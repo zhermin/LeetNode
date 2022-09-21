@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+//USER INFO SECTION
+
+model posts {
+  postID    String @id @default(uuid())
+  email     String
+  title     String
+  message   String   @db.VarChar(500)
+  likes     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userpost_rs users @relation("postemail_rs", fields: [email], references: [email])
+  postMedia_rs postMedia[] @relation("postMedia_rs")
+}
+
+model postMedia {
+  postID String @id @default(uuid())
+  postMediaURL String? //uplaod uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
+  postMedia_rs posts @relation("postMedia_rs", fields: [postID], references: [postID])
+}
+
+model users {
+  email     String   @id
+  password  String   @db.VarChar(20)
+  name      String   @db.VarChar(60)
+  dpURL     String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
+  role      Role 
+  postemail_rs posts[]  @relation("postemail_rs")
+  studentEmail_user_rs students[] @relation("studentEmail_user_rs") 
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model students {
+  studentEmail String  @id
+  matriculationNumber String @unique
+  studentEmail_user_rs users @relation("studentEmail_user_rs", fields: [studentEmail], references: [email])
+  student_Masteries_rs studentMasteries[] @relation("student_Masteries_rs")
+  students_studentAttempt_rs studentAttempts[] @relation("students_studentAttempt_rs")
+}
+
+model studentAttempts {
+  studentEmail String
+  questionID String
+  attemptOption Int
+  attemptCorrect Boolean
+  attemptSeconds Int
+  students_studentAttempt_rs students @relation("students_studentAttempt_rs", fields: [studentEmail], references: [studentEmail])
+  questionAttemptID_rs questions @relation("questionAttemptID_rs", fields: [questionID], references: [questionID])
+  
+  @@id([studentEmail, questionID])
+}
+
+model studentMasteries {
+  studentEmail String
+  topicID String @id @default(uuid())
+  masteryLevel Float @default(0)
+  courseCompletion Float @default(0)
+  studentMasteriesTopic_rs topics @relation("studentMasteriesTopic_rs", fields: [topicID], references: [topicID])
+  student_Masteries_rs students @relation("student_Masteries_rs", fields: [studentEmail], references: [studentEmail])
+}
+
+
+//QUESTION BANK SECTIOn
+
+model topics {
+  topicID String @id @default(uuid())
+  topicName String @db.VarChar(50)
+  topicLevel Int
+  topicID_rs questions[] @relation("topicID_rs")
+  studentMasteriesTopic_rs studentMasteries[] @relation("studentMasteriesTopic_rs")
+}
+
+model questions {
+  questionID String @id @default(uuid())
+  topicID String
+  questionContent String @db.VarChar(500)
+  questionDifficulty Int //1-easy, 2-medium, 3-hard
+  topicID_rs topics @relation("topicID_rs", fields: [topicID], references: [topicID])
+  questionAttemptID_rs studentAttempts[] @relation("questionAttemptID_rs")
+  questionMediaID_rs questionMedia[] @relation("questionMediaID_rs")
+  questionAnswerID_rs answer[] @relation("questionAnswerID_rs")
+}
+
+model questionMedia {
+  questionID String @id @default(uuid())
+  questionMediaURL String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
+  questionMediaID_rs questions @relation("questionMediaID_rs", fields: [questionID], references: [questionID])
+}
+
+model answer {
+  questionID     String @default(uuid())
+  optionNumber   Int      
+  answerContent  String   
+  isCorrect      Boolean  
+  questionAnswerID_rs questions @relation("questionAnswerID_rs", fields: [questionID], references: [questionID])
+
+  @@id([questionID, optionNumber])
+}
+
+// add answers
+
+// delete training model
+
+// delete user registration
+
+// student mastery take out (check if can link from skill to user)
+
+// permission
+
+// populate answer and questions to get data out to frontend
+
+// additional table for student's attempt on question (between questions and user) - include correct first attempt, etc
+
+// Photos for user add back into user table
