@@ -1,34 +1,30 @@
 # Recommender Microservice API
 
-This API is available at: ```bash
-http://127.0.0.1:8000/
-```
+This API is available at: ```http://127.0.0.1:8000/```
 
 ## Add students
 
 Adds students with given names for a skill.
 
 - URL:
-⇥ /add-student/:student_id/:skill
+/add-student/:student_id/:skill
 
 - METHOD:
-⇥ ```bash
-POST
-```
+```POST```
 
-- URL Params:
-⇥ ```bash
+- URL Params:  
+```
 student_id = [str] # Multiple students separated by commas
 skill = [str] # Only 1 skill
 ```
 
 - Data Params:
-⇥ None
+None
 
-- Success Response:
-⇥ Code: 200 OK
-⇥ Content:
-```bash
+- Success Response:  
+    - Code: 200 OK  
+    - Content:
+```
 {
     "Created": true,
     "Student ID": [
@@ -47,26 +43,24 @@ skill = [str] # Only 1 skill
 Removes students with given names for a skill.
 
 - URL:
-⇥ /remove-student/:student_id/:skill
+/remove-student/:student_id/:skill
 
 - METHOD:
-⇥ ```bash
-DELETE
-```
+```DELETE```
 
 - URL Params:
-⇥ ```bash
+```
 student_id = [str] # Multiple students separated by commas
 skill = [str] # Only 1 skill
 ```
 
 - Data Params:
-⇥ None
+None
 
 - Success Response:
-⇥ Code: 200 OK
-⇥ Content:
-```bash
+    - Code: 200 OK
+    - Content:
+```
 {
     "Deleted": true,
     "Student ID": [
@@ -84,26 +78,24 @@ skill = [str] # Only 1 skill
 Fetches mastery probability for a particular student for a skill.
 
 - URL:
-⇥ /get-mastery/:student_id/:skill
+/get-mastery/:student_id/:skill
 
 - METHOD:
-⇥ ```bash
-GET
-```
+```GET```
 
 - URL Params:
-⇥ ```bash
+```
 student_id = [str] # Only 1 student
 skill = [str] # Only 1 skill
 ```
 
 - Data Params:
-⇥ None
+None
 
 - Success Response:
-⇥ Code: 200 OK
-⇥ Content:
-```bash
+    - Code: 200 OK
+    - Content:
+```
 {
     "Mastery (voltage division principle)": 0.7930704584200629
 }
@@ -116,26 +108,24 @@ skill = [str] # Only 1 skill
 Updates state of a particular student for a skill given one response.
 
 - URL:
-⇥ /update-state/:student_id/:skill/:correct
+/update-state/:student_id/:skill/:correct
 
 - METHOD:
-⇥ ```bash
-PATCH
-```
+```PATCH```
 
 - URL Params:
-⇥ ```bash
+```
 student_id = [str] # Only 1 student
 skill = [str] # Only 1 skill
 ```
 
 - Data Params:
-⇥ None
+None
 
 - Success Response:
-⇥ Code: 200 OK
-⇥ Content:
-```bash
+    - Code: 200 OK
+    - Content:
+```
 {
     "Updated": true,
     "Student ID": "A01",
