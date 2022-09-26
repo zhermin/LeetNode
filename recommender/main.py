@@ -1,72 +1,81 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from pyBKT.models import Model
-import pandas as pd
+from pyBKT.models import *
+import numpy as np
 
 model = Model()
+
+# Training the model
+# Run EITHER
 model.load("models/model-custom.pkl")
+# OR
+# defaults = {'order_id': 'Anon Student Id', 'skill_name': 'KC(Default)', 'correct': 'Correct First Attempt'}
+# model.fit(data_path="Data_Analysis_CSV.csv", defaults = defaults)
+# model.save("models/model-custom.pkl")
+
+# Get all the topics - hardcoded for now
+skills_list = ["Ohm's law", 'voltage division principle', 'Equivalent resistance when connected in series or parallel', 'Thevenin Equivalent Circuit', 'node voltage analysis technique', 'transient analysis of series RC circuits, and series RL circuits', 'steady state analysis of R,L,C circuits']
+
+# Initialise empty Roster
+roster = Roster(students = [], skills = skills_list, model = model)
 
 app = FastAPI()
-
-class Student(BaseModel):
-    id: str
-    email: str
-    skill: str
-    correct: int
-    mastery: str
-
-students = {
-    # Temporary placeholder to hold the students data
-}
 
 @app.get("/")
 def home():
     # Homepage
     return {"Status": "The recommender microservice is running!"}
 
-@app.get("/get-student")
-def get_student():
-    # Retrieve all the students' information
-    return students
+@app.post("/add-student/{student_id}/{skill}")
+def add_student(student_id: str, skill: str):
+    # Adds students with given names for a skill with optional initial states.
+    # Notes:
+    #   Update multiple students at once
+    #   Can only update 1 skill at a time
+    student_id = student_id.split(",")
+    if skill not in skills_list: # Ensure valid skill name
+        return {"Error": "Invalid skill name"}
+    elif any(student in roster.skill_rosters[skill].students for student in student_id): # Prevent overwriting
+        return {"Error": "Data already exists"}
+    roster.add_students(skill, student_id)
+    return {"Created": True, "Student ID": student_id, "Skills": skill}
 
-@app.get("/get-student/{student_id}")
-def get_student(student_id: str):
-    # Retrieve the student information based on student id
-    if student_id in students:
-        return students[student_id]
+@app.delete("/remove-student/{student_id}/{skill}")
+def remove_student(student_id: str, skill: str):
+    # Removes students with given names for a skill.
+    # Notes:
+    #   Removes multiple students at once
+    #   Can only remove 1 skill at a time
+    student_id = student_id.split(",")
+    if skill not in skills_list: # Ensure valid skill name
+        return {"Error": "Invalid skill name"}
+    elif all(student in roster.skill_rosters[skill].students for student in student_id): # Ensure all students in the arguments exists in the Roster
+        roster.remove_students(skill, student_id)
+        return {"Deleted": True, "Student ID": student_id, "Skills": skill}
     return {"Error": f"Student ID {student_id} does NOT exists"}
-    
-@app.post("/create-student")
-def create_student(student: Student):
-    # Creating a new student
-    if student.id in students:
-        return {"Error": "Student ID exists"}
-    students[student.id] = student
-    return {"Created": True, "Student ID": f"{student.id} created"}
 
-@app.delete("/delete-student/{student_id}")
-def delete_student(student_id: str):
-    # Deleting a student
-    if student_id in students:
-        students.pop(student_id)
-        return {"Deleted": True, "Student ID": f"{student_id} deleted"}
-    return {"Error": f"Student ID {student_id} does NOT exists"}
+@app.get("/get-mastery/{student_id}/{skill}")
+def get_mastery(student_id: str, skill: str):
+    # Fetches mastery probability for a particular student for a skill.
+    # Notes:
+    #   1 student at a time  
+    #   1 skill at a time
+    if skill not in skills_list: # Ensure valid skill name
+        return {"Error": "Invalid skill name"}
+    elif student_id not in roster.skill_rosters[skill].students: # Ensure all students in the arguments exists in the Roster
+        return {"Error": f"{student_id} does not exists"}
+    return {f"Mastery ({skill})": roster.get_mastery_prob(skill, student_id)}
 
-@app.get("/predict/{student_id}")
-def predict(student_id: str):
-    data = pd.DataFrame(
-        [
-            { # temp
-                "Student ID": student_id.upper(),
-                "Topic": students[student_id].skill.lower(),
-                "Correct": students[student_id].correct,
-                "Problem Name": students[student_id].skill
-            }
-        ]
-    )
-    try:
-        pred = model.predict(data=data)
-        return pred.to_dict()
-    except ValueError:
-        return {"Error": "Invalid Topic Name"}
+@app.patch("/update-state/{student_id}/{skill}/{correct}")
+def update_state(student_id: str, skill: str, correct: str):
+    # Updates state of a particular student for a skill given one response.
+    # Notes:
+    #   Update 1 student at a time
+    #   Update 1 skill at a time
+    if skill not in skills_list: # Ensure valid skill name
+        return {"Error": "Invalid skill name"}
+    elif student_id not in roster.skill_rosters[skill].students: # Prevent overwriting
+        return {"Error": "Data mising"}
+    roster.update_state(skill, student_id, np.array([int(i) for i in correct]))
+    return {"Updated": True, "Student ID": student_id, "Skill": skill}
