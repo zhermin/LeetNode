@@ -19,35 +19,37 @@ The adaptive learning software tool has great potential for the following:
 - Being adopted in other local and international universities/high schools
 - Commercialisation of adaptive learning platform
 
-## UI/UX Design (WIP)
+## UI/UX Design
 
 [Figma Mockup](https://www.figma.com/proto/Alagss66v74gG2fi8MjP7C/UIUX?node-id=12%3A6&scaling=scale-down&page-id=0%3A1&starting-point-node-id=12%3A6 "LeetNode's Figma Mockup")
 
-## Tech Stack (Tentative)
+## Tech Stack (Reference: T3-Stack)
 
 ### Frontend
 - NextJS (ReactJS)
 - Tailwind CSS
-- Chakra UI Components
+- Tailwind / Chakra UI / Headless UI Components
 
 ### Backend
-- NextJS
+- Routing, REST API, etc.: NextJS
 - TypeScript
+- Zod
 
 ### Database
-- Relational: PostgreSQL or MySQL
-- Non-Relational: MongoDB
+- Relational: MySQL
 - ORM: Prisma
 
 ### Authentication
 - NextAuth
 
-### Recommender System
+### Recommender Microservice
 - Machine Learning: pyBKT
 - FastAPI
 
 ### Hosting
-- Vercel / Netlify / AWS / Digital Ocean / etc.
+- Web: Vercel
+- Database: PlanetScale
+- Recommender Microservice: TBC
 
 ### Miscellaneous
 - UI/UX Design: Figma
