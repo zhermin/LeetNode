@@ -16,11 +16,11 @@ model posts {
   postID    String @id @default(uuid())
   email     String
   title     String
-  message   String   @db.VarChar(500)
+  message   String   
   likes     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  userpost_rs users @relation("postemail_rs", fields: [email], references: [email])
+  userpost_rs users @relation("postemail_rs", fields: [email], references: [email], onDelete: Cascade)
   postMedia_rs postMedia[] @relation("postMedia_rs")
 
   @@index([email])
@@ -29,15 +29,15 @@ model posts {
 model postMedia {
   postID String @id @default(uuid())
   postMediaURL String? //uplaod uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
-  postMedia_rs posts @relation("postMedia_rs", fields: [postID], references: [postID])
+  postMedia_rs posts @relation("postMedia_rs", fields: [postID], references: [postID], onDelete: Cascade)
 
   @@index([postMediaURL])
 }
 
 model users {
   email     String   @id
-  password  String   @db.VarChar(20)
-  name      String   @db.VarChar(60)
+  password  String   
+  name      String   
   dpURL     String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
   role      Role 
   postemail_rs posts[]  @relation("postemail_rs")
@@ -46,14 +46,15 @@ model users {
 }
 
 enum Role {
-  USER
   ADMIN
+  USER
+  PROF
 }
 
 model students {
   studentEmail String  @id
   matriculationNumber String @unique
-  studentEmail_user_rs users @relation("studentEmail_user_rs", fields: [studentEmail], references: [email])
+  studentEmail_user_rs users @relation("studentEmail_user_rs", fields: [studentEmail], references: [email], onDelete: Cascade)
   student_Masteries_rs studentMasteries[] @relation("student_Masteries_rs")
   students_studentAttempt_rs studentAttempts[] @relation("students_studentAttempt_rs")
 
@@ -66,8 +67,8 @@ model studentAttempts {
   attemptOption Int
   attemptCorrect Boolean
   attemptSeconds Int
-  students_studentAttempt_rs students @relation("students_studentAttempt_rs", fields: [studentEmail], references: [studentEmail])
-  questionAttemptID_rs questions @relation("questionAttemptID_rs", fields: [questionID], references: [questionID])
+  students_studentAttempt_rs students @relation("students_studentAttempt_rs", fields: [studentEmail], references: [studentEmail], onDelete: Cascade)
+  questionAttemptID_rs questions @relation("questionAttemptID_rs", fields: [questionID], references: [questionID], onDelete: Cascade)
   
   @@id([studentEmail, questionID])
 
@@ -79,8 +80,8 @@ model studentMasteries {
   topicID String @id @default(uuid())
   masteryLevel Float @default(0)
   courseCompletion Float @default(0)
-  studentMasteriesTopic_rs topics @relation("studentMasteriesTopic_rs", fields: [topicID], references: [topicID])
-  student_Masteries_rs students @relation("student_Masteries_rs", fields: [studentEmail], references: [studentEmail])
+  studentMasteriesTopic_rs topics @relation("studentMasteriesTopic_rs", fields: [topicID], references: [topicID], onDelete: Cascade)
+  student_Masteries_rs students @relation("student_Masteries_rs", fields: [studentEmail], references: [studentEmail], onDelete: Cascade)
 
   @@index([topicID, studentEmail])
 }
@@ -90,7 +91,7 @@ model studentMasteries {
 
 model topics {
   topicID String @id @default(uuid())
-  topicName String @db.VarChar(50)
+  topicName String 
   topicLevel Int
   topicID_rs questions[] @relation("topicID_rs")
   studentMasteriesTopic_rs studentMasteries[] @relation("studentMasteriesTopic_rs")
@@ -101,10 +102,10 @@ model questions {
   topicID String
   questionContent String @db.VarChar(500)
   questionDifficulty Int //1-easy, 2-medium, 3-hard
-  topicID_rs topics @relation("topicID_rs", fields: [topicID], references: [topicID])
+  topicID_rs topics @relation("topicID_rs", fields: [topicID], references: [topicID], onDelete: Cascade)
   questionAttemptID_rs studentAttempts[] @relation("questionAttemptID_rs")
   questionMediaID_rs questionMedia[] @relation("questionMediaID_rs")
-  questionAnswerID_rs answer[] @relation("questionAnswerID_rs")
+  questionAnswerID_rs answers[] @relation("questionAnswerID_rs")
 
   @@index([topicID])
 }
@@ -112,19 +113,21 @@ model questions {
 model questionMedia {
   questionID String @id @default(uuid())
   questionMediaURL String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
-  questionMediaID_rs questions @relation("questionMediaID_rs", fields: [questionID], references: [questionID])
+  questionMediaID_rs questions @relation("questionMediaID_rs", fields: [questionID], references: [questionID], onDelete: Cascade)
 
   @@index([questionID])
 }
 
-model answer {
+model answers {
   questionID     String @default(uuid())
   optionNumber   Int      
   answerContent  String   
   isCorrect      Boolean  
-  questionAnswerID_rs questions @relation("questionAnswerID_rs", fields: [questionID], references: [questionID])
+  questionAnswerID_rs questions @relation("questionAnswerID_rs", fields: [questionID], references: [questionID], onDelete: Cascade)
 
   @@id([questionID, optionNumber])
 
   @@index([questionID])
 }
+
+
