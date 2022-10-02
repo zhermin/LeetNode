@@ -1,159 +1,159 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
   referentialIntegrity = "prisma"
 }
 
+// NEXT AUTH
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-//USER INFO SECTION
-
-model posts {
-  postID    String @id @default(uuid())
-  email     String
-  title     String
-  message   String   
-  likes     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users users @relation(fields: [email], references: [email], onDelete: Cascade)
-  postMedia postMedia[]
-
-  @@index([email])
+  @@unique([provider, providerAccountId])
 }
 
-model postMedia {
-  postID String @id @default(uuid())
-  postMediaURL String? //uplaod uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
-  posts posts @relation(fields: [postID], references: [postID], onDelete: Cascade)
-
-  @@index([postMediaURL])
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model users {
-  email     String   @id
-  password  String   
-  name      String   
-  dpURL     String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
-  role      Role 
-  posts     posts[]
-  students  students[]
-  session   session[]
-  account   account[]
+model User {
+  id            String    @id @default(cuid())
+  nusnetId      String?   @unique // KIV
+  name          String
+  email         String    @unique
+  emailVerified DateTime? // KIV
+  image         String    @default("https://robohash.org/LeetNode?set=set4")
+  role          Role      @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  attempts      Attempt[]
+  masteries     Mastery[]
+  posts         Post[]
 }
 
 enum Role {
   ADMIN
   USER
-  PROF
 }
 
-model students {
-  studentEmail String  @id
-  matriculationNumber String @unique
-  users users @relation(fields: [studentEmail], references: [email], onDelete: Cascade)
-  studentMasteries studentMasteries[]
-  studentAttempts studentAttempts[]
-
-  @@index([studentEmail])
-}
-
-model studentAttempts {
-  studentEmail String
-  questionID String
-  attemptOption Int
+model Attempt {
+  userId         String
+  questionId     String
+  attemptOption  Int
   attemptCorrect Boolean
-  attemptSeconds Int
-  students students @relation(fields: [studentEmail], references: [studentEmail], onDelete: Cascade)
-  questions questions @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
-  
-  @@id([studentEmail, questionID])
+  attemptSeconds Int? // KIV
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@index([studentEmail,questionID])
+  @@id([userId, questionId])
+  @@index([userId, questionId])
 }
 
-model studentMasteries {
-  studentEmail String
-  topicID String @id @default(uuid())
-  masteryLevel Float @default(0)
-  courseCompletion Float @default(0)
-  topics topics @relation(fields: [topicID], references: [topicID], onDelete: Cascade)
-  students students @relation(fields: [studentEmail], references: [studentEmail], onDelete: Cascade)
+model Mastery {
+  userId           String
+  topicId          String
+  masteryLevel     Float  @default(0)
+  courseCompletion Float  @default(0)
+  user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic            Topic  @relation(fields: [topicId], references: [topicId], onDelete: Cascade)
 
-  @@index([topicID, studentEmail])
+  @@id([userId, topicId])
+  @@index([userId, topicId])
 }
 
-model session {
-    email        String   @id
-    sessionToken String   @unique
-    expires      DateTime
-    users        users    @relation(fields: [email], references: [email], onDelete: Cascade)
+// QUESTION BANK
+model Topic {
+  topicId    String     @id @default(cuid())
+  topicName  String
+  topicLevel TopicLevel
+  questions  Question[]
+  masteries  Mastery[]
 }
 
-// Necessary for Next Auth
-model account {
-    email             String  @id
-    //userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? //@db.Text
-    access_token      String? //@db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? //@db.Text
-    session_state     String?
-    users             users    @relation(fields: [email], references: [email], onDelete: Cascade)
-
-    @@unique([provider, providerAccountId])
+enum TopicLevel {
+  Foundational
+  Intermediate
+  Advanced
 }
 
-//QUESTION BANK SECTIOn
+model Question {
+  questionId         String             @id @default(cuid())
+  topicId            String
+  questionContent    String             @db.VarChar(500)
+  questionDifficulty QuestionDifficulty
+  topic              Topic              @relation(fields: [topicId], references: [topicId])
+  attempts           Attempt[]
+  questionMedia      QuestionMedia[]
+  answers            Answer[]
 
-model topics {
-  topicID String @id @default(uuid())
-  topicName String 
-  topicLevel Int
-  questions questions[]
-  studentMasteries studentMasteries[]
+  @@index([topicId])
 }
 
-model questions {
-  questionID String @id @default(uuid())
-  topicID String
-  questionContent String @db.VarChar(500)
-  questionDifficulty Int //1-easy, 2-medium, 3-hard
-  topics topics @relation(fields: [topicID], references: [topicID], onDelete: Cascade)
-  studentAttempts studentAttempts[]
-  questionMedia questionMedia[]
-  answers answers[]
-
-  @@index([topicID])
+enum QuestionDifficulty {
+  Easy
+  Medium
+  Hard
 }
 
-model questionMedia {
-  questionID String @id @default(uuid())
-  questionMediaURL String? //upload uploaded file link from cloud storage. See https://github.com/prisma/prisma/discussions/11795
-  questions questions @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
+model QuestionMedia {
+  questionId       String   @id @default(cuid())
+  questionMediaURL String?
+  question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@index([questionID])
+  @@index([questionId])
 }
 
-model answers {
-  questionID     String @default(uuid())
-  optionNumber   Int      
-  answerContent  String   
-  isCorrect      Boolean  
-  questions questions @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
+model Answer {
+  questionId    String   @default(cuid())
+  optionNumber  Int
+  answerContent String
+  isCorrect     Boolean
+  question      Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@id([questionID, optionNumber])
-
-  @@index([questionID])
+  @@id([questionId, optionNumber])
+  @@index([questionId])
 }
 
+// DISCUSSION POSTS
+model Post {
+  postId    String      @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  likes     Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id])
+  postMedia PostMedia[]
 
+  @@index([userId])
+}
+
+model PostMedia {
+  postId       String  @id @default(cuid())
+  postMediaURL String?
+  post         Post    @relation(fields: [postId], references: [postId])
+
+  @@index([postMediaURL])
+}

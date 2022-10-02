@@ -7,5 +7,10 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: ['@tailwindcss/forms'],
+  plugins: [
+    '@tailwindcss/forms',
+    '@tailwindcss/aspect-ratio',
+    '@tailwindcss/typography',
+    'tailwindcss-children',
+  ],
 }

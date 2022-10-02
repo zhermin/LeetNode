@@ -1,41 +1,40 @@
 const { PrismaClient } = require('@prisma/client');
-const { topics, questions, answers, questionMedia } = require('./data.js');
+const { Topic, Question, Answer, QuestionMedia } = require('./data.js');
 const prisma = new PrismaClient();
 
 const load = async () => {
   try {
 
-    // FOR DELETING EXISTING TABLE
-    await prisma.topics.deleteMany();
-    console.log('Deleted records in topics table');
-    await prisma.questions.deleteMany();
-    console.log('Deleted records in questions table');
-    await prisma.answers.deleteMany();
-    console.log('Deleted records in answers table');
+    //FOR DELETING EXISTING TABLE
     await prisma.questionMedia.deleteMany();
     console.log('Deleted records in questionMedia table');
-
+    await prisma.question.deleteMany();
+    console.log('Deleted records in questions table');
+    await prisma.topic.deleteMany();
+    console.log('Deleted records in topics table');
+    await prisma.answer.deleteMany();
+    console.log('Deleted records in answers table');
     
-    
-    await prisma.topics.createMany({
-      data: topics
-    });
-    console.log('Topics are created')
 
-    await prisma.questions.createMany({
-      data: questions,
+    await prisma.question.createMany({
+      data: Question,
     });
     console.log('Questions are created')
 
-    await prisma.answers.createMany({
-      data: answers,
+    await prisma.answer.createMany({
+      data: Answer,
     });
     console.log('Answers are created')
 
     await prisma.questionMedia.createMany({
-      data: questionMedia,
+      data: QuestionMedia,
     });
     console.log('Question Media is created')
+
+    await prisma.topic.createMany({
+      data: Topic,
+    });
+    console.log('Topics are created')
 
   } catch (e) {
     console.error(e);
