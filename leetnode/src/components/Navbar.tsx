@@ -7,18 +7,18 @@ const Navbar = () => {
   const session = useSession();
 
   return (
-    <nav className="bg-white shadow py-2">
+    <nav className="bg-white py-2 shadow">
       <MainWrapper>
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div>
             <Link href="/">
-              <a className="text-gray-900 font-semibold text-2xl">LeetNode</a>
+              <a className="text-2xl font-semibold text-gray-900">LeetNode</a>
             </Link>
           </div>
-          <div className="flex space-x-4 items-center">
+          <div className="flex items-center space-x-4">
             {session.status === "unauthenticated" && (
               <button type="button" onClick={() => signIn()}>
-                <a className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-purple-500 hover:bg-purple-600">
+                <a className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-transparent bg-purple-500 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-purple-600">
                   Sign In
                 </a>
               </button>
@@ -26,7 +26,7 @@ const Navbar = () => {
 
             {session.status === "authenticated" && (
               <>
-                <span className="text-gray-900 font-medium">
+                <span className="font-medium text-gray-900">
                   {session?.data?.user?.name}
                 </span>
                 <Image
@@ -39,7 +39,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-base font-medium bg-slate-100 hover:bg-slate-200"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-transparent bg-slate-100 px-4 py-2 text-base font-medium shadow-sm hover:bg-slate-200"
                 >
                   Sign Out
                 </button>

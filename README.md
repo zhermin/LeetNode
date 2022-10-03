@@ -26,32 +26,39 @@ The adaptive learning software tool has great potential for the following:
 ## Tech Stack (Reference: T3-Stack)
 
 ### Frontend
+
 - NextJS (ReactJS)
 - Tailwind CSS
 - Tailwind / Chakra UI / Headless UI Components
 
 ### Backend
+
 - Routing, REST API, etc.: NextJS
 - TypeScript
 - Zod
 
 ### Database
+
 - Relational: MySQL
 - ORM: Prisma
 
 ### Authentication
+
 - NextAuth
 
 ### Recommender Microservice
+
 - Machine Learning: pyBKT
 - FastAPI
 
 ### Hosting
+
 - Web: Vercel
 - Database: PlanetScale
 - Recommender Microservice: TBC
 
 ### Miscellaneous
+
 - UI/UX Design: Figma
 - Project Management: Notion
 

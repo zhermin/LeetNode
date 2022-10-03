@@ -1,31 +1,51 @@
-import MainWrapper from "@/components/MainWrapper";
-import Navbar from "@/components/Navbar";
+import { Topic, TopicLevel } from "@prisma/client";
+import { prisma } from "@/server/db/client";
 
-const welcome = () => {
+import Navbar from "@/components/Navbar";
+import MainWrapper from "@/components/MainWrapper";
+import WelcomeCard from "@/components/welcome/WelcomeCard";
+
+interface welcomeProps {
+  topics: Topic[];
+}
+
+const welcome = ({ topics }: welcomeProps) => {
   return (
     <>
       <Navbar />
 
       <MainWrapper>
-        <main className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
-          <h1 className="text-5xl md:text-[4rem] leading-normal font-bold text-gray-700">
+        <main className="flex min-h-screen flex-col items-center justify-center p-4">
+          <h1 className="text-5xl font-bold leading-normal text-gray-700 md:text-[4rem]">
             Choose Your Battle
           </h1>
-          <div className="grid gap-3 pt-3 mt-3 text-center md:grid-cols-3 lg:w-2/3">
-            <TechnologyCard
+          <div className="mt-3 grid gap-5 pt-3 md:grid-cols-3 lg:w-3/4">
+            <WelcomeCard
               name="Foundational"
-              description="TODO: Foundational topics data from our database"
-              documentation="https://nextjs.org/"
+              description="Foundational topics are the building blocks of electrical and computer engineering. These topics are the bedrock of your electrical and computer engineering knowledge and are the most important to master."
+              topics={topics.filter(
+                (topic) => topic.topicLevel === TopicLevel.Foundational
+              )}
+              link="https://nextjs.org/"
+              color="bg-emerald-500"
             />
-            <TechnologyCard
+            <WelcomeCard
               name="Intermediate"
-              description="TODO: Intermediate topics data from our database"
-              documentation="https://www.typescriptlang.org/"
+              description="Intermediate topics are the next level of electrical and computer engineering. These topics build upon the foundational topics and are the next step in your journey."
+              topics={topics.filter(
+                (topic) => topic.topicLevel === TopicLevel.Intermediate
+              )}
+              link="https://www.typescriptlang.org/"
+              color="bg-amber-400"
             />
-            <TechnologyCard
+            <WelcomeCard
               name="Advanced"
-              description="TODO: Advanced topics data from our database"
-              documentation="https://tailwindcss.com/"
+              description="Advanced topics are the most advanced topics in electrical and computer engineering. These topics require a deep understanding of the foundational and intermediate topics and will challenge you to the fullest extent."
+              topics={topics.filter(
+                (topic) => topic.topicLevel === TopicLevel.Advanced
+              )}
+              link="https://tailwindcss.com/"
+              color="bg-red-500"
             />
           </div>
         </main>
@@ -36,31 +56,12 @@ const welcome = () => {
 
 export default welcome;
 
-type TechnologyCardProps = {
-  name: string;
-  description: string;
-  documentation: string;
-};
+export async function getStaticProps() {
+  const topics: Topic[] = await prisma.topic.findMany();
 
-const TechnologyCard = ({
-  name,
-  description,
-  documentation,
-}: TechnologyCardProps) => {
-  return (
-    <section className="flex flex-col justify-between p-4 duration-500 border-2 border-gray-500 rounded shadow-xl motion-safe:hover:scale-105">
-      <h2 className="text-lg text-gray-700 font-bold pb-2 border-b-2 border-b-slate-500">
-        {name}
-      </h2>
-      <p className="text-sm text-gray-600 py-3">{description}</p>
-      <a
-        className="mt-3 text-sm underline text-violet-500 decoration-dotted underline-offset-2"
-        href={documentation}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Start Quiz
-      </a>
-    </section>
-  );
-};
+  return {
+    props: {
+      topics: topics,
+    },
+  };
+}

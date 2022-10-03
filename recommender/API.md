@@ -10,7 +10,8 @@ Adds students with given names for a skill.
 
 - METHOD: `POST`
 
-- URL Params:  
+- URL Params:
+
 ```python
 student_id = [str] # Multiple students separated by commas
 skill = [str] # Only 1 skill
@@ -19,22 +20,22 @@ skill = [str] # Only 1 skill
 - Data Params:
 None
 
-- Success Response:  
-    - Code: `200 OK`
-    - Content:
+- Success Response:
+  - Code: `200 OK`
+  - Content:
+
 ```json
 {
-    "Created": true,
-    "Student ID": [
-        "A01",
-        "A02"
-    ],
-    "Skills": "voltage division principle"
+  "Created": true,
+  "Student ID": [
+    "A01",
+    "A02"
+  ],
+  "Skills": "voltage division principle"
 }
 ```
 
 - Error Response:
-
 
 ## Remove students
 
@@ -45,6 +46,7 @@ Removes students with given names for a skill.
 - METHOD: `DELETE`
 
 - URL Params:
+
 ```python
 student_id = [str] # Multiple students separated by commas
 skill = [str] # Only 1 skill
@@ -54,16 +56,16 @@ skill = [str] # Only 1 skill
 None
 
 - Success Response:
-    - Code: `200 OK`
-    - Content:
+  - Code: `200 OK`
+  - Content:
 ```json
 {
-    "Deleted": true,
-    "Student ID": [
-        "A01",
-        "A02"
-    ],
-    "Skills": "voltage division principle"
+  "Deleted": true,
+  "Student ID": [
+    "A01",
+    "A02"
+  ],
+  "Skills": "voltage division principle"
 }
 ```
 
@@ -78,7 +80,8 @@ Fetches mastery probability for a particular student for a skill.
 - METHOD: `GET`
 
 - URL Params:
-```
+
+```python
 student_id = [str] # Only 1 student
 skill = [str] # Only 1 skill
 ```
@@ -87,11 +90,12 @@ skill = [str] # Only 1 skill
 None
 
 - Success Response:
-    - Code: `200 OK`
-    - Content:
+  - Code: `200 OK`
+  - Content:
+
 ```json
 {
-    "Mastery (voltage division principle)": 0.7930704584200629
+  "Mastery (voltage division principle)": 0.7930704584200629
 }
 ```
 
@@ -106,6 +110,7 @@ Updates state of a particular student for a skill given one response.
 - METHOD: `PATCH`
 
 - URL Params:
+
 ```python
 student_id = [str] # Only 1 student
 skill = [str] # Only 1 skill
@@ -115,8 +120,9 @@ skill = [str] # Only 1 skill
 None
 
 - Success Response:
-    - Code: `200 OK`
-    - Content:
+  - Code: `200 OK`
+  - Content:
+
 ```json
 {
     "Updated": true,

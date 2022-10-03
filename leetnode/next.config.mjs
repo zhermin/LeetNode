@@ -21,6 +21,6 @@ export default defineNextConfig({
     defaultLocale: "en",
   },
   images: {
-    domains: ["lh3.googleusercontent.com", "robohash.org"],
+    domains: ["res.cloudinary.com", "lh3.googleusercontent.com", "robohash.org"],
   },
 });
