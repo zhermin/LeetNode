@@ -59,32 +59,32 @@ enum Role {
 
 model Attempt {
   userId         String
-  questionID     String
+  questionId     String
   attemptOption  Int
   attemptCorrect Boolean
   attemptSeconds Int? // KIV
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question       Question @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
+  question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@id([userId, questionID])
-  @@index([userId, questionID])
+  @@id([userId, questionId])
+  @@index([userId, questionId])
 }
 
 model Mastery {
   userId           String
-  topicID          String
+  topicId          String
   masteryLevel     Float  @default(0)
   courseCompletion Float  @default(0)
   user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic            Topic  @relation(fields: [topicID], references: [topicID], onDelete: Cascade)
+  topic            Topic  @relation(fields: [topicId], references: [topicId], onDelete: Cascade)
 
-  @@id([userId, topicID])
-  @@index([userId, topicID])
+  @@id([userId, topicId])
+  @@index([userId, topicId])
 }
 
 // QUESTION BANK
 model Topic {
-  topicID    String     @id @default(cuid())
+  topicId    String     @id @default(cuid())
   topicName  String
   topicLevel TopicLevel
   questions  Question[]
@@ -98,16 +98,16 @@ enum TopicLevel {
 }
 
 model Question {
-  questionID         String             @id @default(cuid())
-  topicID            String
+  questionId         String             @id @default(cuid())
+  topicId            String
   questionContent    String             @db.VarChar(500)
   questionDifficulty QuestionDifficulty
-  topic              Topic              @relation(fields: [topicID], references: [topicID])
+  topic              Topic              @relation(fields: [topicId], references: [topicId])
   attempts           Attempt[]
   questionMedia      QuestionMedia[]
   answers            Answer[]
 
-  @@index([topicID])
+  @@index([topicId])
 }
 
 enum QuestionDifficulty {
@@ -117,27 +117,27 @@ enum QuestionDifficulty {
 }
 
 model QuestionMedia {
-  questionID       String   @id @default(cuid())
+  questionId       String   @id @default(cuid())
   questionMediaURL String?
-  question         Question @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
+  question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@index([questionID])
+  @@index([questionId])
 }
 
 model Answer {
-  questionID    String   @default(cuid())
+  questionId    String   @default(cuid())
   optionNumber  Int
   answerContent String
   isCorrect     Boolean
-  question      Question @relation(fields: [questionID], references: [questionID], onDelete: Cascade)
+  question      Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@id([questionID, optionNumber])
-  @@index([questionID])
+  @@id([questionId, optionNumber])
+  @@index([questionId])
 }
 
 // DISCUSSION POSTS
 model Post {
-  postID    String      @id @default(cuid())
+  postId    String      @id @default(cuid())
   userId    String
   title     String
   message   String
@@ -151,9 +151,9 @@ model Post {
 }
 
 model PostMedia {
-  postID       String  @id @default(cuid())
+  postId       String  @id @default(cuid())
   postMediaURL String?
-  post         Post    @relation(fields: [postID], references: [postID])
+  post         Post    @relation(fields: [postId], references: [postId])
 
   @@index([postMediaURL])
 }
