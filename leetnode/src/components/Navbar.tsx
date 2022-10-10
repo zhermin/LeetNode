@@ -12,7 +12,16 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <div>
             <Link href="/">
-              <a className="text-2xl font-semibold text-gray-900">LeetNode</a>
+              <a>
+                <Image
+                  src="/logo/leetnode-banner-white.png"
+                  alt="LeetNode"
+                  width="0"
+                  height="0"
+                  sizes="100vw"
+                  className="h-auto w-full"
+                />
+              </a>
             </Link>
           </div>
           <div className="flex items-center space-x-4">

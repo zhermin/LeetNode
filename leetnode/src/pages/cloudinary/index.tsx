@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 
@@ -96,6 +97,7 @@ export default function Index({ topic }: topicQuestionProp) {
 
   return (
     <>
+      <Header />
       <Navbar />
       <MainWrapper>
         <div className="pt-10 sm:mt-0">

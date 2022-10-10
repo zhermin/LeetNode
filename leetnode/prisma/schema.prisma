@@ -58,16 +58,17 @@ enum Role {
 }
 
 model Attempt {
+  attemptId      String   @id @default(cuid())
   userId         String
   questionId     String
   attemptOption  Int
-  attemptCorrect Boolean
+  submittedAt    DateTime @default(now())
   attemptSeconds Int? // KIV
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
+  answer         Answer   @relation(fields: [questionId, attemptOption], references: [questionId, optionNumber], onDelete: Cascade)
 
-  @@id([userId, questionId])
-  @@index([userId, questionId])
+  @@unique([userId, questionId, submittedAt])
 }
 
 model Mastery {
@@ -78,8 +79,7 @@ model Mastery {
   user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic            Topic  @relation(fields: [topicId], references: [topicId], onDelete: Cascade)
 
-  @@id([userId, topicId])
-  @@index([userId, topicId])
+  @@unique([userId, topicId])
 }
 
 // QUESTION BANK
@@ -89,6 +89,8 @@ model Topic {
   topicLevel TopicLevel
   questions  Question[]
   masteries  Mastery[]
+
+  @@index([topicLevel])
 }
 
 enum TopicLevel {
@@ -107,7 +109,7 @@ model Question {
   questionMedia      QuestionMedia[]
   answers            Answer[]
 
-  @@index([topicId])
+  @@index([questionDifficulty])
 }
 
 enum QuestionDifficulty {
@@ -117,22 +119,22 @@ enum QuestionDifficulty {
 }
 
 model QuestionMedia {
-  questionId       String   @id @default(cuid())
-  questionMediaURL String?
+  questionId       String
+  questionMediaURL String   @db.VarChar(500)
   question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@index([questionId])
+  @@unique([questionId, questionMediaURL])
 }
 
 model Answer {
-  questionId    String   @default(cuid())
+  questionId    String
   optionNumber  Int
-  answerContent String
+  answerContent String    @db.VarChar(500)
   isCorrect     Boolean
-  question      Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
+  question      Question  @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
+  attempts      Attempt[]
 
-  @@id([questionId, optionNumber])
-  @@index([questionId])
+  @@unique([questionId, optionNumber])
 }
 
 // DISCUSSION POSTS
@@ -151,9 +153,9 @@ model Post {
 }
 
 model PostMedia {
-  postId       String  @id @default(cuid())
-  postMediaURL String?
-  post         Post    @relation(fields: [postId], references: [postId])
+  postId       String
+  postMediaURL String @db.VarChar(500)
+  post         Post   @relation(fields: [postId], references: [postId])
 
-  @@index([postMediaURL])
+  @@unique([postId, postMediaURL])
 }

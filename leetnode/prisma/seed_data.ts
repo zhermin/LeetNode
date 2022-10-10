@@ -134,7 +134,7 @@ const Question = [
     questionId: "cl8qv59e5001aumngrtppz23v",
     topicId: "cl8qundkr0006umngbyhbkmb7",
     questionContent:
-      "A current of 3 A flows through a resistor network as shown in the figure above. The voltage difference VXY (given by VX - VY) is",
+      "A current of 3 A flows through a resistor network as shown in the figure above. The voltage difference \\(V_{XY}\\) (given by \\(V_X\\) - \\(V_Y\\)) is",
     questionDifficulty: QuestionDifficulty.Medium,
   },
   {
@@ -278,25 +278,25 @@ const Answer = [
   {
     questionId: "cl8qv59e5001bumngswwjm2lh",
     optionNumber: 1,
-    answerContent: "(4~Omega)",
+    answerContent: "\\(4~\\Omega\\)",
     isCorrect: true,
   },
   {
     questionId: "cl8qv59e5001bumngswwjm2lh",
     optionNumber: 2,
-    answerContent: "(11~Omega)",
+    answerContent: "\\(11~\\Omega\\)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e5001bumngswwjm2lh",
     optionNumber: 3,
-    answerContent: "(10.2~Omega)",
+    answerContent: "\\(10.2~\\Omega\\)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e5001bumngswwjm2lh",
     optionNumber: 4,
-    answerContent: "(20.8~Omega)",
+    answerContent: "\\(20.8~\\Omega\\)",
     isCorrect: false,
   },
   {
@@ -326,25 +326,25 @@ const Answer = [
   {
     questionId: "cl8qv59e6001dumngql96fas5",
     optionNumber: 1,
-    answerContent: "(V_T = 7~V,~~~~~R_T = 1.2~Omega)",
+    answerContent: "\\(V_T = 7~V,~~~~~R_T = 1.2~\\Omega\\)",
     isCorrect: true,
   },
   {
     questionId: "cl8qv59e6001dumngql96fas5",
     optionNumber: 2,
-    answerContent: "(V_T = 7~V,~~~~~R_T = 1.33~Omega)",
+    answerContent: "\\(V_T = 7~V,~~~~~R_T = 1.33~\\Omega\\)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e6001dumngql96fas5",
     optionNumber: 3,
-    answerContent: "(V_T = 7.4~V,~~~~~R_T = 1.2~Omega)",
+    answerContent: "\\(V_T = 7.4~V,~~~~~R_T = 1.2~\\Omega\\)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e6001dumngql96fas5",
     optionNumber: 4,
-    answerContent: "(V_T = 7.4~V,~~~~~R_T = 1.33~Omega)",
+    answerContent: "\\(V_T = 7.4~V,~~~~~R_T = 1.33~\\Omega\\)",
     isCorrect: false,
   },
   {
@@ -450,49 +450,49 @@ const Answer = [
   {
     questionId: "cl8qv59e7001lumngiyu3yfvb",
     optionNumber: 1,
-    answerContent: "56.9 cos (100t - 129.3°)",
+    answerContent: "56.9 cos(100t - 129.3°)",
     isCorrect: true,
   },
   {
     questionId: "cl8qv59e7001lumngiyu3yfvb",
     optionNumber: 2,
-    answerContent: "80.4 cos (100t - 84.3°)",
+    answerContent: "80.4 cos(100t - 84.3°)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e7001lumngiyu3yfvb",
     optionNumber: 3,
-    answerContent: "1.13 cos (100t + 129.3°)",
+    answerContent: "1.13 cos(100t + 129.3°)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e7001lumngiyu3yfvb",
     optionNumber: 4,
-    answerContent: "56.9 cos (100t - 39.3°)",
+    answerContent: "56.9 cos(100t - 39.3°)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e7001numngt93gzr1f",
     optionNumber: 1,
-    answerContent: "2.89 cos (100t + 47.6°)",
+    answerContent: "2.89 cos(100t + 47.6°)",
     isCorrect: true,
   },
   {
     questionId: "cl8qv59e7001numngt93gzr1f",
     optionNumber: 2,
-    answerContent: "3.34 cos (100t + 55°)",
+    answerContent: "3.34 cos(100t + 55°)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e7001numngt93gzr1f",
     optionNumber: 3,
-    answerContent: "3.55 cos (100t + 39.8°)",
+    answerContent: "3.55 cos(100t + 39.8°)",
     isCorrect: false,
   },
   {
     questionId: "cl8qv59e7001numngt93gzr1f",
     optionNumber: 4,
-    answerContent: "4.1 cos (100t + 31.4°)",
+    answerContent: "4.1 cos(100t + 31.4°)",
     isCorrect: false,
   },
 ];

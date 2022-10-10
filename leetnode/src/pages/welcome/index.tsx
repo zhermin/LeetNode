@@ -1,19 +1,16 @@
 import { Topic, TopicLevel } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
+import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 import WelcomeCard from "@/components/welcome/WelcomeCard";
 
-interface welcomeProps {
-  topics: Topic[];
-}
-
-const welcome = ({ topics }: welcomeProps) => {
+const welcome = ({ topics }: { topics: Topic[] }) => {
   return (
     <>
+      <Header title="Begin your journey by taking an introductory quiz" />
       <Navbar />
-
       <MainWrapper>
         <main className="flex min-h-screen flex-col items-center justify-center p-4">
           <h1 className="text-5xl font-bold leading-normal text-gray-700 md:text-[4rem]">
@@ -26,7 +23,7 @@ const welcome = ({ topics }: welcomeProps) => {
               topics={topics.filter(
                 (topic) => topic.topicLevel === TopicLevel.Foundational
               )}
-              link="https://nextjs.org/"
+              link="/questions"
               color="bg-emerald-500"
             />
             <WelcomeCard
