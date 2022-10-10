@@ -1,28 +1,98 @@
 import { useState } from "react";
-import Image from "next/future/image";
-
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 
-export default function Example() {
-  const [fileSelected, setFileSelected] = useState<string | Blob>("");
+import {
+  PrismaClient,
+  Topic,
+  Question,
+  QuestionMedia,
+  Answer,
+} from "@prisma/client";
 
-  const uploadImage = () => {
+const prisma = new PrismaClient();
+
+interface topicQuestionProp {
+  topic: Topic[];
+  question: Question[];
+  questionMedia: QuestionMedia[];
+  answer: Answer[];
+}
+
+export async function getServerSideProps() {
+  const topics: Topic[] = await prisma.topic.findMany();
+  const questions: Question[] = await prisma.question.findMany({
+    // where: {
+    //   topicName: params.id,
+    // },
+  });
+  const questionMedia: QuestionMedia[] = await prisma.questionMedia.findMany();
+  const answers: Answer[] = await prisma.answer.findMany();
+
+  return {
+    props: {
+      topic: topics,
+      question: questions,
+      questionMedia: questionMedia,
+      answer: answers,
+    },
+  };
+}
+
+// async function getQuestions(question: Prisma.TopicSelect) {
+//   const response = await fetch("/api/questions", {
+//     method: "GET",
+//     body: JSON.stringify(question),
+//   });
+
+//   if (!response.ok) {
+//     throw new Error(response.statusText);
+//   }
+//   return await response.json();
+// }
+
+export default function Index({ topic }: topicQuestionProp) {
+  const [topics] = useState(topic);
+  const [fileSelected, setFileSelected] = useState<string | Blob>("");
+  const [topicSelected] = useState(topic[0]?.topicId);
+  const [, setLoading] = useState(false);
+
+  async function uploadImage() {
     const formData = new FormData();
     formData.append("file", fileSelected);
+    formData.append("resource_type", "auto");
     formData.append("upload_preset", "w2ul1sgu");
 
-    fetch("https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload", {
+    const res = await fetch(
+      "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const content = await res.json();
+    console.log(content);
+  }
+
+  async function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    console.log(event.target.value);
+    setLoading(true);
+    //setTopicSelected(event.target.value);
+    //getQuestions(event.target.value);
+    const selected = {
+      topicName: event.target.value,
+    };
+    console.log(JSON.stringify(selected));
+    const res = await fetch("/api/question/questions", {
       method: "POST",
-      body: formData,
-    })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+      body: JSON.stringify(selected),
+    });
+
+    const load = await res.json();
+    console.log(load);
+  }
 
   return (
     <>
@@ -56,11 +126,13 @@ export default function Example() {
                           <select
                             id="question-topic"
                             name="question-topic"
+                            value={topicSelected}
+                            onChange={(e) => handleChange(e)}
                             className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                           >
-                            <option>Topic 1</option>
-                            <option>Topic 2</option>
-                            <option>Topic 3</option>
+                            {topics.map((t: Topic) => (
+                              <option key={t.topicName}>{t.topicName}</option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -91,7 +163,7 @@ export default function Example() {
                       transition
                       ease-in-out
                       focus:border-blue-600 focus:bg-white focus:text-gray-700 focus:outline-none
-                    "
+                      "
                       id="Question Content"
                       rows={3}
                       placeholder="Question Content"
@@ -178,94 +250,55 @@ export default function Example() {
               </div>
             </div>
             <div className="mt-5 md:col-span-2 md:mt-0">
-              <form action="#" method="POST">
-                <div className="overflow-hidden shadow sm:rounded-md">
-                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
-                    <fieldset>
-                      <legend className="contents text-base font-medium text-gray-900">
-                        Question 1
-                      </legend>
-                      <p className="text-sm text-gray-500">
-                        To have content from planetscale
-                      </p>
-                      <Image
-                        src="https://res.cloudinary.com/dy2tqc45y/image/upload/v1664075351/LeetNode/CG1111_2122_Q1/AY2122-Quiz1-Q01-1_bzugpn.png"
-                        alt="Question 1"
-                        width="0"
-                        height="0"
-                        sizes="100vw"
-                        className="h-auto w-1/2"
-                      />
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-center">
-                          <input
-                            id="option-1"
-                            name="option-1"
-                            type="radio"
-                            className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label
-                            htmlFor="option-1"
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            0.2A
-                          </label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            id="option-2"
-                            name="option-2"
-                            type="radio"
-                            className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label
-                            htmlFor="option-2"
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            1A
-                          </label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            id="option-3"
-                            name="option-3"
-                            type="radio"
-                            className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label
-                            htmlFor="option-3"
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            0.6A
-                          </label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            id="option-4"
-                            name="option-4"
-                            type="radio"
-                            className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label
-                            htmlFor="option-4"
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            0.8A
-                          </label>
-                        </div>
-                      </div>
-                    </fieldset>
-                  </div>
-                  <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                    <button
-                      type="submit"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              <div className="overflow-hidden shadow sm:rounded-md">
+                <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                  <div className="col-span-3 sm:col-span-2">
+                    <label
+                      htmlFor="question-topic"
+                      className="block text-sm font-medium text-gray-700"
                     >
-                      Submit
-                    </button>
+                      Question Topic
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4">
+                    {topics.map((t: Topic) => (
+                      <Link
+                        href={{
+                          pathname: `/cloudinary/[topicName]`,
+                          query: {
+                            topicName: t.topicName,
+                          },
+                        }}
+                        as={`/cloudinary/${t.topicName}`}
+                        key={t.topicName}
+                      >
+                        {/* <div className="flex justify-center">
+                        <ul className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                          <li value={t.topicName} className="cursor-pointer">
+                            {t.topicName}
+                          </li>
+                        </ul>
+                      </div> */}
+
+                        <div
+                          data-value={t.topicName}
+                          className="mt-1 w-full cursor-pointer rounded-md bg-purple-500 py-2 px-3 text-white shadow-sm hover:bg-purple-600 sm:text-sm"
+                        >
+                          {t.topicName}
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 </div>
-              </form>
+                <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                  <button
+                    type="submit"
+                    className="inline-flex justify-center rounded-md border border-transparent bg-purple-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-purple-600"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
