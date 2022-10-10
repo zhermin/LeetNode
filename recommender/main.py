@@ -19,7 +19,7 @@ def train_model() -> Model:
         "correct": "Correct First Attempt",
     }
     model.fit(data_path="Data_Analysis_CSV.csv", defaults=defaults)
-    model.save("models/model-custom.pkl")
+    model.save("model-custom.pkl")
     return model
 
 
@@ -29,7 +29,7 @@ def load_model() -> Model:
     """
 
     model = Model()
-    model.load("models/model-custom.pkl")
+    model.load("model-custom.pkl")
     return model
 
 

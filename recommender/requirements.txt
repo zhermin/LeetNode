@@ -1,5 +1,4 @@
-pybkt
-numpy
-pandas
 fastapi
+pyBKT
+gunicorn
 uvicorn[standard]
