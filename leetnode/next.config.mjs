@@ -23,4 +23,9 @@ export default defineNextConfig({
   images: {
     domains: ["res.cloudinary.com", "lh3.googleusercontent.com", "robohash.org"],
   },
+  experimental: {
+    swcPlugins: [
+      ['next-superjson-plugin', {}],
+    ],
+  },
 });

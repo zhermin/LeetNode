@@ -48,7 +48,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   attempts      Attempt[]
-  masteries     Mastery[]
+  courses       Course[]
   posts         Post[]
 }
 
@@ -71,7 +71,7 @@ model Attempt {
   @@unique([userId, questionId, submittedAt])
 }
 
-model Mastery {
+model Course {
   userId           String
   topicId          String
   masteryLevel     Float  @default(0)
@@ -88,7 +88,7 @@ model Topic {
   topicName  String
   topicLevel TopicLevel
   questions  Question[]
-  masteries  Mastery[]
+  courses    Course[]
 
   @@index([topicLevel])
 }
