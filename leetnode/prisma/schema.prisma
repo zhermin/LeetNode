@@ -38,18 +38,19 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  nusnetId      String?   @unique // KIV
-  name          String
-  email         String    @unique
-  emailVerified DateTime? // KIV
-  image         String    @default("https://robohash.org/LeetNode?set=set4")
-  role          Role      @default(USER)
-  accounts      Account[]
-  sessions      Session[]
-  attempts      Attempt[]
-  courses       Course[]
-  posts         Post[]
+  id              String               @id @default(cuid())
+  nusnetId        String?              @unique // KIV
+  name            String
+  email           String               @unique
+  emailVerified   DateTime? // KIV
+  image           String               @default("https://robohash.org/LeetNode?set=set4")
+  role            Role                 @default(USER)
+  accounts        Account[]
+  sessions        Session[]
+  attempts        Attempt[]
+  courseQuestions UserCourseQuestion[]
+  masteries       Mastery[]
+  posts           Post[]
 }
 
 enum Role {
@@ -60,7 +61,7 @@ enum Role {
 model Attempt {
   attemptId      String   @id @default(cuid())
   userId         String
-  questionId     String
+  questionId     Int
   attemptOption  Int
   submittedAt    DateTime @default(now())
   attemptSeconds Int? // KIV
@@ -71,24 +72,40 @@ model Attempt {
   @@unique([userId, questionId, submittedAt])
 }
 
+// QUESTION BANK
 model Course {
-  userId           String
-  topicId          String
-  masteryLevel     Float  @default(0)
-  courseCompletion Float  @default(0)
-  user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic            Topic  @relation(fields: [topicId], references: [topicId], onDelete: Cascade)
-
-  @@unique([userId, topicId])
+  courseSlug    String               @id
+  courseName    String
+  courseContent Json? // KIV, maybe structure by pages and inside each page, have videos, slides and/or questions
+  userQuestions UserCourseQuestion[]
 }
 
-// QUESTION BANK
+model UserCourseQuestion {
+  id               String     @id @default(cuid())
+  userId           String
+  courseSlug       String
+  courseCompletion Float      @default(0)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course           Course     @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+  questions        Question[]
+}
+
+model Mastery {
+  userId       String
+  topicSlug    String
+  masteryLevel Float  @default(0)
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic        Topic  @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+
+  @@id([userId, topicSlug])
+}
+
 model Topic {
-  topicId    String     @id @default(cuid())
+  topicSlug  String     @id
   topicName  String
   topicLevel TopicLevel
   questions  Question[]
-  courses    Course[]
+  mastery    Mastery[]
 
   @@index([topicLevel])
 }
@@ -100,14 +117,15 @@ enum TopicLevel {
 }
 
 model Question {
-  questionId         String             @id @default(cuid())
-  topicId            String
-  questionContent    String             @db.VarChar(500)
-  questionDifficulty QuestionDifficulty
-  topic              Topic              @relation(fields: [topicId], references: [topicId])
-  attempts           Attempt[]
-  questionMedia      QuestionMedia[]
-  answers            Answer[]
+  questionId          Int                  @id @default(autoincrement())
+  topicSlug           String
+  questionContent     String               @db.VarChar(500)
+  questionDifficulty  QuestionDifficulty
+  topic               Topic                @relation(fields: [topicSlug], references: [topicSlug])
+  attempts            Attempt[]
+  questionMedia       QuestionMedia[]
+  answers             Answer[]
+  userCourseQuestions UserCourseQuestion[]
 
   @@index([questionDifficulty])
 }
@@ -119,7 +137,7 @@ enum QuestionDifficulty {
 }
 
 model QuestionMedia {
-  questionId       String
+  questionId       Int
   questionMediaURL String   @db.VarChar(500)
   question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
@@ -127,7 +145,7 @@ model QuestionMedia {
 }
 
 model Answer {
-  questionId    String
+  questionId    Int
   optionNumber  Int
   answerContent String    @db.VarChar(500)
   isCorrect     Boolean

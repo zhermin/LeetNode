@@ -98,7 +98,7 @@ const questions = ({ questions }: quizProps) => {
                             <Image
                               key={media.questionId}
                               src={media.questionMediaURL}
-                              alt={question.questionId}
+                              alt={`Question ${question.questionId}`}
                               width="0"
                               height="0"
                               sizes="100vw"
@@ -108,9 +108,9 @@ const questions = ({ questions }: quizProps) => {
                         )}
                       </dd>
                       <dd className="px-4 py-5 text-sm text-gray-900 sm:px-6 md:text-base">
-                        <h3 className="pb-1 font-mono">
+                        <span className="pr-3 font-mono">
                           #{question.questionId}
-                        </h3>
+                        </span>
                         <Latex>{question.questionContent}</Latex>
                       </dd>
                     </dl>
