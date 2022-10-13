@@ -1,12 +1,28 @@
-import { GetStaticProps } from "next";
-import { useState } from "react";
+import { Key, useState } from "react";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 import Image from "next/future/image";
+import axios from "axios";
+import Latex from "react-latex-next";
 
 import { PrismaClient, Topic } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+interface displayProp {
+  questionId: string;
+  topicId: string;
+  questionContent: string;
+  questionDifficulty: string;
+  questionMedia: object;
+  topic: {
+    topicId: string;
+    topicName: string;
+    topicLevel: string;
+  };
+  attempts: object;
+  answers: object;
+}
 
 export async function getStaticPaths() {
   const topics: Topic[] = await prisma.topic.findMany();
@@ -18,29 +34,34 @@ export async function getStaticPaths() {
   return { paths, fallback: false };
 }
 
-export const getStaticProps: GetStaticProps = async (context) => {
+export async function getStaticProps(context: any) {
   console.log(context.params);
 
-  const res = await fetch("http://localhost:3000/api/question/questions", {
-    //get back questions based on topic
-    method: "POST",
-    body: JSON.stringify(context.params),
-  });
-  const display = await res.json();
-
-  console.log(display);
-
+  const displayData = async (request: { topicName: string }) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:3000/api/question/questions",
+        request
+      ); //use data destructuring to get data from the promise object
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const display = await displayData(context.params);
+  // console.log(display);
+  // console.log(display.length);
   return {
     props: {
       display,
     },
   };
-};
+}
 
 export default function LoadTopic({ display }: any) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<
-    { currentQuestion: string; answerByUser: string }[]
+    { currentQuestion: number; answerByUser: string }[]
   >([]);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -60,14 +81,14 @@ export default function LoadTopic({ display }: any) {
 
   const handleNext = () => {
     const nextQues = currentQuestion + 1;
-    nextQues < questions.length && setCurrentQuestion(nextQues);
+    nextQues < display.length && setCurrentQuestion(nextQues);
   };
 
   //store submit data - can be ignored for now
   const handleSubmitButton = () => {
     let newScore = 0;
-    for (let i = 0; i < questions.length; i++) {
-      questions[i]?.answers.map(
+    for (let i = 0; i < display.length; i++) {
+      display[i]?.answers.map(
         (answers: {
           questionContent: string;
           optionNumber: number;
@@ -172,43 +193,51 @@ export default function LoadTopic({ display }: any) {
         {/* <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1A1A1A] px-5"></div> */}
         <div className="flex w-full flex-col items-start">
           <h4 className="mt-10 text-xl text-black">
-            Question {currentQuestion + 1} of {questions.length}
+            Question {currentQuestion + 1} of {display.length}
           </h4>
           <div className="mt-4 text-2xl text-black">
-            {questions[currentQuestion]?.questionContent}
+            {display[currentQuestion]?.questionContent}
           </div>
         </div>
         <div className="flex w-full flex-col">
           <Image
-            src={questions[currentQuestion]?.questionMediaURL as string}
-            alt={questions[currentQuestion]?.questionContent as string}
+            src={
+              display[currentQuestion]?.questionMedia[0]
+                .questionMediaURL as string
+            }
+            alt={display[currentQuestion]?.questionContent as string}
             width="0"
             height="0"
             sizes="100vw"
-            className="h-auto w-1/2 object-contain"
+            className="h-auto w-1/2 object-contain pt-6 pb-6"
           />
         </div>
         <div className="flex w-full flex-col">
-          {questions[currentQuestion]?.answers.map((answer, index) => (
-            <div
-              key={index}
-              className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
-              onClick={() => handleAnswerOption(answer.answerContent)}
-            >
-              <input
-                type="radio"
-                name={answer.answerContent}
-                value={answer.answerContent}
-                checked={
-                  answer.answerContent ===
-                  (selectedOptions[currentQuestion]?.answerByUser as string)
-                }
-                onChange={() => handleAnswerOption(answer.answerContent)}
-                className="h-6 w-6 bg-white"
-              />
-              <p className="ml-6 text-black">{answer.answerContent}</p>
-            </div>
-          ))}
+          {display[currentQuestion]?.answers.map(
+            (
+              answer: { answerContent: string },
+              index: Key | null | undefined
+            ) => (
+              <div
+                key={index}
+                className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
+                onClick={() => handleAnswerOption(answer.answerContent)}
+              >
+                <input
+                  type="radio"
+                  name={answer.answerContent}
+                  value={answer.answerContent}
+                  checked={
+                    answer.answerContent ===
+                    (selectedOptions[currentQuestion]?.answerByUser as string)
+                  }
+                  onChange={() => handleAnswerOption(answer.answerContent)}
+                  className="h-6 w-6 bg-white"
+                />
+                <Latex>{answer.answerContent}</Latex>
+              </div>
+            )
+          )}
         </div>
         <div className="mt-4 flex w-full justify-between text-white">
           <button
@@ -219,13 +248,13 @@ export default function LoadTopic({ display }: any) {
           </button>
           <button
             onClick={
-              currentQuestion + 1 === questions.length
+              currentQuestion + 1 === display.length
                 ? handleSubmitButton
                 : handleNext
             }
             className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
           >
-            {currentQuestion + 1 === questions.length ? "Submit" : "Next"}
+            {currentQuestion + 1 === display.length ? "Submit" : "Next"}
           </button>
         </div>
       </MainWrapper>

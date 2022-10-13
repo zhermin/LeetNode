@@ -3,7 +3,9 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
-``
+import axios from "axios";
+import { useRouter } from "next/router";
+
 import {
   PrismaClient,
   Topic,
@@ -41,23 +43,12 @@ export async function getServerSideProps() {
   };
 }
 
-// async function getQuestions(question: Prisma.TopicSelect) {
-//   const response = await fetch("/api/questions", {
-//     method: "GET",
-//     body: JSON.stringify(question),
-//   });
-
-//   if (!response.ok) {
-//     throw new Error(response.statusText);
-//   }
-//   return await response.json();
-// }
-
 export default function Index({ topic }: topicQuestionProp) {
   const [topics] = useState(topic);
   const [fileSelected, setFileSelected] = useState<string | Blob>("");
   const [topicSelected] = useState(topic[0]?.topicId);
   const [, setLoading] = useState(false);
+  const router = useRouter();
 
   async function uploadImage() {
     const formData = new FormData();
@@ -65,23 +56,19 @@ export default function Index({ topic }: topicQuestionProp) {
     formData.append("resource_type", "auto");
     formData.append("upload_preset", "w2ul1sgu");
 
-    const res = await fetch(
-      "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    const content = await res.json();
-    console.log(content);
+    axios
+      .post("https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload", formData)
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   async function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
     console.log(event.target.value);
     setLoading(true);
-    //setTopicSelected(event.target.value);
-    //getQuestions(event.target.value);
     const selected = {
       topicName: event.target.value,
     };
@@ -268,26 +255,18 @@ export default function Index({ topic }: topicQuestionProp) {
                         href={{
                           pathname: `/cloudinary/[topicName]`,
                           query: {
-                            topicName: t.topicName,
+                            topicName: t.topicId,
                           },
                         }}
                         as={`/cloudinary/${t.topicName}`}
-                        key={t.topicName}
+                        key={t.topicId}
                       >
-                        {/* <div className="flex justify-center">
-                        <ul className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-                          <li value={t.topicName} className="cursor-pointer">
-                            {t.topicName}
-                          </li>
-                        </ul>
-                      </div> */}
-
-                        <div
-                          data-value={t.topicName}
-                          className="mt-1 w-full cursor-pointer rounded-md bg-purple-500 py-2 px-3 text-white shadow-sm hover:bg-purple-600 sm:text-sm"
+                        <button
+                          type="button"
+                          className="mt-1 w-full rounded-md bg-purple-500 py-2 px-3 text-white shadow-sm hover:bg-purple-600 sm:text-sm"
                         >
                           {t.topicName}
-                        </div>
+                        </button>
                       </Link>
                     ))}
                   </div>
