@@ -5,7 +5,7 @@ import Image from "next/future/image";
 import axios from "axios";
 import Latex from "react-latex-next";
 
-import { PrismaClient, Topic } from "@prisma/client";
+import { PrismaClient, Course } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -25,10 +25,10 @@ interface displayProp {
 }
 
 export async function getStaticPaths() {
-  const topics: Topic[] = await prisma.topic.findMany();
+  const courses: Course[] = await prisma.course.findMany();
 
-  const paths = topics.map((t) => ({
-    params: { topicName: t.topicName },
+  const paths = courses.map((c) => ({
+    params: { courseSlug: c.courseSlug },
   }));
 
   return { paths, fallback: false };
@@ -37,7 +37,7 @@ export async function getStaticPaths() {
 export async function getStaticProps(context: any) {
   console.log(context.params);
 
-  const displayData = async (request: { topicName: string }) => {
+  const displayData = async (request: { courseSlug: string }) => {
     try {
       const res = await axios.post(
         "http://localhost:3000/api/question/questions",

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-
+import { getSession } from "next-auth/react";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -8,7 +8,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const reqvar = req.body["topicName"];
+  const session = await getSession({ req });
+  const reqvar = req.body["courseSlug"];
 
   // const questionDisplay: any =
   //   // {topicName: string, topicLevel: string, questionContent: string, questionDifficulty: string, questionMediaURL: string, answers: object}[] =
@@ -43,7 +44,8 @@ export default async function handler(
   const questions = await prisma.question.findMany({
     where: {
       topic: {
-        topicName: reqvar,
+        // //IMPT: change to UserCourseContent->courseContent after pyBKT API intergration to get the latest changes
+        topicSlug: reqvar,
       },
     },
     include: {
@@ -52,9 +54,9 @@ export default async function handler(
       },
       topic: true,
       attempts: {
-        // where: {
-        //   userId: session?.user?.id,
-        // },
+        where: {
+          userId: session?.user?.id,
+        },
         orderBy: {
           submittedAt: "desc",
         },

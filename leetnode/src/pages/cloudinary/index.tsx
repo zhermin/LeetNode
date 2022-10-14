@@ -12,6 +12,7 @@ import {
   Question,
   QuestionMedia,
   Answer,
+  Course,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -23,30 +24,38 @@ interface topicQuestionProp {
   answer: Answer[];
 }
 
+interface courseProps {
+  course: Course[];
+  topic: Topic[];
+}
+
 export async function getServerSideProps() {
+  const courses: Course[] = await prisma.course.findMany();
+
   const topics: Topic[] = await prisma.topic.findMany();
-  const questions: Question[] = await prisma.question.findMany({
-    // where: {
-    //   topicName: params.id,
-    // },
-  });
-  const questionMedia: QuestionMedia[] = await prisma.questionMedia.findMany();
-  const answers: Answer[] = await prisma.answer.findMany();
+  // const questions: Question[] = await prisma.question.findMany({
+  //   // where: {
+  //   //   topicName: params.id,
+  //   // },
+  // });
+  // const questionMedia: QuestionMedia[] = await prisma.questionMedia.findMany();
+  // const answers: Answer[] = await prisma.answer.findMany();
 
   return {
     props: {
       topic: topics,
-      question: questions,
-      questionMedia: questionMedia,
-      answer: answers,
+      // question: questions,
+      // questionMedia: questionMedia,
+      // answer: answers,
+      course: courses,
     },
   };
 }
 
-export default function Index({ topic }: topicQuestionProp) {
-  const [topics] = useState(topic);
+export default function Index({ course, topic }: courseProps) {
+  // const [courses] = useState(course);
   const [fileSelected, setFileSelected] = useState<string | Blob>("");
-  const [topicSelected] = useState(topic[0]?.topicId);
+  const [courses, coursesSelected] = useState(course[0]?.courseSlug);
   const [, setLoading] = useState(false);
   const router = useRouter();
 
@@ -106,21 +115,21 @@ export default function Index({ topic }: topicQuestionProp) {
                     <div className="grid grid-cols-3 gap-6">
                       <div className="col-span-3 sm:col-span-2">
                         <label
-                          htmlFor="question-topic"
+                          htmlFor="question-course"
                           className="block text-sm font-medium text-gray-700"
                         >
                           Question Topic
                         </label>
                         <div className="mt-1 flex rounded-md shadow-sm">
                           <select
-                            id="question-topic"
-                            name="question-topic"
-                            value={topicSelected}
+                            id="question-course"
+                            name="question-course"
+                            value={courses}
                             onChange={(e) => handleChange(e)}
                             className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                           >
-                            {topics.map((t: Topic) => (
-                              <option key={t.topicName}>{t.topicName}</option>
+                            {course.map((c: Course) => (
+                              <option key={c.courseName}>{c.courseName}</option>
                             ))}
                           </select>
                         </div>
@@ -226,6 +235,74 @@ export default function Index({ topic }: topicQuestionProp) {
           </div>
         </div>
 
+        <div className="pt-10 sm:mt-0">
+          <div className="md:grid md:grid-cols-3 md:gap-6">
+            <div className="md:col-span-1">
+              <div className="px-4 sm:px-0">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Recommender Microservice POST test
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Testing for POST to Recommender Microservice
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 md:col-span-2 md:mt-0">
+              <form action="#" method="POST">
+                <div className="shadow sm:overflow-hidden sm:rounded-md">
+                  <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                    <div>
+                      <label
+                        htmlFor="question-content"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Student_Id
+                      </label>
+                    </div>
+                    <textarea
+                      className="
+                      form-control
+                      m-0
+                      block
+                      w-full
+                      rounded
+                      border
+                      border-solid
+                      border-gray-300
+                      bg-white bg-clip-padding
+                      px-3 py-1.5 text-base
+                      font-normal
+                      text-gray-700
+                      transition
+                      ease-in-out
+                      focus:border-blue-600 focus:bg-white focus:text-gray-700 focus:outline-none
+                      "
+                      id="Question Content"
+                      rows={3}
+                      placeholder="Question Content"
+                    ></textarea>
+                  </div>
+                  <div className="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                    <button
+                      onClick={uploadImage}
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden sm:block" aria-hidden="true">
+          <div className="py-5">
+            <div className="border-t border-gray-200" />
+          </div>
+        </div>
+
         <div className="mt-10 pb-10 sm:mt-0">
           <div className="md:grid md:grid-cols-3 md:gap-6">
             <div className="md:col-span-1">
@@ -234,7 +311,7 @@ export default function Index({ topic }: topicQuestionProp) {
                   Student Answer Question
                 </h3>
                 <p className="mt-1 text-sm text-gray-600">
-                  Testing for GET question and media from Cloudinary
+                  Testing for POST question and media from Cloudinary
                 </p>
               </div>
             </div>
@@ -249,24 +326,43 @@ export default function Index({ topic }: topicQuestionProp) {
                       Question Topic
                     </label>
                   </div>
-                  <div className="grid grid-cols-4 gap-4">
-                    {topics.map((t: Topic) => (
+                  <div className="grid grid-cols-1 gap-5 p-10 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
+                    {course.map((c: Course) => (
                       <Link
                         href={{
-                          pathname: `/cloudinary/[topicName]`,
+                          pathname: `/cloudinary/[courseSlug]`,
                           query: {
-                            topicName: t.topicId,
+                            courseSlug: c.courseSlug,
                           },
                         }}
-                        as={`/cloudinary/${t.topicName}`}
-                        key={t.topicId}
+                        as={`/cloudinary/${c.courseSlug}`}
+                        key={c.courseSlug}
                       >
-                        <button
+                        <div className="flex cursor-pointer flex-col rounded shadow-lg first-letter:overflow-hidden">
+                          <div className="px-6 py-4">
+                            <div className="mb-2 text-xl font-bold">
+                              {c.courseName}
+                            </div>
+                            <p className="text-base text-gray-700">
+                              Lorem ipsum dolor sit amet, consectetur
+                              adipisicing elit. Voluptatibus quia, Nonea!
+                              Maiores et perferendis eaque, exercitationem
+                              praesentium nihil.
+                            </p>
+                          </div>
+                          <div className="mt-auto px-6 pt-4 pb-2 text-left">
+                            <span className="mr-2 mb-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
+                              #placeholder
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* <button
                           type="button"
                           className="mt-1 w-full rounded-md bg-purple-500 py-2 px-3 text-white shadow-sm hover:bg-purple-600 sm:text-sm"
                         >
                           {t.topicName}
-                        </button>
+                        </button> */}
                       </Link>
                     ))}
                   </div>
