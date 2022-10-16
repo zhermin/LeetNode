@@ -31,7 +31,7 @@ const WelcomeCard = ({
         </div>
         <ul role="list" className="my-7 space-y-5 px-4">
           {topics.map((topic) => (
-            <li key={topic.topicId} className="flex space-x-3">
+            <li key={topic.topicSlug} className="flex space-x-3">
               <svg
                 className="h-5 w-5 flex-shrink-0 text-slate-600"
                 xmlns="http://www.w3.org/2000/svg"

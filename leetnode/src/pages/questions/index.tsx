@@ -5,35 +5,46 @@ import {
   Attempt,
   Answer,
 } from "@prisma/client";
-import { prisma } from "@/server/db/client";
-
+import axios from "axios";
+import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
+import type { GetServerSidePropsContext } from "next/types";
 import { getSession } from "next-auth/react";
+
 import Image from "next/future/image";
 import Link from "next/link";
-import { GetServerSideProps } from "next";
 import Latex from "react-latex-next";
 
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 
-interface quizProps {
-  questions: (Question & {
-    topic: Topic;
-    questionMedia: QuestionMedia[];
-    attempts: Attempt[];
-    answers: Answer[];
-  })[];
-}
+type questionType = (Question & {
+  topic: Topic;
+  questionMedia: QuestionMedia[];
+  attempts: Attempt[];
+  answers: Answer[];
+})[];
 
-const questions = ({ questions }: quizProps) => {
+const fetchUserQuestions = async () =>
+  await axios.get(`/api/question/getAllQuestions`).then((res) => res.data);
+
+const AllQuestionsPage = () => {
+  const {
+    data: questions,
+    isLoading,
+    error,
+  } = useQuery<questionType>(["all-user-questions"], fetchUserQuestions);
+  console.log(isLoading);
+  if (isLoading || !questions) return <div>Loading...</div>;
+  if (error) return <div>Failed to load</div>;
+
   return (
     <>
       <Header />
       <Navbar />
       <MainWrapper>
         <main className="flex min-h-screen flex-col items-center justify-center p-4">
-          <h1 className="text-5xl font-bold leading-normal text-gray-700 md:text-[4rem]">
+          <h1 className="text-5xl font-bold leading-normal text-gray-700 md:text-6xl">
             All Questions
           </h1>
           <div className="mt-3 flex flex-col space-y-4 lg:w-3/4">
@@ -144,9 +155,9 @@ const questions = ({ questions }: quizProps) => {
   );
 };
 
-export default questions;
+export default AllQuestionsPage;
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getSession(context);
   const { resolvedUrl, req } = context;
   const baseUrl = `${req.headers["x-forwarded-proto"] || "http"}://${
@@ -163,25 +174,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const questions = await prisma.question.findMany({
-    include: {
-      questionMedia: true,
-      topic: true,
-      attempts: {
-        where: {
-          userId: session?.user?.id,
-        },
-        orderBy: {
-          submittedAt: "desc",
-        },
-      },
-      answers: true,
-    },
-  });
-
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery<questionType>(
+    ["all-user-questions"],
+    fetchUserQuestions
+  );
   return {
     props: {
-      questions: JSON.parse(JSON.stringify(questions)),
+      dehydratedState: dehydrate(queryClient),
     },
   };
-};
+}
