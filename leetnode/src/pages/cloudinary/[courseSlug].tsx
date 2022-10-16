@@ -1,6 +1,7 @@
 import { Key, useState } from "react";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
+import ProgressBar from "@/components/ProgressBar";
 import Image from "next/future/image";
 import axios from "axios";
 import Latex from "react-latex-next";
@@ -35,6 +36,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps(context: any) {
+  const prisma = new PrismaClient();
   console.log(context.params);
 
   const displayData = async (request: { courseSlug: string }) => {
@@ -49,16 +51,25 @@ export async function getStaticProps(context: any) {
     }
   };
   const display = await displayData(context.params);
-  // console.log(display);
-  // console.log(display.length);
+
+  const users = await prisma.user.findMany();
+  const topics = await prisma.topic.findMany({
+    where: {
+      //add in condition of what topics in this slug (although it should be the topics in this course)
+      topicSlug: context.params.courseSlug,
+    },
+  });
+  console.log(topics);
   return {
     props: {
       display,
+      user: users,
+      topic: topics,
     },
   };
 }
 
-export default function LoadTopic({ display }: any) {
+export default function LoadTopic({ display, user, topic }: any) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<
     { currentQuestion: number; answerByUser: string }[]
@@ -71,7 +82,6 @@ export default function LoadTopic({ display }: any) {
       (selectedOptions[currentQuestion] = { answerByUser: answer } as never),
     ]);
     setSelectedOptions([...selectedOptions]);
-    console.log(selectedOptions);
   };
 
   const handlePrevious = () => {
@@ -79,9 +89,99 @@ export default function LoadTopic({ display }: any) {
     prevQues >= 0 && setCurrentQuestion(prevQues);
   };
 
-  const handleNext = () => {
-    const nextQues = currentQuestion + 1;
-    nextQues < display.length && setCurrentQuestion(nextQues);
+  const handleNext = async () => {
+    if (currentQuestion in selectedOptions) {
+      // logic for updating mastery for user
+
+      //check if answer correct
+      let correctAns: string;
+      const data = display[currentQuestion].answers;
+      const result = data.filter(
+        (x: { isCorrect: boolean }) => x.isCorrect === true
+      );
+      if (
+        selectedOptions[currentQuestion]?.answerByUser ===
+        result[0].answerContent
+      ) {
+        correctAns = "1";
+      } else {
+        correctAns = "0";
+      }
+
+      //update mastery level by sending answer correctness (only can send 1, hence the map function)
+      //E.g. input: {
+      // "id": "c019823",
+      // "skill": "Thevenin Equivalent Circuit",
+      // "correct": "1"
+      // }
+      const updateMastery = async (request: {
+        id: string;
+        skillSlug: string;
+        correct: string;
+      }) => {
+        try {
+          //update mastery of student
+          const res = await axios.post(
+            "http://localhost:3000/api/pybkt/update",
+            request //assume correct
+          ); //use data destructuring to get data from the promise object
+          return res.data;
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      //change to topics of the course
+      topic.map(
+        async (e: {
+          topicSlug: string;
+          topicName: string;
+          topicLevel: string;
+        }) => {
+          await updateMastery({
+            id: user.Id, //CONFIGURE USER ID
+            skillSlug: e.topicSlug,
+            correct: correctAns,
+          });
+          console.log(user.Id);
+          console.log(e.topicName);
+          console.log(correctAns);
+        }
+      );
+
+      //go to next page
+      const nextQues = currentQuestion + 1;
+      nextQues < display.length && setCurrentQuestion(nextQues);
+    } else {
+      alert("Please complete this question before proceeding!");
+    }
+  };
+
+  //get mastery level to be display on next page load
+  const displayMastery = () => {
+    const fetchMastery = async (request: { id: string; skillSlug: string }) => {
+      try {
+        //update mastery of student
+        const res = await axios.post(
+          "http://localhost:3000/api/pybkt/get",
+          request //assume correct
+        ); //use data destructuring to get data from the promise object
+        return res.data;
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    //should return list of skills + determine how to display each skill's matery if course contains more than 1 skill
+    const progressData = topic.map(
+      //change to topics of the course
+      async (eachTopic: {
+        topicSlug: string;
+        topicName: string;
+        topicLevel: string;
+      }) => {
+        await fetchMastery({ id: user.Id, skillSlug: eachTopic.topicName }); //CONFIGURE USER ID
+      }
+    );
   };
 
   //store submit data - can be ignored for now
@@ -104,92 +204,12 @@ export default function LoadTopic({ display }: any) {
     setShowScore(true);
   };
 
-  //temporary static json object - after successfully getting data from API endpoint, replace "question"
-  const questions = [
-    {
-      topicName: "Thevenin Equivalent Circuit",
-      topicLevel: "Foundational",
-      questionContent:
-        "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
-      questionDifficulty: "Medium",
-      questionMediaURL:
-        "https://res.cloudinary.com/dy2tqc45y/image/upload/v1664075350/LeetNode/CG1111_2122_Q1/AY2122-Quiz1-Q04_gxwt6z.png",
-      answers: [
-        {
-          questionContent:
-            "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
-          optionNumber: 1,
-          answerContent: "(4~Omega)",
-          isCorrect: 1,
-        },
-        {
-          questionContent:
-            "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
-          optionNumber: 2,
-          answerContent: "(11~Omega)",
-          isCorrect: 0,
-        },
-        {
-          questionContent:
-            "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
-          optionNumber: 3,
-          answerContent: "(10.2~Omega)",
-          isCorrect: 0,
-        },
-        {
-          questionContent:
-            "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
-          optionNumber: 4,
-          answerContent: "(20.8~Omega)",
-          isCorrect: 0,
-        },
-      ],
-    },
-    {
-      topicName: "Thevenin Equivalent Circuit",
-      topicLevel: "Foundational",
-      questionContent:
-        "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
-      questionDifficulty: "Medium",
-      questionMediaURL:
-        "https://res.cloudinary.com/dy2tqc45y/image/upload/v1664075184/LeetNode/CG1111_2122_Q1/AY2122-Quiz1-Q06-1_inu8j6.png",
-      answers: [
-        {
-          questionContent:
-            "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
-          optionNumber: 1,
-          answerContent: "(V_T = 7~V,~~~~~R_T = 1.2~Omega)",
-          isCorrect: 1,
-        },
-        {
-          questionContent:
-            "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
-          optionNumber: 2,
-          answerContent: "(V_T = 7~V,~~~~~R_T = 1.33~Omega)",
-          isCorrect: 0,
-        },
-        {
-          questionContent:
-            "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
-          optionNumber: 3,
-          answerContent: "(V_T = 7.4~V,~~~~~R_T = 1.2~Omega)",
-          isCorrect: 0,
-        },
-        {
-          questionContent:
-            "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
-          optionNumber: 4,
-          answerContent: "(V_T = 7.4~V,~~~~~R_T = 1.33~Omega)",
-          isCorrect: 0,
-        },
-      ],
-    },
-  ];
-
   return (
     <>
       <Navbar />
       <MainWrapper>
+        {/* test functionality with User.Id and once API endpoint for Jasmine's part done */}
+        <ProgressBar progress={displayMastery} />
         {/* <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1A1A1A] px-5"></div> */}
         <div className="flex w-full flex-col items-start">
           <h4 className="mt-10 text-xl text-black">
