@@ -7,23 +7,9 @@ import axios from "axios";
 import Latex from "react-latex-next";
 
 import { PrismaClient, Course } from "@prisma/client";
+import { getSession } from "next-auth/react";
 
 const prisma = new PrismaClient();
-
-interface displayProp {
-  questionId: string;
-  topicId: string;
-  questionContent: string;
-  questionDifficulty: string;
-  questionMedia: object;
-  topic: {
-    topicId: string;
-    topicName: string;
-    topicLevel: string;
-  };
-  attempts: object;
-  answers: object;
-}
 
 export async function getStaticPaths() {
   const courses: Course[] = await prisma.course.findMany();
@@ -36,6 +22,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps(context: any) {
+  const session = await getSession(context);
   const prisma = new PrismaClient();
   console.log(context.params);
 
@@ -52,24 +39,52 @@ export async function getStaticProps(context: any) {
   };
   const display = await displayData(context.params);
 
-  const users = await prisma.user.findMany();
-  const topics = await prisma.topic.findMany({
+  const questionDisplay = display.questions;
+
+  const users = await prisma.user.findMany({
     where: {
-      //add in condition of what topics in this slug (although it should be the topics in this course)
-      topicSlug: context.params.courseSlug,
+      id: session?.user?.id,
     },
   });
-  console.log(topics);
+  const courses = await prisma.userCourseQuestion.findMany({
+    where: {
+      //add in condition of what topics in this slug (although it should be the topics in this course)
+      courseSlug: context.params.courseSlug,
+    },
+    include: {
+      questions: {
+        select: {
+          topicSlug: true,
+          questionContent: true,
+        },
+      },
+    },
+  });
+  console.log(courses);
+  // // return smth like
+  //{
+  //   id: 'cl9dkw77d0000um9goo3a3xg9',
+  //   userId: 'cl99wlo0i0000umswnh90pqs6',
+  //   courseSlug: 'welcome-quiz',
+  //   courseCompletion: 0,
+  //   questions:[
+  // {
+  //   topicSlug: 'voltage-division-principle',
+  //   questionContent: 'For the circuit shown in the figure above, what is the voltage V1?'
+  // },
+  // [Object], [Object], [Object], [Object] ]
+  // }
+
   return {
     props: {
-      display,
+      questionDisplay,
       user: users,
-      topic: topics,
+      course: courses,
     },
   };
 }
 
-export default function LoadTopic({ display, user, topic }: any) {
+export default function LoadTopic({ questionDisplay, user }: any) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<
     { currentQuestion: number; answerByUser: string }[]
@@ -95,7 +110,7 @@ export default function LoadTopic({ display, user, topic }: any) {
 
       //check if answer correct
       let correctAns: string;
-      const data = display[currentQuestion].answers;
+      const data = questionDisplay[currentQuestion].answers;
       const result = data.filter(
         (x: { isCorrect: boolean }) => x.isCorrect === true
       );
@@ -130,65 +145,32 @@ export default function LoadTopic({ display, user, topic }: any) {
           console.log(error);
         }
       };
-      //change to topics of the course
-      topic.map(
-        async (e: {
-          topicSlug: string;
-          topicName: string;
-          topicLevel: string;
-        }) => {
-          await updateMastery({
-            id: user.Id, //CONFIGURE USER ID
-            skillSlug: e.topicSlug,
-            correct: correctAns,
-          });
-          console.log(user.Id);
-          console.log(e.topicName);
-          console.log(correctAns);
-        }
-      );
+
+      //should output mastery skill
+      const updated = await updateMastery({
+        id: user[0].id,
+        skillSlug: questionDisplay.topicSlug,
+        correct: correctAns,
+      });
+      console.log(user[0].id);
+      console.log(questionDisplay[currentQuestion].topicSlug);
+      console.log(correctAns);
+      console.log(updated);
+      console.log(questionDisplay);
 
       //go to next page
       const nextQues = currentQuestion + 1;
-      nextQues < display.length && setCurrentQuestion(nextQues);
+      nextQues < questionDisplay.length && setCurrentQuestion(nextQues);
     } else {
       alert("Please complete this question before proceeding!");
     }
   };
 
-  //get mastery level to be display on next page load
-  const displayMastery = () => {
-    const fetchMastery = async (request: { id: string; skillSlug: string }) => {
-      try {
-        //update mastery of student
-        const res = await axios.post(
-          "http://localhost:3000/api/pybkt/get",
-          request //assume correct
-        ); //use data destructuring to get data from the promise object
-        return res.data;
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    //should return list of skills + determine how to display each skill's matery if course contains more than 1 skill
-    const progressData = topic.map(
-      //change to topics of the course
-      async (eachTopic: {
-        topicSlug: string;
-        topicName: string;
-        topicLevel: string;
-      }) => {
-        await fetchMastery({ id: user.Id, skillSlug: eachTopic.topicName }); //CONFIGURE USER ID
-      }
-    );
-  };
-
   //store submit data - can be ignored for now
   const handleSubmitButton = () => {
     let newScore = 0;
-    for (let i = 0; i < display.length; i++) {
-      display[i]?.answers.map(
+    for (let i = 0; i < questionDisplay.length; i++) {
+      questionDisplay[i]?.answers.map(
         (answers: {
           questionContent: string;
           optionNumber: number;
@@ -209,23 +191,36 @@ export default function LoadTopic({ display, user, topic }: any) {
       <Navbar />
       <MainWrapper>
         {/* test functionality with User.Id and once API endpoint for Jasmine's part done */}
-        <ProgressBar progress={displayMastery} />
+        {questionDisplay.map(
+          (eachProgress: {
+            topicSlug: string;
+            topic: { topicName: string };
+          }) => (
+            <ProgressBar
+              progressSlug={eachProgress.topicSlug}
+              userId={user[0].id}
+              topicName={eachProgress.topic.topicName}
+              key={eachProgress.topicSlug}
+            />
+          )
+        )}
+
         {/* <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1A1A1A] px-5"></div> */}
         <div className="flex w-full flex-col items-start">
           <h4 className="mt-10 text-xl text-black">
-            Question {currentQuestion + 1} of {display.length}
+            Question {currentQuestion + 1} of {questionDisplay.length}
           </h4>
           <div className="mt-4 text-2xl text-black">
-            {display[currentQuestion]?.questionContent}
+            <Latex>{questionDisplay[currentQuestion]?.questionContent}</Latex>
           </div>
         </div>
         <div className="flex w-full flex-col">
           <Image
             src={
-              display[currentQuestion]?.questionMedia[0]
+              questionDisplay[currentQuestion]?.questionMedia[0]
                 .questionMediaURL as string
             }
-            alt={display[currentQuestion]?.questionContent as string}
+            alt={questionDisplay[currentQuestion]?.questionContent as string}
             width="0"
             height="0"
             sizes="100vw"
@@ -233,7 +228,7 @@ export default function LoadTopic({ display, user, topic }: any) {
           />
         </div>
         <div className="flex w-full flex-col">
-          {display[currentQuestion]?.answers.map(
+          {questionDisplay[currentQuestion]?.answers.map(
             (
               answer: { answerContent: string },
               index: Key | null | undefined
@@ -268,92 +263,16 @@ export default function LoadTopic({ display, user, topic }: any) {
           </button>
           <button
             onClick={
-              currentQuestion + 1 === display.length
+              currentQuestion + 1 === questionDisplay.length
                 ? handleSubmitButton
                 : handleNext
             }
             className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
           >
-            {currentQuestion + 1 === display.length ? "Submit" : "Next"}
+            {currentQuestion + 1 === questionDisplay.length ? "Submit" : "Next"}
           </button>
         </div>
       </MainWrapper>
     </>
   );
 }
-
-// <fieldset>
-//   <legend className="contents text-base font-medium text-gray-900">
-//     Question 1
-//   </legend>
-//   {/* <select>{getQuestions(topicSelected)}</select> */}
-//   <p className="text-sm text-gray-500">
-//     To have content from planetscale
-//   </p>
-//   <Image
-//     src="https://res.cloudinary.com/dy2tqc45y/image/upload/v1664075351/LeetNode/CG1111_2122_Q1/AY2122-Quiz1-Q01-1_bzugpn.png"
-//     alt="Question 1"
-//     width="0"
-//     height="0"
-//     sizes="100vw"
-//     className="h-auto w-1/2 object-contain"
-//   />
-//   <div className="mt-4 space-y-4">
-//     <div className="flex items-center">
-//       <input
-//         id="option-1"
-//         name="option-1"
-//         type="radio"
-//         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-//       />
-//       <label
-//         htmlFor="option-1"
-//         className="ml-3 block text-sm font-medium text-gray-700"
-//       >
-//         0.2A
-//       </label>
-//     </div>
-//     <div className="flex items-center">
-//       <input
-//         id="option-2"
-//         name="option-2"
-//         type="radio"
-//         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-//       />
-//       <label
-//         htmlFor="option-2"
-//         className="ml-3 block text-sm font-medium text-gray-700"
-//       >
-//         1A
-//       </label>
-//     </div>
-//     <div className="flex items-center">
-//       <input
-//         id="option-3"
-//         name="option-3"
-//         type="radio"
-//         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-//       />
-//       <label
-//         htmlFor="option-3"
-//         className="ml-3 block text-sm font-medium text-gray-700"
-//       >
-//         0.6A
-//       </label>
-//     </div>
-//     <div className="flex items-center">
-//       <input
-//         id="option-4"
-//         name="option-4"
-//         type="radio"
-//         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-//       />
-//       <label
-//         htmlFor="option-4"
-//         className="ml-3 block text-sm font-medium text-gray-700"
-//       >
-//         0.8A
-//       </label>
-//     </div>
-//   </div>
-// </fieldset>

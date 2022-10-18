@@ -41,27 +41,29 @@ export default async function handler(
   //   }
   // }
 
-  const questions = await prisma.question.findMany({
+  //should only have one return nested json result
+  const courseContent = await prisma.userCourseQuestion.findMany({
     where: {
-      topic: {
-        // //IMPT: change to UserCourseContent->courseContent after pyBKT API intergration to get the latest changes
-        topicSlug: reqvar,
-      },
+      courseSlug: reqvar,
     },
     include: {
-      questionMedia: {
-        select: { questionMediaURL: true },
-      },
-      topic: true,
-      attempts: {
-        where: {
-          userId: session?.user?.id,
+      questions: {
+        include: {
+          questionMedia: {
+            select: { questionMediaURL: true },
+          },
+          topic: true,
+          attempts: {
+            where: {
+              userId: session?.user?.id,
+            },
+            orderBy: {
+              submittedAt: "desc",
+            },
+          },
+          answers: true,
         },
-        orderBy: {
-          submittedAt: "desc",
-        },
       },
-      answers: true,
     },
   });
 
@@ -70,7 +72,7 @@ export default async function handler(
   }
 
   try {
-    res.status(200).json(questions);
+    res.status(200).json(courseContent[0]);
   } catch (err) {
     res.status(400).json({ message: "Something went wrong" });
   }

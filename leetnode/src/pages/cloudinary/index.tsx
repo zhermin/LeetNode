@@ -1,45 +1,21 @@
-import { FormEventHandler, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 import axios from "axios";
-import { useRouter } from "next/router";
 
-import {
-  PrismaClient,
-  Topic,
-  Question,
-  QuestionMedia,
-  Answer,
-  Course,
-} from "@prisma/client";
+import { PrismaClient, Topic, Course } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-interface topicQuestionProp {
-  topic: Topic[];
-  question: Question[];
-  questionMedia: QuestionMedia[];
-  answer: Answer[];
-}
-
 interface courseProps {
   course: Course[];
-  topic: Topic[];
 }
 
 export async function getServerSideProps() {
   const courses: Course[] = await prisma.course.findMany();
-
   const topics: Topic[] = await prisma.topic.findMany();
-  // const questions: Question[] = await prisma.question.findMany({
-  //   // where: {
-  //   //   topicName: params.id,
-  //   // },
-  // });
-  // const questionMedia: QuestionMedia[] = await prisma.questionMedia.findMany();
-  // const answers: Answer[] = await prisma.answer.findMany();
 
   return {
     props: {
@@ -52,8 +28,7 @@ export async function getServerSideProps() {
   };
 }
 
-export default function Index({ course, topic }: courseProps) {
-  // const [courses] = useState(course);
+export default function Index({ course }: courseProps) {
   const [fileSelected, setFileSelected] = useState<string | Blob>("");
   const [courses, setCoursesSelected] = useState(course[0]?.courseSlug);
   const [, setLoading] = useState(false);
@@ -254,10 +229,10 @@ export default function Index({ course, topic }: courseProps) {
                 <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
                   <div className="col-span-3 sm:col-span-2">
                     <label
-                      htmlFor="question-topic"
+                      htmlFor="courses"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Question Topic
+                      Courses
                     </label>
                   </div>
                   <div className="grid grid-cols-1 gap-5 p-10 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">

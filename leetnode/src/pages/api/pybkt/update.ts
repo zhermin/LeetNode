@@ -10,13 +10,13 @@ export default async function handler(
 ) {
   const displayData = async (req: {
     id: string;
-    skillSlug: string;
+    topicSlug: string;
     correct: string;
   }) => {
     try {
       //update mastery of student
       const res = await axios.post(
-        `http://127.0.0.1:8000/update-state/${req.id}/${req.skillSlug}/${req.correct}`
+        `http://127.0.0.1:8000/update-state/${req.id}/${req.topicSlug}/${req.correct}`
       ); //use data destructuring to get data from the promise object
       return res.data;
     } catch (error) {
@@ -24,6 +24,7 @@ export default async function handler(
     }
   };
   const display = await displayData(req.body);
+  console.log(display);
 
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
@@ -31,16 +32,17 @@ export default async function handler(
 
   try {
     //add updated mastery into Mastery table
+    // update instead of create if exist
     const mastery: Mastery = await prisma.mastery.create({
       data: {
-        userId: req.body.id as string, //need pass id
-        topicSlug: req.body.skillSlug as string,
+        userId: req.body.id as string,
+        topicSlug: req.body.topicSlug as string,
         masteryLevel: Object.values(display)[0] as number, //access skill value
       },
     });
     console.log(mastery);
     console.log(req.body);
-    res.status(200).json(req.body); // should be display
+    res.status(200).json(req.body); // should be displaying mastery table
   } catch (err) {
     res.status(400).json({ message: "Something went wrong" });
   }
