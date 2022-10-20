@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const ProgressBar = ({ progressSlug, userId, topicName }: any) => {
+const ProgressBar = ({ topicSlug, userId, topicName }: any) => {
   //get mastery level to be display on page
-  const displayMastery = async (progressSlug: any) => {
+  const displayMastery = async (topicSlug: any) => {
     const fetchMastery = async (request: { id: string; topicSlug: string }) => {
       try {
         //update mastery of student
@@ -18,7 +18,7 @@ const ProgressBar = ({ progressSlug, userId, topicName }: any) => {
 
     const progressData = await fetchMastery({
       id: userId,
-      topicSlug: progressSlug,
+      topicSlug: topicSlug,
     });
     console.log(progressData); //check output (should return mastery level for each of the topics in course)
   };

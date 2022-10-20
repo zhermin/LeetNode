@@ -1,10 +1,12 @@
 import { Key, useState } from "react";
 import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
+import Header from "@/components/Header";
 import ProgressBar from "@/components/ProgressBar";
 import Image from "next/future/image";
 import axios from "axios";
 import Latex from "react-latex-next";
+import Link from "next/link";
 
 import { PrismaClient, Course } from "@prisma/client";
 import { getSession } from "next-auth/react";
@@ -24,6 +26,10 @@ export async function getStaticPaths() {
 export async function getStaticProps(context: any) {
   const session = await getSession(context);
   const prisma = new PrismaClient();
+  const test = await prisma.course.findMany();
+
+  test.map((e) => console.log(e.courseSlug));
+
   console.log(context.params);
 
   const displayData = async (request: { courseSlug: string }) => {
@@ -46,21 +52,23 @@ export async function getStaticProps(context: any) {
       id: session?.user?.id,
     },
   });
-  const courses = await prisma.userCourseQuestion.findMany({
-    where: {
-      //add in condition of what topics in this slug (although it should be the topics in this course)
-      courseSlug: context.params.courseSlug,
-    },
-    include: {
-      questions: {
-        select: {
-          topicSlug: true,
-          questionContent: true,
-        },
-      },
-    },
-  });
-  console.log(courses);
+
+  // const courses = await prisma.userCourseQuestion.findMany({
+  //   where: {
+  //     //add in condition of what topics in this slug (although it should be the topics in this course)
+  //     courseSlug: context.params.courseSlug,
+  //   },
+  //   include: {
+  //     questions: {
+  //       select: {
+  //         topicSlug: true,
+  //         questionContent: true,
+  //       },
+  //     },
+  //   },
+  // });
+  // console.log(courses);
+
   // // return smth like
   //{
   //   id: 'cl9dkw77d0000um9goo3a3xg9',
@@ -79,24 +87,55 @@ export async function getStaticProps(context: any) {
     props: {
       questionDisplay,
       user: users,
-      course: courses,
+      url: context.params,
     },
   };
 }
 
-export default function LoadTopic({ questionDisplay, user }: any) {
+export default function LoadTopic({ questionDisplay, user, url }: any) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<
     { currentQuestion: number; answerByUser: string }[]
+  >([]);
+  const [attempt, setAttempt] = useState<
+    { currentQuestion: number; isCorrect: string }[]
   >([]);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
 
   const handleAnswerOption = (answer: string) => {
     setSelectedOptions([
-      (selectedOptions[currentQuestion] = { answerByUser: answer } as never),
+      (selectedOptions[currentQuestion] = {
+        answerByUser: answer,
+      } as any),
     ]);
     setSelectedOptions([...selectedOptions]);
+    console.log(selectedOptions);
+
+    //check if answer correct
+    const data = questionDisplay[currentQuestion].answers;
+    const result = data.filter(
+      (x: { isCorrect: boolean }) => x.isCorrect === true
+    );
+    console.log(result[0].answerContent);
+
+    let correctAns;
+    switch (
+      selectedOptions[currentQuestion]?.answerByUser === result[0].answerContent
+    ) {
+      case true:
+        correctAns = "1";
+        break;
+      case false:
+        correctAns = "0";
+    }
+    setAttempt([
+      (attempt[currentQuestion] = {
+        isCorrect: correctAns,
+      } as any),
+    ]);
+    setAttempt([...attempt]);
+    console.log(attempt);
   };
 
   const handlePrevious = () => {
@@ -108,22 +147,22 @@ export default function LoadTopic({ questionDisplay, user }: any) {
     if (currentQuestion in selectedOptions) {
       // logic for updating mastery for user
 
-      //check if answer correct
-      let correctAns: string;
-      const data = questionDisplay[currentQuestion].answers;
-      const result = data.filter(
-        (x: { isCorrect: boolean }) => x.isCorrect === true
-      );
-      if (
-        selectedOptions[currentQuestion]?.answerByUser ===
-        result[0].answerContent
-      ) {
-        correctAns = "1";
-      } else {
-        correctAns = "0";
-      }
+      // //check if answer correct
+      // let correctAns: string;
+      // const data = questionDisplay[currentQuestion].answers;
+      // const result = data.filter(
+      //   (x: { isCorrect: boolean }) => x.isCorrect === true
+      // );
+      // if (
+      //   selectedOptions[currentQuestion]?.answerByUser ===
+      //   result[0].answerContent
+      // ) {
+      //   correctAns = "1";
+      // } else {
+      //   correctAns = "0";
+      // }
 
-      //update mastery level by sending answer correctness (only can send 1, hence the map function)
+      //update mastery level (for both pyBKT and Mastery Table) by sending answer correctness (only can send 1, hence the map function)
       //E.g. input: {
       // "id": "c019823",
       // "skill": "Thevenin Equivalent Circuit",
@@ -150,22 +189,24 @@ export default function LoadTopic({ questionDisplay, user }: any) {
       const updated = await updateMastery({
         id: user[0].id,
         skillSlug: questionDisplay.topicSlug,
-        correct: correctAns,
+        correct: attempt[currentQuestion]?.isCorrect as string,
       });
       console.log(user[0].id);
       console.log(questionDisplay[currentQuestion].topicSlug);
-      console.log(correctAns);
+      console.log(attempt[currentQuestion]?.isCorrect);
       console.log(updated);
-      console.log(questionDisplay);
 
-      //go to next page
-      const nextQues = currentQuestion + 1;
-      nextQues < questionDisplay.length && setCurrentQuestion(nextQues);
+      if (currentQuestion + 1 == questionDisplay.length) {
+        console.log("reached the end");
+      } else {
+        //go to next page
+        const nextQues = currentQuestion + 1;
+        nextQues < questionDisplay.length && setCurrentQuestion(nextQues);
+      }
     } else {
       alert("Please complete this question before proceeding!");
     }
   };
-
   //store submit data - can be ignored for now
   const handleSubmitButton = () => {
     let newScore = 0;
@@ -188,6 +229,7 @@ export default function LoadTopic({ questionDisplay, user }: any) {
 
   return (
     <>
+      <Header />
       <Navbar />
       <MainWrapper>
         {/* test functionality with User.Id and once API endpoint for Jasmine's part done */}
@@ -195,12 +237,13 @@ export default function LoadTopic({ questionDisplay, user }: any) {
           (eachProgress: {
             topicSlug: string;
             topic: { topicName: string };
+            questionId: string;
           }) => (
             <ProgressBar
-              progressSlug={eachProgress.topicSlug}
+              topicSlug={eachProgress.topicSlug}
               userId={user[0].id}
               topicName={eachProgress.topic.topicName}
-              key={eachProgress.topicSlug}
+              key={eachProgress.questionId}
             />
           )
         )}
@@ -261,16 +304,44 @@ export default function LoadTopic({ questionDisplay, user }: any) {
           >
             Previous
           </button>
-          <button
-            onClick={
-              currentQuestion + 1 === questionDisplay.length
-                ? handleSubmitButton
-                : handleNext
-            }
-            className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-          >
-            {currentQuestion + 1 === questionDisplay.length ? "Submit" : "Next"}
-          </button>
+          {currentQuestion + 1 === questionDisplay.length ? (
+            <Link
+              href={{
+                pathname: `/cloudinary/results/[resultsPage]`,
+                // query: { resultsPage: url.courseSlug },
+                query: { options: JSON.stringify(attempt) },
+              }}
+              as={`/cloudinary/results/${url.courseSlug}`}
+              key={url.courseSlug}
+            >
+              <button
+                onClick={handleNext}
+                className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+              >
+                Submit
+              </button>
+            </Link>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+            >
+              Next
+            </button>
+          )}
+          {/* <button
+              onClick={
+                currentQuestion + 1 === questionDisplay.length
+                  ? handleSubmitButton
+                  : handleNext
+              }
+              className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+            >
+              {currentQuestion + 1 === questionDisplay.length
+                ? "Submit"
+                : "Next"}
+            </button>
+          </Link> */}
         </div>
       </MainWrapper>
     </>

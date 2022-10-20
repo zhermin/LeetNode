@@ -240,9 +240,6 @@ export default function Index({ course }: courseProps) {
                       <Link
                         href={{
                           pathname: `/cloudinary/[courseSlug]`,
-                          query: {
-                            courseSlug: c.courseSlug,
-                          },
                         }}
                         as={`/cloudinary/${c.courseSlug}`}
                         key={c.courseSlug}

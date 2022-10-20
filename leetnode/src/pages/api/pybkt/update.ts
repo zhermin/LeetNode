@@ -31,13 +31,21 @@ export default async function handler(
   }
 
   try {
-    //add updated mastery into Mastery table
-    // update instead of create if exist
-    const mastery: Mastery = await prisma.mastery.create({
-      data: {
+    // update instead of create (in Mastery table) if exist
+    const mastery: Mastery = await prisma.mastery.upsert({
+      where: {
+        userId_topicSlug: {
+          userId: req.body.id as string,
+          topicSlug: req.body.topicSlug as string,
+        },
+      },
+      update: {
+        masteryLevel: Object.values(display)[0] as number,
+      },
+      create: {
         userId: req.body.id as string,
         topicSlug: req.body.topicSlug as string,
-        masteryLevel: Object.values(display)[0] as number, //access skill value
+        masteryLevel: Object.values(display)[0] as number,
       },
     });
     console.log(mastery);
