@@ -47,7 +47,7 @@ const Navbar = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ callbackUrl: "/" })}
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-transparent bg-slate-100 px-4 py-2 text-base font-medium shadow-sm hover:bg-slate-200"
                 >
                   Sign Out

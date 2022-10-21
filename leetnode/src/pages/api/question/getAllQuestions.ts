@@ -7,6 +7,10 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await getSession({ req });
+  if (!session) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
 
   const questions = await prisma.question.findMany({
     include: {

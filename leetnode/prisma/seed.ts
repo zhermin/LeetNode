@@ -2,12 +2,25 @@ import { PrismaClient, QuestionDifficulty } from "@prisma/client";
 import {
   Topics,
   Courses,
+  CoursePages,
   Questions,
   Answers,
   QuestionMedias,
 } from "./seed_data";
 
 const prisma = new PrismaClient();
+
+// shuffle the question ids
+function shuffleArray(array: { questionId: number }[]): number[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]] as [
+      typeof array[0],
+      typeof array[0]
+    ];
+  }
+  return array.map((q) => q.questionId);
+}
 
 async function main() {
   // Delete all existing data (local development only)
@@ -34,49 +47,109 @@ async function main() {
     data: QuestionMedias,
   });
   console.log("Question Media created");
-  await prisma.course.createMany({
-    data: Courses,
+
+  // Extract the courses without topics from Courses
+  const coursesWithoutTopics = Courses.map((course) => {
+    const { topics, ...courseWithoutTopics } = course;
+    return courseWithoutTopics;
   });
+
+  // Add the Course data and topics separately
+  await prisma.course.createMany({
+    data: coursesWithoutTopics,
+  });
+
+  for (const course of Courses) {
+    const { topics } = course;
+    const courseTopics = topics.map((topic) => {
+      return {
+        topicSlug: topic,
+      };
+    });
+    await prisma.course.update({
+      where: {
+        courseSlug: course.courseSlug,
+      },
+      data: {
+        topics: {
+          connect: courseTopics,
+        },
+      },
+    });
+  }
   console.log("Courses created");
 
-  // Add the Welcome Quiz
-  await prisma.course.create({
-    data: {
-      courseSlug: "welcome-quiz",
-      courseName: "Welcome Quiz",
-    },
+  await prisma.coursePage.createMany({
+    data: CoursePages,
   });
-  console.log("Welcome Quiz created");
+  console.log("Course Pages created");
 
   // Add 5 random medium questions to the Welcome Quiz for first user found for testing
   // These random question generation for quizzes will be moved to its own functions later
   const user = await prisma.user.findFirst();
 
-  if (user) {
-    const mediumQuestionIds = Questions.filter(
-      (question) => question.questionDifficulty === QuestionDifficulty.Medium
-    ).map((question) => question.questionId);
+  const welcomeQuiz = await prisma.course.findFirst({
+    where: { courseSlug: "welcome-quiz" },
+  });
 
-    const randomMediumQuestionIds = [];
-    for (let i = 0; i < 5; i++) {
-      const randomIndex = Math.floor(Math.random() * mediumQuestionIds.length);
-      randomMediumQuestionIds.push(mediumQuestionIds[randomIndex]);
-      mediumQuestionIds.splice(randomIndex, 1);
-    }
+  // Shuffle the question ids
+  const mediumQuestionIds = shuffleArray(
+    await prisma.question.findMany({
+      select: { questionId: true },
+      where: { questionDifficulty: QuestionDifficulty.Medium },
+    })
+  );
 
-    await prisma.userCourseQuestion.create({
+  if (user && welcomeQuiz) {
+    // Add the user's userCourseQuestion
+    await prisma.userCourseQuestion.createMany({
       data: {
         userId: user.id,
-        courseSlug: "welcome-quiz",
-        questions: {
-          connect: randomMediumQuestionIds.map((questionId) => ({
-            questionId: questionId,
-          })),
+        courseSlug: welcomeQuiz.courseSlug,
+      },
+    });
+
+    const randomMediumQuestionIds: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      randomMediumQuestionIds.push(mediumQuestionIds[i] as number);
+    }
+
+    // Populate and preserve the order of the shuffled question ids using time
+    const questionsWithAddedTime = randomMediumQuestionIds.map(
+      (questionId, index) => {
+        return {
+          questionId,
+          userId: user.id,
+          courseSlug: welcomeQuiz.courseSlug,
+          addedTime: new Date(Date.now() + index * 1000),
+        };
+      }
+    );
+    await prisma.questionWithAddedTime.createMany({
+      data: questionsWithAddedTime,
+    });
+
+    console.log("Generated Welcome Quiz Questions: ", randomMediumQuestionIds);
+
+    // Check against the database if we can sort by addedTime
+    const questions = await prisma.userCourseQuestion.findFirst({
+      where: {
+        userId: user.id,
+        courseSlug: welcomeQuiz.courseSlug,
+      },
+      include: {
+        questionsWithAddedTime: {
+          orderBy: {
+            addedTime: "asc",
+          },
         },
       },
     });
 
-    console.log("Welcome Quiz questions added for first user found");
+    console.log(
+      "Queried Welcome Quiz Questions: ",
+      questions?.questionsWithAddedTime
+    );
   }
 }
 

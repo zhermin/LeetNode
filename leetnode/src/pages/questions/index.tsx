@@ -5,10 +5,9 @@ import {
   Attempt,
   Answer,
 } from "@prisma/client";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { signIn } from "next-auth/react";
 import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
-import type { GetServerSidePropsContext } from "next/types";
-import { getSession } from "next-auth/react";
 
 import Image from "next/future/image";
 import Link from "next/link";
@@ -26,7 +25,14 @@ type questionType = (Question & {
 })[];
 
 const fetchUserQuestions = async () =>
-  await axios.get(`/api/question/getAllQuestions`).then((res) => res.data);
+  await axios
+    .get(`/api/question/getAllQuestions`)
+    .then((res) => res.data)
+    .catch((err: AxiosError) => {
+      if (err.response?.status === 401) {
+        signIn();
+      }
+    });
 
 const AllQuestionsPage = () => {
   const {
@@ -157,23 +163,7 @@ const AllQuestionsPage = () => {
 
 export default AllQuestionsPage;
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getSession(context);
-  const { resolvedUrl, req } = context;
-  const baseUrl = `${req.headers["x-forwarded-proto"] || "http"}://${
-    req.headers["x-forwarded-host"] || req.headers.host
-  }`;
-  const currentUrl = `${baseUrl}${resolvedUrl}`;
-
-  if (!session) {
-    return {
-      redirect: {
-        destination: `/api/auth/signin?callbackUrl=${currentUrl}`,
-        permanent: false,
-      },
-    };
-  }
-
+export async function getStaticProps() {
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery<questionType>(
     ["all-user-questions"],

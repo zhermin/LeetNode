@@ -7,7 +7,11 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await getSession({ req });
-  // get the questionId from the request body and convert to number
+  if (!session) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
   const questionId = Number(req.query.questionId);
 
   const question = await prisma.question.findFirst({

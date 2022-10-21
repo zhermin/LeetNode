@@ -5,7 +5,8 @@ import {
   Attempt,
   Answer,
 } from "@prisma/client";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
 import type { GetStaticPropsContext } from "next/types";
@@ -27,7 +28,14 @@ type question =
   | null;
 
 const fetchQuestion = async (questionId: string) =>
-  await axios.get(`/api/question/${questionId}`).then((res) => res.data);
+  await axios
+    .get(`/api/question/${questionId}`)
+    .then((res) => res.data)
+    .catch((err: AxiosError) => {
+      if (err.response?.status === 401) {
+        signIn();
+      }
+    });
 
 const Question = () => {
   const router = useRouter();
@@ -35,12 +43,14 @@ const Question = () => {
   const {
     data: question,
     isLoading,
+    isError,
     error,
-  } = useQuery<question>(["user-question-by-id", questionId], () =>
+  } = useQuery<question, AxiosError>(["user-question-by-id"], () =>
     fetchQuestion(questionId as string)
   );
-  if (isLoading) return <div>Loading...</div>;
-  if (!question || error) return <div>Failed to load</div>;
+
+  if (isLoading || !question) return <div>Loading...</div>;
+  if (isError) return <div>{error.message}</div>;
 
   return (
     <>

@@ -47,21 +47,25 @@ export default async function handler(
       courseSlug: reqvar,
     },
     include: {
-      questions: {
+      questionsWithAddedTime: {
         include: {
-          questionMedia: {
-            select: { questionMediaURL: true },
-          },
-          topic: true,
-          attempts: {
-            where: {
-              userId: session?.user?.id,
+          question: {
+            include: {
+              questionMedia: {
+                select: { questionMediaURL: true },
+              },
+              topic: true,
+              attempts: {
+                where: {
+                  userId: session?.user?.id,
+                },
+                orderBy: {
+                  submittedAt: "desc",
+                },
+              },
+              answers: true,
             },
-            orderBy: {
-              submittedAt: "desc",
-            },
           },
-          answers: true,
         },
       },
     },

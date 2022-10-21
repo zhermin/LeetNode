@@ -74,20 +74,34 @@ model Attempt {
 
 // QUESTION BANK
 model Course {
-  courseSlug    String               @id
-  courseName    String
-  courseContent Json? // KIV, maybe structure by pages and inside each page, have videos, slides and/or questions
-  userQuestions UserCourseQuestion[]
+  courseSlug          String               @id
+  courseName          String
+  moduleCode          String?
+  moduleTitle         String?
+  week                Int?
+  studio              Int?
+  topics              Topic[]
+  userCourseQuestions UserCourseQuestion[]
+  pages               CoursePage[]
+}
+
+model CoursePage {
+  pageId     Int
+  courseSlug String
+  markdown   String @db.VarChar(10000)
+  course     Course @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+
+  @@id([pageId, courseSlug])
 }
 
 model UserCourseQuestion {
-  id               String     @id @default(cuid())
-  userId           String
-  courseSlug       String
-  courseCompletion Float      @default(0)
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course           Course     @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
-  questions        Question[]
+  userId                 String
+  courseSlug             String
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                 Course                  @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+  questionsWithAddedTime QuestionWithAddedTime[]
+
+  @@id([userId, courseSlug])
 }
 
 model Mastery {
@@ -106,6 +120,7 @@ model Topic {
   topicLevel TopicLevel
   questions  Question[]
   mastery    Mastery[]
+  courses    Course[]
 
   @@index([topicLevel])
 }
@@ -116,16 +131,27 @@ enum TopicLevel {
   Advanced
 }
 
+model QuestionWithAddedTime {
+  questionId Int
+  userId     String
+  courseSlug String
+  addedTime  DateTime           @default(now())
+  question   Question           @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
+  userCourse UserCourseQuestion @relation(fields: [userId, courseSlug], references: [userId, courseSlug], onDelete: Cascade)
+
+  @@id([questionId, userId, courseSlug])
+}
+
 model Question {
-  questionId          Int                  @id @default(autoincrement())
-  topicSlug           String
-  questionContent     String               @db.VarChar(500)
-  questionDifficulty  QuestionDifficulty
-  topic               Topic                @relation(fields: [topicSlug], references: [topicSlug])
-  attempts            Attempt[]
-  questionMedia       QuestionMedia[]
-  answers             Answer[]
-  userCourseQuestions UserCourseQuestion[]
+  questionId             Int                     @id @default(autoincrement())
+  topicSlug              String
+  questionContent        String                  @db.VarChar(500)
+  questionDifficulty     QuestionDifficulty
+  topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
+  attempts               Attempt[]
+  questionMedia          QuestionMedia[]
+  answers                Answer[]
+  questionsWithAddedTime QuestionWithAddedTime[]
 
   @@index([questionDifficulty])
 }
