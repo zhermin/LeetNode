@@ -237,11 +237,20 @@ export default function Index({ course }: courseProps) {
                   </div>
                   <div className="grid grid-cols-1 gap-5 p-10 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
                     {course.map((c: Course) => (
+                      //USED FOR [COURSESLUG]
+                      // <Link
+                      //   href={{
+                      //     pathname: `/cloudinary/[courseSlug]`,
+                      //   }}
+                      //   as={`/cloudinary/${c.courseSlug}`}
+                      //   key={c.courseSlug}
+                      // >
+
                       <Link
                         href={{
-                          pathname: `/cloudinary/[courseSlug]`,
+                          pathname: `/course/[courseSlug]`,
                         }}
-                        as={`/cloudinary/${c.courseSlug}`}
+                        as={`/course/${c.courseSlug}`}
                         key={c.courseSlug}
                       >
                         <div className="flex cursor-pointer flex-col rounded shadow-lg first-letter:overflow-hidden">

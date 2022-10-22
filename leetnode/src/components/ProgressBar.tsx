@@ -1,6 +1,14 @@
 import axios from "axios";
 
-const ProgressBar = ({ topicSlug, userId, topicName }: any) => {
+const ProgressBar = ({
+  topicSlug,
+  userId,
+  topicName,
+}: {
+  topicSlug: string;
+  userId: string;
+  topicName: string;
+}) => {
   //get mastery level to be display on page
   const displayMastery = async (topicSlug: any) => {
     const fetchMastery = async (request: { id: string; topicSlug: string }) => {

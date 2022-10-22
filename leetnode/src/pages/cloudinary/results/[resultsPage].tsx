@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import axios from "axios";
 import { getSession } from "next-auth/react";
+import Link from "next/link";
 
 const prisma = new PrismaClient();
 
@@ -42,7 +43,7 @@ export async function getStaticProps(context: any) {
   };
   const display = await displayData(context.params);
 
-  const questionDisplay = display.questions;
+  const questionDisplay = display.questionsWithAddedTime;
   console.log(questionDisplay);
 
   const users = await prisma.user.findMany({
@@ -79,7 +80,7 @@ export default function ShowResults({ questionDisplay, user, url }: any) {
   const { options } = router.query;
 
   const [results, setResults] = useState<
-    { currentQuestion: number; isCorrect: string }[]
+    { currentQuestion: number; isCorrect: number }[]
   >([]);
 
   useEffect(() => {
@@ -93,27 +94,47 @@ export default function ShowResults({ questionDisplay, user, url }: any) {
     }
   }, [router.isReady, options, results]);
 
+  const arrScore = results.map((questions) => questions.isCorrect);
+  const score = arrScore.reduce((prev, cur) => prev + cur, 0);
   return (
     <>
       <Header />
       <Navbar />
       <MainWrapper>
-        {questionDisplay.map(
-          (eachProgress: {
-            topicSlug: string;
-            topic: { topicName: string };
-            questionId: string;
-          }) => (
-            <ProgressBar
-              topicSlug={eachProgress.topicSlug}
-              userId={user[0].id}
-              topicName={eachProgress.topic.topicName}
-              key={eachProgress.questionId}
-            />
-          )
-        )}
-
-        <div>{results[0]?.isCorrect}</div>
+        <div className="container mx-auto px-6 py-20 text-center">
+          <h2 className="mb-6 text-center text-4xl font-bold text-black">
+            Score: {score}
+          </h2>
+          <h3 className="my-4 text-2xl text-black">
+            Your mastery progress after this practice!
+          </h3>
+          {questionDisplay.map(
+            (eachProgress: {
+              question: {
+                topicSlug: string;
+                topic: { topicName: string };
+                questionId: number;
+              };
+              userId: string;
+            }) => (
+              <ProgressBar
+                topicSlug={eachProgress.question.topicSlug}
+                userId={user[0].id}
+                topicName={eachProgress.question.topic.topicName}
+                key={eachProgress.question.questionId}
+              />
+            )
+          )}
+          <Link
+            href={{
+              pathname: "/cloudinary",
+            }}
+          >
+            <button className="mt-6 rounded-full bg-cyan-500 py-3 px-8 font-bold uppercase tracking-wider text-white shadow-lg hover:bg-cyan-600">
+              Back to Home
+            </button>
+          </Link>
+        </div>
       </MainWrapper>
     </>
   );

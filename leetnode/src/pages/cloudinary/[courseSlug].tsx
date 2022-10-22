@@ -26,11 +26,6 @@ export async function getStaticPaths() {
 export async function getStaticProps(context: any) {
   const session = await getSession(context);
   const prisma = new PrismaClient();
-  const test = await prisma.course.findMany();
-
-  test.map((e) => console.log(e.courseSlug));
-
-  console.log(context.params);
 
   const displayData = async (request: { courseSlug: string }) => {
     try {
@@ -52,22 +47,6 @@ export async function getStaticProps(context: any) {
       id: session?.user?.id,
     },
   });
-
-  // const courses = await prisma.userCourseQuestion.findMany({
-  //   where: {
-  //     //add in condition of what topics in this slug (although it should be the topics in this course)
-  //     courseSlug: context.params.courseSlug,
-  //   },
-  //   include: {
-  //     questions: {
-  //       select: {
-  //         topicSlug: true,
-  //         questionContent: true,
-  //       },
-  //     },
-  //   },
-  // });
-  // console.log(courses);
 
   // // return smth like
   //{
@@ -98,10 +77,8 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
     { currentQuestion: number; answerByUser: string }[]
   >([]);
   const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: string }[]
+    { currentQuestion: number; isCorrect: number }[]
   >([]);
-  const [score, setScore] = useState(0);
-  const [showScore, setShowScore] = useState(false);
 
   const handleAnswerOption = (answer: string) => {
     setSelectedOptions([
@@ -110,10 +87,9 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
       } as any),
     ]);
     setSelectedOptions([...selectedOptions]);
-    console.log(selectedOptions);
 
     //check if answer correct
-    const data = questionDisplay[currentQuestion].answers;
+    const data = questionDisplay[currentQuestion].question.answers;
     const result = data.filter(
       (x: { isCorrect: boolean }) => x.isCorrect === true
     );
@@ -124,10 +100,10 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
       selectedOptions[currentQuestion]?.answerByUser === result[0].answerContent
     ) {
       case true:
-        correctAns = "1";
+        correctAns = 1;
         break;
       case false:
-        correctAns = "0";
+        correctAns = 0;
     }
     setAttempt([
       (attempt[currentQuestion] = {
@@ -147,21 +123,6 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
     if (currentQuestion in selectedOptions) {
       // logic for updating mastery for user
 
-      // //check if answer correct
-      // let correctAns: string;
-      // const data = questionDisplay[currentQuestion].answers;
-      // const result = data.filter(
-      //   (x: { isCorrect: boolean }) => x.isCorrect === true
-      // );
-      // if (
-      //   selectedOptions[currentQuestion]?.answerByUser ===
-      //   result[0].answerContent
-      // ) {
-      //   correctAns = "1";
-      // } else {
-      //   correctAns = "0";
-      // }
-
       //update mastery level (for both pyBKT and Mastery Table) by sending answer correctness (only can send 1, hence the map function)
       //E.g. input: {
       // "id": "c019823",
@@ -171,7 +132,7 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
       const updateMastery = async (request: {
         id: string;
         skillSlug: string;
-        correct: string;
+        correct: number;
       }) => {
         try {
           //update mastery of student
@@ -189,7 +150,7 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
       const updated = await updateMastery({
         id: user[0].id,
         skillSlug: questionDisplay.topicSlug,
-        correct: attempt[currentQuestion]?.isCorrect as string,
+        correct: attempt[currentQuestion]?.isCorrect as number,
       });
       console.log(user[0].id);
       console.log(questionDisplay[currentQuestion].topicSlug);
@@ -206,25 +167,6 @@ export default function LoadTopic({ questionDisplay, user, url }: any) {
     } else {
       alert("Please complete this question before proceeding!");
     }
-  };
-  //store submit data - can be ignored for now
-  const handleSubmitButton = () => {
-    let newScore = 0;
-    for (let i = 0; i < questionDisplay.length; i++) {
-      questionDisplay[i]?.answers.map(
-        (answers: {
-          questionContent: string;
-          optionNumber: number;
-          answerContent: string;
-          isCorrect: number;
-        }) =>
-          answers.isCorrect &&
-          answers.questionContent === selectedOptions[i]?.answerByUser &&
-          (newScore += 1)
-      );
-    }
-    setScore(newScore);
-    setShowScore(true);
   };
 
   return (

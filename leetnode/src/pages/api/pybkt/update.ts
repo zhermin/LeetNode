@@ -11,12 +11,14 @@ export default async function handler(
   const displayData = async (req: {
     id: string;
     topicSlug: string;
-    correct: string;
+    correct: number;
   }) => {
     try {
       //update mastery of student
       const res = await axios.post(
-        `http://127.0.0.1:8000/update-state/${req.id}/${req.topicSlug}/${req.correct}`
+        `http://127.0.0.1:8000/update-state/${req.id}/${req.topicSlug}/${String(
+          req.correct
+        )}`
       ); //use data destructuring to get data from the promise object
       return res.data;
     } catch (error) {

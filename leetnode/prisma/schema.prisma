@@ -63,6 +63,7 @@ model Attempt {
   userId         String
   questionId     Int
   attemptOption  Int
+  isCorrect      Boolean
   submittedAt    DateTime @default(now())
   attemptSeconds Int? // KIV
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
