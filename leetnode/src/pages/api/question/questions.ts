@@ -51,9 +51,7 @@ export default async function handler(
         include: {
           question: {
             include: {
-              questionMedia: {
-                select: { questionMediaURL: true },
-              },
+              questionMedia: true,
               topic: true,
               attempts: {
                 where: {

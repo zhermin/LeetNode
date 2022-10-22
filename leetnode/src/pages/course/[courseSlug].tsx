@@ -1,20 +1,48 @@
+import {
+  PrismaClient,
+  Course,
+  Answer,
+  Attempt,
+  Question,
+  QuestionMedia,
+  QuestionWithAddedTime,
+  Topic,
+  UserCourseQuestion,
+  User,
+} from "@prisma/client";
+import { prisma } from "@/server/db/client";
+
+import axios from "axios";
+import { useState } from "react";
+import { getSession, GetSessionParams } from "next-auth/react";
+
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
-import { useState } from "react";
-import { PrismaClient, Course } from "@prisma/client";
-import { getSession } from "next-auth/react";
-import axios from "axios";
 import PracticeQuestion from "@/components/PracticeQuestion";
 import ResultsPage from "@/components/ResultsPage";
 
-const prisma = new PrismaClient();
+type allQuestionsType = (UserCourseQuestion & {
+  questionsWithAddedTime: (QuestionWithAddedTime & {
+    question: Question & {
+      attempts: Attempt[];
+      topic: Topic;
+      questionMedia: QuestionMedia[];
+      answers: Answer[];
+    };
+  })[];
+})[];
 
 export default function CourseMainPage({
   questionDisplay,
   user,
   url,
   courseName,
-}: any) {
+}: {
+  questionDisplay: allQuestionsType;
+  user: User[];
+  url: string;
+  courseName?: string;
+}) {
   const [openTab, setOpenTab] = useState(1);
   const [quizTab, setQuizTab] = useState(1);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -32,12 +60,12 @@ export default function CourseMainPage({
       isCorrect: number;
     }[]
   >([]);
+  console.log(url);
 
   return (
     <>
       <Header />
       <Navbar />
-
       <div className="flex h-screen flex-row rounded border border-b border-gray-200 dark:border-gray-700">
         <div className="flex basis-1/4 flex-col">
           <div>
@@ -347,7 +375,9 @@ export async function getStaticPaths() {
   return { paths, fallback: false };
 }
 
-export async function getStaticProps(context: any) {
+export async function getStaticProps(
+  context: GetSessionParams & { params: { courseSlug: string } }
+) {
   const session = await getSession(context);
   const prisma = new PrismaClient();
 

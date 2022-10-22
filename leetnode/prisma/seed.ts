@@ -50,6 +50,7 @@ async function main() {
 
   // Extract the courses without topics from Courses
   const coursesWithoutTopics = Courses.map((course) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { topics, ...courseWithoutTopics } = course;
     return courseWithoutTopics;
   });
