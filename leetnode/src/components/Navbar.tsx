@@ -11,6 +11,9 @@ import {
   Text,
   Menu,
   Box,
+  useMantineColorScheme,
+  SegmentedControl,
+  Center,
 } from "@mantine/core";
 import { NextLink } from "@mantine/next";
 import {
@@ -19,6 +22,8 @@ import {
   IconSettings,
   IconLogout,
   IconChevronDown,
+  IconSun,
+  IconMoon,
 } from "@tabler/icons";
 
 const useStyles = createStyles((theme) => ({
@@ -70,6 +75,7 @@ const useStyles = createStyles((theme) => ({
   },
 
   userName: {
+    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
     [theme.fn.smallerThan("xs")]: {
       display: "none",
     },
@@ -83,6 +89,8 @@ const useStyles = createStyles((theme) => ({
 
 export default function Navbar() {
   const session = useSession();
+
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
   const { classes, theme, cx } = useStyles();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
@@ -162,9 +170,47 @@ export default function Navbar() {
                   </Group>
                 </UnstyledButton>
               </Menu.Target>
+
               <Menu.Dropdown>
+                <SegmentedControl
+                  fullWidth
+                  value={colorScheme}
+                  onChange={(value: "light" | "dark") =>
+                    toggleColorScheme(value)
+                  }
+                  data={[
+                    {
+                      value: "light",
+                      label: (
+                        <Center>
+                          <IconSun size={16} stroke={2} />
+                          <Box ml={10}>Light</Box>
+                        </Center>
+                      ),
+                    },
+                    {
+                      value: "dark",
+                      label: (
+                        <Center>
+                          <IconMoon size={16} stroke={2} />
+                          <Box ml={10}>Dark</Box>
+                        </Center>
+                      ),
+                    },
+                  ]}
+                />
+
+                <Menu.Divider />
+
                 <Menu.Label>
-                  <Text weight={700} color={theme.colors.gray[9]}>
+                  <Text
+                    weight={700}
+                    color={
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[0]
+                        : theme.colors.gray[9]
+                    }
+                  >
                     Signed In As:
                   </Text>
                   {session?.data?.user?.email}

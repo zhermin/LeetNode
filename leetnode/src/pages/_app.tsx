@@ -16,7 +16,13 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 // Styles
 import "../styles/globals.css";
 import "katex/dist/katex.min.css";
-import { MantineProvider, createEmotionCache } from "@mantine/core";
+import {
+  MantineProvider,
+  createEmotionCache,
+  ColorSchemeProvider,
+  ColorScheme,
+} from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 const appendCache = createEmotionCache({ key: "mantine", prepend: false });
 
 // Main App
@@ -25,17 +31,32 @@ const LeetNode: AppType<{
   dehydratedState: DehydratedState;
 }> = ({ Component, pageProps: { session, dehydratedState, ...pageProps } }) => {
   const queryClient = React.useRef(new QueryClient()).current;
+
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: "mantine-color-scheme",
+    defaultValue: "light",
+    getInitialValueInEffect: true,
+  });
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+
   return (
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
         <Hydrate state={dehydratedState}>
-          <MantineProvider
-            emotionCache={appendCache}
-            withGlobalStyles
-            withNormalizeCSS
+          <ColorSchemeProvider
+            colorScheme={colorScheme}
+            toggleColorScheme={toggleColorScheme}
           >
-            <Component {...pageProps} />
-          </MantineProvider>
+            <MantineProvider
+              theme={{ colorScheme }}
+              emotionCache={appendCache}
+              withGlobalStyles
+              withNormalizeCSS
+            >
+              <Component {...pageProps} />
+            </MantineProvider>
+          </ColorSchemeProvider>
           <ReactQueryDevtools />
         </Hydrate>
       </QueryClientProvider>
