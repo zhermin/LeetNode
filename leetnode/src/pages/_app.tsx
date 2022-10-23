@@ -49,7 +49,7 @@ const LeetNode: AppType<{
             toggleColorScheme={toggleColorScheme}
           >
             <MantineProvider
-              theme={{ colorScheme }}
+              theme={{ colorScheme, primaryColor: "cyan" }}
               emotionCache={appendCache}
               withGlobalStyles
               withNormalizeCSS

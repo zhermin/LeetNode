@@ -15,6 +15,7 @@ import Latex from "react-latex-next";
 
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 type questionType = (Question & {
   topic: Topic;
@@ -152,6 +153,7 @@ const AllQuestionsPage = () => {
           ))}
         </div>
       </main>
+      <Footer />
     </>
   );
 };

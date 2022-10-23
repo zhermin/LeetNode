@@ -1,30 +1,194 @@
-import type { NextPage } from "next";
-import Link from "next/link";
-
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
-import MainWrapper from "@/components/MainWrapper";
+import Footer from "@/components/Footer";
+import { Dots } from "@/components/Dots";
+import Link from "next/link";
+import {
+  createStyles,
+  Title,
+  Text,
+  Button,
+  Box,
+  Container,
+  Grid,
+  Stack,
+} from "@mantine/core";
+import Image from "next/future/image";
 
-const Home: NextPage = () => {
+const useStyles = createStyles((theme) => ({
+  wrapper: {
+    position: "relative",
+    paddingTop: 80,
+    paddingBottom: 80,
+
+    "@media (max-width: 755px)": {
+      paddingTop: 80,
+      paddingBottom: 60,
+    },
+  },
+
+  inner: {
+    position: "relative",
+    zIndex: 1,
+  },
+
+  dots: {
+    position: "absolute",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[5]
+        : theme.colors.gray[1],
+
+    "@media (max-width: 755px)": {
+      display: "none",
+    },
+  },
+
+  dotsLeft: {
+    left: 0,
+    top: 0,
+  },
+
+  title: {
+    textAlign: "center",
+    fontWeight: 800,
+    fontSize: 48,
+    letterSpacing: -1,
+    color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    marginBottom: theme.spacing.xs,
+    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+
+    "@media (max-width: 520px)": {
+      fontSize: 28,
+      textAlign: "left",
+    },
+  },
+
+  description: {
+    textAlign: "center",
+
+    "@media (max-width: 520px)": {
+      textAlign: "left",
+      fontSize: theme.fontSizes.md,
+    },
+  },
+
+  controls: {
+    marginTop: theme.spacing.lg,
+    display: "flex",
+    justifyContent: "center",
+
+    "@media (max-width: 520px)": {
+      flexDirection: "column",
+    },
+  },
+
+  control: {
+    "&:not(:first-of-type)": {
+      marginLeft: theme.spacing.md,
+    },
+
+    "@media (max-width: 520px)": {
+      height: 42,
+      fontSize: theme.fontSizes.md,
+
+      "&:not(:first-of-type)": {
+        marginTop: theme.spacing.md,
+        marginLeft: 0,
+      },
+    },
+  },
+}));
+
+export default function Home() {
+  const { classes, theme } = useStyles();
+
   return (
     <>
       <Header />
       <Navbar />
-
-      <MainWrapper>
-        <main className="container mx-auto flex min-h-screen flex-col items-center justify-center p-4">
-          <h1 className="text-5xl font-extrabold leading-normal text-gray-700 md:text-[5rem]">
-            Leet<span className="text-cyan-400">Node</span>
-          </h1>
-          <Link href="/welcome">
-            <a className="mt-3 inline-flex items-center justify-center whitespace-nowrap rounded-md border border-transparent bg-cyan-500 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-cyan-600">
-              Start Your Journey
-            </a>
-          </Link>
-        </main>
-      </MainWrapper>
+      <Container className={classes.wrapper} size={1400}>
+        <Dots className={classes.dots} style={{ left: 0, top: 0 }} />
+        <Dots className={classes.dots} style={{ left: 60, top: 0 }} />
+        <Dots className={classes.dots} style={{ left: 0, top: 140 }} />
+        <Dots className={classes.dots} style={{ right: 0, top: 60 }} />
+        <Dots className={classes.dots} style={{ right: 60, top: 200 }} />
+        <Box className={classes.inner}>
+          <Title className={classes.title}>
+            AI-Powered{" "}
+            <Text
+              component="span"
+              variant="gradient"
+              gradient={{ from: theme.colors.cyan[5], to: "blue" }}
+              inherit
+            >
+              Mastery Estimation
+            </Text>
+          </Title>
+          <Container p={0} size={650}>
+            <Text
+              size="lg"
+              color="dimmed"
+              className={classes.description}
+              my="lg"
+            >
+              Experience a cohesive learning and practice platform that goes
+              beyond the traditional &quot;one-size-fits-all&quot; approach to
+              education. Tackle questions tailored to your skill level to
+              achieve mastery in the core concepts of Engineering.
+            </Text>
+          </Container>
+          <Box className={classes.controls}>
+            <Link href="#">
+              <Button
+                className={classes.control}
+                size="lg"
+                variant="default"
+                color="gray"
+              >
+                What&apos;s LeetNode?
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button className={classes.control} size="lg">
+                Start Your Journey
+              </Button>
+            </Link>
+          </Box>
+        </Box>
+      </Container>
+      <Container size={1000} pt="xl">
+        <Grid grow gutter="xl">
+          <Grid.Col sm={3} pb="lg">
+            <Image
+              src="/bkt-diagram.png"
+              alt="Bayesian Knowledge Tracing Diagram"
+              width="0"
+              height="0"
+              sizes="100vw"
+              className="h-auto w-full"
+            />
+          </Grid.Col>
+          <Grid.Col sm={1} ml="xl">
+            <Stack justify="flex-start">
+              <Title order={3}>The Recommendation Engine</Title>
+              <Text size="md" align="left" color="dimmed">
+                LeetNode leverages the Machine Learning algorithm known as
+                Bayesian Knowledge Tracing (BKT) to provide a personalized
+                learning experience.
+              </Text>
+              <Text size="md" align="left" color="dimmed">
+                BKT is a probabilistic model that estimates a student&apos;s
+                mastery of a concept based on their performance on a series of
+                questions. Our model is trained on simulated student
+                interactions based on historical quiz distribution statistics
+                for selected topics.
+              </Text>
+            </Stack>
+          </Grid.Col>
+        </Grid>
+      </Container>
+      <Footer />
     </>
   );
-};
-
-export default Home;
+}
