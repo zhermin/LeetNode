@@ -29,17 +29,18 @@ The adaptive learning software tool has great potential for the following:
 
 - NextJS (ReactJS)
 - Tailwind CSS
-- Tailwind / Chakra UI / Headless UI Components
+- Mantine Component Library
 
 ### Backend
 
-- Routing, REST API, etc.: NextJS
 - TypeScript
+- Routing, REST API, etc.: NextJS
+- React Query
 - Zod
 
 ### Database
 
-- Relational: MySQL
+- Relational DB: MySQL
 - ORM: Prisma
 
 ### Authentication
@@ -50,12 +51,13 @@ The adaptive learning software tool has great potential for the following:
 
 - Machine Learning: pyBKT
 - FastAPI
+- Docker
 
 ### Hosting
 
 - Web: Vercel
 - Database: PlanetScale
-- Recommender Microservice: TBC
+- Recommender Microservice: Google GCP
 
 ### Miscellaneous
 
