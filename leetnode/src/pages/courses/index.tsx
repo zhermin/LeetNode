@@ -22,7 +22,7 @@ import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { getSession, signIn } from "next-auth/react";
 import { Course, CourseType, Level } from "@prisma/client";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   dehydrate,
   QueryCache,
@@ -37,16 +37,19 @@ type allCoursesType = (Course & {
   }[];
 })[];
 
-const fetchCourses: () => Promise<allCoursesType | null> = async () =>
-  await axios
-    .get("/api/courses")
-    .then((res) => res.data)
-    .catch((err) => {
-      console.log(err);
-      if (err.response?.status === 401) {
-        signIn("google");
-      }
-    });
+const fetchCourses: () => Promise<allCoursesType | null> = async () => {
+  try {
+    const { data } = await axios.get("/api/courses");
+    return data;
+  } catch (error) {
+    const err = error as AxiosError;
+    if (err.response?.status === 401) {
+      signIn("google");
+    }
+    console.log(error);
+    throw error;
+  }
+};
 
 export interface BadgeCardProps {
   slug: string;
@@ -136,16 +139,16 @@ export default function CoursesPage() {
     data: courses,
     isLoading,
     isFetching,
+    isError,
   } = useQuery<allCoursesType | null>(["all-courses"], fetchCourses);
-  console.log(courses);
 
-  console.log(isLoading, isFetching);
-  if (isLoading || !courses)
+  if (isLoading || isFetching || !courses)
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
+  if (isError) return <div>Something went wrong!</div>;
 
   return (
     <>
@@ -346,8 +349,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }),
   });
   await queryClient.prefetchQuery<allCoursesType | null>(
-    ["all-user-questions"],
+    ["all-courses"],
     fetchCourses
+  );
+
+  console.log(
+    "[PREFETCHED ALL COURSES]",
+    queryClient.getQueryData(["all-courses"])
   );
 
   return {

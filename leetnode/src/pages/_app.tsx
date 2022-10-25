@@ -48,9 +48,9 @@ const LeetNode: AppType<{
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Hydrate state={dehydratedState}>
-        <SessionProvider session={session}>
+    <SessionProvider session={session}>
+      <QueryClientProvider client={queryClient}>
+        <Hydrate state={dehydratedState}>
           <ColorSchemeProvider
             colorScheme={colorScheme}
             toggleColorScheme={toggleColorScheme}
@@ -65,9 +65,9 @@ const LeetNode: AppType<{
             </MantineProvider>
           </ColorSchemeProvider>
           <ReactQueryDevtools />
-        </SessionProvider>
-      </Hydrate>
-    </QueryClientProvider>
+        </Hydrate>
+      </QueryClientProvider>
+    </SessionProvider>
   );
 };
 

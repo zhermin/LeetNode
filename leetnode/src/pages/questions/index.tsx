@@ -7,7 +7,12 @@ import {
 } from "@prisma/client";
 import axios, { AxiosError } from "axios";
 import { getSession, GetSessionParams, signIn } from "next-auth/react";
-import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
+import {
+  dehydrate,
+  QueryCache,
+  QueryClient,
+  useQuery,
+} from "@tanstack/react-query";
 
 import Image from "next/future/image";
 import Link from "next/link";
@@ -17,6 +22,7 @@ import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Center, Loader } from "@mantine/core";
+import toast from "react-hot-toast";
 
 type questionType = (Question & {
   topic: Topic;
@@ -25,32 +31,35 @@ type questionType = (Question & {
   answers: Answer[];
 })[];
 
-const fetchUserQuestions = async () =>
-  await axios
-    .get(`/api/question/getAllQuestions`)
-    .then((res) => res.data)
-    .catch((err: AxiosError) => {
-      if (err.response?.status === 401) {
-        signIn("google");
-      }
-    });
+const fetchUserQuestions = async () => {
+  try {
+    const { data } = await axios.get("/api/question/getAllQuestions");
+    return data;
+  } catch (error) {
+    const err = error as AxiosError;
+    if (err.response?.status === 401) {
+      signIn("google");
+    }
+    console.log(error);
+    throw error;
+  }
+};
 
 const AllQuestionsPage = () => {
   const {
     data: questions,
     isLoading,
     isFetching,
-    error,
+    isError,
   } = useQuery<questionType>(["all-user-questions"], fetchUserQuestions);
 
-  console.log(isLoading, isFetching);
-  if (isLoading || !questions)
+  if (isLoading || isFetching || !questions)
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
-  if (error) return <div>Failed to load</div>;
+  if (isError) return <div>Something went wrong!</div>;
 
   return (
     <>
@@ -172,10 +181,23 @@ export async function getStaticProps(context: GetSessionParams) {
   const session = await getSession(context);
   if (!session) signIn("google");
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Something went wrong: ${error.message}`);
+        }
+      },
+    }),
+  });
   await queryClient.prefetchQuery<questionType>(
     ["all-user-questions"],
     fetchUserQuestions
+  );
+
+  console.log(
+    "[PREFETCHED USER QUESTIONS]",
+    queryClient.getQueryData(["all-user-questions"])
   );
 
   return {
