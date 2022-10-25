@@ -1,4 +1,4 @@
-import { Topic, TopicLevel } from "@prisma/client";
+import { Topic, Level } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
 import Header from "@/components/Header";
@@ -19,7 +19,7 @@ const welcome = ({ topics }: { topics: Topic[] }) => {
             name="Foundational"
             description="Foundational topics are the building blocks of electrical and computer engineering. These topics are the bedrock of your electrical and computer engineering knowledge and are the most important to master."
             topics={topics.filter(
-              (topic) => topic.topicLevel === TopicLevel.Foundational
+              (topic) => topic.topicLevel === Level.Foundational
             )}
             link="/questions"
             color="bg-emerald-500"
@@ -28,7 +28,7 @@ const welcome = ({ topics }: { topics: Topic[] }) => {
             name="Intermediate"
             description="Intermediate topics are the next level of electrical and computer engineering. These topics build upon the foundational topics and are the next step in your journey."
             topics={topics.filter(
-              (topic) => topic.topicLevel === TopicLevel.Intermediate
+              (topic) => topic.topicLevel === Level.Intermediate
             )}
             link="https://www.typescriptlang.org/"
             color="bg-amber-400"
@@ -37,7 +37,7 @@ const welcome = ({ topics }: { topics: Topic[] }) => {
             name="Advanced"
             description="Advanced topics are the most advanced topics in electrical and computer engineering. These topics require a deep understanding of the foundational and intermediate topics and will challenge you to the fullest extent."
             topics={topics.filter(
-              (topic) => topic.topicLevel === TopicLevel.Advanced
+              (topic) => topic.topicLevel === Level.Advanced
             )}
             link="https://tailwindcss.com/"
             color="bg-red-500"

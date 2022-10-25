@@ -6,7 +6,7 @@ import {
   Answer,
 } from "@prisma/client";
 import axios, { AxiosError } from "axios";
-import { signIn } from "next-auth/react";
+import { getSession, GetSessionParams, signIn } from "next-auth/react";
 import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
 
 import Image from "next/future/image";
@@ -16,6 +16,7 @@ import Latex from "react-latex-next";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Center, Loader } from "@mantine/core";
 
 type questionType = (Question & {
   topic: Topic;
@@ -30,7 +31,7 @@ const fetchUserQuestions = async () =>
     .then((res) => res.data)
     .catch((err: AxiosError) => {
       if (err.response?.status === 401) {
-        signIn();
+        signIn("google");
       }
     });
 
@@ -38,10 +39,17 @@ const AllQuestionsPage = () => {
   const {
     data: questions,
     isLoading,
+    isFetching,
     error,
   } = useQuery<questionType>(["all-user-questions"], fetchUserQuestions);
-  console.log(isLoading);
-  if (isLoading || !questions) return <div>Loading...</div>;
+
+  console.log(isLoading, isFetching);
+  if (isLoading || !questions)
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
   if (error) return <div>Failed to load</div>;
 
   return (
@@ -160,12 +168,16 @@ const AllQuestionsPage = () => {
 
 export default AllQuestionsPage;
 
-export async function getStaticProps() {
+export async function getStaticProps(context: GetSessionParams) {
+  const session = await getSession(context);
+  if (!session) signIn("google");
+
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery<questionType>(
     ["all-user-questions"],
     fetchUserQuestions
   );
+
   return {
     props: {
       dehydratedState: dehydrate(queryClient),

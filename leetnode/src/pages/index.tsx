@@ -1,7 +1,8 @@
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Dots } from "@/components/Dots";
+import Dots from "@/components/Dots";
+
 import Link from "next/link";
 import {
   createStyles,
@@ -39,14 +40,9 @@ const useStyles = createStyles((theme) => ({
         ? theme.colors.dark[5]
         : theme.colors.gray[1],
 
-    "@media (max-width: 755px)": {
+    "@media (max-width: 568px)": {
       display: "none",
     },
-  },
-
-  dotsLeft: {
-    left: 0,
-    top: 0,
   },
 
   title: {
@@ -108,11 +104,15 @@ export default function Home() {
       <Header />
       <Navbar />
       <Container className={classes.wrapper} size={1400}>
-        <Dots className={classes.dots} style={{ left: 0, top: 0 }} />
-        <Dots className={classes.dots} style={{ left: 60, top: 0 }} />
-        <Dots className={classes.dots} style={{ left: 0, top: 140 }} />
-        <Dots className={classes.dots} style={{ right: 0, top: 60 }} />
-        <Dots className={classes.dots} style={{ right: 60, top: 200 }} />
+        <Dots
+          dotPositions={[
+            { left: 0, top: 0 },
+            { left: 60, top: 0 },
+            { left: 0, top: 140 },
+            { right: 0, top: 60 },
+            { right: 60, top: 200 },
+          ]}
+        />
         <Box className={classes.inner}>
           <Title className={classes.title}>
             AI-Powered{" "}
@@ -138,19 +138,9 @@ export default function Home() {
               achieve mastery in the core concepts of Engineering.
             </Text>
           </Container>
-          <Box className={classes.controls}>
-            <Link href="#">
-              <Button
-                className={classes.control}
-                size="lg"
-                variant="default"
-                color="gray"
-              >
-                What&apos;s LeetNode?
-              </Button>
-            </Link>
-            <Link href="/courses">
-              <Button className={classes.control} size="lg">
+          <Box className={classes.controls} mt="xl">
+            <Link href="/courses" passHref>
+              <Button component="a" className={classes.control} size="lg">
                 Start Your Journey
               </Button>
             </Link>

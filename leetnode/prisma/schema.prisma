@@ -74,10 +74,24 @@ model Attempt {
 }
 
 // QUESTION BANK
+enum Level {
+  Foundational
+  Intermediate
+  Advanced
+}
+
+enum CourseType {
+  Content
+  Quiz
+}
+
 model Course {
   courseSlug          String               @id
   courseName          String
-  courseCompletion    Int                  @default(0)
+  courseDescription   String
+  courseImage         String
+  courseLevel         Level
+  type                CourseType
   moduleCode          String?
   moduleTitle         String?
   week                Int?
@@ -99,6 +113,7 @@ model CoursePage {
 model UserCourseQuestion {
   userId                 String
   courseSlug             String
+  courseCompletion       Int                     @default(0)
   user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   course                 Course                  @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
   questionsWithAddedTime QuestionWithAddedTime[]
@@ -119,18 +134,12 @@ model Mastery {
 model Topic {
   topicSlug  String     @id
   topicName  String
-  topicLevel TopicLevel
+  topicLevel Level
   questions  Question[]
   mastery    Mastery[]
   courses    Course[]
 
   @@index([topicLevel])
-}
-
-enum TopicLevel {
-  Foundational
-  Intermediate
-  Advanced
 }
 
 model QuestionWithAddedTime {

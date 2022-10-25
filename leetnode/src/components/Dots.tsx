@@ -1,9 +1,25 @@
+import { createStyles } from "@mantine/core";
+
+const useStyles = createStyles((theme) => ({
+  dots: {
+    position: "absolute",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[5]
+        : theme.colors.gray[1],
+
+    "@media (max-width: 568px)": {
+      display: "none",
+    },
+  },
+}));
+
 export interface DotsProps extends React.ComponentPropsWithoutRef<'svg'> {
   size?: number;
   radius?: number;
 }
 
-export function Dots({ size = 185, radius = 2.5, ...others }: DotsProps) {
+export function DotsSvg({ size = 185, radius = 2.5, ...others }: DotsProps) {
   return (
     <svg
       aria-hidden
@@ -115,5 +131,29 @@ export function Dots({ size = 185, radius = 2.5, ...others }: DotsProps) {
       <rect width="5" height="5" x="160" y="180" rx={radius} />
       <rect width="5" height="5" x="180" y="180" rx={radius} />
     </svg>
+  );
+}
+
+export type DotPositionType = {
+  top?: number;
+  left?: number;
+  right?: number;
+  bottom?: number;
+}
+
+export default function Dots({ dotPositions }: { dotPositions: DotPositionType[] }) {
+  const { classes } = useStyles();
+  return (
+    <>
+      {
+        dotPositions.map((dotPosition, index) => (
+            <DotsSvg
+              key={index}
+              style={dotPosition}
+              className={classes.dots} 
+            />
+        )
+      )}
+    </>
   );
 }

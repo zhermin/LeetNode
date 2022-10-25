@@ -1,5 +1,4 @@
 import {
-  PrismaClient,
   Course,
   Answer,
   Attempt,
@@ -379,7 +378,6 @@ export async function getStaticProps(
   context: GetSessionParams & { params: { courseSlug: string } }
 ) {
   const session = await getSession(context);
-  const prisma = new PrismaClient();
 
   const displayData = async (request: { courseSlug: string }) => {
     try {

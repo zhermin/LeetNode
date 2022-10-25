@@ -21,11 +21,14 @@ export default defineNextConfig({
     defaultLocale: "en",
   },
   images: {
-    domains: ["res.cloudinary.com", "lh3.googleusercontent.com", "robohash.org"],
+    domains: [
+      "res.cloudinary.com",
+      "lh3.googleusercontent.com",
+      "images.unsplash.com",
+      "robohash.org",
+    ],
   },
   experimental: {
-    swcPlugins: [
-      ['next-superjson-plugin', {}],
-    ],
+    swcPlugins: [["next-superjson-plugin", {}]],
   },
 });

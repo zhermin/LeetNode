@@ -1,7 +1,3 @@
-import { useSession, signIn, signOut } from "next-auth/react";
-import Image from "next/future/image";
-import Link from "next/link";
-import { useState } from "react";
 import {
   createStyles,
   Container,
@@ -15,7 +11,6 @@ import {
   SegmentedControl,
   Center,
 } from "@mantine/core";
-import { NextLink } from "@mantine/next";
 import {
   IconBook,
   IconStar,
@@ -25,6 +20,13 @@ import {
   IconSun,
   IconMoon,
 } from "@tabler/icons";
+import { useMediaQuery } from "@mantine/hooks";
+import { NextLink } from "@mantine/next";
+
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/future/image";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -76,7 +78,7 @@ const useStyles = createStyles((theme) => ({
 
   userName: {
     color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    [theme.fn.smallerThan("xs")]: {
+    [theme.fn.smallerThan("sm")]: {
       display: "none",
     },
   },
@@ -90,16 +92,29 @@ const useStyles = createStyles((theme) => ({
 export default function Navbar() {
   const session = useSession();
 
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-
   const { classes, theme, cx } = useStyles();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
   return (
     <Box className={classes.header}>
       <Container className={classes.mainSection}>
         <Group position="apart">
-          <Box className={classes.logoFull}>
+          {mobile ? (
+            <Link href="/">
+              <a>
+                <Image
+                  src="/logo/leetnode-logo-square.png"
+                  alt="LeetNode"
+                  width="0"
+                  height="0"
+                  sizes="100vw"
+                  className="h-6 w-full rounded-full"
+                />
+              </a>
+            </Link>
+          ) : (
             <Link href="/">
               <a>
                 <Image
@@ -112,21 +127,7 @@ export default function Navbar() {
                 />
               </a>
             </Link>
-          </Box>
-          <Box className={classes.logoSmall}>
-            <Link href="/">
-              <a>
-                <Image
-                  src="/logo/leetnode-logo-square.png"
-                  alt="LeetNode"
-                  width="0"
-                  height="0"
-                  sizes="100vw"
-                  className="h-8 w-full rounded-full"
-                />
-              </a>
-            </Link>
-          </Box>
+          )}
 
           {session.status === "unauthenticated" && (
             <Button color="cyan" onClick={() => signIn("google")}>
@@ -151,13 +152,6 @@ export default function Navbar() {
                   })}
                 >
                   <Group spacing={7}>
-                    <Image
-                      src={session?.data?.user?.image || ""}
-                      alt={session?.data?.user?.name || ""}
-                      className="mr-2 rounded-full"
-                      width={25}
-                      height={25}
-                    />
                     <Text
                       className={classes.userName}
                       sx={{ lineHeight: 1 }}
@@ -166,6 +160,13 @@ export default function Navbar() {
                     >
                       {session?.data?.user?.name}
                     </Text>
+                    <Image
+                      src={session?.data?.user?.image || ""}
+                      alt={session?.data?.user?.name || ""}
+                      className="ml-1 rounded-full"
+                      width={25}
+                      height={25}
+                    />
                     <IconChevronDown size={12} stroke={1.5} />
                   </Group>
                 </UnstyledButton>

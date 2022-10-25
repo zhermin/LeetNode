@@ -30,7 +30,14 @@ const LeetNode: AppType<{
   session: Session | null;
   dehydratedState: DehydratedState;
 }> = ({ Component, pageProps: { session, dehydratedState, ...pageProps } }) => {
-  const queryClient = React.useRef(new QueryClient()).current;
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 60 * 1000 },
+        },
+      })
+  );
 
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mantine-color-scheme",
@@ -41,15 +48,15 @@ const LeetNode: AppType<{
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
   return (
-    <SessionProvider session={session}>
-      <QueryClientProvider client={queryClient}>
-        <Hydrate state={dehydratedState}>
+    <QueryClientProvider client={queryClient}>
+      <Hydrate state={dehydratedState}>
+        <SessionProvider session={session}>
           <ColorSchemeProvider
             colorScheme={colorScheme}
             toggleColorScheme={toggleColorScheme}
           >
             <MantineProvider
-              theme={{ colorScheme, primaryColor: "cyan" }}
+              theme={{ colorScheme, primaryColor: "cyan", loader: "dots" }}
               emotionCache={appendCache}
               withGlobalStyles
               withNormalizeCSS
@@ -58,9 +65,9 @@ const LeetNode: AppType<{
             </MantineProvider>
           </ColorSchemeProvider>
           <ReactQueryDevtools />
-        </Hydrate>
-      </QueryClientProvider>
-    </SessionProvider>
+        </SessionProvider>
+      </Hydrate>
+    </QueryClientProvider>
   );
 };
 
