@@ -5,9 +5,8 @@ import Navbar from "@/components/Navbar";
 import MainWrapper from "@/components/MainWrapper";
 import axios from "axios";
 
-import { PrismaClient, Topic, Course } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db/client";
+import { Topic, Course } from "@prisma/client";
 
 interface courseProps {
   course: Course[];

@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
-import { PrismaClient, Mastery } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db/client";
+import { Mastery } from "@prisma/client";
 
 export default async function handler(
   req: NextApiRequest,

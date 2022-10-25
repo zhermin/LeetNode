@@ -1,15 +1,13 @@
 import Navbar from "@/components/Navbar";
 import Header from "@/components/Header";
 import MainWrapper from "@/components/MainWrapper";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/server/db/client";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import axios from "axios";
 import { getSession } from "next-auth/react";
 import Link from "next/link";
-
-const prisma = new PrismaClient();
 
 export async function getStaticPaths() {
   const courses = await prisma.course.findMany();
@@ -23,7 +21,6 @@ export async function getStaticPaths() {
 
 export async function getStaticProps(context: any) {
   const session = await getSession(context);
-  const prisma = new PrismaClient();
   const test = await prisma.course.findMany();
 
   test.map((e) => console.log(e.courseSlug));

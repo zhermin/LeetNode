@@ -8,10 +8,9 @@ import axios from "axios";
 import Latex from "react-latex-next";
 import Link from "next/link";
 
-import { PrismaClient, Course } from "@prisma/client";
-import { getSession } from "next-auth/react";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db/client";
+import { Course } from "@prisma/client";
+import { getSession, GetSessionParams } from "next-auth/react";
 
 export async function getStaticPaths() {
   const courses: Course[] = await prisma.course.findMany();
@@ -23,9 +22,10 @@ export async function getStaticPaths() {
   return { paths, fallback: false };
 }
 
-export async function getStaticProps(context: any) {
+export async function getStaticProps(
+  context: GetSessionParams & { params: { courseSlug: string } }
+) {
   const session = await getSession(context);
-  const prisma = new PrismaClient();
 
   const displayData = async (request: { courseSlug: string }) => {
     try {
