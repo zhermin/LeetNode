@@ -14,10 +14,10 @@ export default async function handler(
   }) => {
     try {
       //update mastery of student
-      const res = await axios.post(
-        `http://127.0.0.1:8000/update-state/${req.id}/${req.topicSlug}/${String(
-          req.correct
-        )}`
+      //prettier-ignore
+      const res = await axios.patch(
+        `https://api-deployment.onrender.com/update-state/${req.id}/${req.topicSlug}/${String(req.correct)}`,
+        req
       ); //use data destructuring to get data from the promise object
       return res.data;
     } catch (error) {

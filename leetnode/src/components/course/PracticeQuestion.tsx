@@ -2,7 +2,6 @@ import { Key } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Latex from "react-latex-next";
-import ProgressBar from "./ProgressBar";
 
 const LoadTopic = ({
   questionDisplay,
@@ -87,7 +86,7 @@ const LoadTopic = ({
       // }
       const updateMastery = async (request: {
         id: string;
-        skillSlug: string;
+        topicSlug: string;
         correct: number;
       }) => {
         try {
@@ -105,7 +104,7 @@ const LoadTopic = ({
       //should output mastery skill
       const updated = await updateMastery({
         id: user[0].id,
-        skillSlug: questionDisplay[currentQuestion].question.topicSlug,
+        topicSlug: questionDisplay[currentQuestion].question.topicSlug,
         correct: attempt[currentQuestion]?.isCorrect as number,
       });
       console.log(user[0].id);
@@ -129,7 +128,7 @@ const LoadTopic = ({
   return (
     <>
       {/* test functionality with User.Id and once API endpoint for Jasmine's part done */}
-      {questionDisplay.map(
+      {/* {questionDisplay.map(
         (eachProgress: {
           question: {
             topicSlug: string;
@@ -145,7 +144,7 @@ const LoadTopic = ({
             key={eachProgress.question.questionId}
           />
         )
-      )}
+      )} */}
 
       <div className="flex w-full flex-col items-start">
         <h4 className="mt-10 text-xl text-black">
