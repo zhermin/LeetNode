@@ -1,5 +1,6 @@
 import {
   createStyles,
+  Header,
   Container,
   Button,
   UnstyledButton,
@@ -28,9 +29,10 @@ import Link from "next/link";
 import Image from "next/future/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
+const HEADER_HEIGHT = 80;
+
 const useStyles = createStyles((theme) => ({
   header: {
-    paddingTop: theme.spacing.sm,
     backgroundColor:
       theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
     borderBottom: `1px solid ${
@@ -38,8 +40,11 @@ const useStyles = createStyles((theme) => ({
     }`,
   },
 
-  mainSection: {
-    paddingBottom: theme.spacing.sm,
+  inner: {
+    height: HEADER_HEIGHT,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   logoFull: {
@@ -98,9 +103,9 @@ export default function Navbar() {
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
   return (
-    <Box className={classes.header}>
-      <Container className={classes.mainSection}>
-        <Group position="apart">
+    <Header className={classes.header} height={HEADER_HEIGHT}>
+      <Container>
+        <Box className={classes.inner}>
           {mobile ? (
             <Link href="/">
               <a>
@@ -252,8 +257,8 @@ export default function Navbar() {
               </Menu.Dropdown>
             </Menu>
           )}
-        </Group>
+        </Box>
       </Container>
-    </Box>
+    </Header>
   );
 }

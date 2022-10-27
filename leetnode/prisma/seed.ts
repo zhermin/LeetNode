@@ -2,7 +2,6 @@ import { PrismaClient, QuestionDifficulty } from "@prisma/client";
 import {
   Topics,
   Courses,
-  CoursePages,
   Questions,
   Answers,
   QuestionMedias,
@@ -79,11 +78,6 @@ async function main() {
     });
   }
   console.log("Courses created");
-
-  await prisma.coursePage.createMany({
-    data: CoursePages,
-  });
-  console.log("Course Pages created");
 
   // Add 5 random medium questions to the Welcome Quiz for first user found for testing
   // These random question generation for quizzes will be moved to its own functions later

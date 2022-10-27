@@ -1,4 +1,4 @@
-import { createStyles, Text } from "@mantine/core";
+import { createStyles, Footer as MantineFooter, Text } from "@mantine/core";
 
 const useStyles = createStyles((theme) => ({
   footer: {
@@ -20,12 +20,12 @@ export default function Footer() {
   const { classes } = useStyles();
 
   return (
-    <div className={classes.footer}>
+    <MantineFooter className={classes.footer} height={60}>
       <div className={classes.inner}>
         <Text color="dimmed" size="sm">
           © 2022 LeetNode. All rights reserved.
         </Text>
       </div>
-    </div>
+    </MantineFooter>
   );
 }

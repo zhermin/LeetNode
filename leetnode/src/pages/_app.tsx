@@ -1,8 +1,8 @@
 // Next and Next-Auth
+import React from "react";
 import type { AppType } from "next/app";
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import React from "react";
 
 // React-Query
 import {
@@ -25,19 +25,16 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 const appendCache = createEmotionCache({ key: "mantine", prepend: false });
 
+// React PDF Renderer
+import { pdfjs } from "react-pdf";
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 // Main App
 const LeetNode: AppType<{
   session: Session | null;
   dehydratedState: DehydratedState;
 }> = ({ Component, pageProps: { session, dehydratedState, ...pageProps } }) => {
-  const [queryClient] = React.useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: { staleTime: 60 * 1000 },
-        },
-      })
-  );
+  const [queryClient] = React.useState(() => new QueryClient());
 
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mantine-color-scheme",
@@ -64,7 +61,7 @@ const LeetNode: AppType<{
               <Component {...pageProps} />
             </MantineProvider>
           </ColorSchemeProvider>
-          <ReactQueryDevtools />
+          <ReactQueryDevtools position="bottom-right" />
         </Hydrate>
       </QueryClientProvider>
     </SessionProvider>

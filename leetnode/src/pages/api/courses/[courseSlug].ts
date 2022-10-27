@@ -19,14 +19,24 @@ export default async function handler(
       courseSlug: courseSlug,
     },
     include: {
-      topics: true,
-      pages: true,
+      topics: {
+        include: {
+          mastery: {
+            where: {
+              userId: session?.user?.id,
+            },
+          },
+        },
+      },
       userCourseQuestions: {
         where: {
           userId: session?.user?.id,
         },
         include: {
           questionsWithAddedTime: {
+            include: {
+              question: true,
+            },
             orderBy: {
               addedTime: "asc",
             },

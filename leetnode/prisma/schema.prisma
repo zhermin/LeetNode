@@ -92,22 +92,15 @@ model Course {
   courseImage         String
   courseLevel         Level
   type                CourseType
-  moduleCode          String?
-  moduleTitle         String?
+  moduleCode          String
+  moduleTitle         String
   week                Int?
   studio              Int?
+  slide               String?              @db.VarChar(500)
+  video               String?              @db.VarChar(500)
+  markdown            String?              @db.VarChar(10000)
   topics              Topic[]
   userCourseQuestions UserCourseQuestion[]
-  pages               CoursePage[]
-}
-
-model CoursePage {
-  pageId     Int
-  courseSlug String
-  markdown   String @db.VarChar(10000)
-  course     Course @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
-
-  @@id([pageId, courseSlug])
 }
 
 model UserCourseQuestion {
