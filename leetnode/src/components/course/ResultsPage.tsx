@@ -1,7 +1,7 @@
 import { Key } from "react";
 import ProgressBar from "@/components/ProgressBar";
 
-const ShowResults = ({ questionDisplay, attempt, user, masteryLevel }: any) => {
+const ShowResults = ({ questionDisplay, attempt, user }: any) => {
   console.log(user);
   const arrScore = attempt.map(
     (questions: { isCorrect: number }) => questions.isCorrect
@@ -49,7 +49,6 @@ const ShowResults = ({ questionDisplay, attempt, user, masteryLevel }: any) => {
               topicSlug={eachProgress.question.topicSlug}
               userId={user[0].id}
               topicName={eachProgress.question.topic.topicName}
-              masteryLevel={masteryLevel}
               key={eachProgress.questionId}
             />
           )

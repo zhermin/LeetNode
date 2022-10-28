@@ -150,7 +150,6 @@ export default function CourseMainPage({
   questionDisplay,
   user,
   courseName,
-  masteryLevel,
 }: {
   questionDisplay: allQuestionsType;
   user: User[];
@@ -304,7 +303,6 @@ export default function CourseMainPage({
             questionDisplay={questionDisplay}
             attempt={attempt}
             user={user}
-            masteryLevel={masteryLevel}
           />
         ) : active === "Discussion" ? (
           <div>Discussion</div>
@@ -333,6 +331,7 @@ export async function getStaticProps(
 
   const displayData = async (request: { courseSlug: string }) => {
     try {
+      console.log(request);
       const res = await axios.post(
         "http://localhost:3000/api/question/questions",
         request
@@ -343,9 +342,8 @@ export async function getStaticProps(
     }
   };
   const display = await displayData(context.params);
-
-  const questionDisplay = display.questionsWithAddedTime;
-
+  const questionDisplay = display[0].questionsWithAddedTime;
+  console.log(questionDisplay);
   const course = await prisma.course.findUnique({
     where: {
       courseSlug: context.params.courseSlug,
@@ -354,14 +352,20 @@ export async function getStaticProps(
       courseName: true,
     },
   });
-  const topic = await prisma.topic.findMany();
-  console.log(topic);
+  // const topic = await prisma.topic.findMany();
 
   const users = await prisma.user.findMany({
     where: {
       id: session?.user?.id,
     },
   });
+  //adds new student with skill if does not exist student does not have the topic for the course
+  questionDisplay.map((eachQuestion: { question: { topicSlug: string } }) =>
+    axios.post(
+      `https://pybkt-api-deployment.herokuapp.com/add-student/${users[0]?.id}/${eachQuestion.question.topicSlug}`,
+      {} // NOTE: will throw an error if student exist, but cannot get rid due to JS security concerns
+    )
+  );
 
   // // return smth like
   //{
@@ -377,20 +381,12 @@ export async function getStaticProps(
   // [Object], [Object], [Object], [Object] ]
   // }
 
-  const masteryLevel = await prisma.mastery.findMany({
-    where: {
-      userId: session?.user?.id,
-    },
-  });
-  console.log(users);
-
   return {
     props: {
       courseName: course?.courseName,
       questionDisplay,
       user: users,
       url: context.params,
-      masteryLevel: masteryLevel,
     },
   };
 }
