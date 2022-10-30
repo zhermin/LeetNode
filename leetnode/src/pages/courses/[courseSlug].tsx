@@ -30,6 +30,7 @@ import LeetNodeFooter from "@/components/Footer";
 import PracticeQuestion from "@/components/course/PracticeQuestion";
 import ResultsPage from "@/components/course/ResultsPage";
 import CourseDiscussion from "@/components/course/CourseDiscussion";
+import QuestionHistory from "@/components/course/QuestionHistory";
 import MarkdownLatex from "@/components/MarkdownLatex";
 import { Document, Page } from "react-pdf";
 
@@ -64,6 +65,7 @@ import {
   IconArrowBarLeft,
   IconArrowLeft,
   IconArrowRight,
+  IconChartLine,
 } from "@tabler/icons";
 
 type CourseInfoType =
@@ -125,7 +127,9 @@ export default function CourseMainPage() {
   >([]);
   const [questionHistory, setQuestionHistory] = useState<
     {
-      questionId: number;
+      questionContent: string;
+      questionNumber: number;
+      questionMedia: string;
       topicName: string;
       questionDifficulty: string;
       isCorrect: number;
@@ -162,7 +166,8 @@ export default function CourseMainPage() {
     ],
     practice: [
       { label: "Question", icon: IconZoomQuestion },
-      { label: "Attempts", icon: IconClipboardCheck },
+      { label: "Attempts", icon: IconChartLine },
+      { label: "Mastery", icon: IconClipboardCheck },
       { label: "Discussion", icon: IconMessages },
     ],
   };
@@ -322,6 +327,8 @@ export default function CourseMainPage() {
             setQuestionHistory={setQuestionHistory}
           />
         ) : active === "Attempts" ? (
+          <QuestionHistory questionHistory={questionHistory} />
+        ) : active === "Mastery" ? (
           <ResultsPage
             questionDisplay={
               course.userCourseQuestions[0]?.questionsWithAddedTime

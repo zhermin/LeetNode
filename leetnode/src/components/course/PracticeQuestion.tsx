@@ -1,9 +1,10 @@
 import { Key, useState } from "react";
 import axios from "axios";
-import Image from "next/image";
+// import Image from "next/image";
 import Latex from "react-latex-next";
 import { Center, Loader } from "@mantine/core";
 import { useSession } from "next-auth/react";
+import { Image } from "@mantine/core";
 
 const LoadTopic = ({
   questionDisplay,
@@ -18,6 +19,7 @@ const LoadTopic = ({
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
+  const [endReached, setEndReached] = useState(false);
 
   const handleAnswerOption = (answer: string) => {
     setSelectedOptions([
@@ -57,7 +59,7 @@ const LoadTopic = ({
     const prevQues = currentQuestion - 1;
     prevQues >= 0 && setCurrentQuestion(prevQues);
   };
-
+  console.log(questionDisplay[currentQuestion].question.topic.topicName);
   const handleNext = async () => {
     if (currentQuestion in selectedOptions) {
       setQuestionHistory(
@@ -67,15 +69,21 @@ const LoadTopic = ({
               questionNumber: string;
               questionId: number;
               topicName: string;
+              questionDifficulty: string;
               isCorrect: number;
             }
           ]
         ) => [
           ...current,
           {
+            questionContent:
+              questionDisplay[currentQuestion].question.questionContent,
             questionNumber: currentQuestion,
-            questionId: questionDisplay[currentQuestion].question.questionId,
-            topicName: questionDisplay[currentQuestion].question.questionName,
+            questionMedia:
+              questionDisplay[currentQuestion].question.questionMedia[0]
+                .questionMediaURL,
+            topicName:
+              questionDisplay[currentQuestion].question.topic.topicName,
             questionDifficulty:
               questionDisplay[currentQuestion].question.questionDifficulty,
             isCorrect: attempt[currentQuestion]?.isCorrect,
@@ -129,6 +137,7 @@ const LoadTopic = ({
 
       if (currentQuestion + 1 == questionDisplay.length) {
         console.log("reached the end");
+        setEndReached(true);
       } else {
         //go to next page
         const nextQues = currentQuestion + 1;
@@ -159,87 +168,100 @@ const LoadTopic = ({
           />
         )
       )} */}
-      {loading === true ? (
-        <Center style={{ height: 500 }}>
-          <Loader />
-        </Center>
+      {endReached === false ? (
+        <>
+          {loading === true ? (
+            <Center style={{ height: 500 }}>
+              <Loader color="cyan" size="xl" variant="oval" />
+            </Center>
+          ) : (
+            <>
+              <div className="flex w-full flex-col items-start">
+                <h4 className="mt-10 text-xl text-black">
+                  Question {currentQuestion + 1} of {questionDisplay.length}
+                </h4>
+                <div className="mt-4 text-2xl text-black">
+                  <Latex>
+                    {questionDisplay[currentQuestion].question.questionContent}
+                  </Latex>
+                </div>
+              </div>
+              <div className="flex w-full flex-col" style={{ width: 500 }}>
+                <Image
+                  src={
+                    questionDisplay[currentQuestion].question.questionMedia[0]
+                      .questionMediaURL as string
+                  }
+                  alt={
+                    questionDisplay[currentQuestion].question
+                      .questionContent as string
+                  }
+                  fit="contain"
+                  radius="md"
+                  className="h-auto w-1/2 object-contain pt-6 pb-6"
+                />
+              </div>
+              <div className="flex w-full flex-col">
+                {questionDisplay[currentQuestion].question.answers.map(
+                  (
+                    answer: { answerContent: string },
+                    index: Key | null | undefined
+                  ) => (
+                    <div
+                      key={index}
+                      className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
+                      onClick={() => handleAnswerOption(answer.answerContent)}
+                    >
+                      <input
+                        type="radio"
+                        name={answer.answerContent}
+                        value={answer.answerContent}
+                        checked={
+                          answer.answerContent ===
+                          (selectedOptions[currentQuestion]
+                            ?.answerByUser as string)
+                        }
+                        onChange={() =>
+                          handleAnswerOption(answer.answerContent)
+                        }
+                        className="h-6 w-6 bg-white"
+                      />
+                      <Latex>{answer.answerContent}</Latex>
+                    </div>
+                  )
+                )}
+              </div>
+              <div className="mt-4 flex w-full justify-between text-white">
+                <button
+                  onClick={handlePrevious}
+                  className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+                >
+                  Previous
+                </button>
+                {currentQuestion + 1 === questionDisplay.length &&
+                endReached === false ? (
+                  <button
+                    onClick={handleNext}
+                    className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+                  >
+                    End Quiz
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNext}
+                    className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
+                  >
+                    Next
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </>
       ) : (
         <>
-          <div className="flex w-full flex-col items-start">
-            <h4 className="mt-10 text-xl text-black">
-              Question {currentQuestion + 1} of {questionDisplay.length}
-            </h4>
-            <div className="mt-4 text-2xl text-black">
-              <Latex>
-                {questionDisplay[currentQuestion].question.questionContent}
-              </Latex>
-            </div>
-          </div>
-          <div className="flex w-full flex-col">
-            <Image
-              src={
-                questionDisplay[currentQuestion].question.questionMedia[0]
-                  .questionMediaURL as string
-              }
-              alt={
-                questionDisplay[currentQuestion].question
-                  .questionContent as string
-              }
-              width="0"
-              height="0"
-              sizes="100vw"
-              className="h-auto w-1/2 object-contain pt-6 pb-6"
-            />
-          </div>
-          <div className="flex w-full flex-col">
-            {questionDisplay[currentQuestion].question.answers.map(
-              (
-                answer: { answerContent: string },
-                index: Key | null | undefined
-              ) => (
-                <div
-                  key={index}
-                  className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
-                  onClick={() => handleAnswerOption(answer.answerContent)}
-                >
-                  <input
-                    type="radio"
-                    name={answer.answerContent}
-                    value={answer.answerContent}
-                    checked={
-                      answer.answerContent ===
-                      (selectedOptions[currentQuestion]?.answerByUser as string)
-                    }
-                    onChange={() => handleAnswerOption(answer.answerContent)}
-                    className="h-6 w-6 bg-white"
-                  />
-                  <Latex>{answer.answerContent}</Latex>
-                </div>
-              )
-            )}
-          </div>
-          <div className="mt-4 flex w-full justify-between text-white">
-            <button
-              onClick={handlePrevious}
-              className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-            >
-              Previous
-            </button>
-            {currentQuestion + 1 === questionDisplay.length ? (
-              <button
-                onClick={handleNext}
-                className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-              >
-                End Quiz
-              </button>
-            ) : (
-              <button
-                onClick={handleNext}
-                className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-              >
-                Next
-              </button>
-            )}
+          <div>
+            End reached, please refer to the Attempts tab for your score.
           </div>
         </>
       )}
