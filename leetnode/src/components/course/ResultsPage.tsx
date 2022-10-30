@@ -1,8 +1,7 @@
 import { Key } from "react";
 import ProgressBar from "@/components/ProgressBar";
 
-const ShowResults = ({ questionDisplay, attempt, user }: any) => {
-  console.log(user);
+const ShowResults = ({ questionDisplay, attempt }: any) => {
   const arrScore = attempt.map(
     (questions: { isCorrect: number }) => questions.isCorrect
   );
@@ -47,7 +46,6 @@ const ShowResults = ({ questionDisplay, attempt, user }: any) => {
           }) => (
             <ProgressBar
               topicSlug={eachProgress.question.topicSlug}
-              userId={user[0].id}
               topicName={eachProgress.question.topic.topicName}
               key={eachProgress.questionId}
             />

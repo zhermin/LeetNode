@@ -3,10 +3,10 @@ import axios from "axios";
 import Image from "next/image";
 import Latex from "react-latex-next";
 import { Center, Loader } from "@mantine/core";
+import { useSession } from "next-auth/react";
 
 const LoadTopic = ({
   questionDisplay,
-  user,
   selectedOptions,
   setSelectedOptions,
   attempt,
@@ -15,6 +15,8 @@ const LoadTopic = ({
   setCurrentQuestion,
   setQuestionHistory,
 }: any) => {
+  const session = useSession();
+
   const [loading, setLoading] = useState(false);
 
   const handleAnswerOption = (answer: string) => {
@@ -24,6 +26,8 @@ const LoadTopic = ({
       } as any),
     ]);
     setSelectedOptions([...selectedOptions]);
+
+    console.log(questionDisplay);
 
     //check if answer correct
     const data = questionDisplay[currentQuestion].question.answers;
@@ -111,13 +115,13 @@ const LoadTopic = ({
 
       //should output mastery skill
       const updated = await updateMastery({
-        id: user[0].id,
+        id: session?.data?.user?.id as string,
         topicSlug: questionDisplay[currentQuestion].question.topicSlug,
         correct: attempt[currentQuestion]?.isCorrect as number,
       });
       setLoading(false);
       console.log(loading);
-      console.log(user[0].id);
+      console.log(session?.data?.user?.id);
       console.log(questionDisplay[currentQuestion].question.topicSlug);
       console.log(attempt[currentQuestion]?.isCorrect);
       console.log(updated);
@@ -157,7 +161,7 @@ const LoadTopic = ({
       )} */}
       {loading === true ? (
         <Center style={{ height: 500 }}>
-          <Loader color="cyan" size="xl" variant="oval" />
+          <Loader />
         </Center>
       ) : (
         <>

@@ -7,26 +7,31 @@ import {
   QuestionWithAddedTime,
   Topic,
   UserCourseQuestion,
-  User,
   Mastery,
 } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useState } from "react";
-import { getSession, GetSessionParams } from "next-auth/react";
+import { getSession, GetSessionParams, signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import {
+  dehydrate,
+  QueryCache,
+  QueryClient,
+  useQuery,
+} from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import LeetNodeHeader from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
 import LeetNodeFooter from "@/components/Footer";
 import PracticeQuestion from "@/components/course/PracticeQuestion";
 import ResultsPage from "@/components/course/ResultsPage";
-import AdditionalResources from "@/components/course/AdditionalResources";
 import CourseDiscussion from "@/components/course/CourseDiscussion";
-import CourseOverview from "@/components/course/CourseOverview";
-import LectureSlides from "@/components/course/LectureSlides";
-import LectureVideos from "@/components/course/LectureVideos";
+import MarkdownLatex from "@/components/MarkdownLatex";
+import { Document, Page } from "react-pdf";
 
 import {
   createStyles,
@@ -40,6 +45,13 @@ import {
   Burger,
   MediaQuery,
   Text,
+  Center,
+  Loader,
+  Button,
+  Tooltip,
+  Group,
+  Stack,
+  Title,
 } from "@mantine/core";
 import {
   IconApps,
@@ -50,7 +62,320 @@ import {
   IconZoomQuestion,
   IconClipboardCheck,
   IconArrowBarLeft,
+  IconArrowLeft,
+  IconArrowRight,
 } from "@tabler/icons";
+
+type CourseInfoType =
+  | (Course & {
+      topics: (Topic & {
+        mastery: Mastery[];
+      })[];
+      userCourseQuestions: UserCourseQuestion &
+        {
+          questionsWithAddedTime: (QuestionWithAddedTime & {
+            question: Question & {
+              answers: Answer[];
+              attempts: Attempt[];
+              topic: Topic;
+              questionMedia: QuestionMedia[];
+            };
+          })[];
+        }[];
+    })
+  | null;
+
+const fetchCourse: (
+  courseSlug: string
+) => Promise<CourseInfoType | null> = async (courseSlug) => {
+  try {
+    const { data } = await axios.get(`/api/courses/${courseSlug}`);
+    return data;
+  } catch (error) {
+    const err = error as AxiosError;
+    if (err.response?.status === 401) {
+      signIn("google");
+    }
+    console.log(error);
+    throw error;
+  }
+};
+
+export default function CourseMainPage() {
+  // Mantine
+  const { theme, classes, cx } = useStyles();
+
+  // States
+  const [opened, setOpened] = useState(false);
+  const [section, setSection] = useState<"learn" | "practice">("learn");
+  const [active, setActive] = useState("Overview");
+
+  const [numPages, setNumPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+  }
+
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<
+    { currentQuestion: number; answerByUser: string }[]
+  >([]);
+  const [attempt, setAttempt] = useState<
+    { currentQuestion: number; isCorrect: number }[]
+  >([]);
+  const [questionHistory, setQuestionHistory] = useState<
+    {
+      questionId: number;
+      topicName: string;
+      questionDifficulty: string;
+      isCorrect: number;
+    }[]
+  >([]);
+
+  // Data Fetched using Axios, Queried by React Query
+  const router = useRouter();
+  const {
+    data: course,
+    isLoading,
+    isFetching,
+    isError,
+  } = useQuery<CourseInfoType | null>(["course", router.query.courseSlug], () =>
+    fetchCourse(router.query.courseSlug as string)
+  );
+
+  if (isLoading || isFetching || !course)
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
+  if (isError) return <div>Something went wrong!</div>;
+
+  // Sidebar Tabs based on Fetched Data
+  const tabs = {
+    learn: [
+      { label: "Overview", icon: IconApps },
+      course.slide ? { label: "Lecture Slides", icon: IconPresentation } : null,
+      course.video ? { label: "Lecture Videos", icon: IconVideo } : null,
+      { label: "Additional Resources", icon: IconReportSearch },
+      { label: "Course Discussion", icon: IconMessages },
+    ],
+    practice: [
+      { label: "Question", icon: IconZoomQuestion },
+      { label: "Attempts", icon: IconClipboardCheck },
+      { label: "Discussion", icon: IconMessages },
+    ],
+  };
+
+  const links = tabs[section].map(
+    (item) =>
+      item && (
+        <a
+          className={cx(classes.link, {
+            [classes.linkActive]: item.label === active,
+          })}
+          key={item.label}
+          onClick={(event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            setActive(item.label);
+          }}
+        >
+          <item.icon className={classes.linkIcon} stroke={1.5} />
+          <span>{item.label}</span>
+        </a>
+      )
+  );
+
+  return (
+    <AppShell
+      className={classes.appshell}
+      navbarOffsetBreakpoint="sm"
+      header={
+        <>
+          <LeetNodeHeader title={course.courseName} />
+          <Header height={80}>
+            <Container
+              style={{ display: "flex", alignItems: "center", height: "100%" }}
+            >
+              <MediaQuery largerThan="sm" styles={{ display: "none" }}>
+                <Burger
+                  opened={opened}
+                  onClick={() => setOpened((opened) => !opened)}
+                  size="sm"
+                  color={theme.colors.gray[6]}
+                  mr="xl"
+                />
+              </MediaQuery>
+              <LeetNodeNavbar />
+            </Container>
+          </Header>
+        </>
+      }
+      footer={<LeetNodeFooter />}
+      navbar={
+        <Sidebar
+          p="md"
+          hiddenBreakpoint="sm"
+          hidden={!opened}
+          width={{ sm: 200, lg: 300 }}
+          className={classes.navbar}
+        >
+          <Sidebar.Section>
+            <Text weight={600} size="lg" align="center" mb="lg">
+              {course.courseName}
+            </Text>
+
+            <SegmentedControl
+              value={section}
+              onChange={(value: "learn" | "practice") => setSection(value)}
+              transitionTimingFunction="ease"
+              fullWidth
+              data={[
+                { label: "Learn", value: "learn" },
+                { label: "Practice", value: "practice" },
+              ]}
+            />
+          </Sidebar.Section>
+
+          <Sidebar.Section mt="xl" grow>
+            {links}
+          </Sidebar.Section>
+
+          <Sidebar.Section className={classes.sidebarFooter}>
+            <Link href="/courses" passHref>
+              <Box className={classes.link} component="a">
+                <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
+                <span>Back to Courses</span>
+              </Box>
+            </Link>
+          </Sidebar.Section>
+        </Sidebar>
+      }
+    >
+      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+        {active === "Overview" ? (
+          <Container>
+            <Title>{course.courseName}</Title>
+            <Text size="xl">{course.courseDescription}</Text>
+          </Container>
+        ) : active === "Lecture Slides" ? (
+          <Stack align="center">
+            <Document file={course.slide} onLoadSuccess={onDocumentLoadSuccess}>
+              <Page pageNumber={pageNumber} />
+            </Document>
+            <Group>
+              <Button
+                onClick={() => {
+                  if (pageNumber > 1) {
+                    setPageNumber(pageNumber - 1);
+                  }
+                }}
+                variant="light"
+              >
+                <IconArrowLeft stroke={1.5} />
+              </Button>
+              <Tooltip label="Jump to Page 1" withArrow position="bottom">
+                <Button variant="light" onClick={() => setPageNumber(1)}>
+                  Page {pageNumber} of {numPages}
+                </Button>
+              </Tooltip>
+              <Button
+                onClick={() => {
+                  if (pageNumber < numPages) {
+                    setPageNumber(pageNumber + 1);
+                  }
+                }}
+                variant="light"
+              >
+                <IconArrowRight stroke={1.5} />
+              </Button>
+            </Group>
+          </Stack>
+        ) : active === "Lecture Videos" ? (
+          <Group className="h-[calc(100vh-180px)]">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${course.video}?rel=0`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </Group>
+        ) : active === "Additional Resources" ? (
+          <MarkdownLatex>{course.markdown ?? defaultMarkdown}</MarkdownLatex>
+        ) : active === "Course Discussion" ? (
+          <CourseDiscussion />
+        ) : active === "Question" ? (
+          <PracticeQuestion
+            questionDisplay={
+              course.userCourseQuestions[0]?.questionsWithAddedTime
+            }
+            selectedOptions={selectedOptions}
+            setSelectedOptions={setSelectedOptions}
+            attempt={attempt}
+            setAttempt={setAttempt}
+            currentQuestion={currentQuestion}
+            setCurrentQuestion={setCurrentQuestion}
+            questionHistory={questionHistory}
+            setQuestionHistory={setQuestionHistory}
+          />
+        ) : active === "Attempts" ? (
+          <ResultsPage
+            questionDisplay={
+              course.userCourseQuestions[0]?.questionsWithAddedTime
+            }
+            attempt={attempt}
+          />
+        ) : active === "Discussion" ? (
+          <div>Discussion</div>
+        ) : (
+          <div>Error</div>
+        )}
+      </ScrollArea.Autosize>
+    </AppShell>
+  );
+}
+
+export async function getStaticPaths() {
+  const courses: Course[] = await prisma.course.findMany();
+
+  const paths = courses.map((course) => ({
+    params: { courseSlug: course.courseSlug },
+  }));
+
+  return { paths, fallback: false };
+}
+
+export async function getStaticProps(
+  context: GetSessionParams & { params: { courseSlug: string } }
+) {
+  const session = await getSession(context);
+  if (!session) signIn("google");
+
+  const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Something went wrong: ${error.message}`);
+        }
+      },
+    }),
+  });
+  await queryClient.prefetchQuery<CourseInfoType | null>(
+    ["course", context.params.courseSlug],
+    () => fetchCourse(context.params.courseSlug)
+  );
+
+  console.log("[PREFETCHED COURSE]");
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryClient),
+    },
+  };
+}
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
@@ -135,258 +460,6 @@ const useStyles = createStyles((theme, _params, getRef) => {
   };
 });
 
-type allQuestionsType = (UserCourseQuestion & {
-  questionsWithAddedTime: (QuestionWithAddedTime & {
-    question: Question & {
-      attempts: Attempt[];
-      topic: Topic;
-      questionMedia: QuestionMedia[];
-      answers: Answer[];
-    };
-  })[];
-})[];
-
-export default function CourseMainPage({
-  questionDisplay,
-  user,
-  courseName,
-}: {
-  questionDisplay: allQuestionsType;
-  user: User[];
-  courseName: string;
-  masteryLevel: Mastery[];
-}) {
-  const [opened, setOpened] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState<
-    { currentQuestion: number; answerByUser: string }[]
-  >([]);
-  const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: number }[]
-  >([]);
-  const [questionHistory, setQuestionHistory] = useState<
-    {
-      questionId: number;
-      topicName: string;
-      questionDifficulty: string;
-      isCorrect: number;
-    }[]
-  >([]);
-
-  const { theme, classes, cx } = useStyles();
-  const [section, setSection] = useState<"learn" | "practice">("learn");
-  const [active, setActive] = useState("Overview");
-
-  const tabs = {
-    learn: [
-      { label: "Overview", icon: IconApps },
-      { label: "Lecture Slides", icon: IconPresentation },
-      { label: "Lecture Videos", icon: IconVideo },
-      { label: "Additional Resources", icon: IconReportSearch },
-      { label: "Course Discussion", icon: IconMessages },
-    ],
-    practice: [
-      { label: "Question", icon: IconZoomQuestion },
-      { label: "Attempts", icon: IconClipboardCheck },
-      { label: "Discussion", icon: IconMessages },
-    ],
-  };
-
-  const links = tabs[section].map((item) => (
-    <a
-      className={cx(classes.link, {
-        [classes.linkActive]: item.label === active,
-      })}
-      key={item.label}
-      onClick={(event: { preventDefault: () => void }) => {
-        event.preventDefault();
-        setActive(item.label);
-      }}
-    >
-      <item.icon className={classes.linkIcon} stroke={1.5} />
-      <span>{item.label}</span>
-    </a>
-  ));
-
-  return (
-    <AppShell
-      className={classes.appshell}
-      navbarOffsetBreakpoint="sm"
-      header={
-        <>
-          <LeetNodeHeader title={courseName} />
-          <Header height={80}>
-            <Container
-              style={{ display: "flex", alignItems: "center", height: "100%" }}
-            >
-              <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                <Burger
-                  opened={opened}
-                  onClick={() => setOpened((opened) => !opened)}
-                  size="sm"
-                  color={theme.colors.gray[6]}
-                  mr="xl"
-                />
-              </MediaQuery>
-              <LeetNodeNavbar />
-            </Container>
-          </Header>
-        </>
-      }
-      footer={<LeetNodeFooter />}
-      navbar={
-        <Sidebar
-          p="md"
-          hiddenBreakpoint="sm"
-          hidden={!opened}
-          width={{ sm: 200, lg: 300 }}
-          className={classes.navbar}
-        >
-          <Sidebar.Section>
-            <Text weight={600} size="lg" align="center" mb="lg">
-              {courseName}
-            </Text>
-
-            <SegmentedControl
-              value={section}
-              onChange={(value: "learn" | "practice") => setSection(value)}
-              transitionTimingFunction="ease"
-              fullWidth
-              data={[
-                { label: "Learn", value: "learn" },
-                { label: "Practice", value: "practice" },
-              ]}
-            />
-          </Sidebar.Section>
-
-          <Sidebar.Section mt="xl" grow>
-            {links}
-          </Sidebar.Section>
-
-          <Sidebar.Section className={classes.sidebarFooter}>
-            <Link href="/courses" passHref>
-              <Box className={classes.link} component="a">
-                <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
-                <span>Back to Courses</span>
-              </Box>
-            </Link>
-          </Sidebar.Section>
-        </Sidebar>
-      }
-    >
-      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
-        {active === "Overview" ? (
-          <CourseOverview />
-        ) : active === "Lecture Slides" ? (
-          <LectureSlides />
-        ) : active === "Lecture Videos" ? (
-          <LectureVideos />
-        ) : active === "Additional Resources" ? (
-          <AdditionalResources />
-        ) : active === "Course Discussion" ? (
-          <CourseDiscussion />
-        ) : active === "Question" ? (
-          <PracticeQuestion
-            questionDisplay={questionDisplay}
-            user={user}
-            selectedOptions={selectedOptions}
-            setSelectedOptions={setSelectedOptions}
-            attempt={attempt}
-            setAttempt={setAttempt}
-            currentQuestion={currentQuestion}
-            setCurrentQuestion={setCurrentQuestion}
-            questionHistory={questionHistory}
-            setQuestionHistory={setQuestionHistory}
-          />
-        ) : active === "Attempts" ? (
-          <ResultsPage
-            questionDisplay={questionDisplay}
-            attempt={attempt}
-            user={user}
-          />
-        ) : active === "Discussion" ? (
-          <div>Discussion</div>
-        ) : (
-          <div>error</div>
-        )}
-      </ScrollArea.Autosize>
-    </AppShell>
-  );
-}
-
-export async function getStaticPaths() {
-  const courses: Course[] = await prisma.course.findMany();
-
-  const paths = courses.map((course) => ({
-    params: { courseSlug: course.courseSlug },
-  }));
-
-  return { paths, fallback: false };
-}
-
-export async function getStaticProps(
-  context: GetSessionParams & { params: { courseSlug: string } }
-) {
-  const session = await getSession(context);
-
-  const displayData = async (request: { courseSlug: string }) => {
-    try {
-      console.log(request);
-      const res = await axios.post(
-        "http://localhost:3000/api/question/questions",
-        request
-      );
-      return res.data;
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const display = await displayData(context.params);
-  const questionDisplay = display[0].questionsWithAddedTime;
-  console.log(questionDisplay);
-  const course = await prisma.course.findUnique({
-    where: {
-      courseSlug: context.params.courseSlug,
-    },
-    select: {
-      courseName: true,
-    },
-  });
-  // const topic = await prisma.topic.findMany();
-
-  const users = await prisma.user.findMany({
-    where: {
-      id: session?.user?.id,
-    },
-  });
-  //adds new student with skill if does not exist student does not have the topic for the course
-  questionDisplay.map((eachQuestion: { question: { topicSlug: string } }) =>
-    axios.post(
-      `https://pybkt-api-deployment.herokuapp.com/add-student/${users[0]?.id}/${eachQuestion.question.topicSlug}`,
-      {} // NOTE: will throw an error if student exist, but cannot get rid due to JS security concerns
-    )
-  );
-
-  // // return smth like
-  //{
-  //   id: 'cl9dkw77d0000um9goo3a3xg9',
-  //   userId: 'cl99wlo0i0000umswnh90pqs6',
-  //   courseSlug: 'welcome-quiz',
-  //   courseCompletion: 0,
-  //   questions:[
-  // {
-  //   topicSlug: 'voltage-division-principle',
-  //   questionContent: 'For the circuit shown in the figure above, what is the voltage V1?'
-  // },
-  // [Object], [Object], [Object], [Object] ]
-  // }
-
-  return {
-    props: {
-      courseName: course?.courseName,
-      questionDisplay,
-      user: users,
-      url: context.params,
-    },
-  };
-}
+const defaultMarkdown = `# Additional Learning Resources by [Khan Academy](https://www.khanacademy.org/)
+            
+<div classname="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;

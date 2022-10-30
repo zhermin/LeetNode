@@ -189,7 +189,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w1s1-fundamentals-of-electricity.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/agscc9MAIok?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "agscc9MAIok",
     topics: ["power", "ohms-law"],
   },
   {
@@ -207,7 +207,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w1s2-electrical-circuit-principles.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/knkSt14499I?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "knkSt14499I",
     topics: [
       "kcl",
       "kvl",
@@ -231,7 +231,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s1-thevenin-equivalent-circuit.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/hmIDKROT9Eg?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "hmIDKROT9Eg",
     topics: ["thevenin-equivalent-circuit"],
   },
   {
@@ -249,7 +249,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s2-circuit-analysis-techniques.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/bHx3FSQM9fg?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "bHx3FSQM9fg",
     topics: ["node-voltage-analysis-technique"],
   },
   {
@@ -267,7 +267,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s1-principles-of-capacitors.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/BsklaRrgQWM?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "BsklaRrgQWM",
     topics: [
       "rc-steady-state-analysis",
       "equivalent-capacitance",
@@ -289,7 +289,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s2-dc-transient-behaviour-of-capacitors.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/AR5bnNADoF8?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "AR5bnNADoF8",
     topics: ["rc-transient-analysis"],
   },
   {
@@ -307,7 +307,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w4s1-principles-of-inductors.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/dd3gaBiJvXc?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "dd3gaBiJvXc",
     topics: [
       "rl-steady-state-analysis",
       "equivalent-inductance",
@@ -330,7 +330,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w7s1-basics-of-operational-amplifiers.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/YZXoTvKaNfU?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "YZXoTvKaNfU",
     topics: [
       "inverting-non-inverting-amplifiers-gains",
       "opamp-circuit-analysis",
@@ -352,7 +352,7 @@ export const Courses: CourseWithTopics = [
     type: CourseType.Content,
     slide:
       "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w8s1-opamp-comparators-and-filters.pdf",
-    video: `<iframe width="560" height="315" src="https://www.youtube.com/embed/tkH9dECGeT0?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    video: "tkH9dECGeT0",
     topics: ["first-order-low-pass-filters", "first-order-high-pass-filters"],
   },
 ];
@@ -360,6 +360,7 @@ export const Courses: CourseWithTopics = [
 export const Questions: Question[] = [
   {
     questionId: 1,
+    variationId: 1,
     topicSlug: "ohms-law",
     questionContent:
       "For the circuit shown in the figure above, what is the value of current I1?",
@@ -367,6 +368,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 2,
+    variationId: 1,
     topicSlug: "voltage-division-principle",
     questionContent:
       "For the circuit shown in the figure above, what is the voltage V1?",
@@ -374,6 +376,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 3,
+    variationId: 1,
     topicSlug: "equivalent-resistance-in-series-or-parallel",
     questionContent:
       "A current of 3 A flows through a resistor network as shown in the figure above. The voltage difference \\(V_{XY}\\) (given by \\(V_X\\) - \\(V_Y\\)) is",
@@ -381,6 +384,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 4,
+    variationId: 1,
     topicSlug: "thevenin-equivalent-circuit",
     questionContent:
       "What is the value of R that will result in a current of I = 0.25 A passing through R? (Hint: Use Thevenin equivalent circuit)",
@@ -388,6 +392,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 5,
+    variationId: 1,
     topicSlug: "voltage-division-principle",
     questionContent:
       "What is the maximum power that can be utilized by the variable load R?",
@@ -395,6 +400,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 6,
+    variationId: 1,
     topicSlug: "thevenin-equivalent-circuit",
     questionContent:
       "For the circuit shown in the figure above, what is the Thevenin equivalent circuit as seen by the load RL?",
@@ -402,6 +408,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 7,
+    variationId: 1,
     topicSlug: "node-voltage-analysis-technique",
     questionContent:
       "For the circuit shown in the figure above, what is the node voltage VA?",
@@ -409,6 +416,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 8,
+    variationId: 1,
     topicSlug: "voltage-division-principle",
     questionContent:
       "For the circuit shown in the figure above, is Battery B being recharged or discharged? What is the power lost in Battery B's internal resistance?",
@@ -416,6 +424,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 9,
+    variationId: 1,
     topicSlug: "rl-transient-analysis",
     questionContent:
       "In the circuit shown in the figure above, the two switches were opened for a very long time before time t = 0. At time t = 0, both the switches are closed simultaneously. How long does it take for the voltage VL(t) to fall to 7 V after the switches are closed?",
@@ -423,6 +432,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 10,
+    variationId: 1,
     topicSlug: "rc-transient-analysis",
     questionContent:
       "In the circuit shown in the figure above, the capacitor was fully discharged initially. At time t = 0, the switch is closed. If it takes 6 s for the practical capacitor's voltage VPC(t) to rise to 6 V, what is the value of capacitance C?",
@@ -430,6 +440,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 11,
+    variationId: 1,
     topicSlug: "rlc-circuit-analysis",
     questionContent:
       "In the circuit shown in the figure above, the capacitor's voltage vC(t) is",
@@ -437,6 +448,7 @@ export const Questions: Question[] = [
   },
   {
     questionId: 12,
+    variationId: 1,
     topicSlug: "rlc-circuit-analysis",
     questionContent:
       "In the circuit shown in the figure above, a 100-ohm resistor is connected in series with a practical inductor. The practical inductor has a resistance of 10-ohm, and an unknown inductance L. Suppose the phase angle of the voltage vR(t) is found to be –35° with respect to the source voltage vS(t), what is the voltage across the practical inductor vPL(t)?",

@@ -35,7 +35,21 @@ export default async function handler(
         include: {
           questionsWithAddedTime: {
             include: {
-              question: true,
+              question: {
+                include: {
+                  answers: true,
+                  attempts: {
+                    where: {
+                      userId: session?.user?.id,
+                    },
+                    orderBy: {
+                      submittedAt: "desc",
+                    },
+                  },
+                  topic: true,
+                  questionMedia: true,
+                },
+              },
             },
             orderBy: {
               addedTime: "asc",

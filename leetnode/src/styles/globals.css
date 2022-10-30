@@ -33,4 +33,8 @@
     @apply font-medium;
     @apply py-1;
   }
+  a {
+    @apply text-cyan-500;
+    @apply underline;
+  }
 }

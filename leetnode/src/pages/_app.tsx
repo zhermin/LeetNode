@@ -34,7 +34,17 @@ const LeetNode: AppType<{
   session: Session | null;
   dehydratedState: DehydratedState;
 }> = ({ Component, pageProps: { session, dehydratedState, ...pageProps } }) => {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // staleTime: 1000 * 60 * 60 * 24, // 24 hours
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+  );
 
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mantine-color-scheme",
