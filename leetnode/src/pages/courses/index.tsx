@@ -169,6 +169,13 @@ export default function CoursesPage() {
       </Container>
       <Container size={1400} className={classes.coursesContainer}>
         <Title className={classes.subtitle}>Quizzes</Title>
+        <Text color="dimmed" size="xl" mb="xl">
+          Quizzes in LeetNode are designed to test your knowledge on a set of
+          topics. Unlike practice questions, which are found in the individual
+          courses and are recommended to you based on your mastery in a
+          particular topic, quizzes will give you a clearer picture of your
+          ability to tackle examinations.
+        </Text>
         <Carousel
           slideSize="30%"
           breakpoints={[{ maxWidth: "sm", slideSize: "100%", slideGap: 2 }]}
@@ -206,6 +213,12 @@ export default function CoursesPage() {
       </Container>
       <Container size={1400} className={classes.coursesContainer}>
         <Title className={classes.subtitle}>Foundational Courses</Title>
+        <Text color="dimmed" size="xl" mb="xl">
+          Foundational courses are the building blocks of electrical and
+          computer engineering. These touch upon topics that are the bedrock of
+          your electrical and computer engineering knowledge and are the most
+          important to master.
+        </Text>
         <Carousel
           slideSize="30%"
           breakpoints={[
@@ -250,6 +263,11 @@ export default function CoursesPage() {
       </Container>
       <Container size={1400} className={classes.coursesContainer}>
         <Title className={classes.subtitle}>Intermediate Courses</Title>
+        <Text color="dimmed" size="xl" mb="xl">
+          Intermediate courses will teach you the next level of electrical and
+          computer engineering. These topics build upon the foundational topics
+          and are the next step in your journey.
+        </Text>
         <Carousel
           slideSize="30%"
           breakpoints={[{ maxWidth: "sm", slideSize: "100%", slideGap: 2 }]}
@@ -291,6 +309,12 @@ export default function CoursesPage() {
       </Container>
       <Container size={1400} className={classes.coursesContainer}>
         <Title className={classes.subtitle}>Advanced Courses</Title>
+        <Text color="dimmed" size="xl" mb="xl">
+          Advanced courses will guide you in the higher level concepts in
+          electrical and computer engineering. These contain topics that require
+          a deep understanding of both the foundational and intermediate topics
+          and will challenge you to the fullest extent.
+        </Text>
         <Carousel
           slideSize="30%"
           breakpoints={[{ maxWidth: "sm", slideSize: "100%", slideGap: 2 }]}
@@ -353,10 +377,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     fetchCourses
   );
 
-  console.log(
-    "[PREFETCHED ALL COURSES]",
-    queryClient.getQueryData(["all-courses"])
-  );
+  console.log("[PREFETCHED ALL COURSES]");
 
   return {
     props: {

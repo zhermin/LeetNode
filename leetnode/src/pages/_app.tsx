@@ -10,8 +10,11 @@ import {
   DehydratedState,
   QueryClient,
   QueryClientProvider,
+  MutationCache,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import toast from "react-hot-toast";
+import { AxiosError } from "axios";
 
 // Styles
 import "../styles/globals.css";
@@ -43,6 +46,13 @@ const LeetNode: AppType<{
             refetchOnWindowFocus: false,
           },
         },
+        mutationCache: new MutationCache({
+          onError: (error) => {
+            if (error instanceof AxiosError) {
+              toast.error(error.message);
+            }
+          },
+        }),
       })
   );
 

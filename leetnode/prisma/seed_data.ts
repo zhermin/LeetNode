@@ -160,7 +160,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Welcome to CG1111A! Take this quiz to help us get to know you better and recommend suitable questions.",
     courseImage:
-      "https://images.unsplash.com/photo-1547521420-4328f6f9b272?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjYyNjE&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1547521420-4328f6f9b272?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjYyNjE&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Quiz,
     topics: [
@@ -184,7 +184,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the fundamentals of electricity such as electric charge and current, power, voltage and resistance.",
     courseImage:
-      "https://images.unsplash.com/photo-1510761047613-a5c1d008d780?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY0Mjk&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1510761047613-a5c1d008d780?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY0Mjk&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     slide:
@@ -202,7 +202,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the principles of electrical circuits such as Kirchhoff's Laws, equivalent resistances and voltage and current division principles.",
     courseImage:
-      "https://images.unsplash.com/photo-1619345371662-fccc15cc4814?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY3MTY&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1619345371662-fccc15cc4814?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY3MTY&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     slide:
@@ -226,7 +226,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn how to find the Thevenin equivalent circuit to simplify the analysis of electrical circuits.",
     courseImage:
-      "https://images.unsplash.com/photo-1632571401005-458e9d244591?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY4Nzk&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1632571401005-458e9d244591?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY4Nzk&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     slide:
@@ -244,7 +244,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the techniques of circuit analysis such as superposition, node and mesh analysis.",
     courseImage:
-      "https://images.unsplash.com/photo-1586256053828-a36b572ab01d?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcwNjc&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1586256053828-a36b572ab01d?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcwNjc&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     slide:
@@ -284,7 +284,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the DC transient behaviour of capacitors such as charging and discharging of capacitors.",
     courseImage:
-      "https://images.unsplash.com/photo-1625480860249-be231806e6ed?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcyMzE&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1625480860249-be231806e6ed?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcyMzE&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
     slide:
@@ -302,7 +302,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the principles of inductors such as inductance, energy stored in inductors and steady and transient analysis of RL circuits.",
     courseImage:
-      "https://images.unsplash.com/photo-1583199873815-b58ce30591ea?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcxNTA&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1583199873815-b58ce30591ea?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcxNTA&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
     slide:
@@ -325,7 +325,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the basics of operational amplifiers (opamps) such as ideal and non-ideal opamps, opamp circuit analysis and the opamp golden rules.",
     courseImage:
-      "https://images.unsplash.com/photo-1611759386165-ed9beec7b14f?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjczMzE&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1611759386165-ed9beec7b14f?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjczMzE&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
     slide:
@@ -347,7 +347,7 @@ export const Courses: CourseWithTopics = [
     courseDescription:
       "Learn the applications of operational amplifiers (opamps) such as comparators and filters.",
     courseImage:
-      "https://images.unsplash.com/photo-1510746001195-0db09655b6db?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2Mjc0NDU&ixlib=rb-4.0.3&q=80w=400",
+      "https://images.unsplash.com/photo-1510746001195-0db09655b6db?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2Mjc0NDU&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
     slide:

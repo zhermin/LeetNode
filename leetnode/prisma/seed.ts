@@ -83,6 +83,16 @@ async function main() {
   // These random question generation for quizzes will be moved to its own functions later
   const user = await prisma.user.findFirst();
 
+  // Clear user's nusnetId for /welcome page testing
+  await prisma.user.update({
+    where: {
+      id: user?.id,
+    },
+    data: {
+      nusnetId: null,
+    },
+  });
+
   const welcomeQuiz = await prisma.course.findFirst({
     where: { courseSlug: "welcome-quiz" },
   });

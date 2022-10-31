@@ -147,7 +147,7 @@ export default function Home() {
           </Box>
         </Box>
       </Container>
-      <Container size={1000} pt="xl">
+      <Container size={1000} pt="xl" mb={100}>
         <Grid grow gutter="xl">
           <Grid.Col sm={3} pb="lg">
             <Image
