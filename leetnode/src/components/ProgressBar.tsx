@@ -24,7 +24,7 @@ const ProgressBar = ({
   const session = useSession();
 
   //this  method displays mastery based on api calls
-  const [details, setDetails] = useState<{ Mastery: number }>();
+  const [details, setDetails] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const ProgressBar = ({
       });
   }, [topicSlug, session?.data?.user?.id]);
 
-  const results = details?.Mastery;
+  const results = details;
   // const results = masteryDisplay[0]?.masteryLevel;
   const roundedResults = Math.round((results as number) * 10000) / 100;
   console.log(roundedResults);

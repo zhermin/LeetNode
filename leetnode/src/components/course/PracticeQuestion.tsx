@@ -2,9 +2,9 @@ import { Key, useState } from "react";
 import axios from "axios";
 // import Image from "next/image";
 import Latex from "react-latex-next";
-import { Center, Loader } from "@mantine/core";
+import { Button, Center, Loader } from "@mantine/core";
 import { useSession } from "next-auth/react";
-import { Image } from "@mantine/core";
+import { Image, Text } from "@mantine/core";
 
 const LoadTopic = ({
   questionDisplay,
@@ -15,11 +15,12 @@ const LoadTopic = ({
   currentQuestion,
   setCurrentQuestion,
   setQuestionHistory,
+  endReached,
+  setEndReached,
 }: any) => {
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
-  const [endReached, setEndReached] = useState(false);
 
   const handleAnswerOption = (answer: string) => {
     setSelectedOptions([
@@ -28,7 +29,7 @@ const LoadTopic = ({
       } as any),
     ]);
     setSelectedOptions([...selectedOptions]);
-
+    console.log(selectedOptions);
     console.log(questionDisplay);
 
     //check if answer correct
@@ -71,6 +72,7 @@ const LoadTopic = ({
               topicName: string;
               questionDifficulty: string;
               isCorrect: number;
+              answerContent: string;
             }
           ]
         ) => [
@@ -87,6 +89,7 @@ const LoadTopic = ({
             questionDifficulty:
               questionDisplay[currentQuestion].question.questionDifficulty,
             isCorrect: attempt[currentQuestion]?.isCorrect,
+            answerContent: selectedOptions[currentQuestion].answerByUser,
           },
         ]
       );
@@ -134,10 +137,11 @@ const LoadTopic = ({
       console.log(attempt[currentQuestion]?.isCorrect);
       console.log(updated);
       console.log(currentQuestion);
-
-      if (currentQuestion + 1 == questionDisplay.length) {
+      console.log(questionDisplay.length);
+      if (currentQuestion + 1 === questionDisplay.length) {
         console.log("reached the end");
         setEndReached(true);
+        console.log(endReached);
       } else {
         //go to next page
         const nextQues = currentQuestion + 1;
@@ -177,14 +181,14 @@ const LoadTopic = ({
           ) : (
             <>
               <div className="flex w-full flex-col items-start">
-                <h4 className="mt-10 text-xl text-black">
-                  Question {currentQuestion + 1} of {questionDisplay.length}
-                </h4>
-                <div className="mt-4 text-2xl text-black">
+                <Text size="xl" weight={700}>
+                  Question {currentQuestion + 1}
+                </Text>
+                <Text size="xl">
                   <Latex>
                     {questionDisplay[currentQuestion].question.questionContent}
                   </Latex>
-                </div>
+                </Text>
               </div>
               <div className="flex w-full flex-col" style={{ width: 500 }}>
                 <Image
@@ -232,27 +236,21 @@ const LoadTopic = ({
                 )}
               </div>
               <div className="mt-4 flex w-full justify-between text-white">
-                <button
+                {/* <Button
                   onClick={handlePrevious}
                   className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
                 >
                   Previous
-                </button>
+                </Button> */}
                 {currentQuestion + 1 === questionDisplay.length &&
                 endReached === false ? (
-                  <button
-                    onClick={handleNext}
-                    className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-                  >
+                  <Button onClick={handleNext} color="cyan" radius="md">
                     End Quiz
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    onClick={handleNext}
-                    className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-                  >
-                    Next
-                  </button>
+                  <Button onClick={handleNext} color="cyan" radius="md">
+                    Confirm Answer
+                  </Button>
                 )}
               </div>
             </>

@@ -5,10 +5,12 @@ import {
   Group,
   Paper,
   Image,
+  Badge,
+  SimpleGrid,
 } from "@mantine/core";
 import { IconX, IconCheck } from "@tabler/icons";
 
-const ICON_SIZE = 70;
+const ICON_SIZE = 50;
 
 const useStyles = createStyles((theme) => ({
   card: {
@@ -30,9 +32,9 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const LectureVideos = ({ questionHistory }: any) => {
+const LectureVideos = ({ questionHistory, questionDisplay }: any) => {
   const { classes } = useStyles();
-
+  console.log(questionDisplay);
   return (
     <>
       {questionHistory.map(
@@ -43,6 +45,7 @@ const LectureVideos = ({ questionHistory }: any) => {
           topicName: string;
           questionDifficulty: string;
           isCorrect: number;
+          answerContent: string;
         }) => (
           <>
             <Paper
@@ -51,23 +54,18 @@ const LectureVideos = ({ questionHistory }: any) => {
               className={classes.card}
               mt={ICON_SIZE / 3}
             >
-              {qns.isCorrect === 1 ? (
-                <ThemeIcon
-                  className={classes.icon}
-                  size={ICON_SIZE}
-                  radius={ICON_SIZE}
-                >
+              <ThemeIcon
+                color={qns.isCorrect === 1 ? "green" : "red"}
+                className={classes.icon}
+                size={ICON_SIZE}
+                radius={ICON_SIZE}
+              >
+                {qns.isCorrect === 1 ? (
                   <IconCheck size={34} stroke={1.5} />
-                </ThemeIcon>
-              ) : (
-                <ThemeIcon
-                  className={classes.icon}
-                  size={ICON_SIZE}
-                  radius={ICON_SIZE}
-                >
+                ) : (
                   <IconX size={34} stroke={1.5} />
-                </ThemeIcon>
-              )}
+                )}
+              </ThemeIcon>
               <Group position="apart">
                 <Group>
                   <Text weight={700} className={classes.title}>
@@ -83,6 +81,32 @@ const LectureVideos = ({ questionHistory }: any) => {
                   alt={qns.questionMedia}
                 />
               </Group>
+              <Text>Your Answer: {qns.answerContent}</Text>
+              <SimpleGrid cols={1} verticalSpacing="xl" mt={20}>
+                {questionDisplay[qns.questionNumber].question.answers.map(
+                  (ans: { isCorrect: boolean; answerContent: string }) => (
+                    <Group key={ans.answerContent}>
+                      {ans.isCorrect === true ? <IconCheck /> : <IconX />}
+
+                      <Text>{ans.answerContent}</Text>
+                    </Group>
+                  )
+                )}
+              </SimpleGrid>
+              <Badge
+                color={
+                  qns.questionDifficulty === "Easy"
+                    ? "green"
+                    : qns.questionDifficulty === "Medium"
+                    ? "indigo"
+                    : "red"
+                }
+                radius="lg"
+                size="lg"
+                mt={30}
+              >
+                {qns.questionDifficulty} Difficulty
+              </Badge>
               {/* <Text>hi</Text>
               {questionDisplay.map(
                 (e: any) => {

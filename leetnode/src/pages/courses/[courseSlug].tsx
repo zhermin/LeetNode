@@ -111,7 +111,7 @@ export default function CourseMainPage() {
   const [opened, setOpened] = useState(false);
   const [section, setSection] = useState<"learn" | "practice">("learn");
   const [active, setActive] = useState("Overview");
-
+  const [endReached, setEndReached] = useState(false);
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -133,6 +133,7 @@ export default function CourseMainPage() {
       topicName: string;
       questionDifficulty: string;
       isCorrect: number;
+      answerContent: string;
     }[]
   >([]);
 
@@ -325,9 +326,16 @@ export default function CourseMainPage() {
             setCurrentQuestion={setCurrentQuestion}
             questionHistory={questionHistory}
             setQuestionHistory={setQuestionHistory}
+            endReached={endReached}
+            setEndReached={setEndReached}
           />
         ) : active === "Attempts" ? (
-          <QuestionHistory questionHistory={questionHistory} />
+          <QuestionHistory
+            questionHistory={questionHistory}
+            questionDisplay={
+              course.userCourseQuestions[0]?.questionsWithAddedTime
+            }
+          />
         ) : active === "Mastery" ? (
           <ResultsPage
             questionDisplay={
