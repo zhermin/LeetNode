@@ -1,36 +1,16 @@
 import {
+  Badge,
   createStyles,
-  ThemeIcon,
-  Text,
+  Grid,
   Group,
   Paper,
-  Image,
-  Badge,
-  SimpleGrid,
+  Title,
+  Text,
 } from "@mantine/core";
-import { IconX, IconCheck } from "@tabler/icons";
-
-const ICON_SIZE = 50;
-
-const useStyles = createStyles((theme) => ({
-  card: {
-    position: "relative",
-    overflow: "visible",
-    padding: theme.spacing.xl,
-    paddingTop: theme.spacing.xl * 1 + ICON_SIZE / 3,
-  },
-
-  icon: {
-    position: "absolute",
-    top: -ICON_SIZE / 3,
-    // left: `calc(50% - ${ICON_SIZE / 2}px)`,
-  },
-
-  title: {
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-    lineHeight: 1,
-  },
-}));
+import { IconCheck, IconX } from "@tabler/icons";
+import Image from "next/future/image";
+import Latex from "react-latex-next";
+import { QuestionDifficulty } from "@prisma/client";
 
 const LectureVideos = ({ questionHistory, questionDisplay }: any) => {
   const { classes } = useStyles();
@@ -43,130 +23,124 @@ const LectureVideos = ({ questionHistory, questionDisplay }: any) => {
           questionNumber: number;
           questionMedia: string;
           topicName: string;
-          questionDifficulty: string;
-          isCorrect: number;
+          questionDifficulty: QuestionDifficulty;
+          isCorrect: boolean;
           answerContent: string;
         }) => (
           <>
             <Paper
-              radius="md"
+              radius="lg"
               withBorder
-              className={classes.card}
-              mt={ICON_SIZE / 3}
+              className={`${classes.card} ${
+                qns.isCorrect ? classes.correct : classes.wrong
+              }`}
+              mr="lg"
+              mb="xl"
             >
-              <ThemeIcon
-                color={qns.isCorrect === 1 ? "green" : "red"}
-                className={classes.icon}
-                size={ICON_SIZE}
-                radius={ICON_SIZE}
-              >
-                {qns.isCorrect === 1 ? (
-                  <IconCheck size={34} stroke={1.5} />
-                ) : (
-                  <IconX size={34} stroke={1.5} />
-                )}
-              </ThemeIcon>
-              <Group position="apart">
-                <Group>
-                  <Text weight={700} className={classes.title}>
-                    Question {qns.questionNumber + 1}: {qns.questionContent}
-                  </Text>
-                </Group>
-                <Image
-                  radius="md"
-                  width={300}
-                  height={200}
-                  fit="contain"
-                  src={qns.questionMedia}
-                  alt={qns.questionMedia}
-                />
-              </Group>
-              <Text>Your Answer: {qns.answerContent}</Text>
-              <SimpleGrid cols={1} verticalSpacing="xl" mt={20}>
-                {questionDisplay[qns.questionNumber].question.answers.map(
-                  (ans: { isCorrect: boolean; answerContent: string }) => (
-                    <Group key={ans.answerContent}>
-                      {ans.isCorrect === true ? <IconCheck /> : <IconX />}
-
-                      <Text>{ans.answerContent}</Text>
-                    </Group>
-                  )
-                )}
-              </SimpleGrid>
-              <Badge
-                color={
-                  qns.questionDifficulty === "Easy"
-                    ? "green"
-                    : qns.questionDifficulty === "Medium"
-                    ? "indigo"
-                    : "red"
-                }
-                radius="lg"
-                size="lg"
-                mt={30}
-              >
-                {qns.questionDifficulty} Difficulty
-              </Badge>
-              {/* <Text>hi</Text>
-              {questionDisplay.map(
-                (e: any) => {
-                  <Text>{e.questionId}</Text>;
-                  // e.map((ans: any) => {
-                  //   <div>{ans.answerContent}</div>;
-                  // });
-                }
-
-                // qns.questionContent === e.question.questionContent ? (
-                //   e.answers.map((ans: { answerContent: string }) => (
-                //     <div key={ans.answerContent}>{ans.answerContent}</div>
-                //   ))
-                // ) : (
-                //   <div>error</div>
-                // )
-              )} */}
+              <Grid grow align="center">
+                <Grid.Col span={7}>
+                  <Group>
+                    <Badge
+                      color={
+                        qns.questionDifficulty === QuestionDifficulty.Easy
+                          ? "green"
+                          : qns.questionDifficulty === QuestionDifficulty.Medium
+                          ? "yellow"
+                          : "red"
+                      }
+                      radius="lg"
+                      size="lg"
+                    >
+                      {qns.questionDifficulty} Difficulty
+                    </Badge>
+                    <Badge radius="lg" size="lg">
+                      {qns.topicName}
+                    </Badge>
+                  </Group>
+                  <Title order={3} className={classes.title} my="lg">
+                    Question {qns.questionNumber + 1}:{" "}
+                    <Latex>{qns.questionContent}</Latex>
+                  </Title>
+                  {questionDisplay[qns.questionNumber].question.answers.map(
+                    (ans: { isCorrect: boolean; answerContent: string }) => (
+                      <Group
+                        key={ans.answerContent}
+                        className={`${classes.options} ${
+                          qns.answerContent === ans.answerContent
+                            ? classes.selected
+                            : ""
+                        }`}
+                      >
+                        {ans.isCorrect === true ? (
+                          <IconCheck color="green" size={30} stroke={3} />
+                        ) : (
+                          <IconX color="red" size={30} stroke={3} />
+                        )}
+                        <Text>{ans.answerContent}</Text>
+                      </Group>
+                    )
+                  )}
+                </Grid.Col>
+                <Grid.Col span={1}>
+                  <Image
+                    src={qns.questionMedia}
+                    alt={qns.questionMedia}
+                    width="0"
+                    height="0"
+                    sizes="100vw"
+                    className="h-auto w-full rounded-lg"
+                  />
+                </Grid.Col>
+              </Grid>
             </Paper>
-
-            {/* <Paper
-              radius="md"
-              withBorder
-              className={classes.card}
-              mt={ICON_SIZE / 3}
-            >
-              <ThemeIcon
-                className={classes.icon}
-                size={ICON_SIZE}
-                radius={ICON_SIZE}
-              >
-                <IconX size={34} stroke={1.5} />
-              </ThemeIcon>
-
-              <Text align="center" weight={700} className={classes.title}>
-                Swimming challenge
-              </Text>
-              <Text color="dimmed" align="center" size="sm">
-                32 km / week
-              </Text>
-
-              <Group position="apart" mt="xs">
-                <Text size="sm" color="dimmed">
-                  Progress
-                </Text>
-                <Text size="sm" color="dimmed">
-                  62%
-                </Text>
-              </Group>
-
-              <Progress value={62} mt={5} />
-
-              <Group position="apart" mt="md">
-                <Text size="sm">20 / 36 km</Text>
-                <Badge size="sm">4 days left</Badge>
-              </Group>
-            </Paper> */}
           </>
         )
       )}
     </>
   );
 };
+
 export default LectureVideos;
+
+const useStyles = createStyles((theme) => ({
+  card: {
+    padding: theme.spacing.xl,
+    borderLeft: `20px solid`,
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+  },
+
+  correct: {
+    borderLeftColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.teal[7]
+        : theme.colors.teal[4],
+  },
+
+  wrong: {
+    borderLeftColor:
+      theme.colorScheme === "dark" ? theme.colors.red[7] : theme.colors.red[4],
+  },
+
+  title: {
+    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+    lineHeight: 1,
+  },
+
+  options: {
+    padding: theme.spacing.xs,
+    margin: theme.spacing.xs,
+    borderRadius: theme.radius.md,
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[9]
+        : theme.colors.gray[0],
+  },
+
+  selected: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[3],
+  },
+}));

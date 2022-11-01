@@ -123,7 +123,7 @@ export default function CourseMainPage() {
     { currentQuestion: number; answerByUser: string }[]
   >([]);
   const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: number }[]
+    { currentQuestion: number; isCorrect: boolean }[]
   >([]);
   const [questionHistory, setQuestionHistory] = useState<
     {
@@ -132,7 +132,7 @@ export default function CourseMainPage() {
       questionMedia: string;
       topicName: string;
       questionDifficulty: string;
-      isCorrect: number;
+      isCorrect: boolean;
       answerContent: string;
     }[]
   >([]);
@@ -344,7 +344,7 @@ export default function CourseMainPage() {
             attempt={attempt}
           />
         ) : active === "Discussion" ? (
-          <div>Discussion</div>
+          <div>Discussion (WIP)</div>
         ) : (
           <div>Error</div>
         )}
@@ -476,5 +476,5 @@ const useStyles = createStyles((theme, _params, getRef) => {
 });
 
 const defaultMarkdown = `# Additional Learning Resources by [Khan Academy](https://www.khanacademy.org/)
-            
+
 <div classname="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;

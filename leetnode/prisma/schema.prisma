@@ -172,7 +172,7 @@ model QuestionMedia {
   questionMediaURL String   @db.VarChar(500)
   question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
-  @@unique([questionId, questionMediaURL])
+  @@id([questionId, questionMediaURL])
 }
 
 model Answer {
@@ -183,7 +183,7 @@ model Answer {
   question      Question  @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
   attempts      Attempt[]
 
-  @@unique([questionId, optionNumber])
+  @@id([questionId, optionNumber])
 }
 
 // DISCUSSION POSTS
@@ -206,5 +206,5 @@ model PostMedia {
   postMediaURL String @db.VarChar(500)
   post         Post   @relation(fields: [postId], references: [postId])
 
-  @@unique([postId, postMediaURL])
+  @@id([postId, postMediaURL])
 }

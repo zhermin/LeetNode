@@ -1,9 +1,10 @@
 import { Key } from "react";
-import ProgressBar from "@/components/ProgressBar";
+import ProgressBar from "@/components/course/ProgressBar";
+import { Text, Title } from "@mantine/core";
 
 const ShowResults = ({ questionDisplay, attempt }: any) => {
   const arrScore = attempt.map(
-    (questions: { isCorrect: number }) => questions.isCorrect
+    (questions: { isCorrect: boolean }) => questions.isCorrect
   );
   const score = arrScore.reduce((prev: number, cur: number) => prev + cur, 0);
   console.log(questionDisplay);
@@ -33,12 +34,12 @@ const ShowResults = ({ questionDisplay, attempt }: any) => {
   return (
     <>
       <div className="container mx-auto px-6 py-20 text-center">
-        <h2 className="mb-6 text-center text-4xl font-bold text-black">
-          Score: {score}
-        </h2>
-        <h3 className="my-4 text-2xl text-black">
-          Your mastery progress after this practice!
-        </h3>
+        <Title order={1}>
+          Score: {score}/{questionDisplay.length}
+        </Title>
+        <Text size="xl" mb="xl">
+          Keep practising to achieve mastery in all topics!
+        </Text>
         {newarr.map(
           (eachProgress: {
             question: { topicSlug: string; topic: { topicName: string } };

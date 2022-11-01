@@ -1,10 +1,9 @@
 import { Key, useState } from "react";
 import axios from "axios";
-// import Image from "next/image";
+import Image from "next/future/image";
 import Latex from "react-latex-next";
-import { Button, Center, Loader } from "@mantine/core";
+import { Center, Loader, Title, Text, Button } from "@mantine/core";
 import { useSession } from "next-auth/react";
-import { Image, Text } from "@mantine/core";
 
 const LoadTopic = ({
   questionDisplay,
@@ -71,7 +70,7 @@ const LoadTopic = ({
               questionId: number;
               topicName: string;
               questionDifficulty: string;
-              isCorrect: number;
+              isCorrect: boolean;
               answerContent: string;
             }
           ]
@@ -176,35 +175,34 @@ const LoadTopic = ({
         <>
           {loading === true ? (
             <Center style={{ height: 500 }}>
-              <Loader color="cyan" size="xl" variant="oval" />
+              <Loader />
             </Center>
           ) : (
             <>
               <div className="flex w-full flex-col items-start">
-                <Text size="xl" weight={700}>
+                <Title order={1} mt="lg">
                   Question {currentQuestion + 1}
-                </Text>
-                <Text size="xl">
+                </Title>
+                <Text size="xl" mt="sm">
                   <Latex>
                     {questionDisplay[currentQuestion].question.questionContent}
                   </Latex>
                 </Text>
               </div>
-              <div className="flex w-full flex-col" style={{ width: 500 }}>
-                <Image
-                  src={
-                    questionDisplay[currentQuestion].question.questionMedia[0]
-                      .questionMediaURL as string
-                  }
-                  alt={
-                    questionDisplay[currentQuestion].question
-                      .questionContent as string
-                  }
-                  fit="contain"
-                  radius="md"
-                  className="h-auto w-1/2 object-contain pt-6 pb-6"
-                />
-              </div>
+              <Image
+                src={
+                  questionDisplay[currentQuestion].question.questionMedia[0]
+                    .questionMediaURL ?? ""
+                }
+                alt={
+                  questionDisplay[currentQuestion].question.questionContent ??
+                  ""
+                }
+                width="0"
+                height="0"
+                sizes="100vw"
+                className="h-auto w-1/3 rounded-lg py-8"
+              />
               <div className="flex w-full flex-col">
                 {questionDisplay[currentQuestion].question.answers.map(
                   (
@@ -235,21 +233,18 @@ const LoadTopic = ({
                   )
                 )}
               </div>
-              <div className="mt-4 flex w-full justify-between text-white">
-                {/* <Button
-                  onClick={handlePrevious}
-                  className="w-[13%] rounded-lg bg-purple-500 py-3 hover:bg-purple-600"
-                >
+              <div className="mt-4 flex w-full justify-between">
+                {/* <Button onClick={handlePrevious} radius="md" size="md">
                   Previous
                 </Button> */}
                 {currentQuestion + 1 === questionDisplay.length &&
                 endReached === false ? (
-                  <Button onClick={handleNext} color="cyan" radius="md">
-                    End Quiz
+                  <Button onClick={handleNext} radius="md" size="md">
+                    Finish Quiz
                   </Button>
                 ) : (
-                  <Button onClick={handleNext} color="cyan" radius="md">
-                    Confirm Answer
+                  <Button onClick={handleNext} radius="md" size="md">
+                    Submit Answer
                   </Button>
                 )}
               </div>

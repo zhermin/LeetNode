@@ -461,7 +461,7 @@ const useStyles = createStyles((theme) => ({
 
   card: {
     backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
+      theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[0],
     transition: "all 300ms ease-in-out",
     filter:
       "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.06))",

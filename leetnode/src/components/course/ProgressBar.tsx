@@ -1,4 +1,4 @@
-import { Center, Loader } from "@mantine/core";
+import { Center, Box, Group, Loader, Progress, Title } from "@mantine/core";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -53,27 +53,21 @@ const ProgressBar = ({
           <Loader />
         </Center>
       ) : (
-        <div className="relative pt-10">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <span className="text-s inline-block rounded-full bg-cyan-200 py-1 px-2 font-semibold uppercase text-cyan-600">
-                {topicName}
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-s inline-block font-semibold text-cyan-600">
-                {roundedResults}
-              </span>
-            </div>
-          </div>
-          <div className="mb-4 flex h-2.5 overflow-hidden rounded bg-cyan-200">
-            <div
-              // if want percentage for css, do in **.** format
-              style={{ width: `${roundedResults}%` }}
-              className="flex flex-col justify-center whitespace-nowrap bg-cyan-500 text-center text-white shadow-none"
-            ></div>
-          </div>
-        </div>
+        <Box pt="xl">
+          <Group position="apart">
+            <Title order={3}>{topicName}</Title>
+            <Title order={2}>{roundedResults}%</Title>
+          </Group>
+          <Progress
+            mt="md"
+            color="cyan"
+            radius="xl"
+            size="xl"
+            value={roundedResults}
+            striped
+            animate
+          />
+        </Box>
       )}
     </>
   );

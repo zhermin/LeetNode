@@ -141,13 +141,14 @@ erDiagram
   }
   Question {
     int questionId PK
-    string topicSlug FK
+    int variationId
+    string topicSlug
     string questionContent
     QuestionDifficulty questionDifficulty
   }
   QuestionMedia {
     int questionId FK
-    string questionMediaURL
+    string questionMediaURL FK
   }
   Answer {
     int questionId FK
@@ -166,7 +167,7 @@ erDiagram
   }
   PostMedia {
     string postId FK
-    string postMediaURL
+    string postMediaURL FK
   }
 ```
 
