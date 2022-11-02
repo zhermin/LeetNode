@@ -206,19 +206,18 @@ const LoadTopic = ({
             </Center>
           ) : (
             <>
-              <div className="flex w-full flex-col items-start">
-                <Title order={1} mt="lg">
-                  Question {currentQuestion + 1}
-                </Title>
-                <Text size="xl" mt="sm">
-                  <Latex>
-                    {
-                      questionDisplay?.[currentQuestion]?.question
-                        ?.questionContent
-                    }
-                  </Latex>
-                </Text>
-              </div>
+              <Title order={1} mt="lg">
+                Question {currentQuestion + 1}
+              </Title>
+              <Text size="xl" mt="sm">
+                <Latex>
+                  {
+                    questionDisplay?.[currentQuestion]?.question
+                      ?.questionContent
+                  }
+                </Latex>
+              </Text>
+
               <Image
                 src={
                   questionDisplay?.[currentQuestion]?.question?.questionMedia[0]
@@ -233,57 +232,49 @@ const LoadTopic = ({
                 sizes="100vw"
                 className="h-auto w-1/3 rounded-lg py-8"
               />
-              <div className="flex w-full flex-col">
+              <Radio.Group orientation="vertical" spacing={40} mb={40}>
                 {questionDisplay?.[currentQuestion]?.question?.answers?.map(
                   (
                     answer: { answerContent: string },
                     index: Key | null | undefined
                   ) => (
-                    <div
+                    <Radio
                       key={index}
-                      className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
+                      label={<Latex>{answer.answerContent}</Latex>}
+                      value={answer.answerContent}
                       onClick={() => handleAnswerOption(answer.answerContent)}
-                    >
-                      <Radio
-                        value={answer.answerContent}
-                        checked={
-                          answer.answerContent ===
-                          (selectedOptions[currentQuestion]
-                            ?.answerByUser as string)
-                        }
-                        onChange={() =>
-                          handleAnswerOption(answer.answerContent)
-                        }
-                        className="h-6 w-6 bg-white"
-                      />
-                      <Latex>{answer.answerContent}</Latex>
-                    </div>
+                      checked={
+                        answer.answerContent ===
+                        (selectedOptions[currentQuestion]
+                          ?.answerByUser as string)
+                      }
+                    />
                   )
                 )}
-              </div>
-              <div className="mt-4 flex w-full justify-between">
-                {/* <Button onClick={handlePrevious} radius="md" size="md">
+              </Radio.Group>
+              {/* <Button onClick={handlePrevious} radius="md" size="md">
                   Previous
                 </Button> */}
-                {currentQuestion + 1 === questionDisplay?.length &&
-                endReached === false ? (
-                  <Button onClick={handleNext} radius="md" size="md">
-                    Finish Quiz
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext} radius="md" size="md">
-                    Submit Answer
-                  </Button>
-                )}
-              </div>
+              {currentQuestion + 1 === questionDisplay?.length &&
+              endReached === false ? (
+                <Button onClick={handleNext} radius="md" size="md">
+                  Finish Quiz
+                </Button>
+              ) : (
+                <Button onClick={handleNext} radius="md" size="md">
+                  Submit Answer
+                </Button>
+              )}
             </>
           )}
         </>
       ) : (
         <>
-          <div>
-            End reached, please refer to the Attempts tab for your score.
-          </div>
+          <Center>
+            <Title mt={100}>
+              End reached, please refer to the Attempts tab for your score.
+            </Title>
+          </Center>
         </>
       )}
     </>

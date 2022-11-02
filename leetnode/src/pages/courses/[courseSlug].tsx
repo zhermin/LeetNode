@@ -346,7 +346,7 @@ export default function CourseMainPage() {
         ) : active === "Discussion" ? (
           <div>Discussion (WIP)</div>
         ) : (
-          <div>Error</div>
+          <Text>Error</Text>
         )}
       </ScrollArea.Autosize>
     </AppShell>
