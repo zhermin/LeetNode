@@ -2,7 +2,16 @@ import { Dispatch, Key, SetStateAction, useState } from "react";
 import axios from "axios";
 import Image from "next/future/image";
 import Latex from "react-latex-next";
-import { Center, Loader, Title, Text, Button, Radio } from "@mantine/core";
+import {
+  createStyles,
+  Center,
+  Loader,
+  Title,
+  Text,
+  Button,
+  Radio,
+  Paper,
+} from "@mantine/core";
 import { useSession } from "next-auth/react";
 import {
   Answer,
@@ -80,6 +89,7 @@ const LoadTopic = ({
   endReached: boolean;
   setEndReached: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const { classes } = useStyles();
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -92,7 +102,6 @@ const LoadTopic = ({
     ]);
     setSelectedOptions([...selectedOptions]);
     console.log(selectedOptions);
-    console.log(questionDisplay);
 
     //check if answer correct
     const data = questionDisplay?.[currentQuestion]?.question?.answers;
@@ -201,14 +210,12 @@ const LoadTopic = ({
       {endReached === false ? (
         <>
           {loading === true ? (
-            <Center style={{ height: 500 }}>
+            <Center className="h-[calc(100vh-180px)]">
               <Loader />
             </Center>
           ) : (
-            <>
-              <Title order={1} mt="lg">
-                Question {currentQuestion + 1}
-              </Title>
+            <Paper p="xl" radius="md" withBorder>
+              <Title order={1}>Question {currentQuestion + 1}</Title>
               <Text size="xl" mt="sm">
                 <Latex>
                   {
@@ -217,7 +224,6 @@ const LoadTopic = ({
                   }
                 </Latex>
               </Text>
-
               <Image
                 src={
                   questionDisplay?.[currentQuestion]?.question?.questionMedia[0]
@@ -230,9 +236,9 @@ const LoadTopic = ({
                 width="0"
                 height="0"
                 sizes="100vw"
-                className="h-auto w-1/3 rounded-lg py-8"
+                className={`my-8 h-auto w-1/3 rounded-lg ${classes.image}`}
               />
-              <Radio.Group orientation="vertical" spacing={40} mb={40}>
+              <Radio.Group orientation="vertical" size="md" mb={40}>
                 {questionDisplay?.[currentQuestion]?.question?.answers?.map(
                   (
                     answer: { answerContent: string },
@@ -248,6 +254,15 @@ const LoadTopic = ({
                         (selectedOptions[currentQuestion]
                           ?.answerByUser as string)
                       }
+                      className={classes.options}
+                      styles={{
+                        label: {
+                          cursor: "pointer",
+                        },
+                        radio: {
+                          cursor: "pointer",
+                        },
+                      }}
                     />
                   )
                 )}
@@ -258,27 +273,42 @@ const LoadTopic = ({
               {currentQuestion + 1 === questionDisplay?.length &&
               endReached === false ? (
                 <Button onClick={handleNext} radius="md" size="md">
-                  Finish Quiz
+                  Complete Quiz
                 </Button>
               ) : (
                 <Button onClick={handleNext} radius="md" size="md">
                   Submit Answer
                 </Button>
               )}
-            </>
+            </Paper>
           )}
         </>
       ) : (
-        <>
-          <Center>
-            <Title mt={100}>
-              End reached, please refer to the Attempts tab for your score.
-            </Title>
-          </Center>
-        </>
+        <Center className="h-[calc(100vh-180px)]">
+          <Text>
+            You have reached the end of this series of questions, please refer
+            to the Attempts and Mastery tabs for your results and topic
+            masteries.
+          </Text>
+        </Center>
       )}
     </>
   );
 };
 
 export default LoadTopic;
+
+const useStyles = createStyles((theme) => ({
+  image: {
+    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
+  },
+
+  options: {
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[9]
+        : theme.colors.gray[0],
+  },
+}));

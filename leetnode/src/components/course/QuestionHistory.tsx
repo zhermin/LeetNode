@@ -1,11 +1,12 @@
 import {
-  Badge,
   createStyles,
+  Badge,
   Grid,
   Group,
   Paper,
   Title,
   Text,
+  Center,
 } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons";
 import Image from "next/future/image";
@@ -13,7 +14,7 @@ import Latex from "react-latex-next";
 import { QuestionDifficulty } from "@prisma/client";
 import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";
 
-const LectureVideos = ({
+const QuestionHistory = ({
   questionHistory,
   questionDisplay,
 }: {
@@ -47,7 +48,15 @@ const LectureVideos = ({
     | undefined;
 }) => {
   const { classes } = useStyles();
-  console.log(questionDisplay);
+
+  if (questionHistory.length === 0) {
+    return (
+      <Center className="h-[calc(100vh-180px)]">
+        <Text>You have not attempted any questions yet.</Text>
+      </Center>
+    );
+  }
+
   return (
     <>
       {questionHistory.map(
@@ -60,82 +69,79 @@ const LectureVideos = ({
           isCorrect: boolean;
           answerContent: string;
         }) => (
-          <>
-            <Paper
-              radius="lg"
-              withBorder
-              className={`${classes.card} ${
-                qns.isCorrect ? classes.correct : classes.wrong
-              }`}
-              mr="lg"
-              mb="xl"
-            >
-              <Grid grow align="center">
-                <Grid.Col span={7}>
-                  <Group>
-                    <Badge
-                      color={
-                        qns.questionDifficulty === QuestionDifficulty.Easy
-                          ? "green"
-                          : qns.questionDifficulty === QuestionDifficulty.Medium
-                          ? "yellow"
-                          : "red"
-                      }
-                      radius="lg"
-                      size="lg"
+          <Paper
+            radius="lg"
+            withBorder
+            className={`${classes.card} ${
+              qns.isCorrect ? classes.correct : classes.wrong
+            }`}
+            mr="lg"
+            mb="xl"
+            key={qns.questionNumber}
+          >
+            <Grid grow align="center">
+              <Grid.Col span={7}>
+                <Group>
+                  <Badge
+                    color={
+                      qns.questionDifficulty === QuestionDifficulty.Easy
+                        ? "green"
+                        : qns.questionDifficulty === QuestionDifficulty.Medium
+                        ? "yellow"
+                        : "red"
+                    }
+                    radius="lg"
+                    size="lg"
+                  >
+                    {qns.questionDifficulty} Difficulty
+                  </Badge>
+                  <Badge radius="lg" size="lg">
+                    {qns.topicName}
+                  </Badge>
+                </Group>
+                <Title order={3} className={classes.title} my="lg">
+                  Question {qns.questionNumber + 1}:{" "}
+                  <Latex>{qns.questionContent}</Latex>
+                </Title>
+                {questionDisplay?.[qns.questionNumber]?.question?.answers?.map(
+                  (ans: { isCorrect: boolean; answerContent: string }) => (
+                    <Group
+                      key={ans.answerContent}
+                      className={`${classes.options} ${
+                        qns.answerContent === ans.answerContent
+                          ? classes.selected
+                          : ""
+                      }`}
                     >
-                      {qns.questionDifficulty} Difficulty
-                    </Badge>
-                    <Badge radius="lg" size="lg">
-                      {qns.topicName}
-                    </Badge>
-                  </Group>
-                  <Title order={3} className={classes.title} my="lg">
-                    Question {qns.questionNumber + 1}:{" "}
-                    <Latex>{qns.questionContent}</Latex>
-                  </Title>
-                  {questionDisplay?.[
-                    qns.questionNumber
-                  ]?.question?.answers?.map(
-                    (ans: { isCorrect: boolean; answerContent: string }) => (
-                      <Group
-                        key={ans.answerContent}
-                        className={`${classes.options} ${
-                          qns.answerContent === ans.answerContent
-                            ? classes.selected
-                            : ""
-                        }`}
-                      >
-                        {ans.isCorrect === true ? (
-                          <IconCheck color="green" size={30} stroke={3} />
-                        ) : (
-                          <IconX color="red" size={30} stroke={3} />
-                        )}
-                        <Text>{ans.answerContent}</Text>
-                      </Group>
-                    )
-                  )}
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Image
-                    src={qns.questionMedia}
-                    alt={qns.questionMedia}
-                    width="0"
-                    height="0"
-                    sizes="100vw"
-                    className="h-auto w-full rounded-lg"
-                  />
-                </Grid.Col>
-              </Grid>
-            </Paper>
-          </>
+                      {ans.isCorrect === true ? (
+                        <IconCheck color="green" size={30} stroke={3} />
+                      ) : (
+                        <IconX color="red" size={30} stroke={3} />
+                      )}
+                      <Latex>{ans.answerContent}</Latex>
+                    </Group>
+                  )
+                )}
+              </Grid.Col>
+              <Grid.Col span={1}>
+                <Image
+                  src={qns.questionMedia}
+                  alt={qns.questionMedia}
+                  width="0"
+                  height="0"
+                  sizes="100vw"
+                  className={`h-auto w-full rounded-lg ${classes.image}`}
+                />
+              </Grid.Col>
+            </Grid>
+          </Paper>
         )
       )}
     </>
   );
 };
 
-export default LectureVideos;
+export default QuestionHistory;
 
 const useStyles = createStyles((theme) => ({
   card: {
@@ -160,6 +166,10 @@ const useStyles = createStyles((theme) => ({
   title: {
     fontFamily: `Greycliff CF, ${theme.fontFamily}`,
     lineHeight: 1,
+  },
+
+  image: {
+    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
   },
 
   options: {

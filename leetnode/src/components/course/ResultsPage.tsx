@@ -1,5 +1,5 @@
 import ProgressBar from "@/components/course/ProgressBar";
-import { Center, Text, Title } from "@mantine/core";
+import { Paper, Text, Title } from "@mantine/core";
 import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";
 
 const ShowResults = ({
@@ -60,18 +60,13 @@ const ShowResults = ({
   }
 
   return (
-    <>
-      {/* <div className="container mx-auto px-6 py-20 text-center"> */}
-      <Center mt="xl">
-        <Title order={1}>
-          Score: {score}/{questionDisplay?.length}
-        </Title>
-      </Center>
-      <Center>
-        <Text size="xl" mb="xl">
-          Keep practising to achieve mastery in all topics!
-        </Text>
-      </Center>
+    <Paper p="xl" radius="md" withBorder>
+      <Title order={1} mt="md" align="center">
+        Score: {score}/{questionDisplay?.length}
+      </Title>
+      <Text size="xl" mb="xl" align="center">
+        Keep practising to achieve mastery in all topics!
+      </Text>
       {newarr.map((eachProgress) =>
         eachProgress ? (
           <ProgressBar
@@ -83,7 +78,7 @@ const ShowResults = ({
           <Text>Error</Text>
         )
       )}
-    </>
+    </Paper>
   );
 };
 

@@ -82,6 +82,7 @@ export default function WelcomePage() {
   const { mutate, isLoading: mutationIsLoading } = useMutation(initializeUser, {
     onSuccess: (data) => {
       console.log(data);
+      setLoaded(false);
       router.push("/courses");
     },
   });

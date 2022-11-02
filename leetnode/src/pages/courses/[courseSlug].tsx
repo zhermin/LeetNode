@@ -62,7 +62,7 @@ import {
   IconReportSearch,
   IconMessages,
   IconZoomQuestion,
-  IconClipboardCheck,
+  IconTarget,
   IconArrowBarLeft,
   IconArrowLeft,
   IconArrowRight,
@@ -151,7 +151,7 @@ export default function CourseMainPage() {
 
   if (isLoading || isFetching || !course)
     return (
-      <Center className="h-screen">
+      <Center className="h-[calc(100vh-180px)]">
         <Loader />
       </Center>
     );
@@ -169,7 +169,7 @@ export default function CourseMainPage() {
     practice: [
       { label: "Question", icon: IconZoomQuestion },
       { label: "Attempts", icon: IconChartLine },
-      { label: "Mastery", icon: IconClipboardCheck },
+      { label: "Mastery", icon: IconTarget },
       { label: "Discussion", icon: IconMessages },
     ],
   };
