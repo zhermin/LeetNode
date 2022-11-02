@@ -1,9 +1,16 @@
-import { Key, useState } from "react";
+import { Dispatch, Key, SetStateAction, useState } from "react";
 import axios from "axios";
 import Image from "next/future/image";
 import Latex from "react-latex-next";
-import { Center, Loader, Title, Text, Button } from "@mantine/core";
+import { Center, Loader, Title, Text, Button, Radio } from "@mantine/core";
 import { useSession } from "next-auth/react";
+import {
+  Answer,
+  Attempt,
+  QuestionDifficulty,
+  QuestionMedia,
+  Topic,
+} from "@prisma/client";
 
 const LoadTopic = ({
   questionDisplay,
@@ -16,7 +23,63 @@ const LoadTopic = ({
   setQuestionHistory,
   endReached,
   setEndReached,
-}: any) => {
+}: {
+  questionDisplay:
+    | {
+        addedTime: Date;
+        courseSlug: string;
+        question: {
+          answers: Answer[];
+          attempts: Attempt[];
+          questionContent: string;
+          questionDifficulty: string;
+          questionId: number;
+          variationId: number;
+          topicSlug: string;
+          questionMedia: QuestionMedia[];
+          topic: Topic;
+        };
+        questionId: number;
+        userId: string;
+      }[]
+    | undefined;
+  selectedOptions: {
+    answerByUser: string;
+  }[];
+  setSelectedOptions: Dispatch<
+    SetStateAction<
+      {
+        answerByUser: string;
+      }[]
+    >
+  >;
+  attempt: { currentQuestion: number; isCorrect: boolean }[];
+  setAttempt: Dispatch<
+    SetStateAction<
+      {
+        currentQuestion: number;
+        isCorrect: boolean;
+      }[]
+    >
+  >;
+  currentQuestion: number;
+  setCurrentQuestion: Dispatch<SetStateAction<number>>;
+  setQuestionHistory: Dispatch<
+    SetStateAction<
+      {
+        questionContent: string;
+        questionNumber: number;
+        questionMedia: string;
+        topicName: string;
+        questionDifficulty: QuestionDifficulty;
+        isCorrect: boolean;
+        answerContent: string;
+      }[]
+    >
+  >;
+  endReached: boolean;
+  setEndReached: Dispatch<SetStateAction<boolean>>;
+}) => {
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -25,73 +88,54 @@ const LoadTopic = ({
     setSelectedOptions([
       (selectedOptions[currentQuestion] = {
         answerByUser: answer,
-      } as any),
+      }),
     ]);
     setSelectedOptions([...selectedOptions]);
     console.log(selectedOptions);
     console.log(questionDisplay);
 
     //check if answer correct
-    const data = questionDisplay[currentQuestion].question.answers;
-    const result = data.filter(
+    const data = questionDisplay?.[currentQuestion]?.question?.answers;
+    const result = data?.filter(
       (x: { isCorrect: boolean }) => x.isCorrect === true
     );
 
-    let correctAns;
-    switch (
-      selectedOptions[currentQuestion]?.answerByUser === result[0].answerContent
-    ) {
-      case true:
-        correctAns = 1;
-        break;
-      case false:
-        correctAns = 0;
-    }
     setAttempt([
       (attempt[currentQuestion] = {
-        isCorrect: correctAns,
-      } as any),
+        currentQuestion: currentQuestion,
+        isCorrect:
+          selectedOptions[currentQuestion]?.answerByUser ===
+          result?.[0]?.answerContent,
+      }),
     ]);
     setAttempt([...attempt]);
   };
 
-  const handlePrevious = () => {
-    const prevQues = currentQuestion - 1;
-    prevQues >= 0 && setCurrentQuestion(prevQues);
-  };
-  console.log(questionDisplay[currentQuestion].question.topic.topicName);
+  // Previous button used for testing!
+  // const handlePrevious = () => {
+  //   const prevQues = currentQuestion - 1;
+  //   prevQues >= 0 && setCurrentQuestion(prevQues);
+  // };
+  console.log(questionDisplay?.[currentQuestion]?.question?.topic?.topicName);
   const handleNext = async () => {
     if (currentQuestion in selectedOptions) {
-      setQuestionHistory(
-        (
-          current: [
-            {
-              questionNumber: string;
-              questionId: number;
-              topicName: string;
-              questionDifficulty: string;
-              isCorrect: boolean;
-              answerContent: string;
-            }
-          ]
-        ) => [
-          ...current,
-          {
-            questionContent:
-              questionDisplay[currentQuestion].question.questionContent,
-            questionNumber: currentQuestion,
-            questionMedia:
-              questionDisplay[currentQuestion].question.questionMedia[0]
-                .questionMediaURL,
-            topicName:
-              questionDisplay[currentQuestion].question.topic.topicName,
-            questionDifficulty:
-              questionDisplay[currentQuestion].question.questionDifficulty,
-            isCorrect: attempt[currentQuestion]?.isCorrect,
-            answerContent: selectedOptions[currentQuestion].answerByUser,
-          },
-        ]
-      );
+      setQuestionHistory((current) => [
+        ...current,
+        {
+          questionContent: questionDisplay?.[currentQuestion]?.question
+            ?.questionContent as string,
+          questionNumber: currentQuestion as number,
+          questionMedia: questionDisplay?.[currentQuestion]?.question
+            ?.questionMedia?.[0]?.questionMediaURL as string,
+          topicName: questionDisplay?.[currentQuestion]?.question?.topic
+            ?.topicName as string,
+          questionDifficulty: questionDisplay?.[currentQuestion]?.question
+            ?.questionDifficulty as QuestionDifficulty,
+          isCorrect: attempt[currentQuestion]?.isCorrect as boolean,
+          answerContent: selectedOptions?.[currentQuestion]
+            ?.answerByUser as string,
+        },
+      ]);
 
       // logic for updating mastery for user
 
@@ -107,7 +151,7 @@ const LoadTopic = ({
       const updateMastery = async (request: {
         id: string;
         topicSlug: string;
-        correct: number;
+        correct: boolean;
       }) => {
         try {
           //update mastery of student
@@ -126,22 +170,23 @@ const LoadTopic = ({
       //should output mastery skill
       const updated = await updateMastery({
         id: session?.data?.user?.id as string,
-        topicSlug: questionDisplay[currentQuestion].question.topicSlug,
-        correct: attempt[currentQuestion]?.isCorrect as number,
+        topicSlug: questionDisplay?.[currentQuestion]?.question
+          ?.topicSlug as string,
+        correct: attempt[currentQuestion]?.isCorrect as boolean,
       });
       setLoading(false);
       console.log(loading);
       console.log(session?.data?.user?.id);
-      console.log(questionDisplay[currentQuestion].question.topicSlug);
+      console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
       console.log(attempt[currentQuestion]?.isCorrect);
       console.log(updated);
       console.log(currentQuestion);
-      console.log(questionDisplay.length);
-      if (currentQuestion + 1 === questionDisplay.length) {
+      console.log(questionDisplay?.length);
+      if (currentQuestion + 1 === questionDisplay?.length) {
         console.log("reached the end");
         setEndReached(true);
         console.log(endReached);
-      } else {
+      } else if (questionDisplay) {
         //go to next page
         const nextQues = currentQuestion + 1;
         nextQues < questionDisplay.length && setCurrentQuestion(nextQues);
@@ -153,24 +198,6 @@ const LoadTopic = ({
 
   return (
     <>
-      {/* test functionality with User.Id and once API endpoint for Jasmine's part done */}
-      {/* {questionDisplay.map(
-        (eachProgress: {
-          question: {
-            topicSlug: string;
-            topic: { topicName: string };
-            questionId: number;
-          };
-          userId: string;
-        }) => (
-          <ProgressBar
-            topicSlug={eachProgress.question.topicSlug}
-            userId={user[0].id}
-            topicName={eachProgress.question.topic.topicName}
-            key={eachProgress.question.questionId}
-          />
-        )
-      )} */}
       {endReached === false ? (
         <>
           {loading === true ? (
@@ -185,18 +212,21 @@ const LoadTopic = ({
                 </Title>
                 <Text size="xl" mt="sm">
                   <Latex>
-                    {questionDisplay[currentQuestion].question.questionContent}
+                    {
+                      questionDisplay?.[currentQuestion]?.question
+                        ?.questionContent
+                    }
                   </Latex>
                 </Text>
               </div>
               <Image
                 src={
-                  questionDisplay[currentQuestion].question.questionMedia[0]
-                    .questionMediaURL ?? ""
+                  questionDisplay?.[currentQuestion]?.question?.questionMedia[0]
+                    ?.questionMediaURL ?? ""
                 }
                 alt={
-                  questionDisplay[currentQuestion].question.questionContent ??
-                  ""
+                  questionDisplay?.[currentQuestion]?.question
+                    ?.questionContent ?? ""
                 }
                 width="0"
                 height="0"
@@ -204,7 +234,7 @@ const LoadTopic = ({
                 className="h-auto w-1/3 rounded-lg py-8"
               />
               <div className="flex w-full flex-col">
-                {questionDisplay[currentQuestion].question.answers.map(
+                {questionDisplay?.[currentQuestion]?.question?.answers?.map(
                   (
                     answer: { answerContent: string },
                     index: Key | null | undefined
@@ -214,9 +244,7 @@ const LoadTopic = ({
                       className="m-2 ml-0 flex w-full cursor-pointer items-center space-x-2 rounded-xl border-2 border-white/10 bg-white/5 py-4 pl-5"
                       onClick={() => handleAnswerOption(answer.answerContent)}
                     >
-                      <input
-                        type="radio"
-                        name={answer.answerContent}
+                      <Radio
                         value={answer.answerContent}
                         checked={
                           answer.answerContent ===
@@ -237,7 +265,7 @@ const LoadTopic = ({
                 {/* <Button onClick={handlePrevious} radius="md" size="md">
                   Previous
                 </Button> */}
-                {currentQuestion + 1 === questionDisplay.length &&
+                {currentQuestion + 1 === questionDisplay?.length &&
                 endReached === false ? (
                   <Button onClick={handleNext} radius="md" size="md">
                     Finish Quiz

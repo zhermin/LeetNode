@@ -8,6 +8,7 @@ import {
   Topic,
   UserCourseQuestion,
   Mastery,
+  QuestionDifficulty,
 } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
@@ -120,7 +121,7 @@ export default function CourseMainPage() {
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<
-    { currentQuestion: number; answerByUser: string }[]
+    { answerByUser: string }[]
   >([]);
   const [attempt, setAttempt] = useState<
     { currentQuestion: number; isCorrect: boolean }[]
@@ -131,7 +132,7 @@ export default function CourseMainPage() {
       questionNumber: number;
       questionMedia: string;
       topicName: string;
-      questionDifficulty: string;
+      questionDifficulty: QuestionDifficulty;
       isCorrect: boolean;
       answerContent: string;
     }[]
@@ -324,7 +325,6 @@ export default function CourseMainPage() {
             setAttempt={setAttempt}
             currentQuestion={currentQuestion}
             setCurrentQuestion={setCurrentQuestion}
-            questionHistory={questionHistory}
             setQuestionHistory={setQuestionHistory}
             endReached={endReached}
             setEndReached={setEndReached}
@@ -341,7 +341,7 @@ export default function CourseMainPage() {
             questionDisplay={
               course.userCourseQuestions[0]?.questionsWithAddedTime
             }
-            attempt={attempt}
+            attempt={attempt ?? undefined}
           />
         ) : active === "Discussion" ? (
           <div>Discussion (WIP)</div>

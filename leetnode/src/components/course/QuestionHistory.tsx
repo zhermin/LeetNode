@@ -11,8 +11,41 @@ import { IconCheck, IconX } from "@tabler/icons";
 import Image from "next/future/image";
 import Latex from "react-latex-next";
 import { QuestionDifficulty } from "@prisma/client";
+import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";
 
-const LectureVideos = ({ questionHistory, questionDisplay }: any) => {
+const LectureVideos = ({
+  questionHistory,
+  questionDisplay,
+}: {
+  questionHistory: {
+    questionContent: string;
+    questionNumber: number;
+    questionMedia: string;
+    topicName: string;
+    questionDifficulty: QuestionDifficulty;
+    isCorrect: boolean;
+    answerContent: string;
+  }[];
+  questionDisplay:
+    | {
+        addedTime: Date;
+        courseSlug: string;
+        question: {
+          answers: Answer[];
+          attempts: Attempt[];
+          questionContent: string;
+          questionDifficulty: string;
+          questionId: number;
+          variationId: number;
+          topicSlug: string;
+          questionMedia: QuestionMedia[];
+          topic: Topic;
+        };
+        questionId: number;
+        userId: string;
+      }[]
+    | undefined;
+}) => {
   const { classes } = useStyles();
   console.log(questionDisplay);
   return (
@@ -61,7 +94,9 @@ const LectureVideos = ({ questionHistory, questionDisplay }: any) => {
                     Question {qns.questionNumber + 1}:{" "}
                     <Latex>{qns.questionContent}</Latex>
                   </Title>
-                  {questionDisplay[qns.questionNumber].question.answers.map(
+                  {questionDisplay?.[
+                    qns.questionNumber
+                  ]?.question?.answers?.map(
                     (ans: { isCorrect: boolean; answerContent: string }) => (
                       <Group
                         key={ans.answerContent}

@@ -10,17 +10,18 @@ export default async function handler(
   const displayData = async (req: {
     id: string;
     topicSlug: string;
-    correct: number;
+    correct: boolean;
   }) => {
     //patch then get data then update mastery
     const res = await axios.patch(
       `https://pybkt-api-deployment.herokuapp.com/update-state/${req.id}/${
         req.topicSlug
-      }/${String(req.correct)}`,
+      }/${String(req.correct ? 1 : 0)}`,
       req
     );
 
     const info = res.data.Updated;
+    console.log(info);
 
     if (info === true) {
       const res2 = await axios.get(

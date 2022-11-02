@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import axios from "axios";
 import { prisma } from "@/server/db/client";
 
 export default async function handler(
