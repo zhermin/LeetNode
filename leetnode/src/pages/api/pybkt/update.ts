@@ -11,6 +11,8 @@ export default async function handler(
     id: string;
     topicSlug: string;
     correct: boolean;
+    optionNumber: number;
+    questionId: number;
   }) => {
     //patch then get data then update mastery
     const res = await axios.patch(
@@ -60,8 +62,18 @@ export default async function handler(
       masteryLevel: display.Mastery,
     },
   });
-  // console.log("test");
   console.log(mastery);
+
+  //updates attempt after each submission
+  const updateAttempt = await prisma.attempt.create({
+    data: {
+      userId: req.body.id,
+      questionId: req.body.questionId,
+      attemptOption: req.body.optionNumber,
+      isCorrect: req.body.correct,
+    },
+  });
+  console.log(updateAttempt.attemptId);
 
   try {
     res.status(200).json(display); // should be displaying mastery table

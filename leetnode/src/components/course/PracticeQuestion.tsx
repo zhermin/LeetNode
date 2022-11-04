@@ -93,6 +93,9 @@ const LoadTopic = ({
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
+  // const [optionNumber, setOptionNumber] = useState<number>(0);
+
+  let optionNumber: number;
 
   const handleAnswerOption = (answer: string) => {
     setSelectedOptions([
@@ -125,7 +128,6 @@ const LoadTopic = ({
   //   const prevQues = currentQuestion - 1;
   //   prevQues >= 0 && setCurrentQuestion(prevQues);
   // };
-  console.log(questionDisplay?.[currentQuestion]?.question?.topic?.topicName);
   const handleNext = async () => {
     if (currentQuestion in selectedOptions) {
       setQuestionHistory((current) => [
@@ -155,12 +157,26 @@ const LoadTopic = ({
       // "correct": "1"
       // }
 
+      // Store quesiton option number to optionNumber variable
+      questionDisplay?.[currentQuestion]?.question.answers.map((options) => {
+        if (
+          selectedOptions[currentQuestion]?.answerByUser ===
+          options.answerContent
+        ) {
+          optionNumber = options.optionNumber;
+        }
+      });
+
+      console.log(optionNumber);
+
       setLoading(true);
       console.log(loading);
       const updateMastery = async (request: {
         id: string;
         topicSlug: string;
         correct: boolean;
+        optionNumber: number;
+        questionId: number;
       }) => {
         try {
           //update mastery of student
@@ -182,9 +198,12 @@ const LoadTopic = ({
         topicSlug: questionDisplay?.[currentQuestion]?.question
           ?.topicSlug as string,
         correct: attempt[currentQuestion]?.isCorrect as boolean,
+        optionNumber: optionNumber,
+        questionId: questionDisplay?.[currentQuestion]?.question
+          ?.questionId as number,
       });
+
       setLoading(false);
-      console.log(loading);
       console.log(session?.data?.user?.id);
       console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
       console.log(attempt[currentQuestion]?.isCorrect);
