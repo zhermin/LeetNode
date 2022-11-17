@@ -51,6 +51,7 @@ model User {
   courseQuestions UserCourseQuestion[]
   masteries       Mastery[]
   posts           Post[]
+  comments        Comment[]
 }
 
 enum Role {
@@ -197,8 +198,16 @@ model Post {
   updatedAt DateTime    @updatedAt
   user      User        @relation(fields: [userId], references: [id])
   postMedia PostMedia[]
+  comment   Comment[]
+  postType  PostType
 
   @@index([userId])
+}
+
+enum PostType {
+  Content
+  Quiz
+  Misc
 }
 
 model PostMedia {
@@ -207,4 +216,26 @@ model PostMedia {
   post         Post   @relation(fields: [postId], references: [postId])
 
   @@id([postId, postMediaURL])
+}
+
+
+model Comment {
+  commentId    String      @id @default(cuid())
+  postId       String      
+  userId       String
+  message      String
+  likes        Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  post         Post        @relation(fields: [postId], references: [postId])
+  user         User        @relation(fields: [userId], references: [id])
+  commentMedia CommentMedia[]
+}
+
+model CommentMedia {
+  commentId       String
+  commentMediaURL String @db.VarChar(500)
+  comment         Comment   @relation(fields: [commentId], references: [commentId])
+
+  @@id([commentId, commentMediaURL])
 }
