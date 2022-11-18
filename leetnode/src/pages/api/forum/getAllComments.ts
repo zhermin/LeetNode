@@ -12,11 +12,14 @@ export default async function handler(
     return;
   }
 
-  const posts = await prisma.post.findMany({
+  const comments = await prisma.comment.findMany({
     include: {
-      postMedia: true,
+      commentMedia: true,
+    },
+    where: {
+      postId: req.body.postId,
     },
   });
 
-  res.status(200).json(posts);
+  res.status(200).json(comments);
 }

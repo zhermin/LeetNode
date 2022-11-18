@@ -12,9 +12,11 @@ export default async function handler(
     return;
   }
 
-  const posts = await prisma.post.findMany({
-    include: {
-      postMedia: true,
+  const posts = await prisma.comment.create({
+    data: {
+      postId: req.body.postId,
+      userId: req.body.userId,
+      message: req.body.message,
     },
   });
 

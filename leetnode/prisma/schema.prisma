@@ -193,7 +193,7 @@ model Post {
   userId    String
   title     String
   message   String
-  likes     Int
+  likes     Int         @default(0)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   user      User        @relation(fields: [userId], references: [id])
@@ -218,13 +218,12 @@ model PostMedia {
   @@id([postId, postMediaURL])
 }
 
-
 model Comment {
   commentId    String      @id @default(cuid())
   postId       String      
   userId       String
   message      String
-  likes        Int
+  likes        Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   post         Post        @relation(fields: [postId], references: [postId])

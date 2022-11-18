@@ -19,6 +19,7 @@
     "@emotion/server": "^11.10.0",
     "@mantine/carousel": "^5.6.1",
     "@mantine/core": "^5.6.1",
+    "@mantine/form": "^5.8.0",
     "@mantine/hooks": "^5.6.1",
     "@mantine/next": "^5.6.1",
     "@next-auth/prisma-adapter": "^1.0.4",
