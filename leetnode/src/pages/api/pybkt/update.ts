@@ -14,6 +14,21 @@ export default async function handler(
     optionNumber: number;
     questionId: number;
   }) => {
+    //check if masteryLevel === 0 =>
+    axios
+      .get(
+        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}/`
+      )
+      .catch(function (error) {
+        if (
+          error.response.data.detail === `Student ID ${req.id} does NOT exists`
+        ) {
+          axios.post(
+            `https://pybkt-api-deployment.herokuapp.com/add-student/${req.id}/${req.topicSlug}/`
+          );
+        }
+      });
+
     //patch then get data then update mastery
     const res = await axios.patch(
       `https://pybkt-api-deployment.herokuapp.com/update-state/${req.id}/${
