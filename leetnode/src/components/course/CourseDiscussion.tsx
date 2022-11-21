@@ -8,12 +8,20 @@ import {
   Center,
   Loader,
   Title,
+  Modal,
+  Textarea,
+  TextInput,
+  SimpleGrid,
+  Select,
+  Pagination,
 } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import ForumPost from "@/components/course/ForumPost";
 import { Comment, PostMedia } from "@prisma/client";
+import { useForm } from "@mantine/form";
+import { useSession } from "next-auth/react";
 
 type postType = {
   postId: string;
@@ -28,6 +36,18 @@ type postType = {
 } | null;
 
 const CourseDiscussion = () => {
+  const [redirect, setRedirect] = useState(false);
+  const [postData, setPostData] = useState<postType>(null);
+  const [opened, setOpened] = useState(false);
+
+  //initialize pagination variables
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage, setPostsPerPage] = useState<string | null>("5");
+  const [postFilter, setPostFilter] = useState<string | null>("All");
+
+  const session = useSession();
+  const queryClient = useQueryClient();
+
   const {
     data: posts,
     isLoading,
@@ -38,13 +58,44 @@ const CourseDiscussion = () => {
     return res.data;
   });
 
-  const [redirect, setRedirect] = useState(false);
-  const [postData, setPostData] = useState<postType>(null);
-
   function handleClick(post: postType) {
     setRedirect(true);
     setPostData(post);
   }
+
+  const mutation = useMutation<
+    Response,
+    AxiosError,
+    { userId: string; title: string; message: string; postType: string },
+    () => void
+  >({
+    mutationFn: async (newPost) => {
+      const res = await axios.post(
+        "http://localhost:3000/api/forum/addPost",
+        newPost
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-posts"]);
+      form.values.message = "";
+      form.values.title = "";
+      form.values.postType = "Content";
+      setOpened(false);
+    },
+  });
+
+  const form = useForm({
+    initialValues: {
+      title: "",
+      message: "",
+      postType: "Content",
+    },
+    validate: {
+      title: (value) => value.trim().length === 0,
+      message: (value) => value.trim().length === 0,
+    },
+  });
 
   if (isLoading || isFetching || !posts)
     return (
@@ -54,6 +105,27 @@ const CourseDiscussion = () => {
     );
   if (isError) return <div>Something went wrong!</div>;
 
+  const indexOfLastPost = currentPage * Number(postsPerPage);
+  const indexOfFirstPost = indexOfLastPost - Number(postsPerPage);
+  let filteredPosts;
+  {
+    postFilter === "All"
+      ? (filteredPosts = posts)
+      : postFilter === "Content"
+      ? (filteredPosts = posts.filter(
+          (post: { postType: string }) => post.postType === "Content"
+        ))
+      : postFilter === "Quiz"
+      ? (filteredPosts = posts.filter(
+          (post: { postType: string }) => post.postType === "Quiz"
+        ))
+      : (filteredPosts = posts.filter(
+          (post: { postType: string }) => post.postType === "Misc"
+        ));
+  }
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const nPages = Math.ceil(posts.length / Number(postsPerPage));
+
   return (
     <>
       {redirect ? (
@@ -62,7 +134,90 @@ const CourseDiscussion = () => {
         <>
           <Title align="center">Discussion Forum</Title>
           <Container size="md">
-            {posts.map((post: postType) => (
+            <Modal
+              transition="fade"
+              transitionDuration={600}
+              transitionTimingFunction="ease"
+              centered
+              overflow="inside"
+              opened={opened}
+              onClose={() => setOpened(false)}
+              title="Post a Forum Thread"
+              styles={(theme) => ({
+                title: {
+                  fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+                  align: "center",
+                  fontSize: 25,
+                },
+              })}
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  mutation.mutate({
+                    userId: session?.data?.user?.id as string,
+                    title: form.values.title,
+                    message: form.values.message,
+                    postType: form.values.postType,
+                  });
+                }}
+              >
+                <SimpleGrid
+                  cols={2}
+                  mt="xl"
+                  breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                >
+                  <TextInput
+                    label="Title"
+                    placeholder="Title"
+                    name="title"
+                    variant="filled"
+                    {...form.getInputProps("title")}
+                  />
+                  <Select
+                    data={["Content", "Quiz", "Misc"]}
+                    placeholder="Choose thread type"
+                    label="Thread Type"
+                    defaultValue="Content"
+                    {...form.getInputProps("postType")}
+                  />
+                </SimpleGrid>
+                <Textarea
+                  mt="md"
+                  label="Message"
+                  placeholder="Your message"
+                  maxRows={10}
+                  minRows={5}
+                  autosize
+                  name="message"
+                  variant="filled"
+                  {...form.getInputProps("message")}
+                />
+
+                <Group position="center" mt="xl">
+                  <Button type="submit" size="md">
+                    Send message
+                  </Button>
+                </Group>
+              </form>
+            </Modal>
+            <Group position="apart">
+              <Button onClick={() => setOpened(true)}>Post a Thread</Button>
+              <Select
+                value={postFilter}
+                data={["All", "Content", "Quiz", "Misc"]}
+                onChange={setPostFilter}
+                dropdownPosition="bottom"
+                size="sm"
+                styles={() => ({
+                  root: {
+                    width: 150,
+                  },
+                })}
+              />
+            </Group>
+
+            {currentPosts.map((post: postType) => (
               <Card
                 shadow="sm"
                 p="md"
@@ -102,6 +257,25 @@ const CourseDiscussion = () => {
                 </Button>
               </Card>
             ))}
+            <Group position="center" mt={"md"}>
+              <Pagination
+                page={currentPage}
+                onChange={setCurrentPage}
+                total={nPages}
+                size="md"
+              />
+              <Select
+                value={postsPerPage}
+                onChange={setPostsPerPage}
+                data={["5", "10", "15", "20"]}
+                size="sm"
+                styles={() => ({
+                  root: {
+                    width: 55,
+                  },
+                })}
+              />
+            </Group>
           </Container>
         </>
       )}
@@ -110,100 +284,3 @@ const CourseDiscussion = () => {
 };
 
 export default CourseDiscussion;
-
-// import {
-//   Group,
-//   Avatar,
-//   Text,
-//   Accordion,
-//   Card,
-//   Badge,
-//   Button,
-//   Title,
-//   Container,
-// } from "@mantine/core";
-
-// const charactersList = [
-//   {
-//     id: "bender",
-//     image: "https://img.icons8.com/clouds/256/000000/futurama-bender.png",
-//     label: "Bender Bending Rodríguez",
-//     description: "Fascinated with cooking, though has no sense of taste",
-//     content:
-//       "Bender Bending Rodríguez, (born September 4, 2996), designated Bending Unit 22, and commonly known as Bender, is a bending unit created by a division of MomCorp in Tijuana, Mexico, and his serial number is 2716057. His mugshot id number is 01473. He is Fry's best friend.",
-//   },
-
-//   {
-//     id: "carol",
-//     image: "https://img.icons8.com/clouds/256/000000/futurama-mom.png",
-//     label: "Carol Miller",
-//     description: "One of the richest people on Earth",
-//     content:
-//       "Carol Miller (born January 30, 2880), better known as Mom, is the evil chief executive officer and shareholder of 99.7% of Momcorp, one of the largest industrial conglomerates in the universe and the source of most of Earth's robots. She is also one of the main antagonists of the Futurama series.",
-//   },
-
-//   {
-//     id: "homer",
-//     image: "https://img.icons8.com/clouds/256/000000/homer-simpson.png",
-//     label: "Homer Simpson",
-//     description: "Overweight, lazy, and often ignorant",
-//     content:
-//       "Homer Jay Simpson (born May 12) is the main protagonist and one of the five main characters of The Simpsons series(or show). He is the spouse of Marge Simpson and father of Bart, Lisa and Maggie Simpson.",
-//   },
-// ];
-
-// interface AccordionLabelProps {
-//   label: string;
-//   image: string;
-//   description: string;
-// }
-
-// function AccordionLabel({ label, image, description }: AccordionLabelProps) {
-//   return (
-//     <Group noWrap>
-//       <div>
-//         <Group position="apart" mt="md" mb="xs">
-//           <Group>
-//             <Avatar src={image} radius="xl" size="lg" />
-//             <Text weight={500}>{label}</Text>
-//           </Group>
-//           <Badge color="pink" variant="light">
-//             On Sale
-//           </Badge>
-//         </Group>
-
-//         <Text size="sm" color="dimmed">
-//           {description}
-//         </Text>
-
-//         <Button variant="light" color="blue" fullWidth mt="md" radius="md">
-//           Book classic tour now
-//         </Button>
-//       </div>
-//     </Group>
-//   );
-// }
-
-// function Demo() {
-//   const items = charactersList.map((item) => (
-//     <Accordion.Item value={item.id} key={item.label}>
-//       <Accordion.Control>
-//         <Card shadow="sm" p="lg" radius="md" withBorder>
-//           <AccordionLabel {...item} />
-//         </Card>
-//       </Accordion.Control>
-//       <Accordion.Panel>
-//         <Text size="sm">{item.content}</Text>
-//       </Accordion.Panel>
-//     </Accordion.Item>
-//   ));
-
-//   return (
-//     <Container size="sm">
-//       <Title align="center">Course Discussion</Title>
-//       <Accordion>{items}</Accordion>
-//     </Container>
-//   );
-// }
-
-// export default Demo;

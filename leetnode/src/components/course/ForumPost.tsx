@@ -1,4 +1,12 @@
-import { Button, Center, Group, Loader, Text, Textarea } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Center,
+  Group,
+  Loader,
+  Text,
+  Textarea,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { PostMedia, Comment, CommentMedia } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,8 +50,7 @@ const ForumPost = ({
     );
     return res.data;
   });
-  console.log(post?.postId);
-  console.log(comments);
+
   const mutation = useMutation<
     Response,
     AxiosError,
@@ -87,6 +94,18 @@ const ForumPost = ({
   return (
     <>
       <a onClick={handleBack}>Back</a>
+      <Badge
+        color={
+          post?.postType === "Content"
+            ? "cyan"
+            : post?.postType === "Quiz"
+            ? "blue"
+            : "gray"
+        }
+        variant="light"
+      >
+        {post?.postType}
+      </Badge>
       <div>
         <div>postId: {post?.postId}</div>
         <div>title: {post?.title}</div>

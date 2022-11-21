@@ -12,13 +12,14 @@ export default async function handler(
     return;
   }
 
-  const comments = await prisma.comment.create({
+  const posts = await prisma.post.create({
     data: {
-      postId: req.body.postId,
       userId: req.body.userId,
+      title: req.body.title,
       message: req.body.message,
+      postType: req.body.postType,
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json(posts);
 }
