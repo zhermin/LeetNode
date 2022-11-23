@@ -12,13 +12,9 @@ export default async function handler(
     return;
   }
 
-  const posts = await prisma.post.findMany({
-    orderBy: {
-      postId: "desc",
-    },
-    include: {
-      postMedia: true,
-      comment: true,
+  const posts = await prisma.course.findMany({
+    select: {
+      courseName: true,
     },
   });
 

@@ -4,9 +4,10 @@ import {
   Center,
   Group,
   Loader,
+  SimpleGrid,
   Text,
-  Textarea,
 } from "@mantine/core";
+import RichTextEditor from "@/components/course/RichText";
 import { useForm } from "@mantine/form";
 import { PostMedia, Comment, CommentMedia } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,7 +143,7 @@ const ForumPost = ({
           });
         }}
       >
-        <Textarea
+        {/* <Textarea
           mt="md"
           label="Message"
           placeholder="Your message"
@@ -152,8 +153,13 @@ const ForumPost = ({
           name="message"
           variant="filled"
           {...form.getInputProps("message")}
-        />
-
+        /> */}
+        <Text size={"sm"} weight={500}>
+          Message
+        </Text>
+        <SimpleGrid style={{ minHeight: 250 }}>
+          <RichTextEditor id="rte" />
+        </SimpleGrid>
         <Group position="center" mt="xl">
           <Button type="submit" size="md">
             Send message

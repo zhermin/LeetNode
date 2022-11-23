@@ -313,7 +313,7 @@ export default function CourseMainPage() {
         ) : active === "Additional Resources" ? (
           <MarkdownLatex>{course.markdown ?? defaultMarkdown}</MarkdownLatex>
         ) : active === "Course Discussion" ? (
-          <CourseDiscussion />
+          <CourseDiscussion courseName={course.courseName} />
         ) : active === "Question" ? (
           <PracticeQuestion
             questionDisplay={
