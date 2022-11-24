@@ -15,8 +15,9 @@ import {
   Table,
   Avatar,
   Anchor,
+  Divider,
+  TypographyStylesProvider,
 } from "@mantine/core";
-import RichTextEditor from "@/components/course/RichText";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { useState } from "react";
@@ -92,6 +93,10 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   function handleClick(post: postType) {
     setRedirect(true);
     setPostData(post);
+    form.values.message = "";
+    form.values.title = "";
+    form.values.courseName = courseName;
+    form.values.postType = "Content";
   }
 
   const handleCloseModal = () => {
@@ -110,7 +115,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       userId: string;
       title: string;
       message: string;
-      course: string;
+      courseName: string;
       postType: string;
     },
     () => void
@@ -126,7 +131,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       queryClient.invalidateQueries(["all-posts"]);
       form.values.message = "";
       form.values.title = "";
-      form.values.course = courseName;
+      form.values.courseName = courseName;
       form.values.postType = "Content";
       setOpenedPosting(false);
     },
@@ -136,7 +141,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     initialValues: {
       title: "",
       message: "",
-      course: courseName,
+      courseName: courseName,
       postType: "Content",
     },
     validate: {
@@ -210,7 +215,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     indexOfFirstPost,
     indexOfLastPost
   );
-  const nPages = Math.ceil(posts.data.data.length / Number(postsPerPage));
+  const nPages = Math.ceil(currentPosts.length / Number(postsPerPage));
 
   //store all courses in array for filter purposes
   const coursesArr = [
@@ -226,7 +231,76 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     }
   });
 
-  console.log(coursesArr);
+  const DateDiff = {
+    inSeconds: function (
+      d1: { getTime: () => number },
+      d2: { getTime: () => number }
+    ) {
+      const t2 = d2.getTime();
+      const t1 = d1.getTime();
+
+      return (t2 - t1) / 1000;
+    },
+
+    inMinutes: function (
+      d1: { getTime: () => number },
+      d2: { getTime: () => number }
+    ) {
+      const t2 = d2.getTime();
+      const t1 = d1.getTime();
+
+      return (t2 - t1) / 60000;
+    },
+
+    inHours: function (
+      d1: { getTime: () => number },
+      d2: { getTime: () => number }
+    ) {
+      const t2 = d2.getTime();
+      const t1 = d1.getTime();
+
+      return (t2 - t1) / 3600000;
+    },
+
+    inDays: function (
+      d1: { getTime: () => number },
+      d2: { getTime: () => number }
+    ) {
+      const t2 = d2.getTime();
+      const t1 = d1.getTime();
+
+      return (t2 - t1) / (24 * 3600 * 1000);
+    },
+
+    inWeeks: function (
+      d1: { getTime: () => number },
+      d2: { getTime: () => number }
+    ) {
+      const t2 = d2.getTime();
+      const t1 = d1.getTime();
+
+      return (t2 - t1) / (24 * 3600 * 1000 * 7);
+    },
+
+    inMonths: function (
+      d1: { getFullYear: () => number; getMonth: () => number },
+      d2: { getFullYear: () => number; getMonth: () => number }
+    ) {
+      const d1Y = d1.getFullYear();
+      const d2Y = d2.getFullYear();
+      const d1M = d1.getMonth();
+      const d2M = d2.getMonth();
+
+      return d2M + 12 * d2Y - (d1M + 12 * d1Y);
+    },
+
+    inYears: function (
+      d1: { getFullYear: () => number },
+      d2: { getFullYear: () => number }
+    ) {
+      return d2.getFullYear() - d1.getFullYear();
+    },
+  };
   return (
     <>
       {redirect ? (
@@ -243,7 +317,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
               centered
               overflow="inside"
               opened={openedPosting}
-              onClose={() => setOpenedPosting(false)}
+              onClose={() => {
+                setOpenedPosting(false);
+                form.values.message = "";
+                form.values.title = "";
+                form.values.courseName = courseName;
+                form.values.postType = "Content";
+              }}
               title="Post a Forum Thread"
               styles={(theme) => ({
                 title: {
@@ -260,7 +340,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                     userId: session?.data?.user?.id as string,
                     title: form.values.title,
                     message: form.values.message,
-                    course: form.values.course,
+                    courseName: form.values.courseName,
                     postType: form.values.postType,
                   });
                 }}
@@ -294,23 +374,10 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                     {...form.getInputProps("course")}
                   />
                 </SimpleGrid>
-                {/* <Textarea
-                  mt="md"
-                  label="Message"
-                  placeholder="Your message"
-                  maxRows={10}
-                  minRows={5}
-                  autosize
-                  name="message"
-                  variant="filled"
-                  {...form.getInputProps("message")}
-                /> */}
                 <Text size={"sm"} weight={500}>
                   Message
                 </Text>
-                <SimpleGrid style={{ minHeight: 250 }}>
-                  <RichTextEditor id="rte" />
-                </SimpleGrid>
+                <SimpleGrid style={{ minHeight: 250 }}></SimpleGrid>
                 <Group position="center" mt="xl">
                   <Button type="submit" size="md">
                     Send message
@@ -377,7 +444,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
             <Table sx={{ minWidth: 800 }}>
               <thead>
                 <tr>
-                  <th style={{ width: 400 }}>Forum Thread</th>
+                  <th>Forum Thread</th>
                   <th>Comments</th>
                   <th>Likes</th>
                   <th>Author</th>
@@ -388,10 +455,105 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 {currentPosts.map((post: postType) => (
                   <tr key={post?.postId}>
                     <td>
-                      <Anchor onClick={() => handleClick(post)}>
+                      <Anchor
+                        onClick={() => {
+                          handleClick(post);
+                          form.values.message = "";
+                          form.values.title = "";
+                          form.values.courseName = courseName;
+                          form.values.postType = "Content";
+                        }}
+                      >
                         <Text size={"lg"}>{post?.title}</Text>
                       </Anchor>
-                      <Text>{post?.message}</Text>
+                      <Group>
+                        <Text>
+                          {new Date(
+                            post?.createdAt as string
+                          ).toLocaleDateString("en-GB") +
+                            " " +
+                            new Date(post?.createdAt as string).toLocaleString(
+                              ["en-GB"],
+                              {
+                                hour12: true,
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                        </Text>
+                        <Divider orientation="vertical" />
+
+                        {DateDiff.inMinutes(
+                          new Date(post?.createdAt as string),
+                          new Date()
+                        ) < 60 ? (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inMinutes(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " minutes ago"}
+                          </Text>
+                        ) : DateDiff.inHours(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          ) < 24 ? (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inHours(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " hours ago"}
+                          </Text>
+                        ) : DateDiff.inDays(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          ) < 7 ? (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inDays(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " days ago"}
+                          </Text>
+                        ) : DateDiff.inWeeks(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          ) < 4 ? (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inWeeks(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " weeks ago"}
+                          </Text>
+                        ) : DateDiff.inMonths(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          ) < 12 ? (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inMonths(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " months ago"}
+                          </Text>
+                        ) : (
+                          <Text color="cyan.7">
+                            {Math.round(
+                              DateDiff.inYears(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " years ago"}
+                          </Text>
+                        )}
+                      </Group>
                     </td>
                     <td>{post?.comment.length}</td>
                     <td>{post?.likes}</td>

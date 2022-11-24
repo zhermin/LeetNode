@@ -6,8 +6,8 @@ import {
   Loader,
   SimpleGrid,
   Text,
+  TypographyStylesProvider,
 } from "@mantine/core";
-import RichTextEditor from "@/components/course/RichText";
 import { useForm } from "@mantine/form";
 import { PostMedia, Comment, CommentMedia } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -112,7 +112,13 @@ const ForumPost = ({
         <div>title: {post?.title}</div>
         <div>userId: {post?.userId}</div>
         <div>Post Type: {post?.postType}</div>
-        <div>Message: {post?.message}</div>
+        <TypographyStylesProvider>
+          <div
+            dangerouslySetInnerHTML={{
+              __html: `${post?.message}`,
+            }}
+          />
+        </TypographyStylesProvider>
         <div>CreatedAt: {post?.createdAt}</div>
         <div>UpdatedAt: {post?.updatedAt}</div>
         <div>PostMediaURL: {post?.postMedia?.[0]?.postMediaURL}</div>
@@ -157,9 +163,7 @@ const ForumPost = ({
         <Text size={"sm"} weight={500}>
           Message
         </Text>
-        <SimpleGrid style={{ minHeight: 250 }}>
-          <RichTextEditor id="rte" />
-        </SimpleGrid>
+        <SimpleGrid style={{ minHeight: 250 }}></SimpleGrid>
         <Group position="center" mt="xl">
           <Button type="submit" size="md">
             Send message
