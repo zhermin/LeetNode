@@ -194,7 +194,7 @@ model Post {
   postId      String      @id @default(cuid())
   userId      String
   title       String
-  message     String
+  message     Json?       
   likes       Int         @default(0)
   courseName  String
   topicName   String?     //kiv until dynamic loading implemented
@@ -228,7 +228,7 @@ model Comment {
   commentId    String      @id @default(cuid())
   postId       String      
   userId       String
-  message      String
+  message      Json?       
   likes        Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

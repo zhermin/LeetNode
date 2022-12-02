@@ -13,7 +13,10 @@ import { PostMedia, Comment, CommentMedia } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { useSession } from "next-auth/react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
+import modules from "../editor/Modules";
+import dynamic from "next/dynamic";
+const QuillNoSSRWrapper = dynamic(() => import("react-quill"), { ssr: false });
 
 type postType = {
   postId: string;
@@ -34,10 +37,18 @@ const ForumPost = ({
   post: postType;
   setRedirect: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const [value, setValue] = useState("");
+
   const session = useSession();
   const queryClient = useQueryClient();
 
   console.log(post?.postId);
+
+  // onChange expects a function with these 4 arguments
+  function handleChange(content: any, delta: any, source: any, editor: any) {
+    setValue(editor.getContents());
+    form.values.message = value;
+  }
 
   const {
     data: comments,
@@ -135,7 +146,13 @@ const ForumPost = ({
           updatedAt: string;
           commentMedia: CommentMedia[];
         }) => (
-          <div key={e.commentId}>{e.message}</div>
+          <TypographyStylesProvider key={e.commentId}>
+            <div
+              dangerouslySetInnerHTML={{
+                __html: `${e.message}`,
+              }}
+            />
+          </TypographyStylesProvider>
         )
       )}
 
@@ -160,10 +177,18 @@ const ForumPost = ({
           variant="filled"
           {...form.getInputProps("message")}
         /> */}
+
         <Text size={"sm"} weight={500}>
           Message
         </Text>
-        <SimpleGrid style={{ minHeight: 250 }}></SimpleGrid>
+        <SimpleGrid style={{ minHeight: 250 }}>
+          <QuillNoSSRWrapper
+            modules={modules}
+            onChange={handleChange}
+            // {...form.getInputProps("message")}
+            theme="snow"
+          />
+        </SimpleGrid>
         <Group position="center" mt="xl">
           <Button type="submit" size="md">
             Send message

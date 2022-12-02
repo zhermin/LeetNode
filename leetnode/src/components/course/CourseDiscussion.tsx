@@ -16,7 +16,6 @@ import {
   Avatar,
   Anchor,
   Divider,
-  TypographyStylesProvider,
 } from "@mantine/core";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
@@ -25,6 +24,25 @@ import ForumPost from "@/components/course/ForumPost";
 import { Comment, PostMedia } from "@prisma/client";
 import { useForm } from "@mantine/form";
 import { useSession } from "next-auth/react";
+import modules from "../editor/Modules";
+import "react-quill/dist/quill.snow.css";
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import dynamic from "next/dynamic";
+// import DisplayQuill from "../editor/Editor";
+if (typeof window !== "undefined") {
+  // declare global {
+  //   interface Window {
+  //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //     katex: any;
+  //   }
+  // }
+  window.katex = katex;
+}
+const QuillNoSSRWrapper = dynamic(import("react-quill"), {
+  ssr: false,
+  loading: () => <p>Loading ...</p>,
+});
 
 type postType = {
   postId: string;
@@ -64,8 +82,21 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     string | null
   >("All");
 
+  // const [editorState, setEditorState] = useState<EditorState>(
+  //   EditorState.createEmpty()
+  // );
+  // const [content, setContent] = useState<string>("");
+
+  const [value, setValue] = useState("");
+
   const session = useSession();
   const queryClient = useQueryClient();
+
+  // onChange expects a function with these 4 arguments
+  function handleChange(content: any, delta: any, source: any, editor: any) {
+    setValue(editor.getContents());
+    form.values.message = value;
+  }
 
   const [posts, courses, topics] = useQueries({
     queries: [
@@ -97,15 +128,18 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     form.values.title = "";
     form.values.courseName = courseName;
     form.values.postType = "Content";
+    console.log("clicked button");
   }
 
   const handleCloseModal = () => {
     setOpenedFilter(false);
+    console.log("close out modal w/o button");
   };
   const handleCloseSubmitModal = () => {
     setPostCourseFilter(postCourseFilterStagger);
     setPostTypeFilter(postTypeFilterStagger);
     setOpenedFilter(false);
+    console.log("close out modal w/ button");
   };
 
   const mutation = useMutation<
@@ -114,7 +148,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     {
       userId: string;
       title: string;
-      message: string;
+      message: unknown;
       courseName: string;
       postType: string;
     },
@@ -215,7 +249,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     indexOfFirstPost,
     indexOfLastPost
   );
-  const nPages = Math.ceil(currentPosts.length / Number(postsPerPage));
+  const nPages = Math.ceil(filteredTypePosts.length / Number(postsPerPage));
 
   //store all courses in array for filter purposes
   const coursesArr = [
@@ -301,6 +335,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       return d2.getFullYear() - d1.getFullYear();
     },
   };
+
   return (
     <>
       {redirect ? (
@@ -377,7 +412,14 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 <Text size={"sm"} weight={500}>
                   Message
                 </Text>
-                <SimpleGrid style={{ minHeight: 250 }}></SimpleGrid>
+                <SimpleGrid style={{ minHeight: 250 }}>
+                  <QuillNoSSRWrapper
+                    modules={modules}
+                    onChange={handleChange}
+                    // {...form.getInputProps("message")}
+                    theme="snow"
+                  />
+                </SimpleGrid>
                 <Group position="center" mt="xl">
                   <Button type="submit" size="md">
                     Send message
@@ -595,7 +637,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 size="sm"
                 styles={() => ({
                   root: {
-                    width: 55,
+                    width: 63,
                   },
                 })}
               />
