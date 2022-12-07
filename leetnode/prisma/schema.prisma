@@ -219,7 +219,7 @@ enum PostType {
 model PostMedia {
   postId       String
   postMediaURL String @db.VarChar(500)
-  post         Post   @relation(fields: [postId], references: [postId])
+  post         Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
   @@id([postId, postMediaURL])
 }
@@ -232,7 +232,7 @@ model Comment {
   likes        Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
-  post         Post        @relation(fields: [postId], references: [postId])
+  post         Post        @relation(fields: [postId], references: [postId], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id])
   commentMedia CommentMedia[]
 }
@@ -240,7 +240,7 @@ model Comment {
 model CommentMedia {
   commentId       String
   commentMediaURL String @db.VarChar(500)
-  comment         Comment   @relation(fields: [commentId], references: [commentId])
+  comment         Comment   @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
 
   @@id([commentId, commentMediaURL])
 }

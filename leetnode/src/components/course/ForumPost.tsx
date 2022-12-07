@@ -45,6 +45,7 @@ const ForumPost = ({
   console.log(post?.postId);
 
   // onChange expects a function with these 4 arguments
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleChange(content: any, delta: any, source: any, editor: any) {
     setValue(editor.getContents());
     form.values.message = value;

@@ -19,17 +19,18 @@ import {
 } from "@mantine/core";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ForumPost from "@/components/course/ForumPost";
 import { Comment, PostMedia } from "@prisma/client";
 import { useForm } from "@mantine/form";
 import { useSession } from "next-auth/react";
-import modules from "../editor/Modules";
+// import modules from "../editor/Modules";
 import "react-quill/dist/quill.snow.css";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import dynamic from "next/dynamic";
-// import DisplayQuill from "../editor/Editor";
+// import "quill-mention";
+
 if (typeof window !== "undefined") {
   // declare global {
   //   interface Window {
@@ -39,7 +40,8 @@ if (typeof window !== "undefined") {
   // }
   window.katex = katex;
 }
-const QuillNoSSRWrapper = dynamic(import("react-quill"), {
+
+const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
   ssr: false,
   loading: () => <p>Loading ...</p>,
 });
@@ -92,11 +94,68 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const session = useSession();
   const queryClient = useQueryClient();
 
-  // onChange expects a function with these 4 arguments
-  function handleChange(content: any, delta: any, source: any, editor: any) {
-    setValue(editor.getContents());
-    form.values.message = value;
-  }
+  const handleImageUpload = useCallback(
+    (file: File): Promise<string> =>
+      new Promise(async (resolve, reject) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "w2ul1sgu");
+        console.log(formData.get("file"));
+        console.log(formData.get("upload_preset"));
+
+        try {
+          const res = await axios.post(
+            "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
+            formData
+          ); //use data destructuring to get data from the promise object
+          resolve(res.data.secure_url);
+        } catch (error) {
+          console.log(error);
+          reject(error);
+        }
+      }),
+
+    []
+  );
+
+  const people: { value: string }[] = [];
+  axios.get("http://localhost:3000/api/forum/getAllUsers").then((res) => {
+    console.log(res.data);
+    res.data.map((e: { name: string }) => {
+      const jsonstr = `{"value":"${e.name}"}`;
+      people.push(JSON.parse(jsonstr));
+    });
+  });
+
+  const tags: { value: string }[] = [];
+  axios.get("http://localhost:3000/api/forum/getAllTopicNames").then((res) => {
+    console.log(res.data);
+    res.data.map((e: { topicName: string }) => {
+      const jsonstr = `{"value":"${e.topicName}"}`;
+      tags.push(JSON.parse(jsonstr));
+    });
+  });
+
+  const mentions = useMemo(
+    () => ({
+      allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
+      mentionDenotationChars: ["@", "#"],
+      defaultMenuOrientation: "top",
+      source: (
+        searchTerm: string,
+        renderList: (arg0: { value: string }[]) => void,
+        mentionChar: string
+      ) => {
+        const list = mentionChar === "@" ? people : tags;
+        const includesSearchTerm = list.filter((item) =>
+          item.value.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        renderList(includesSearchTerm.slice(0, 5));
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const [posts, courses, topics] = useQueries({
     queries: [
@@ -124,22 +183,15 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   function handleClick(post: postType) {
     setRedirect(true);
     setPostData(post);
-    form.values.message = "";
-    form.values.title = "";
-    form.values.courseName = courseName;
-    form.values.postType = "Content";
-    console.log("clicked button");
   }
 
   const handleCloseModal = () => {
     setOpenedFilter(false);
-    console.log("close out modal w/o button");
   };
   const handleCloseSubmitModal = () => {
     setPostCourseFilter(postCourseFilterStagger);
     setPostTypeFilter(postTypeFilterStagger);
     setOpenedFilter(false);
-    console.log("close out modal w/ button");
   };
 
   const mutation = useMutation<
@@ -168,6 +220,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       form.values.courseName = courseName;
       form.values.postType = "Content";
       setOpenedPosting(false);
+      setValue("");
     },
   });
 
@@ -345,7 +398,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
           <Title align="center">Discussion Forum</Title>
           <Container size="md">
             <Modal
-              size={"xl"}
+              size={"50vw"}
               transition="fade"
               transitionDuration={600}
               transitionTimingFunction="ease"
@@ -354,10 +407,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
               opened={openedPosting}
               onClose={() => {
                 setOpenedPosting(false);
-                form.values.message = "";
-                form.values.title = "";
-                form.values.courseName = courseName;
-                form.values.postType = "Content";
+                setValue("");
               }}
               title="Post a Forum Thread"
               styles={(theme) => ({
@@ -412,16 +462,28 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 <Text size={"sm"} weight={500}>
                   Message
                 </Text>
-                <SimpleGrid style={{ minHeight: 250 }}>
-                  <QuillNoSSRWrapper
-                    modules={modules}
-                    onChange={handleChange}
-                    // {...form.getInputProps("message")}
-                    theme="snow"
-                  />
-                </SimpleGrid>
+                <QuillNoSSRWrapper
+                  // modules={modules}
+                  value={value}
+                  onChange={setValue}
+                  onImageUpload={handleImageUpload}
+                  mentions={mentions}
+                  styles={{
+                    toolbar: {
+                      zIndex: 0,
+                    },
+                  }}
+                />
                 <Group position="center" mt="xl">
-                  <Button type="submit" size="md">
+                  <Button
+                    type="submit"
+                    size="md"
+                    styles={{
+                      root: {
+                        zIndex: -1,
+                      },
+                    }}
+                  >
                     Send message
                   </Button>
                 </Group>
@@ -525,10 +587,31 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         </Text>
                         <Divider orientation="vertical" />
 
-                        {DateDiff.inMinutes(
-                          new Date(post?.createdAt as string),
-                          new Date()
-                        ) < 60 ? (
+                        {Math.round(
+                          DateDiff.inMinutes(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          )
+                        ) === 1 ||
+                        Math.round(
+                          DateDiff.inMinutes(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          )
+                        ) === 0 ? (
+                          <Text color="cyan.7">
+                            {" "}
+                            {Math.round(
+                              DateDiff.inMinutes(
+                                new Date(post?.createdAt as string),
+                                new Date()
+                              )
+                            ) + " minute ago"}
+                          </Text>
+                        ) : DateDiff.inMinutes(
+                            new Date(post?.createdAt as string),
+                            new Date()
+                          ) < 60 ? (
                           <Text color="cyan.7">
                             {Math.round(
                               DateDiff.inMinutes(
@@ -537,6 +620,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                               )
                             ) + " minutes ago"}
                           </Text>
+                        ) : Math.round(
+                            DateDiff.inHours(
+                              new Date(post?.createdAt as string),
+                              new Date()
+                            )
+                          ) === 1 ? (
+                          <Text color="cyan.7">1 hour ago</Text>
                         ) : DateDiff.inHours(
                             new Date(post?.createdAt as string),
                             new Date()
@@ -549,6 +639,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                               )
                             ) + " hours ago"}
                           </Text>
+                        ) : Math.round(
+                            DateDiff.inDays(
+                              new Date(post?.createdAt as string),
+                              new Date()
+                            )
+                          ) === 1 ? (
+                          <Text color="cyan.7">1 day ago</Text>
                         ) : DateDiff.inDays(
                             new Date(post?.createdAt as string),
                             new Date()
@@ -561,6 +658,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                               )
                             ) + " days ago"}
                           </Text>
+                        ) : Math.round(
+                            DateDiff.inWeeks(
+                              new Date(post?.createdAt as string),
+                              new Date()
+                            )
+                          ) === 1 ? (
+                          <Text color="cyan.7">1 week ago</Text>
                         ) : DateDiff.inWeeks(
                             new Date(post?.createdAt as string),
                             new Date()
@@ -573,6 +677,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                               )
                             ) + " weeks ago"}
                           </Text>
+                        ) : Math.round(
+                            DateDiff.inMonths(
+                              new Date(post?.createdAt as string),
+                              new Date()
+                            )
+                          ) === 1 ? (
+                          <Text color="cyan.7">1 month ago</Text>
                         ) : DateDiff.inMonths(
                             new Date(post?.createdAt as string),
                             new Date()
@@ -585,6 +696,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                               )
                             ) + " months ago"}
                           </Text>
+                        ) : Math.round(
+                            DateDiff.inMonths(
+                              new Date(post?.createdAt as string),
+                              new Date()
+                            )
+                          ) === 1 ? (
+                          <Text color="cyan.7">1 year ago</Text>
                         ) : (
                           <Text color="cyan.7">
                             {Math.round(
