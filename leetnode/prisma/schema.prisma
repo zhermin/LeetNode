@@ -27,6 +27,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -35,6 +36,7 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 model User {
@@ -52,6 +54,7 @@ model User {
   masteries       Mastery[]
   posts           Post[]
   comments        Comment[]
+  postLikes       PostLikes[]
 }
 
 enum Role {
@@ -72,6 +75,7 @@ model Attempt {
   answer         Answer   @relation(fields: [questionId, attemptOption], references: [questionId, optionNumber], onDelete: Cascade)
 
   @@unique([userId, questionId, submittedAt])
+  @@index([questionId, attemptOption])
 }
 
 // QUESTION BANK
@@ -114,6 +118,8 @@ model UserCourseQuestion {
   questionsWithAddedTime QuestionWithAddedTime[]
 
   @@id([userId, courseSlug])
+  @@index([courseSlug])
+  @@index([userId])
 }
 
 model Mastery {
@@ -124,6 +130,8 @@ model Mastery {
   topic        Topic  @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
+  @@index([topicSlug])
+  @@index([userId])
 }
 
 model Topic {
@@ -147,6 +155,8 @@ model QuestionWithAddedTime {
   userCourse UserCourseQuestion @relation(fields: [userId, courseSlug], references: [userId, courseSlug], onDelete: Cascade)
 
   @@id([questionId, userId, courseSlug])
+  @@index([userId, courseSlug])
+  @@index([questionId])
 }
 
 model Question {
@@ -162,6 +172,7 @@ model Question {
   questionsWithAddedTime QuestionWithAddedTime[]
 
   @@index([questionDifficulty])
+  @@index([topicSlug])
 }
 
 enum QuestionDifficulty {
@@ -176,6 +187,7 @@ model QuestionMedia {
   question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
 
   @@id([questionId, questionMediaURL])
+  @@index([questionId])
 }
 
 model Answer {
@@ -187,6 +199,7 @@ model Answer {
   attempts      Attempt[]
 
   @@id([questionId, optionNumber])
+  @@index([questionId])
 }
 
 // DISCUSSION POSTS
@@ -194,7 +207,7 @@ model Post {
   postId      String      @id @default(cuid())
   userId      String
   title       String
-  message     Json?       
+  message     String      @db.VarChar(700)
   likes       Int         @default(0)
   courseName  String
   topicName   String?     //kiv until dynamic loading implemented
@@ -205,9 +218,12 @@ model Post {
   topic       Topic?      @relation(fields: [topicName], references: [topicName])
   postMedia   PostMedia[]
   comment     Comment[]
+  postLikes   PostLikes[]
   postType    PostType
 
   @@index([userId])
+  @@index([topicName])
+  @@index([courseName])
 }
 
 enum PostType {
@@ -222,19 +238,35 @@ model PostMedia {
   post         Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
   @@id([postId, postMediaURL])
+  @@index([postId])
+}
+
+model PostLikes {
+  postId       String 
+  userId       String
+  likes        Int    @default(0)
+  post         Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([postId])
+  @@index([userId])
 }
 
 model Comment {
   commentId    String      @id @default(cuid())
   postId       String      
   userId       String
-  message      Json?       
+  message      String      @db.VarChar(700)
   likes        Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   post         Post        @relation(fields: [postId], references: [postId], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id])
   commentMedia CommentMedia[]
+
+  @@index([postId])
+  @@index([userId])
 }
 
 model CommentMedia {
@@ -243,4 +275,5 @@ model CommentMedia {
   comment         Comment   @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
 
   @@id([commentId, commentMediaURL])
+  @@index([commentId])
 }

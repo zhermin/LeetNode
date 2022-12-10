@@ -17,29 +17,20 @@ import {
   Anchor,
   Divider,
 } from "@mantine/core";
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { useCallback, useMemo, useState } from "react";
 import ForumPost from "@/components/course/ForumPost";
 import { Comment, PostMedia } from "@prisma/client";
 import { useForm } from "@mantine/form";
 import { useSession } from "next-auth/react";
-// import modules from "../editor/Modules";
 import "react-quill/dist/quill.snow.css";
-import katex from "katex";
-import "katex/dist/katex.min.css";
 import dynamic from "next/dynamic";
-// import "quill-mention";
-
-if (typeof window !== "undefined") {
-  // declare global {
-  //   interface Window {
-  //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //     katex: any;
-  //   }
-  // }
-  window.katex = katex;
-}
 
 const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
   ssr: false,
@@ -84,12 +75,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     string | null
   >("All");
 
-  // const [editorState, setEditorState] = useState<EditorState>(
-  //   EditorState.createEmpty()
-  // );
-  // const [content, setContent] = useState<string>("");
-
-  const [value, setValue] = useState("");
+  const [message, setMessage] = useState("");
 
   const session = useSession();
   const queryClient = useQueryClient();
@@ -100,9 +86,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", "w2ul1sgu");
-        console.log(formData.get("file"));
-        console.log(formData.get("upload_preset"));
-
         try {
           const res = await axios.post(
             "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
@@ -120,7 +103,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
 
   const people: { value: string }[] = [];
   axios.get("http://localhost:3000/api/forum/getAllUsers").then((res) => {
-    console.log(res.data);
     res.data.map((e: { name: string }) => {
       const jsonstr = `{"value":"${e.name}"}`;
       people.push(JSON.parse(jsonstr));
@@ -129,7 +111,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
 
   const tags: { value: string }[] = [];
   axios.get("http://localhost:3000/api/forum/getAllTopicNames").then((res) => {
-    console.log(res.data);
     res.data.map((e: { topicName: string }) => {
       const jsonstr = `{"value":"${e.topicName}"}`;
       tags.push(JSON.parse(jsonstr));
@@ -180,6 +161,22 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     ],
   });
 
+  // Use the useQuery hook to make the API call to get all users
+  const {
+    data: users,
+    isLoading: isLoadingUsers,
+    isFetching: isFetchingUsers,
+    isError: isErrorUsers,
+  } = useQuery(["all-users"], async () => {
+    const res = await axios.get("http://localhost:3000/api/forum/getAllUsers");
+    const people: { id: string; image: string; value: string }[] = [];
+    res.data.map((e: { name: string; id: string; image: string }) => {
+      const jsonstr = `{"id":"${e.id}","image":"${e.image}","value":"${e.name}"}`;
+      people.push(JSON.parse(jsonstr));
+    });
+    return people;
+  });
+
   function handleClick(post: postType) {
     setRedirect(true);
     setPostData(post);
@@ -200,7 +197,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     {
       userId: string;
       title: string;
-      message: unknown;
+      message: string;
       courseName: string;
       postType: string;
     },
@@ -215,25 +212,22 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
-      form.values.message = "";
       form.values.title = "";
       form.values.courseName = courseName;
       form.values.postType = "Content";
       setOpenedPosting(false);
-      setValue("");
+      setMessage("");
     },
   });
 
   const form = useForm({
     initialValues: {
       title: "",
-      message: "",
       courseName: courseName,
       postType: "Content",
     },
     validate: {
       title: (value) => value.trim().length === 0,
-      message: (value) => value.trim().length === 0,
     },
   });
 
@@ -246,14 +240,17 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     !courses ||
     topics.isLoading ||
     topics.isFetching ||
-    !topics
+    !topics ||
+    isLoadingUsers ||
+    isFetchingUsers ||
+    !users
   )
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
-  if (posts.isError || courses.isError || topics.isError)
+  if (posts.isError || courses.isError || topics.isError || isErrorUsers)
     return <div>Something went wrong!</div>;
 
   const indexOfLastPost = currentPage * Number(postsPerPage);
@@ -392,7 +389,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   return (
     <>
       {redirect ? (
-        <ForumPost post={postData} setRedirect={setRedirect} />
+        <ForumPost post={postData} setRedirect={setRedirect} users={users} />
       ) : (
         <>
           <Title align="center">Discussion Forum</Title>
@@ -407,7 +404,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
               opened={openedPosting}
               onClose={() => {
                 setOpenedPosting(false);
-                setValue("");
+                setMessage("");
               }}
               title="Post a Forum Thread"
               styles={(theme) => ({
@@ -424,7 +421,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   mutation.mutate({
                     userId: session?.data?.user?.id as string,
                     title: form.values.title,
-                    message: form.values.message,
+                    message: message,
                     courseName: form.values.courseName,
                     postType: form.values.postType,
                   });
@@ -464,8 +461,8 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 </Text>
                 <QuillNoSSRWrapper
                   // modules={modules}
-                  value={value}
-                  onChange={setValue}
+                  value={message}
+                  onChange={setMessage}
                   onImageUpload={handleImageUpload}
                   mentions={mentions}
                   styles={{
@@ -475,15 +472,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   }}
                 />
                 <Group position="center" mt="xl">
-                  <Button
-                    type="submit"
-                    size="md"
-                    styles={{
-                      root: {
-                        zIndex: -1,
-                      },
-                    }}
-                  >
+                  <Button type="submit" size="md">
                     Send message
                   </Button>
                 </Group>
@@ -562,10 +551,10 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                       <Anchor
                         onClick={() => {
                           handleClick(post);
-                          form.values.message = "";
                           form.values.title = "";
                           form.values.courseName = courseName;
                           form.values.postType = "Content";
+                          setMessage("");
                         }}
                       >
                         <Text size={"lg"}>{post?.title}</Text>
@@ -719,8 +708,21 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                     <td>{post?.likes}</td>
                     <td>
                       <Group>
-                        <Avatar></Avatar>
-                        <Text>{post?.userId}</Text>
+                        <Avatar
+                          src={
+                            users.find((user) => user.id === post?.userId)
+                              ?.image
+                          }
+                          alt={post?.userId}
+                          radius="lg"
+                          size="sm"
+                        />
+                        <Text size="sm">
+                          {
+                            users.find((user) => user.id === post?.userId)
+                              ?.value
+                          }
+                        </Text>
                       </Group>
                     </td>
                     <td>

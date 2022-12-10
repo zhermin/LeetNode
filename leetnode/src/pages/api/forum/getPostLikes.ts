@@ -12,7 +12,19 @@ export default async function handler(
     return;
   }
 
-  const comments = await prisma.user.findMany();
-
-  res.status(200).json(comments);
+  const postLikes = await prisma.postLikes.upsert({
+    where: {
+      postId_userId: {
+        postId: req.body.postId,
+        userId: req.body.userId,
+      },
+    },
+    update: {},
+    create: {
+      postId: req.body.postId,
+      userId: req.body.userId,
+      likes: 0,
+    },
+  });
+  res.status(200).json(postLikes);
 }
