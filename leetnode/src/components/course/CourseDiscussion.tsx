@@ -18,6 +18,7 @@ import {
   Divider,
 } from "@mantine/core";
 import {
+  QueryKey,
   useMutation,
   useQueries,
   useQuery,
@@ -31,6 +32,7 @@ import { useForm } from "@mantine/form";
 import { useSession } from "next-auth/react";
 import "react-quill/dist/quill.snow.css";
 import dynamic from "next/dynamic";
+import DateDiffCalc from "./DateDiffCalc";
 
 const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
   ssr: false,
@@ -315,81 +317,85 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     }
   });
 
-  const DateDiff = {
-    inSeconds: function (
-      d1: { getTime: () => number },
-      d2: { getTime: () => number }
-    ) {
-      const t2 = d2.getTime();
-      const t1 = d1.getTime();
+  // const DateDiff = {
+  //   inSeconds: function (
+  //     d1: { getTime: () => number },
+  //     d2: { getTime: () => number }
+  //   ) {
+  //     const t2 = d2.getTime();
+  //     const t1 = d1.getTime();
 
-      return (t2 - t1) / 1000;
-    },
+  //     return (t2 - t1) / 1000;
+  //   },
 
-    inMinutes: function (
-      d1: { getTime: () => number },
-      d2: { getTime: () => number }
-    ) {
-      const t2 = d2.getTime();
-      const t1 = d1.getTime();
+  //   inMinutes: function (
+  //     d1: { getTime: () => number },
+  //     d2: { getTime: () => number }
+  //   ) {
+  //     const t2 = d2.getTime();
+  //     const t1 = d1.getTime();
 
-      return (t2 - t1) / 60000;
-    },
+  //     return (t2 - t1) / 60000;
+  //   },
 
-    inHours: function (
-      d1: { getTime: () => number },
-      d2: { getTime: () => number }
-    ) {
-      const t2 = d2.getTime();
-      const t1 = d1.getTime();
+  //   inHours: function (
+  //     d1: { getTime: () => number },
+  //     d2: { getTime: () => number }
+  //   ) {
+  //     const t2 = d2.getTime();
+  //     const t1 = d1.getTime();
 
-      return (t2 - t1) / 3600000;
-    },
+  //     return (t2 - t1) / 3600000;
+  //   },
 
-    inDays: function (
-      d1: { getTime: () => number },
-      d2: { getTime: () => number }
-    ) {
-      const t2 = d2.getTime();
-      const t1 = d1.getTime();
+  //   inDays: function (
+  //     d1: { getTime: () => number },
+  //     d2: { getTime: () => number }
+  //   ) {
+  //     const t2 = d2.getTime();
+  //     const t1 = d1.getTime();
 
-      return (t2 - t1) / (24 * 3600 * 1000);
-    },
+  //     return (t2 - t1) / (24 * 3600 * 1000);
+  //   },
 
-    inWeeks: function (
-      d1: { getTime: () => number },
-      d2: { getTime: () => number }
-    ) {
-      const t2 = d2.getTime();
-      const t1 = d1.getTime();
+  //   inWeeks: function (
+  //     d1: { getTime: () => number },
+  //     d2: { getTime: () => number }
+  //   ) {
+  //     const t2 = d2.getTime();
+  //     const t1 = d1.getTime();
 
-      return (t2 - t1) / (24 * 3600 * 1000 * 7);
-    },
+  //     return (t2 - t1) / (24 * 3600 * 1000 * 7);
+  //   },
 
-    inMonths: function (
-      d1: { getFullYear: () => number; getMonth: () => number },
-      d2: { getFullYear: () => number; getMonth: () => number }
-    ) {
-      const d1Y = d1.getFullYear();
-      const d2Y = d2.getFullYear();
-      const d1M = d1.getMonth();
-      const d2M = d2.getMonth();
+  //   inMonths: function (
+  //     d1: { getFullYear: () => number; getMonth: () => number },
+  //     d2: { getFullYear: () => number; getMonth: () => number }
+  //   ) {
+  //     const d1Y = d1.getFullYear();
+  //     const d2Y = d2.getFullYear();
+  //     const d1M = d1.getMonth();
+  //     const d2M = d2.getMonth();
 
-      return d2M + 12 * d2Y - (d1M + 12 * d1Y);
-    },
+  //     return d2M + 12 * d2Y - (d1M + 12 * d1Y);
+  //   },
 
-    inYears: function (
-      d1: { getFullYear: () => number },
-      d2: { getFullYear: () => number }
-    ) {
-      return d2.getFullYear() - d1.getFullYear();
-    },
-  };
+  //   inYears: function (
+  //     d1: { getFullYear: () => number },
+  //     d2: { getFullYear: () => number }
+  //   ) {
+  //     return d2.getFullYear() - d1.getFullYear();
+  //   },
+  // };
 
   return (
     <>
       {redirect ? (
-        <ForumPost post={postData} setRedirect={setRedirect} users={users} />
+        <ForumPost
+          postId={postData?.postId as string}
+          setRedirect={setRedirect}
+          users={users}
+        />
       ) : (
         <>
           <Title align="center">Discussion Forum</Title>
@@ -576,132 +582,9 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         </Text>
                         <Divider orientation="vertical" />
 
-                        {Math.round(
-                          DateDiff.inMinutes(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          )
-                        ) === 1 ||
-                        Math.round(
-                          DateDiff.inMinutes(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          )
-                        ) === 0 ? (
-                          <Text color="cyan.7">
-                            {" "}
-                            {Math.round(
-                              DateDiff.inMinutes(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " minute ago"}
-                          </Text>
-                        ) : DateDiff.inMinutes(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          ) < 60 ? (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inMinutes(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " minutes ago"}
-                          </Text>
-                        ) : Math.round(
-                            DateDiff.inHours(
-                              new Date(post?.createdAt as string),
-                              new Date()
-                            )
-                          ) === 1 ? (
-                          <Text color="cyan.7">1 hour ago</Text>
-                        ) : DateDiff.inHours(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          ) < 24 ? (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inHours(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " hours ago"}
-                          </Text>
-                        ) : Math.round(
-                            DateDiff.inDays(
-                              new Date(post?.createdAt as string),
-                              new Date()
-                            )
-                          ) === 1 ? (
-                          <Text color="cyan.7">1 day ago</Text>
-                        ) : DateDiff.inDays(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          ) < 7 ? (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inDays(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " days ago"}
-                          </Text>
-                        ) : Math.round(
-                            DateDiff.inWeeks(
-                              new Date(post?.createdAt as string),
-                              new Date()
-                            )
-                          ) === 1 ? (
-                          <Text color="cyan.7">1 week ago</Text>
-                        ) : DateDiff.inWeeks(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          ) < 4 ? (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inWeeks(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " weeks ago"}
-                          </Text>
-                        ) : Math.round(
-                            DateDiff.inMonths(
-                              new Date(post?.createdAt as string),
-                              new Date()
-                            )
-                          ) === 1 ? (
-                          <Text color="cyan.7">1 month ago</Text>
-                        ) : DateDiff.inMonths(
-                            new Date(post?.createdAt as string),
-                            new Date()
-                          ) < 12 ? (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inMonths(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " months ago"}
-                          </Text>
-                        ) : Math.round(
-                            DateDiff.inMonths(
-                              new Date(post?.createdAt as string),
-                              new Date()
-                            )
-                          ) === 1 ? (
-                          <Text color="cyan.7">1 year ago</Text>
-                        ) : (
-                          <Text color="cyan.7">
-                            {Math.round(
-                              DateDiff.inYears(
-                                new Date(post?.createdAt as string),
-                                new Date()
-                              )
-                            ) + " years ago"}
-                          </Text>
-                        )}
+                        <Text size={"sm"} color={"cyan.7"}>
+                          {DateDiffCalc(post?.createdAt as string)}
+                        </Text>
                       </Group>
                     </td>
                     <td>{post?.comment.length}</td>
@@ -767,6 +650,12 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       )}
     </>
   );
+};
+
+export const useGetFetchQuery = (key: QueryKey) => {
+  const queryClient = useQueryClient();
+
+  return queryClient.getQueryData(key);
 };
 
 export default CourseDiscussion;

@@ -261,6 +261,7 @@ model Comment {
   likes        Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  reply        String?     
   post         Post        @relation(fields: [postId], references: [postId], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id])
   commentMedia CommentMedia[]
