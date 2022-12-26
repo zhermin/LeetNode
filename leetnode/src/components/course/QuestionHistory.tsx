@@ -9,7 +9,7 @@ import {
   Center,
 } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons";
-import Image from "next/future/image";
+import Image from "next/image";
 import Latex from "react-latex-next";
 import { QuestionDifficulty } from "@prisma/client";
 import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";

@@ -28,7 +28,4 @@ export default defineNextConfig({
       "robohash.org",
     ],
   },
-  experimental: {
-    swcPlugins: [["next-superjson-plugin", {}]],
-  },
 });

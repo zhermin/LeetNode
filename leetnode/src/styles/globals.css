@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 @layer base {
-  h1 {
+  .markdown h1 {
     @apply text-4xl;
     @apply font-semibold;
     @apply py-3;
   }
-  h2 {
+  .markdown h2 {
     @apply text-3xl;
     @apply font-medium;
     @apply py-2;
   }
-  h3 {
+  .markdown h3 {
     @apply text-2xl;
     @apply font-medium;
     @apply py-1;
   }
-  h4 {
+  .markdown h4 {
     @apply text-xl;
     @apply font-medium;
     @apply py-1;
   }
-  h5 {
+  .markdown h5 {
     @apply text-lg;
     @apply font-medium;
     @apply py-1;
   }
-  h6 {
+  .markdown h6 {
     @apply text-base;
     @apply font-medium;
     @apply py-1;
   }
-  a {
+  .markdown a {
     @apply text-cyan-500;
     @apply underline;
   }

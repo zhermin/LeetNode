@@ -1,13 +1,12 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["referentialIntegrity"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider             = "mysql"
-  url                  = env("DATABASE_URL")
-  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
-  referentialIntegrity = "prisma"
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
 }
 
 // NEXT AUTH
@@ -36,6 +35,7 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
@@ -204,22 +204,22 @@ model Answer {
 
 // DISCUSSION POSTS
 model Post {
-  postId      String      @id @default(cuid())
-  userId      String
-  title       String
-  message     String      @db.VarChar(700)
-  likes       Int         @default(0)
-  courseName  String
-  topicName   String?     //kiv until dynamic loading implemented
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        User        @relation(fields: [userId], references: [id])
-  course      Course      @relation(fields: [courseName], references: [courseName], onDelete: Cascade)
-  topic       Topic?      @relation(fields: [topicName], references: [topicName])
-  postMedia   PostMedia[]
-  comment     Comment[]
-  postLikes   PostLikes[]
-  postType    PostType
+  postId     String      @id @default(cuid())
+  userId     String
+  title      String
+  message    String      @db.VarChar(700)
+  likes      Int         @default(0)
+  courseName String
+  topicName  String? //kiv until dynamic loading implemented
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id])
+  course     Course      @relation(fields: [courseName], references: [courseName], onDelete: Cascade)
+  topic      Topic?      @relation(fields: [topicName], references: [topicName])
+  postMedia  PostMedia[]
+  comment    Comment[]
+  postLikes  PostLikes[]
+  postType   PostType
 
   @@index([userId])
   @@index([topicName])
@@ -242,11 +242,11 @@ model PostMedia {
 }
 
 model PostLikes {
-  postId       String 
-  userId       String
-  likes        Int    @default(0)
-  post         Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId String
+  userId String
+  likes  Int    @default(0)
+  post   Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([postId, userId])
   @@index([postId])
@@ -254,16 +254,16 @@ model PostLikes {
 }
 
 model Comment {
-  commentId    String      @id @default(cuid())
-  postId       String      
+  commentId    String         @id @default(cuid())
+  postId       String
   userId       String
-  message      String      @db.VarChar(700)
-  likes        Int         @default(0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  reply        String?     
-  post         Post        @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  user         User        @relation(fields: [userId], references: [id])
+  message      String         @db.VarChar(700)
+  likes        Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  reply        String?
+  post         Post           @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id])
   commentMedia CommentMedia[]
 
   @@index([postId])
@@ -272,8 +272,8 @@ model Comment {
 
 model CommentMedia {
   commentId       String
-  commentMediaURL String @db.VarChar(500)
-  comment         Comment   @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
+  commentMediaURL String  @db.VarChar(500)
+  comment         Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
 
   @@id([commentId, commentMediaURL])
   @@index([commentId])

@@ -22,11 +22,10 @@ import {
   IconMoon,
 } from "@tabler/icons";
 import { useMediaQuery } from "@mantine/hooks";
-import { NextLink } from "@mantine/next";
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/future/image";
+import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 const HEADER_HEIGHT = 80;
@@ -35,9 +34,7 @@ const useStyles = createStyles((theme) => ({
   header: {
     backgroundColor:
       theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
-    borderBottom: `1px solid ${
-      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
-    }`,
+    borderBottom: `1px solid ${theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]}`,
   },
 
   inner: {
@@ -104,160 +101,154 @@ export default function Navbar() {
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
-      <Container>
-        <Box className={classes.inner}>
-          {mobile ? (
-            <Link href="/">
-              <a>
-                <Image
-                  src="/logo/leetnode-logo-square.png"
-                  alt="LeetNode"
-                  width="0"
-                  height="0"
-                  sizes="100vw"
-                  className="h-6 w-full rounded-full"
-                />
-              </a>
-            </Link>
-          ) : (
-            <Link href="/">
-              <a>
-                <Image
-                  src="/logo/leetnode-banner-white.png"
-                  alt="LeetNode"
-                  width="0"
-                  height="0"
-                  sizes="100vw"
-                  className="h-auto w-full"
-                />
-              </a>
-            </Link>
-          )}
+      <Container className={classes.inner}>
+        {mobile ? (
+          <Link href="/">
+            <Image
+              src="/logo/leetnode-logo-square.png"
+              alt="LeetNode"
+              width="0"
+              height="0"
+              sizes="100vw"
+              className="h-6 w-full rounded-full"
+            />
+          </Link>
+        ) : (
+          <Link href="/">
+            <Image
+              src="/logo/leetnode-banner-white.png"
+              alt="LeetNode"
+              width="0"
+              height="0"
+              sizes="100vw"
+              className="h-auto w-full max-h-12"
+            />
+          </Link>
+        )}
 
-          {session.status === "unauthenticated" && (
-            <Button color="cyan" onClick={() => signIn("google")}>
-              Log In
-            </Button>
-          )}
+        {session.status === "unauthenticated" && (
+          <Button color="cyan" onClick={() => signIn("google")}>
+            Log In
+          </Button>
+        )}
 
-          {session.status === "authenticated" && (
-            <Menu
-              width={260}
-              radius="md"
-              position="bottom-end"
-              transition="pop-top-right"
-              classNames={classes}
-              onClose={() => setUserMenuOpened(false)}
-              onOpen={() => setUserMenuOpened(true)}
-            >
-              <Menu.Target>
-                <UnstyledButton
-                  className={cx(classes.user, {
-                    [classes.userActive]: userMenuOpened,
-                  })}
-                >
-                  <Group spacing={7}>
-                    <Text
-                      className={classes.userName}
-                      sx={{ lineHeight: 1 }}
-                      weight={500}
-                      color={theme.colors.gray[9]}
-                    >
-                      {session?.data?.user?.name}
-                    </Text>
-                    <Image
-                      src={session?.data?.user?.image || ""}
-                      alt={session?.data?.user?.name || ""}
-                      className="ml-1 rounded-full"
-                      width={25}
-                      height={25}
-                    />
-                    <IconChevronDown size={12} stroke={1.5} />
-                  </Group>
-                </UnstyledButton>
-              </Menu.Target>
-
-              <Menu.Dropdown>
-                <SegmentedControl
-                  fullWidth
-                  value={colorScheme}
-                  onChange={(value: "light" | "dark") =>
-                    toggleColorScheme(value)
-                  }
-                  data={[
-                    {
-                      value: "light",
-                      label: (
-                        <Center>
-                          <IconSun size={16} stroke={2} />
-                          <Box ml={10}>Light</Box>
-                        </Center>
-                      ),
-                    },
-                    {
-                      value: "dark",
-                      label: (
-                        <Center>
-                          <IconMoon size={16} stroke={2} />
-                          <Box ml={10}>Dark</Box>
-                        </Center>
-                      ),
-                    },
-                  ]}
-                />
-
-                <Menu.Divider />
-
-                <Menu.Label>
+        {session.status === "authenticated" && (
+          <Menu
+            width={260}
+            radius="md"
+            position="bottom-end"
+            transition="pop-top-right"
+            classNames={classes}
+            onClose={() => setUserMenuOpened(false)}
+            onOpen={() => setUserMenuOpened(true)}
+          >
+            <Menu.Target>
+              <UnstyledButton
+                className={cx(classes.user, {
+                  [classes.userActive]: userMenuOpened,
+                })}
+              >
+                <Group spacing={7}>
                   <Text
-                    weight={700}
-                    color={
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[0]
-                        : theme.colors.gray[9]
-                    }
+                    className={classes.userName}
+                    sx={{ lineHeight: 1 }}
+                    weight={500}
+                    color={theme.colors.gray[9]}
                   >
-                    Signed In As:
+                    {session?.data?.user?.name}
                   </Text>
-                  {session?.data?.user?.email}
-                </Menu.Label>
+                  <Image
+                    src={session?.data?.user?.image || ""}
+                    alt={session?.data?.user?.name || ""}
+                    className="ml-1 rounded-full"
+                    width={25}
+                    height={25}
+                  />
+                  <IconChevronDown size={12} stroke={1.5} />
+                </Group>
+              </UnstyledButton>
+            </Menu.Target>
 
-                <Menu.Divider />
+            <Menu.Dropdown>
+              <SegmentedControl
+                fullWidth
+                value={colorScheme}
+                onChange={(value: "light" | "dark") =>
+                  toggleColorScheme(value)
+                }
+                data={[
+                  {
+                    value: "light",
+                    label: (
+                      <Center>
+                        <IconSun size={16} stroke={2} />
+                        <Box ml={10}>Light</Box>
+                      </Center>
+                    ),
+                  },
+                  {
+                    value: "dark",
+                    label: (
+                      <Center>
+                        <IconMoon size={16} stroke={2} />
+                        <Box ml={10}>Dark</Box>
+                      </Center>
+                    ),
+                  },
+                ]}
+              />
 
-                <Menu.Item
-                  component={NextLink}
-                  href="/courses"
-                  icon={<IconBook size={14} stroke={1.5} />}
-                >
-                  Courses
-                </Menu.Item>
-                <Menu.Item
-                  component={NextLink}
-                  href="/profile"
-                  icon={<IconStar size={14} stroke={1.5} />}
-                >
-                  Masteries
-                </Menu.Item>
+              <Menu.Divider />
 
-                <Menu.Divider />
+              <Menu.Label>
+                <Text
+                  weight={700}
+                  color={
+                    theme.colorScheme === "dark"
+                      ? theme.colors.dark[0]
+                      : theme.colors.gray[9]
+                  }
+                >
+                  Signed In As:
+                </Text>
+                {session?.data?.user?.email}
+              </Menu.Label>
 
-                <Menu.Item
-                  component={NextLink}
-                  href="/"
-                  icon={<IconSettings size={14} stroke={1.5} />}
-                >
-                  Account settings
-                </Menu.Item>
-                <Menu.Item
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  icon={<IconLogout size={14} stroke={1.5} />}
-                >
-                  Logout
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          )}
-        </Box>
+              <Menu.Divider />
+
+              <Menu.Item
+                component={Link}
+                href="/courses"
+                icon={<IconBook size={14} stroke={1.5} />}
+              >
+                Courses
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                href="/profile"
+                icon={<IconStar size={14} stroke={1.5} />}
+              >
+                Masteries
+              </Menu.Item>
+
+              <Menu.Divider />
+
+              <Menu.Item
+                component={Link}
+                href="/"
+                icon={<IconSettings size={14} stroke={1.5} />}
+              >
+                Account settings
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => signOut({ callbackUrl: "/" })}
+                icon={<IconLogout size={14} stroke={1.5} />}
+              >
+                Logout
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        )}
       </Container>
     </Header>
   );

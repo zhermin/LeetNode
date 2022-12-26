@@ -10,6 +10,7 @@ export default function MarkdownLatex({ children }: { children: string }) {
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
+        className="markdown"
       >
         {children}
       </ReactMarkdown>

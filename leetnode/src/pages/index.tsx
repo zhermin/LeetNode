@@ -14,7 +14,7 @@ import {
   Grid,
   Stack,
 } from "@mantine/core";
-import Image from "next/future/image";
+import Image from "next/image";
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -140,7 +140,7 @@ export default function Home() {
           </Container>
           <Box className={classes.controls} mt="xl">
             <Link href="/courses" passHref>
-              <Button component="a" className={classes.control} size="lg">
+              <Button className={classes.control} size="lg">
                 Start Your Journey
               </Button>
             </Link>

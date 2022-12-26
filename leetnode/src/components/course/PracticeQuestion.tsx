@@ -1,6 +1,6 @@
 import { Dispatch, Key, SetStateAction, useState } from "react";
 import axios from "axios";
-import Image from "next/future/image";
+import Image from "next/image";
 import Latex from "react-latex-next";
 import {
   createStyles,

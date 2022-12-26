@@ -71,21 +71,21 @@ import {
 
 type CourseInfoType =
   | (Course & {
-      topics: (Topic & {
-        mastery: Mastery[];
+    topics: (Topic & {
+      mastery: Mastery[];
+    })[];
+    userCourseQuestions: UserCourseQuestion &
+    {
+      questionsWithAddedTime: (QuestionWithAddedTime & {
+        question: Question & {
+          answers: Answer[];
+          attempts: Attempt[];
+          topic: Topic;
+          questionMedia: QuestionMedia[];
+        };
       })[];
-      userCourseQuestions: UserCourseQuestion &
-        {
-          questionsWithAddedTime: (QuestionWithAddedTime & {
-            question: Question & {
-              answers: Answer[];
-              attempts: Attempt[];
-              topic: Topic;
-              questionMedia: QuestionMedia[];
-            };
-          })[];
-        }[];
-    })
+    }[];
+  })
   | null;
 
 const fetchCourse: (
@@ -250,7 +250,7 @@ export default function CourseMainPage() {
 
           <Sidebar.Section className={classes.sidebarFooter}>
             <Link href="/courses" passHref>
-              <Box className={classes.link} component="a">
+              <Box className={classes.link}>
                 <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
                 <span>Back to Courses</span>
               </Box>
@@ -465,11 +465,10 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
 
     sidebarFooter: {
-      borderTop: `1px solid ${
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[4]
-          : theme.colors.gray[3]
-      }`,
+      borderTop: `1px solid ${theme.colorScheme === "dark"
+        ? theme.colors.dark[4]
+        : theme.colors.gray[3]
+        }`,
       paddingTop: theme.spacing.md,
     },
   };

@@ -11,7 +11,7 @@ import { useRouter } from "next/router";
 import { dehydrate, QueryClient, useQuery } from "@tanstack/react-query";
 import type { GetStaticPropsContext } from "next/types";
 
-import Image from "next/future/image";
+import Image from "next/image";
 import Latex from "react-latex-next";
 
 import Header from "@/components/Header";
