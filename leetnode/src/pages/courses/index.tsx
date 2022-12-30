@@ -19,10 +19,12 @@ import {
 
 import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { getSession, signIn } from "next-auth/react";
+import { authOptions } from "../api/auth/[...nextauth]";
+import { unstable_getServerSession } from "next-auth";
 import { Course, CourseType, Level } from "@prisma/client";
+import { getData } from "../api/courses";
 import { serverUrl } from "@/server/url";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import {
   dehydrate,
   QueryCache,
@@ -36,19 +38,6 @@ type allCoursesType = (Course & {
     topicSlug: string;
   }[];
 })[];
-
-const fetchCourses: () => Promise<allCoursesType | null> = async () => {
-  try {
-    const { data } = await axios.get(`${serverUrl}/api/courses`);
-    return data;
-  } catch (error) {
-    const err = error as AxiosError;
-    if (err.response?.status === 401) {
-      signIn("google");
-    }
-    throw error;
-  }
-};
 
 interface BadgeCardProps {
   slug: string;
@@ -150,20 +139,23 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 export default function CoursesPage() {
   const { classes } = useStyles();
 
-  const {
-    data: courses,
-    isLoading,
-    isFetching,
-    isError,
-  } = useQuery<allCoursesType | null>(["all-courses"], fetchCourses);
+  const { data: courses } = useQuery<allCoursesType>(["all-courses"], async () => {
+    try {
+      const { data } = await axios.get(`${serverUrl}/api/courses`);
+      return data;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to refetch all courses from the API");
+    }
+  }, { useErrorBoundary: true });
 
-  if (isLoading || isFetching || !courses)
+  if (!courses) {
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
-  if (isError) return <div>Something went wrong!</div>;
+  }
 
   return (
     <>
@@ -308,8 +300,15 @@ export default function CoursesPage() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getSession(context);
-  if (!session) signIn("google");
+  const session = await unstable_getServerSession(context.req, context.res, authOptions);
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/api/auth/signin",
+        permanent: false,
+      },
+    };
+  }
 
   const queryClient = new QueryClient({
     queryCache: new QueryCache({
@@ -320,12 +319,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     }),
   });
-  await queryClient.prefetchQuery<allCoursesType | null>(
+
+  await queryClient.fetchQuery<allCoursesType>(
     ["all-courses"],
-    fetchCourses
+    async () => {
+      try {
+        const data = await getData();
+        return data;
+      } catch (error) {
+        console.log(error)
+        throw new Error("Failed to fetch all courses directly from the database");
+      }
+    }
   );
 
-  console.log("[PREFETCHED ALL COURSES]");
+  const courses = queryClient.getQueryData<allCoursesType>(["all-courses"]);
+  console.log(courses ? "PREFETCHED DATA SUCCESSFULLY" : "FAILED TO PREFETCH")
 
   return {
     props: {
