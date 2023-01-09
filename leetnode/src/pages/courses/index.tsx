@@ -17,10 +17,7 @@ import {
   Loader,
 } from "@mantine/core";
 
-import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { authOptions } from "../api/auth/[...nextauth]";
-import { unstable_getServerSession } from "next-auth";
 import { Course, CourseType, Level } from "@prisma/client";
 import { getData } from "../api/courses";
 import { serverUrl } from "@/server/url";
@@ -145,7 +142,7 @@ export default function CoursesPage() {
       return data;
     } catch (error) {
       console.log(error);
-      throw new Error("Failed to refetch all courses from the API");
+      throw new Error("Failed to refetch all courses from API");
     }
   }, { useErrorBoundary: true });
 
@@ -299,17 +296,7 @@ export default function CoursesPage() {
   );
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await unstable_getServerSession(context.req, context.res, authOptions);
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/api/auth/signin",
-        permanent: false,
-      },
-    };
-  }
-
+export async function getStaticProps() {
   const queryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {
@@ -334,7 +321,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   );
 
   const courses = queryClient.getQueryData<allCoursesType>(["all-courses"]);
-  console.log(courses ? "PREFETCHED DATA SUCCESSFULLY" : "FAILED TO PREFETCH")
+  console.log(typeof courses === "object" ? "PREFETCHED ALL COURSES" : "FAILED TO PREFETCH")
 
   return {
     props: {

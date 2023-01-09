@@ -9,11 +9,18 @@ import { env } from "../../../env/server.mjs";
 export const authOptions: NextAuthOptions = {
   // Include user.id on session
   callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
+    },
+
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
     },
   },
   // Configure one or more authentication providers
@@ -26,6 +33,9 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     newUser: "/welcome",
+  },
+  session: {
+    strategy: "jwt",
   },
 };
 

@@ -12,11 +12,13 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { useState } from "react";
-import { getSession, GetSessionParams, signIn } from "next-auth/react";
+import { GetSessionParams, getSession } from "next-auth/react";
 import Link from "next/link";
+import { serverUrl } from "@/server/url";
 import { useRouter } from "next/router";
+import { getData } from "../api/courses/[courseSlug]";
 import {
   dehydrate,
   QueryCache,
@@ -85,24 +87,7 @@ type CourseInfoType =
         };
       })[];
     }[];
-  })
-  | null;
-
-const fetchCourse: (
-  courseSlug: string
-) => Promise<CourseInfoType | null> = async (courseSlug) => {
-  try {
-    const { data } = await axios.get(`/api/courses/${courseSlug}`);
-    return data;
-  } catch (error) {
-    const err = error as AxiosError;
-    if (err.response?.status === 401) {
-      signIn("google");
-    }
-    console.log(error);
-    throw error;
-  }
-};
+  }) | null;
 
 export default function CourseMainPage() {
   // Mantine
@@ -142,20 +127,23 @@ export default function CourseMainPage() {
   const router = useRouter();
   const {
     data: course,
-    isLoading,
-    isFetching,
-    isError,
-  } = useQuery<CourseInfoType | null>(["course", router.query.courseSlug], () =>
-    fetchCourse(router.query.courseSlug as string)
+  } = useQuery<CourseInfoType>(["course", router.query.courseSlug], async () => {
+    try {
+      const { data } = await axios.get(`${serverUrl}/api/courses/${router.query.courseSlug}`);
+      return data;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to fetch course from API");
+    }
+  }, { useErrorBoundary: true }
   );
 
-  if (isLoading || isFetching || !course)
+  if (!course)
     return (
       <Center className="h-[calc(100vh-180px)]">
         <Loader />
       </Center>
     );
-  if (isError) return <div>Something went wrong!</div>;
 
   // Sidebar Tabs based on Fetched Data
   const tabs = {
@@ -367,7 +355,6 @@ export async function getStaticProps(
   context: GetSessionParams & { params: { courseSlug: string } }
 ) {
   const session = await getSession(context);
-  if (!session) signIn("google");
 
   const queryClient = new QueryClient({
     queryCache: new QueryCache({
@@ -378,12 +365,24 @@ export async function getStaticProps(
       },
     }),
   });
-  await queryClient.prefetchQuery<CourseInfoType | null>(
+  await queryClient.fetchQuery(
     ["course", context.params.courseSlug],
-    () => fetchCourse(context.params.courseSlug)
+    async () => {
+      try {
+        const data = await getData(
+          context.params.courseSlug,
+          session?.user?.id as string)
+        return JSON.parse(JSON.stringify(data));
+      } catch (error) {
+        console.log(error);
+        throw new Error("Failed to fetch course directly from database");
+      }
+    }
   );
 
-  console.log("[PREFETCHED COURSE]");
+  const course = queryClient.getQueryData<CourseInfoType>(["course", context.params.courseSlug]);
+  console.log(typeof course === "object" ? "PREFETCHED COURSE" : "FAILED TO PREFETCH")
+  console.log(course)
 
   return {
     props: {

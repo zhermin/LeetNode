@@ -1,20 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { authOptions } from "../auth/[...nextauth]";
+import { unstable_getServerSession } from "next-auth";
 import { prisma } from "@/server/db/client";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = await getSession({ req });
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  const courseSlug = req.query.courseSlug as string;
-
-  const course = await prisma.course.findFirst({
+export async function getData(courseSlug: string, id: string) {
+  return await prisma.course.findFirst({
     where: {
       courseSlug: courseSlug,
     },
@@ -23,14 +13,14 @@ export default async function handler(
         include: {
           mastery: {
             where: {
-              userId: session?.user?.id,
+              userId: id,
             },
           },
         },
       },
       userCourseQuestions: {
         where: {
-          userId: session?.user?.id,
+          userId: id,
         },
         include: {
           questionsWithAddedTime: {
@@ -40,7 +30,7 @@ export default async function handler(
                   answers: true,
                   attempts: {
                     where: {
-                      userId: session?.user?.id,
+                      userId: id,
                     },
                     orderBy: {
                       submittedAt: "desc",
@@ -59,6 +49,20 @@ export default async function handler(
       },
     },
   });
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const session = await unstable_getServerSession(req, res, authOptions);
+  if (!session) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  const courseSlug = req.query.courseSlug as string;
+  const course = getData(courseSlug, session.user?.id as string);
 
   res.status(200).json(course);
 }
