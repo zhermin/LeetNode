@@ -1,24 +1,33 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { authOptions } from "../auth/[...nextauth]";
+import { unstable_getServerSession } from "next-auth";
 import { prisma } from "@/server/db/client";
+
+export async function getCourseDetails(courseSlug: string) {
+  return await prisma.course.findFirst({
+    where: {
+      courseSlug: courseSlug,
+    },
+  });
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  const session = await unstable_getServerSession(req, res, authOptions);
   if (!session) {
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
 
-  const courseSlug = req.query.courseSlug as string;
+  const courseDetails = await getCourseDetails(req.query.courseSlug as string);
 
-  const course = await prisma.course.findFirst({
+  const userCourseInfo = await prisma.course.findFirst({
     where: {
-      courseSlug: courseSlug,
+      courseSlug: req.query.courseSlug as string,
     },
-    include: {
+    select: {
       topics: {
         include: {
           mastery: {
@@ -59,6 +68,11 @@ export default async function handler(
       },
     },
   });
+
+  const course = {
+    ...courseDetails,
+    ...userCourseInfo,
+  };
 
   res.status(200).json(course);
 }

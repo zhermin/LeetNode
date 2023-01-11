@@ -17,13 +17,9 @@ import {
   Loader,
 } from "@mantine/core";
 
-import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { authOptions } from "../api/auth/[...nextauth]";
-import { unstable_getServerSession } from "next-auth";
 import { Course, CourseType, Level } from "@prisma/client";
-import { getData } from "../api/courses";
-import { serverUrl } from "@/server/url";
+import { getAllCoursesData } from "../api/courses";
 import axios from "axios";
 import {
   dehydrate,
@@ -56,16 +52,10 @@ function BadgeCard({
   category,
   badges,
 }: BadgeCardProps) {
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles();
 
   const features = badges.map((badge) => (
-    <Badge
-      color={theme.colorScheme === "dark" ? "dark" : "gray"}
-      key={badge}
-      leftSection="#"
-      size="sm"
-      variant="filled"
-    >
+    <Badge color="gray" key={badge} leftSection="#" size="sm" variant="filled">
       {badge}
     </Badge>
   ));
@@ -114,7 +104,7 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
       slideSize="40%"
       breakpoints={[
         { maxWidth: "md", slideSize: "50%", slideGap: "sm" },
-        { maxWidth: "sm", slideSize: "100%" }
+        { maxWidth: "sm", slideSize: "100%" },
       ]}
       align="start"
       slideGap="md"
@@ -139,15 +129,19 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 export default function CoursesPage() {
   const { classes } = useStyles();
 
-  const { data: courses } = useQuery<allCoursesType>(["all-courses"], async () => {
-    try {
-      const { data } = await axios.get(`${serverUrl}/api/courses`);
-      return data;
-    } catch (error) {
-      console.log(error);
-      throw new Error("Failed to refetch all courses from the API");
-    }
-  }, { useErrorBoundary: true });
+  const { data: courses } = useQuery<allCoursesType>(
+    ["all-courses"],
+    async () => {
+      try {
+        const { data } = await axios.get(`/api/courses`);
+        return data;
+      } catch (error) {
+        console.log(error);
+        throw new Error("Failed to refetch all courses from API");
+      }
+    },
+    { useErrorBoundary: true }
+  );
 
   if (!courses) {
     return (
@@ -299,17 +293,7 @@ export default function CoursesPage() {
   );
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await unstable_getServerSession(context.req, context.res, authOptions);
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/api/auth/signin",
-        permanent: false,
-      },
-    };
-  }
-
+export async function getStaticProps() {
   const queryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {
@@ -320,21 +304,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }),
   });
 
-  await queryClient.fetchQuery<allCoursesType>(
-    ["all-courses"],
-    async () => {
-      try {
-        const data = await getData();
-        return data;
-      } catch (error) {
-        console.log(error)
-        throw new Error("Failed to fetch all courses directly from the database");
-      }
+  await queryClient.fetchQuery<allCoursesType>(["all-courses"], async () => {
+    try {
+      const data = await getAllCoursesData();
+      return data;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to fetch all courses directly from the database");
     }
-  );
+  });
 
   const courses = queryClient.getQueryData<allCoursesType>(["all-courses"]);
-  console.log(courses ? "PREFETCHED DATA SUCCESSFULLY" : "FAILED TO PREFETCH")
+  console.log(
+    typeof courses === "object"
+      ? "PREFETCHED ALL COURSES"
+      : "FAILED TO PREFETCH"
+  );
 
   return {
     props: {
@@ -424,8 +409,9 @@ const useStyles = createStyles((theme) => ({
   },
 
   section: {
-    borderBottom: `1px solid ${theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3]
-      }`,
+    borderBottom: `1px solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3]
+    }`,
     paddingLeft: theme.spacing.md,
     paddingRight: theme.spacing.md,
     paddingBottom: theme.spacing.md,

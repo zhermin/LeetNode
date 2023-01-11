@@ -12,18 +12,12 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { useState } from "react";
-import { getSession, GetSessionParams, signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import {
-  dehydrate,
-  QueryCache,
-  QueryClient,
-  useQuery,
-} from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { getCourseDetails } from "../api/courses/[courseSlug]";
+import { useQuery } from "@tanstack/react-query";
 
 import LeetNodeHeader from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
@@ -68,43 +62,29 @@ import {
   IconArrowRight,
   IconChartLine,
 } from "@tabler/icons";
+import { GetStaticProps } from "next";
 
-type CourseInfoType =
-  | (Course & {
-    topics: (Topic & {
-      mastery: Mastery[];
+type CourseInfoType = {
+  topics: (Topic & {
+    mastery: Mastery[];
+  })[];
+  userCourseQuestions: (UserCourseQuestion & {
+    questionsWithAddedTime: (QuestionWithAddedTime & {
+      question: Question & {
+        answers: Answer[];
+        attempts: Attempt[];
+        topic: Topic;
+        questionMedia: QuestionMedia[];
+      };
     })[];
-    userCourseQuestions: UserCourseQuestion &
-    {
-      questionsWithAddedTime: (QuestionWithAddedTime & {
-        question: Question & {
-          answers: Answer[];
-          attempts: Attempt[];
-          topic: Topic;
-          questionMedia: QuestionMedia[];
-        };
-      })[];
-    }[];
-  })
-  | null;
+  })[];
+} | null;
 
-const fetchCourse: (
-  courseSlug: string
-) => Promise<CourseInfoType | null> = async (courseSlug) => {
-  try {
-    const { data } = await axios.get(`/api/courses/${courseSlug}`);
-    return data;
-  } catch (error) {
-    const err = error as AxiosError;
-    if (err.response?.status === 401) {
-      signIn("google");
-    }
-    console.log(error);
-    throw error;
-  }
-};
-
-export default function CourseMainPage() {
+export default function CourseMainPage({
+  courseDetails,
+}: {
+  courseDetails: Course;
+}) {
   // Mantine
   const { theme, classes, cx } = useStyles();
 
@@ -140,29 +120,41 @@ export default function CourseMainPage() {
 
   // Data Fetched using Axios, Queried by React Query
   const router = useRouter();
-  const {
-    data: course,
-    isLoading,
-    isFetching,
-    isError,
-  } = useQuery<CourseInfoType | null>(["course", router.query.courseSlug], () =>
-    fetchCourse(router.query.courseSlug as string)
+
+  const { data: course } = useQuery<CourseInfoType>(
+    ["course", router.query.courseSlug],
+    async () => {
+      try {
+        const { data } = await axios.get(
+          `/api/courses/${router.query.courseSlug}`
+        );
+        return data;
+      } catch (error) {
+        console.log(error);
+        throw new Error("Failed to fetch user course info from API");
+      }
+    },
+    { useErrorBoundary: true }
   );
 
-  if (isLoading || isFetching || !course)
+  if (!course) {
     return (
       <Center className="h-[calc(100vh-180px)]">
         <Loader />
       </Center>
     );
-  if (isError) return <div>Something went wrong!</div>;
+  }
+
+  console.log(course);
 
   // Sidebar Tabs based on Fetched Data
   const tabs = {
     learn: [
       { label: "Overview", icon: IconApps },
-      course.slide ? { label: "Lecture Slides", icon: IconPresentation } : null,
-      course.video ? { label: "Lecture Videos", icon: IconVideo } : null,
+      courseDetails.slide
+        ? { label: "Lecture Slides", icon: IconPresentation }
+        : null,
+      courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
       { label: "Additional Resources", icon: IconReportSearch },
       { label: "Course Discussion", icon: IconMessages },
     ],
@@ -199,7 +191,7 @@ export default function CourseMainPage() {
       navbarOffsetBreakpoint="sm"
       header={
         <>
-          <LeetNodeHeader title={course.courseName} />
+          <LeetNodeHeader title={courseDetails.courseName} />
           <Header height={80}>
             <Container
               style={{ display: "flex", alignItems: "center", height: "100%" }}
@@ -229,7 +221,7 @@ export default function CourseMainPage() {
         >
           <Sidebar.Section>
             <Text weight={600} size="lg" align="center" mb="lg">
-              {course.courseName}
+              {courseDetails.courseName}
             </Text>
 
             <SegmentedControl
@@ -262,12 +254,15 @@ export default function CourseMainPage() {
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
         {active === "Overview" ? (
           <Container>
-            <Title>{course.courseName}</Title>
-            <Text size="xl">{course.courseDescription}</Text>
+            <Title>{courseDetails.courseName}</Title>
+            <Text size="xl">{courseDetails.courseDescription}</Text>
           </Container>
         ) : active === "Lecture Slides" ? (
           <Stack align="center">
-            <Document file={course.slide} onLoadSuccess={onDocumentLoadSuccess}>
+            <Document
+              file={courseDetails.slide}
+              onLoadSuccess={onDocumentLoadSuccess}
+            >
               <Page pageNumber={pageNumber} />
             </Document>
             <Group>
@@ -303,7 +298,7 @@ export default function CourseMainPage() {
             <iframe
               width="100%"
               height="100%"
-              src={`https://www.youtube.com/embed/${course.video}?rel=0`}
+              src={`https://www.youtube.com/embed/${courseDetails.video}?rel=0`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -311,9 +306,11 @@ export default function CourseMainPage() {
             ></iframe>
           </Group>
         ) : active === "Additional Resources" ? (
-          <MarkdownLatex>{course.markdown ?? defaultMarkdown}</MarkdownLatex>
+          <MarkdownLatex>
+            {courseDetails.markdown ?? defaultMarkdown}
+          </MarkdownLatex>
         ) : active === "Course Discussion" ? (
-          <CourseDiscussion courseName={course.courseName} />
+          <CourseDiscussion courseName={courseDetails.courseName} />
         ) : active === "Question" ? (
           <PracticeQuestion
             questionDisplay={
@@ -363,34 +360,24 @@ export async function getStaticPaths() {
   return { paths, fallback: false };
 }
 
-export async function getStaticProps(
-  context: GetSessionParams & { params: { courseSlug: string } }
-) {
-  const session = await getSession(context);
-  if (!session) signIn("google");
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { params } = context;
 
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Something went wrong: ${error.message}`);
-        }
-      },
-    }),
-  });
-  await queryClient.prefetchQuery<CourseInfoType | null>(
-    ["course", context.params.courseSlug],
-    () => fetchCourse(context.params.courseSlug)
+  const courseDetails = await getCourseDetails(params?.courseSlug as string);
+
+  console.log(
+    typeof courseDetails === "object"
+      ? "PRERENDERED COURSE DETAILS"
+      : "FAILED TO PRERENDER"
   );
-
-  console.log("[PREFETCHED COURSE]");
+  console.log(courseDetails);
 
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
+      courseDetails,
     },
   };
-}
+};
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
@@ -465,10 +452,11 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
 
     sidebarFooter: {
-      borderTop: `1px solid ${theme.colorScheme === "dark"
-        ? theme.colors.dark[4]
-        : theme.colors.gray[3]
-        }`,
+      borderTop: `1px solid ${
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[4]
+          : theme.colors.gray[3]
+      }`,
       paddingTop: theme.spacing.md,
     },
   };
@@ -476,4 +464,4 @@ const useStyles = createStyles((theme, _params, getRef) => {
 
 const defaultMarkdown = `# Additional Learning Resources by [Khan Academy](https://www.khanacademy.org/)
 
-<div classname="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+<div className="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
