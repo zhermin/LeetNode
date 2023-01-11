@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @layer base {
+  /* Custom styles for Markdown content */
   .markdown h1 {
     @apply text-4xl;
     @apply font-semibold;
@@ -36,5 +37,45 @@
   .markdown a {
     @apply text-cyan-500;
     @apply underline;
+  }
+
+  /* Re-add most disabled Tailwind preflight styles due to Mantine clash */
+  a {
+    @apply no-underline;
+    @apply text-slate-800 dark:text-slate-200;
+  }
+
+  blockquote,
+  dl,
+  dd,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  hr,
+  figure,
+  p,
+  pre {
+    margin: 0;
+  }
+
+  img,
+  svg,
+  video,
+  canvas,
+  audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+    vertical-align: middle;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
   }
 }

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/server/db/client";
 
-export async function getData() {
+export async function getAllCoursesData() {
   return await prisma.course.findMany({
     include: {
       topics: {
@@ -23,6 +23,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const courses = await getData();
+  const courses = await getAllCoursesData();
   res.status(200).json(courses);
 }

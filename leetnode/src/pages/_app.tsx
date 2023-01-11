@@ -21,12 +21,10 @@ import "../styles/globals.css";
 import "katex/dist/katex.min.css";
 import {
   MantineProvider,
-  createEmotionCache,
   ColorSchemeProvider,
   ColorScheme,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-const appendCache = createEmotionCache({ key: "mantine", prepend: false });
 
 // React PDF Renderer
 import { pdfjs } from "react-pdf";
@@ -74,7 +72,6 @@ const LeetNode: AppType<{
           >
             <MantineProvider
               theme={{ colorScheme, primaryColor: "cyan", loader: "dots" }}
-              emotionCache={appendCache}
               withGlobalStyles
               withNormalizeCSS
             >

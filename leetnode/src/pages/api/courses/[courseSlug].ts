@@ -3,24 +3,43 @@ import { authOptions } from "../auth/[...nextauth]";
 import { unstable_getServerSession } from "next-auth";
 import { prisma } from "@/server/db/client";
 
-export async function getData(courseSlug: string, id: string) {
+export async function getCourseDetails(courseSlug: string) {
   return await prisma.course.findFirst({
     where: {
       courseSlug: courseSlug,
     },
-    include: {
+  });
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const session = await unstable_getServerSession(req, res, authOptions);
+  if (!session) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  const courseDetails = await getCourseDetails(req.query.courseSlug as string);
+
+  const userCourseInfo = await prisma.course.findFirst({
+    where: {
+      courseSlug: req.query.courseSlug as string,
+    },
+    select: {
       topics: {
         include: {
           mastery: {
             where: {
-              userId: id,
+              userId: session?.user?.id,
             },
           },
         },
       },
       userCourseQuestions: {
         where: {
-          userId: id,
+          userId: session?.user?.id,
         },
         include: {
           questionsWithAddedTime: {
@@ -30,7 +49,7 @@ export async function getData(courseSlug: string, id: string) {
                   answers: true,
                   attempts: {
                     where: {
-                      userId: id,
+                      userId: session?.user?.id,
                     },
                     orderBy: {
                       submittedAt: "desc",
@@ -49,20 +68,11 @@ export async function getData(courseSlug: string, id: string) {
       },
     },
   });
-}
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  const courseSlug = req.query.courseSlug as string;
-  const course = getData(courseSlug, session.user?.id as string);
+  const course = {
+    ...courseDetails,
+    ...userCourseInfo,
+  };
 
   res.status(200).json(course);
 }

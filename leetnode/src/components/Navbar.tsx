@@ -34,7 +34,9 @@ const useStyles = createStyles((theme) => ({
   header: {
     backgroundColor:
       theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
-    borderBottom: `1px solid ${theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]}`,
+    borderBottom: `1px solid ${
+      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
+    }`,
   },
 
   inner: {
@@ -173,9 +175,17 @@ export default function Navbar() {
               <SegmentedControl
                 fullWidth
                 value={colorScheme}
-                onChange={(value: "light" | "dark") =>
-                  toggleColorScheme(value)
-                }
+                onChange={(value: "light" | "dark") => {
+                  // change mantine color scheme
+                  toggleColorScheme(value);
+
+                  // change tailwind color scheme
+                  if (value === "dark") {
+                    document.documentElement.classList.add("dark");
+                  } else {
+                    document.documentElement.classList.remove("dark");
+                  }
+                }}
                 data={[
                   {
                     value: "light",
