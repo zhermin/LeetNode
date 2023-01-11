@@ -43,6 +43,7 @@
     "rehype-katex": "^6.0.2",
     "rehype-raw": "^6.1.1",
     "remark-math": "^5.1.1",
+    "sharp": "^0.31.3",
     "zod": "^3.20.2"
   },
   "devDependencies": {
