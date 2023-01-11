@@ -67,17 +67,13 @@ const ShowResults = ({
       <Text size="xl" mb="xl" align="center">
         Keep practising to achieve mastery in all topics!
       </Text>
-      {newarr.map((eachProgress) =>
-        eachProgress ? (
-          <ProgressBar
-            topicSlug={eachProgress?.question?.topicSlug}
-            topicName={eachProgress?.question?.topic?.topicName}
-            key={eachProgress?.questionId}
-          />
-        ) : (
-          <Text>Error</Text>
-        )
-      )}
+      {newarr.map((eachProgress) => (
+        <ProgressBar
+          topicSlug={eachProgress?.question?.topicSlug as string}
+          topicName={eachProgress?.question?.topic?.topicName as string}
+          key={eachProgress?.questionId}
+        />
+      ))}
     </Paper>
   );
 };
