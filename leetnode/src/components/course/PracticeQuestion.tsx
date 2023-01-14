@@ -181,7 +181,7 @@ const LoadTopic = ({
         try {
           //update mastery of student
           const res = await axios.post(
-            "http://localhost:3000/api/pybkt/update",
+            "/api/pybkt/update",
             request //returns { Mastery: .... }
           ); //use data destructuring to get data from the promise object
           console.log("Res Data");
