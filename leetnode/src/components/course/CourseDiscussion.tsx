@@ -104,7 +104,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   );
 
   const people: { value: string }[] = [];
-  axios.get("http://localhost:3000/api/forum/getAllUsers").then((res) => {
+  axios.get("/api/forum/getAllUsers").then((res) => {
     res.data.map((e: { name: string }) => {
       const jsonstr = `{"value":"${e.name}"}`;
       people.push(JSON.parse(jsonstr));
@@ -112,7 +112,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   });
 
   const tags: { value: string }[] = [];
-  axios.get("http://localhost:3000/api/forum/getAllTopicNames").then((res) => {
+  axios.get("/api/forum/getAllTopicNames").then((res) => {
     res.data.map((e: { topicName: string }) => {
       const jsonstr = `{"value":"${e.topicName}"}`;
       tags.push(JSON.parse(jsonstr));
@@ -145,19 +145,19 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       {
         queryKey: ["all-posts"],
         queryFn: () => {
-          return axios.get("http://localhost:3000/api/forum/getAllPosts");
+          return axios.get("/api/forum/getAllPosts");
         },
       },
       {
         queryKey: ["all-course-names"],
         queryFn: () => {
-          return axios.get("http://localhost:3000/api/forum/getAllCourseNames");
+          return axios.get("/api/forum/getAllCourseNames");
         },
       },
       {
         queryKey: ["all-topic-names"],
         queryFn: () => {
-          return axios.get("http://localhost:3000/api/forum/getAllTopicNames");
+          return axios.get("/api/forum/getAllTopicNames");
         },
       },
     ],
@@ -170,7 +170,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     isFetching: isFetchingUsers,
     isError: isErrorUsers,
   } = useQuery(["all-users"], async () => {
-    const res = await axios.get("http://localhost:3000/api/forum/getAllUsers");
+    const res = await axios.get("/api/forum/getAllUsers");
     const people: { id: string; image: string; value: string }[] = [];
     res.data.map((e: { name: string; id: string; image: string }) => {
       const jsonstr = `{"id":"${e.id}","image":"${e.image}","value":"${e.name}"}`;
@@ -206,10 +206,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     () => void
   >({
     mutationFn: async (newPost) => {
-      const res = await axios.post(
-        "http://localhost:3000/api/forum/addPost",
-        newPost
-      );
+      const res = await axios.post("/api/forum/addPost", newPost);
       return res.data;
     },
     onSuccess: () => {

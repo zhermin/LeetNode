@@ -144,10 +144,9 @@ const ForumPost = ({
     isFetching: isFetchingComments,
     isError: isErrorComments,
   } = useQuery(["post-comments"], async () => {
-    const res = await axios.post(
-      "http://localhost:3000/api/forum/getAllComments",
-      { postId: post?.postId }
-    );
+    const res = await axios.post("/api/forum/getAllComments", {
+      postId: post?.postId,
+    });
     return res.data;
   });
 
@@ -157,10 +156,10 @@ const ForumPost = ({
     isFetching: isFetchingLikes,
     isError: isErrorLikes,
   } = useQuery(["post-likes"], async () => {
-    const res = await axios.post(
-      "http://localhost:3000/api/forum/getPostLikes",
-      { postId: post?.postId, userId: session?.data?.user?.id }
-    );
+    const res = await axios.post("/api/forum/getPostLikes", {
+      postId: post?.postId,
+      userId: session?.data?.user?.id,
+    });
     console.log(res.data);
     if (res.data.likes === 1) {
       console.log("set like as 1");
@@ -180,9 +179,7 @@ const ForumPost = ({
     isFetching: isFetchingTopics,
     isError: isErrorTopics,
   } = useQuery(["all-topics"], async () => {
-    const res = await axios.get(
-      "http://localhost:3000/api/forum/getAllTopicNames"
-    );
+    const res = await axios.get("/api/forum/getAllTopicNames");
     const tags: { value: string }[] = [];
     res.data.map((e: { topicName: string }) => {
       const jsonstr = `{"value":"${e.topicName}"}`;
@@ -243,10 +240,7 @@ const ForumPost = ({
   >({
     mutationFn: async (newComment) => {
       console.log(newComment);
-      const res = await axios.post(
-        "http://localhost:3000/api/forum/addComment",
-        newComment
-      );
+      const res = await axios.post("/api/forum/addComment", newComment);
       return res.data;
     },
     onSuccess: () => {
@@ -265,10 +259,7 @@ const ForumPost = ({
   >({
     mutationFn: async (editComment) => {
       console.log(editComment);
-      const res = await axios.post(
-        "http://localhost:3000/api/forum/editComment",
-        editComment
-      );
+      const res = await axios.post("/api/forum/editComment", editComment);
       return res.data;
     },
     onSuccess: () => {
@@ -287,10 +278,7 @@ const ForumPost = ({
   >({
     mutationFn: async (editPost) => {
       console.log(editPost);
-      const res = await axios.post(
-        "http://localhost:3000/api/forum/editPost",
-        editPost
-      );
+      const res = await axios.post("/api/forum/editPost", editPost);
       return res.data;
     },
     onSuccess: () => {
@@ -319,7 +307,7 @@ const ForumPost = ({
         newLikes: (displayLikes as number) - difference,
       };
       setDisplayLikes(data.newLikes);
-      await axios.post("http://localhost:3000/api/forum/changeLikes", data);
+      await axios.post("/api/forum/changeLikes", data);
     };
   }
 

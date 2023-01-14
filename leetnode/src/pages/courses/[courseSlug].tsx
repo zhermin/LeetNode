@@ -367,10 +367,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   console.log(
     typeof courseDetails === "object"
-      ? "PRERENDERED COURSE DETAILS"
+      ? `PRERENDERED /${params?.courseSlug} DETAILS`
       : "FAILED TO PRERENDER"
   );
-  console.log(courseDetails);
 
   return {
     props: {

@@ -30,7 +30,7 @@ const ProgressBar = ({
   useEffect(() => {
     setLoading(true);
     axios
-      .post("http://localhost:3000/api/pybkt/get", {
+      .post("/api/pybkt/get", {
         id: session?.data?.user?.id,
         topicSlug: topicSlug,
         //change contents of topicSlug to topicSlug
