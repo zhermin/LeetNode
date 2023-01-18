@@ -1,51 +1,63 @@
-import React, { useState } from "react";
-import { Document, Page } from "react-pdf";
-import MarkdownLatex from "@/components/MarkdownLatex";
-import Latex from "react-latex-next";
 import { evaluate } from "mathjs";
+import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
+import Latex from "react-latex-next";
+import { Document, Page } from "react-pdf";
 
-import LeetNodeHeader from "@/components/Header";
-import LeetNodeNavbar from "@/components/Navbar";
 import LeetNodeFooter from "@/components/Footer";
+import LeetNodeHeader from "@/components/Header";
+import MarkdownLatex from "@/components/MarkdownLatex";
+import LeetNodeNavbar from "@/components/Navbar";
 import {
-  AppShell,
-  Header,
-  Navbar,
-  SegmentedControl,
-  Text,
-  createStyles,
-  ScrollArea,
-  Button,
-  MediaQuery,
-  Burger,
-  Group,
-  Container,
+	AppShell,
+	Burger,
+	Button,
+	Container,
+	createStyles,
+	Grid,
+	Group,
+	Header,
+	MediaQuery,
+	Modal,
+	Navbar,
+	ScrollArea,
+	SegmentedControl,
+	Select,
+	SimpleGrid,
+	Text,
+	TextInput
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import {
-  IconShoppingCart,
-  IconLicense,
-  IconMessage2,
-  IconBellRinging,
-  IconMessages,
-  IconFingerprint,
-  IconKey,
-  IconSettings,
-  Icon2fa,
-  IconUsers,
-  IconFileAnalytics,
-  IconDatabaseImport,
-  IconReceipt2,
-  IconReceiptRefund,
-  IconLogout,
-  IconSwitchHorizontal,
+	Icon2fa,
+	IconBellRinging,
+	IconDatabaseImport,
+	IconFileAnalytics,
+	IconFingerprint,
+	IconKey,
+	IconLicense,
+	IconLogout,
+	IconMessage2,
+	IconMessages,
+	IconReceipt2,
+	IconReceiptRefund,
+	IconSettings,
+	IconShoppingCart,
+	IconSwitchHorizontal,
+	IconUsers
 } from "@tabler/icons";
+
+const Editor = dynamic(import("@/components/editor/Editor"), {
+  ssr: false,
+  loading: () => <p>Loading Editor...</p>,
+});
 
 const tabs = {
   account: [
     { link: "", label: "Slides and Videos", icon: IconBellRinging },
     { link: "", label: "Latex", icon: IconReceipt2 },
-    { link: "", label: "1", icon: IconFingerprint },
+    { link: "", label: "Editor", icon: IconFingerprint },
     { link: "", label: "2", icon: IconKey },
     { link: "", label: "3", icon: IconDatabaseImport },
     { link: "", label: "4", icon: Icon2fa },
@@ -67,6 +79,8 @@ export default function Test() {
   const [section, setSection] = useState<"account" | "general">("account");
   const [active, setActive] = useState("Latex");
   const [opened, setOpened] = useState(false);
+  const [editorOpened, setEditorOpened] = useState(false);
+  const [expr, setExpr] = useState("");
 
   const [numPages, setNumPages] = React.useState(1);
   const [pageNumber, setPageNumber] = React.useState(1);
@@ -94,6 +108,17 @@ export default function Test() {
       <span>{item.label}</span>
     </a>
   ));
+
+  const form = useForm({
+    initialValues: {
+      title: "",
+      courseName: "CS1010",
+      postType: "Content",
+    },
+    validate: {
+      title: (value) => value.trim().length === 0,
+    },
+  });
 
   return (
     <AppShell
@@ -163,13 +188,9 @@ export default function Test() {
           </Navbar.Section>
 
           <Navbar.Section className={classes.footer}>
-            <a
-              href="#"
-              className={classes.link}
-              onClick={(event) => event.preventDefault()}
-            >
+            <a className={classes.link} onClick={() => setEditorOpened(true)}>
               <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
-              <span>Change account</span>
+              <span>Open Editor</span>
             </a>
 
             <a
@@ -185,6 +206,14 @@ export default function Test() {
       }
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+        <Modal
+          opened={editorOpened}
+          onClose={() => setEditorOpened(false)}
+          size="xl"
+          title="Markdown/LaTeX Editor"
+        >
+          <Editor />
+        </Modal>
         {active === "Slides and Videos" ? (
           <>
             <Document file={slide} onLoadSuccess={onDocumentLoadSuccess}>
@@ -223,6 +252,79 @@ export default function Test() {
             <hr />
             <MarkdownLatex>{markdown_latex}</MarkdownLatex>
           </>
+        ) : active === "Editor" ? (
+          <>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                // mutation.mutate({
+                //   userId: session?.data?.user?.id as string,
+                //   title: form.values.title,
+                //   message: message,
+                //   courseName: form.values.courseName,
+                //   postType: form.values.postType,
+                // });
+              }}
+            >
+              <TextInput
+                label="Title"
+                placeholder="Title"
+                name="title"
+                variant="filled"
+                required
+                {...form.getInputProps("title")}
+              />
+              <SimpleGrid
+                cols={2}
+                mt="lg"
+                mb="lg"
+                breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+              >
+                <Select
+                  data={["Content", "Quiz", "Misc"]}
+                  placeholder="Choose thread type"
+                  label="Thread Type"
+                  defaultValue="Content"
+                  {...form.getInputProps("postType")}
+                />
+                <Select
+                  data={["CS1010", "CS2101", "CS2102"]}
+                  placeholder="Choose course"
+                  label="Course Name"
+                  defaultValue="CS1010"
+                  {...form.getInputProps("course")}
+                />
+              </SimpleGrid>
+              <Text size="sm" weight={500}>
+                Question
+              </Text>
+              <Editor />
+              <Text size="sm" weight={500} mt="lg">
+                Method
+              </Text>
+              <Grid mb="lg" justify="center" align="center" w="99%" grow>
+                <Grid.Col span={1}>
+                  <TextInput
+                    placeholder="R_{TH} = \frac{R_2*R_3}{R_2+R_3}"
+                    name="title"
+                    value={expr}
+                    onChange={(e) => setExpr(e.target.value)}
+                  />
+                </Grid.Col>
+                <Grid.Col
+                  span={1}
+                  className="bg-slate-200 rounded-md border border-solid border-slate-400"
+                >
+                  <Latex>{`$$ ${expr} $$`}</Latex>
+                </Grid.Col>
+              </Grid>
+              <Group position="center" mt="xl">
+                <Button type="submit" size="md">
+                  Create Question
+                </Button>
+              </Group>
+            </form>
+          </>
         ) : (
           <></>
         )}
@@ -242,6 +344,7 @@ $$`;
 // TODO: maybe have one-line descriptions for each step
 // TODO: incorporate hints
 // TODO: try randomizing
+// TODO: expressions validation (must have = sign)
 
 type QuestionData = {
   variables: Record<string, unknown>;
@@ -460,6 +563,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
+      cursor: "pointer",
 
       "&:hover": {
         backgroundColor:

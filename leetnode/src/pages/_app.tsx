@@ -19,6 +19,7 @@ import toast, { Toaster } from "react-hot-toast";
 // Styles
 import "../styles/globals.css";
 import "katex/dist/katex.min.css";
+import "react-quill/dist/quill.snow.css";
 import {
   MantineProvider,
   ColorSchemeProvider,
