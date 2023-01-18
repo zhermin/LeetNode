@@ -17,14 +17,25 @@ export default async function handler(
     //check if masteryLevel === 0 =>
     axios
       .get(
-        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}/`
+        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          },
+        }
       )
       .catch(function (error) {
+        console.log("reached error");
         if (
           error.response.data.detail === `Student ID ${req.id} does NOT exists`
         ) {
           axios.post(
-            `https://pybkt-api-deployment.herokuapp.com/add-student/${req.id}/${req.topicSlug}/`
+            `https://pybkt-api-deployment.herokuapp.com/add-student/${req.id}/${req.topicSlug}/`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+              },
+            }
           );
         }
       });
@@ -34,7 +45,12 @@ export default async function handler(
       `https://pybkt-api-deployment.herokuapp.com/update-state/${req.id}/${
         req.topicSlug
       }/${String(req.correct ? 1 : 0)}`,
-      req
+      req,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+        },
+      }
     );
 
     const info = res.data.Updated;
@@ -42,7 +58,12 @@ export default async function handler(
 
     if (info === true) {
       const res2 = await axios.get(
-        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}`
+        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          },
+        }
       );
       console.log("reached res2");
       console.log(res2.data);

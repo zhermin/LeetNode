@@ -188,6 +188,8 @@ const LoadTopic = ({
           console.log(res.data);
           return res.data;
         } catch (error) {
+          console.log("update error");
+          console.log(request);
           console.log(error);
         }
       };
@@ -207,6 +209,8 @@ const LoadTopic = ({
       console.log(session?.data?.user?.id);
       console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
       console.log(attempt[currentQuestion]?.isCorrect);
+      console.log(optionNumber);
+      console.log(questionDisplay?.[currentQuestion]?.question?.questionId);
       console.log(updated);
       console.log(currentQuestion);
       console.log(questionDisplay?.length);
