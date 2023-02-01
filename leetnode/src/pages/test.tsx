@@ -1,6 +1,6 @@
 import { evaluate } from "mathjs";
 import dynamic from "next/dynamic";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Latex from "react-latex-next";
 import { Document, Page } from "react-pdf";
@@ -9,6 +9,7 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import MarkdownLatex from "@/components/MarkdownLatex";
 import LeetNodeNavbar from "@/components/Navbar";
+import { CustomMath } from "@/server/Utils";
 import {
 	AppShell,
 	Burger,
@@ -53,6 +54,22 @@ const Editor = dynamic(import("@/components/editor/Editor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
+type QuestionData = {
+  variables: Record<string, number>;
+  qn_variables: string[];
+  variable_ranges: {
+    [key: string]: {
+      toRandomize: boolean;
+      min?: number;
+      max?: number;
+      decimalPlaces?: number;
+    };
+  };
+  expressions: string[];
+  Answer: string;
+  units: Record<string, string>;
+};
+
 const tabs = {
   account: [
     { link: "", label: "Slides and Videos", icon: IconBellRinging },
@@ -84,6 +101,84 @@ export default function Test() {
 
   const [numPages, setNumPages] = React.useState(1);
   const [pageNumber, setPageNumber] = React.useState(1);
+
+  const [qn1Data, setQn1Data] = useState<QuestionData>({
+    variables: {
+      V: 12,
+      R_1: 4,
+      R_2: 8,
+      R_3: 10,
+    },
+    qn_variables: ["V", "R_1", "R_2", "R_3"],
+    variable_ranges: {
+      V: { toRandomize: true, min: 1, max: 12, decimalPlaces: 2 },
+      R_1: { toRandomize: false },
+      R_2: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
+      R_3: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
+    },
+    expressions: [
+      "I_1 = V / R_1",
+      "I_2 = V / R_2",
+      "I_3 = V / R_3",
+      "I_4 = I_1 + I_2 + I_3",
+      "Answer = I_4",
+    ],
+    Answer: "I_4",
+    units: {
+      V: "V",
+      R_1: "\\Omega",
+      R_2: "\\Omega",
+      R_3: "\\Omega",
+      I_1: "A",
+      I_2: "A",
+      I_3: "A",
+      I_4: "A",
+      Answer: "A",
+    },
+  });
+
+  for (const expr of qn1Data.expressions) {
+    evaluate(expr, qn1Data.variables);
+  }
+
+  const [qn1Markdown, setQn1Markdown] = useState(``);
+  useEffect(() => {
+    setQn1Markdown(`
+## Q1: Ohm's Law
+
+Given the circuit below, find the total current flowing through the circuit.
+
+![qn1 circuit diagram](testqn1.png)
+
+### Variables
+
+$$
+${qn1Data.qn_variables
+  .map((key) => `${key} = ${qn1Data.variables[key]} ${qn1Data.units[key]}`)
+  .join(",~")}
+$$
+
+### Method
+
+${qn1Data.expressions
+  .map(
+    (expr) => `
+$$
+${expr}~~~\\text{ (Unit: ${qn1Data.units[expr.split("=")[0]?.trim() ?? ""]})}
+$$
+`
+  )
+  .join("")}
+
+### Answer
+
+$$
+${qn1Data.Answer} = ${qn1Data.variables[qn1Data.Answer]?.toFixed(2)} ${
+      qn1Data.units[qn1Data.Answer]
+    }
+$$
+`);
+  }, [qn1Data]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -194,12 +289,29 @@ export default function Test() {
             </a>
 
             <a
-              href="#"
               className={classes.link}
-              onClick={(event) => event.preventDefault()}
+              onClick={() => {
+                const newQn1Data = { ...qn1Data };
+                for (const v of qn1Data.qn_variables) {
+                  if (qn1Data.variable_ranges[v]?.toRandomize) {
+                    newQn1Data.variables[v] = CustomMath.random(
+                      qn1Data.variable_ranges[v]?.min ?? 0,
+                      qn1Data.variable_ranges[v]?.max ?? 0,
+                      qn1Data.variable_ranges[v]?.decimalPlaces ?? 0
+                    );
+                  }
+                }
+
+                for (const expr of qn1Data.expressions) {
+                  evaluate(expr, newQn1Data.variables);
+                }
+                console.log(newQn1Data.variables.Answer);
+
+                setQn1Data(newQn1Data);
+              }}
             >
               <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Logout</span>
+              <span>Randomize</span>
             </a>
           </Navbar.Section>
         </Navbar>
@@ -246,11 +358,13 @@ export default function Test() {
           </>
         ) : active === "Latex" ? (
           <>
-            <MarkdownLatex>{qn1_markdown}</MarkdownLatex>
+            <MarkdownLatex>{qn1Markdown}</MarkdownLatex>
             <hr />
             <MarkdownLatex>{qn2_markdown}</MarkdownLatex>
             <hr />
             <MarkdownLatex>{markdown_latex}</MarkdownLatex>
+            <hr />
+            <MarkdownLatex>{circuitikz_test}</MarkdownLatex>
           </>
         ) : active === "Editor" ? (
           <>
@@ -339,80 +453,20 @@ $$
 L = \\frac{1}{2} \\rho v^2 S C_L
 $$`;
 
+// DONE
 // TODO: range data for each variable
 // TODO: maybe list of variables for students only
-// TODO: maybe have one-line descriptions for each step
-// TODO: incorporate hints
 // TODO: try randomizing
+
+// TODO: maybe have one-line descriptions for each step (optional)
+// TODO: incorporate hints
 // TODO: expressions validation (must have = sign)
-
-type QuestionData = {
-  variables: Record<string, unknown>;
-  expressions: string[];
-  Answer: string;
-  units: Record<string, string>;
-};
-
-const qn1_data: QuestionData = {
-  variables: {
-    V: 12,
-    R_1: 4,
-    R_2: 8,
-    R_3: 10,
-  },
-  expressions: [
-    "I_1 = V / R_1",
-    "I_2 = V / R_2",
-    "I_3 = V / R_3",
-    "I_4 = I_1 + I_2 + I_3",
-    "Answer = I_4",
-  ],
-  Answer: "I_4",
-  units: {
-    V: "V",
-    R_1: "\\Omega",
-    R_2: "\\Omega",
-    R_3: "\\Omega",
-    I_1: "A",
-    I_2: "A",
-    I_3: "A",
-    I_4: "A",
-    Answer: "A",
-  },
-};
-
-const qn1_markdown = `
-## Q1: Ohm's Law
-
-Given the circuit below, find the total current flowing through the circuit.
-
-![qn1 circuit diagram](testqn1.png)
-
-### Variables
-
-$$
-${Object.keys(qn1_data.variables)
-  .map((key) => `${key} = ${qn1_data.variables[key]} ${qn1_data.units[key]}`)
-  .join(",~")}
-$$
-
-### Method
-
-${qn1_data.expressions
-  .map(
-    (expr) => `
-$$
-${expr}~~~\\text{ (Unit: ${qn1_data.units[expr.split("=")[0]?.trim() ?? ""]})}
-$$
-`
-  )
-  .join("")}
-`;
-
-for (const expr of qn1_data.expressions) {
-  evaluate(expr, qn1_data.variables);
-}
-console.log(qn1_data.variables.Answer);
+// TODO: site responsive
+// TODO: variable name rules
+// TODO: random range rules / test on x cases
+// TODO: circuitikz live editor
+// TODO: wrong options generator / logic
+// TODO: dynamic form
 
 const qn2_data: QuestionData = {
   variables: {
@@ -422,6 +476,15 @@ const qn2_data: QuestionData = {
     R_4: 25,
     V_1: 12,
     V_2: 8,
+  },
+  qn_variables: ["R_1", "R_2", "R_3", "R_4", "V_1", "V_2"],
+  variable_ranges: {
+    R_1: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
+    R_2: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
+    R_3: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
+    R_4: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
+    V_1: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
+    V_2: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
   },
   expressions: [
     "R_TH = (R_2*R_3) / (R_2+R_3)",
@@ -501,6 +564,16 @@ $$
 ${qn2_data.expressions[qn2_data.expressions.length - 1]} \\text{ | Unit: ${
   qn2_data.units[qn2_data.Answer]
 }}
+$$
+`;
+
+const circuitikz_test = `
+$$
+\\begin{aligned}
+
+A(s) &= \\left( \\cfrac{\\partial r}{\\partial s} \\Delta s\\right) \\left( \\cfrac{\\partial r}{\\partial t} \\Delta t\\right) \\\\ &= \\left| \\cfrac{\\partial r}{\\partial t} \\cfrac{\\partial r}{\\partial s} \\right| dsdt = dS
+
+\\end{aligned}
 $$
 `;
 
