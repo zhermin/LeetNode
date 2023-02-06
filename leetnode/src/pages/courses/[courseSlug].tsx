@@ -104,7 +104,7 @@ export default function CourseMainPage({
     { answerByUser: string }[]
   >([]);
   const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: boolean }[]
+    { currentQuestion: number; isCorrect: boolean, question: Question }[]
   >([]);
   const [questionHistory, setQuestionHistory] = useState<
     {

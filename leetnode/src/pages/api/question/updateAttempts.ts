@@ -12,15 +12,16 @@ export default async function handler(
   //   return;
   // }
 
-  const posts = await prisma.post.create({
+  //updates attempt after each submission
+  const updateAttempt = await prisma.attempt.create({
     data: {
-      userId: req.body.userId,
-      title: req.body.title,
-      message: req.body.message,
-      courseName: req.body.courseName,
-      postType: req.body.postType,
+      userId: req.body.id,
+      questionId: req.body.questionId,
+      attemptOption: req.body.optionNumber,
+      isCorrect: req.body.correct,
     },
   });
+  console.log(updateAttempt.attemptId);
 
-  res.status(200).json(posts);
+  res.status(200).json(updateAttempt);
 }

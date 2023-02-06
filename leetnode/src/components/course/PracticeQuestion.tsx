@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import {
   Answer,
   Attempt,
+  Question,
   QuestionDifficulty,
   QuestionMedia,
   Topic,
@@ -62,12 +63,17 @@ const LoadTopic = ({
       }[]
     >
   >;
-  attempt: { currentQuestion: number; isCorrect: boolean }[];
+  attempt: {
+    currentQuestion: number;
+    isCorrect: boolean;
+    question: Question;
+  }[];
   setAttempt: Dispatch<
     SetStateAction<
       {
         currentQuestion: number;
         isCorrect: boolean;
+        question: Question;
       }[]
     >
   >;
@@ -118,6 +124,7 @@ const LoadTopic = ({
         isCorrect:
           selectedOptions[currentQuestion]?.answerByUser ===
           result?.[0]?.answerContent,
+        question: questionDisplay?.[currentQuestion]?.question as Question,
       }),
     ]);
     setAttempt([...attempt]);
@@ -157,7 +164,7 @@ const LoadTopic = ({
       // "correct": "1"
       // }
 
-      // Store quesiton option number to optionNumber variable
+      // Store question option number to optionNumber variable
       questionDisplay?.[currentQuestion]?.question.answers.map((options) => {
         if (
           selectedOptions[currentQuestion]?.answerByUser ===
@@ -185,6 +192,7 @@ const LoadTopic = ({
             request //returns { Mastery: .... }
           ); //use data destructuring to get data from the promise object
           console.log("Res Data");
+          console.log(request);
           console.log(res.data);
           return res.data;
         } catch (error) {
@@ -209,11 +217,131 @@ const LoadTopic = ({
       console.log(session?.data?.user?.id);
       console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
       console.log(attempt[currentQuestion]?.isCorrect);
+      console.log(attempt[currentQuestion]?.question);
+      //get the topic from here, also change to get attempts from prisma instead instead of state
+      console.log(attempt[currentQuestion]?.question?.topicSlug);
+      // const topicSlug = questionDisplay?.[currentQuestion]?.question?.topicSlug;
+      // const topicCount = attempt.filter(
+      //   (item) => item.question?.topicSlug === topicSlug
+      // ).length;
+      // console.log(topicCount);
+      // console.log(attempt);
+
       console.log(optionNumber);
       console.log(questionDisplay?.[currentQuestion]?.question?.questionId);
       console.log(updated);
       console.log(currentQuestion);
       console.log(questionDisplay?.length);
+
+      //update attempt table in prisma
+      const updateAttempts = async (request: {
+        id: string;
+        correct: boolean;
+        optionNumber: number;
+        questionId: number;
+      }) => {
+        try {
+          //update mastery of student
+          const res = await axios.post("/api/question/updateAttempts", request); //use data destructuring to get data from the promise object
+          return res.data;
+        } catch (error) {
+          console.log("attempt error");
+          // console.log(request);
+          // console.log(error);
+        }
+      };
+      const updatedAttempts = await updateAttempts({
+        id: session?.data?.user?.id as string,
+        correct: attempt[currentQuestion]?.isCorrect as boolean,
+        optionNumber: optionNumber,
+        questionId: questionDisplay?.[currentQuestion]?.question
+          ?.questionId as number,
+      });
+      console.log(updatedAttempts);
+
+      //checks attempt table in prisma
+      const checkAnswer = async (request: {
+        id: string;
+        topicSlug: string;
+      }) => {
+        try {
+          //update mastery of student
+          const res = await axios.post("/api/question/checkAttempts", request); //use data destructuring to get data from the promise object
+          return res.data;
+        } catch (error) {
+          console.log("attempt error");
+          // console.log(request);
+          // console.log(error);
+        }
+      };
+
+      const checkAttempts = await checkAnswer({
+        id: session?.data?.user?.id as string,
+        topicSlug: questionDisplay?.[currentQuestion]?.question
+          ?.topicSlug as string,
+      });
+      console.log(checkAttempts);
+      console.log(checkAttempts.length);
+
+      //get all users in prisma
+      const getUsers = async () => {
+        try {
+          //update mastery of student
+          const res = await axios.get("/api/forum/getAllUsers"); //use data destructuring to get data from the promise object
+          return res.data;
+        } catch (error) {
+          console.log("attempt error");
+          // console.log(request);
+          // console.log(error);
+        }
+      };
+
+      const allUsers = await getUsers();
+      console.log(allUsers);
+      //get all emails with ADMIN role
+      const maillist = allUsers
+        .filter((attribute: { role: string }) => {
+          return attribute.role == "ADMIN";
+        })
+        .map((admins: { email: string }) => admins.email);
+
+      //checks if email condition met
+      const emailCheck = async (request: {
+        id: string;
+        topicName: string;
+        name: string;
+        email: string[];
+      }) => {
+        try {
+          //activate email api
+          const res = await axios.post("/api/question/sendEmail", request); //use data destructuring to get data from the promise object
+          return res.data;
+        } catch (error) {
+          console.log("attempt error");
+          // console.log(request);
+          // console.log(error);
+        }
+      };
+      //correctness count last 5 to check if all wrong (need to refine)
+      const topicCount = checkAttempts
+        .slice(-5)
+        .filter(
+          (item: { isCorrect: boolean }) => item.isCorrect === false
+        ).length;
+      console.log(topicCount);
+      if (topicCount === 5) {
+        const email = await emailCheck({
+          id: session?.data?.user?.id as string,
+          topicName: questionDisplay?.[currentQuestion]?.question?.topic
+            ?.topicName as string,
+          name: checkAttempts[0].user.name,
+          //compile all email of ADMIN status
+          email: maillist,
+        });
+        console.log(email);
+      }
+      console.log(topicCount);
+
       if (currentQuestion + 1 === questionDisplay?.length) {
         console.log("reached the end");
         setEndReached(true);

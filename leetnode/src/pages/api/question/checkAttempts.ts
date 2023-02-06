@@ -12,15 +12,21 @@ export default async function handler(
   //   return;
   // }
 
-  const posts = await prisma.post.create({
-    data: {
-      userId: req.body.userId,
-      title: req.body.title,
-      message: req.body.message,
-      courseName: req.body.courseName,
-      postType: req.body.postType,
+  //check attempt after each submission
+  const checkAttempts = await prisma.attempt.findMany({
+    where: {
+      userId: req.body.id,
+      question: {
+        topicSlug: req.body.topicSlug,
+      },
+    },
+    include: {
+      user: true,
+    },
+    orderBy: {
+      submittedAt: "asc",
     },
   });
 
-  res.status(200).json(posts);
+  res.status(200).json(checkAttempts);
 }

@@ -100,16 +100,16 @@ export default async function handler(
   });
   console.log(mastery);
 
-  //updates attempt after each submission
-  const updateAttempt = await prisma.attempt.create({
-    data: {
-      userId: req.body.id,
-      questionId: req.body.questionId,
-      attemptOption: req.body.optionNumber,
-      isCorrect: req.body.correct,
-    },
-  });
-  console.log(updateAttempt.attemptId);
+  // //updates attempt after each submission
+  // const updateAttempt = await prisma.attempt.create({
+  //   data: {
+  //     userId: req.body.id,
+  //     questionId: req.body.questionId,
+  //     attemptOption: req.body.optionNumber,
+  //     isCorrect: req.body.correct,
+  //   },
+  // });
+  // console.log(updateAttempt.attemptId);
 
   try {
     res.status(200).json(display); // should be displaying mastery table
