@@ -15,6 +15,7 @@ specifiers:
   '@tanstack/react-query': ^4.20.4
   '@tanstack/react-query-devtools': ^4.20.4
   '@types/node': 18.11.17
+  '@types/nodemailer': ^6.4.7
   '@types/react': 18.0.26
   '@types/react-dom': 18.0.10
   '@types/react-pdf': ^5.7.2
@@ -63,6 +64,7 @@ dependencies:
   '@next-auth/prisma-adapter': 1.0.5_pmiftlxd73swft3i7kjlxtgxni
   '@tabler/icons': 1.119.0_biqbaboplfbrettd7655fr4n2y
   '@tanstack/react-query': 4.22.0_biqbaboplfbrettd7655fr4n2y
+  '@types/nodemailer': 6.4.7
   axios: 1.2.2
   cloudinary: 1.33.0
   embla-carousel-react: 7.0.5_react@18.2.0
@@ -1143,6 +1145,12 @@ packages:
 
   /@types/node/18.11.17:
     resolution: {integrity: sha512-HJSUJmni4BeDHhfzn6nF0sVmd1SMezP7/4F0Lq+aXzmp2xm9O7WXrUtHW/CHlYVtZUbByEvWidHqRtcJXGF2Ng==}
+
+  /@types/nodemailer/6.4.7:
+    resolution: {integrity: sha512-f5qCBGAn/f0qtRcd4SEn88c8Fp3Swct1731X4ryPKqS61/A3LmmzN8zaEz7hneJvpjFbUUgY7lru/B/7ODTazg==}
+    dependencies:
+      '@types/node': 18.11.17
+    dev: false
 
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}

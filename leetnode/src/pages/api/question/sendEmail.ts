@@ -1,14 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
-import { prisma } from "@/server/db/client";
-
-const nodemailer = require("nodemailer");
+// import { getSession } from "next-auth/react";
+import nodemailer from "nodemailer";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  // const session = await getSession({ req });
   // if (!session) {
   //   res.status(401).json({ message: "Unauthorized" });
   //   return;
@@ -36,26 +34,9 @@ export default async function handler(
     text: `Help needed for ${req.body.name} (ID:${req.body.id})`,
   };
 
-  // Send the email
-  //   if (req.method === "POST") {
-  //   transporter.sendMail(
-  //     mailOptions,
-  //     (error: any, info: { response: string }) => {
-  //       if (error) {
-  //         res.status(404).json({
-  //           error: `Connection refused at ${error.address}`,
-  //         });
-  //       } else {
-  //         res.status(250).json({
-  //           success: "Email sent: " + info.response,
-  //         });
-  //       }
-  //     }
-  //   );
-  //   }
   transporter.sendMail(
     mailOptions,
-    (error: any, info: { response: string }) => {
+    (error: Error | null, info: { response: string }) => {
       if (error) {
         console.log(error);
       } else {
