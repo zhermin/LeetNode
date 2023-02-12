@@ -1,9 +1,6 @@
 name: Daily Email API
 
 on:
-  push:
-    branches:
-      - "dev"
   schedule:
     - cron: "0 9 * * *"
   workflow_dispatch:
@@ -17,4 +14,3 @@ jobs:
         run: |
           curl --request POST \
           --url https://localhost:3000/api/email/sendEmailActual \
-          --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
