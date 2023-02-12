@@ -3,7 +3,7 @@ name: Daily Email API
 on:
   schedule:
     - cron: '0 9 * * *'
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   send_email:
