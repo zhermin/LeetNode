@@ -123,11 +123,14 @@ model UserCourseQuestion {
 }
 
 model Mastery {
-  userId       String
-  topicSlug    String
-  masteryLevel Float  @default(0)
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic        Topic  @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+  userId        String
+  topicSlug     String
+  masteryLevel  Float    @default(0)
+  topicPing     Boolean  @default(false)
+  lastFlagged   DateTime?
+  errorMeter    Int      @default(0)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic         Topic    @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
   @@index([topicSlug])

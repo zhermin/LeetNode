@@ -130,7 +130,7 @@ const LoadTopic = ({
     setAttempt([...attempt]);
   };
 
-  // Previous button used for testing!
+  // //Previous button used for testing!
   // const handlePrevious = () => {
   //   const prevQues = currentQuestion - 1;
   //   prevQues >= 0 && setCurrentQuestion(prevQues);
@@ -157,13 +157,6 @@ const LoadTopic = ({
 
       // logic for updating mastery for user
 
-      //update mastery level (for both pyBKT and Mastery Table) by sending answer correctness (only can send 1, hence the map function)
-      //E.g. input: {
-      // "id": "c019823",
-      // "skill": "Thevenin Equivalent Circuit",
-      // "correct": "1"
-      // }
-
       // Store question option number to optionNumber variable
       questionDisplay?.[currentQuestion]?.question.answers.map((options) => {
         if (
@@ -178,60 +171,7 @@ const LoadTopic = ({
 
       setLoading(true);
       console.log(loading);
-      const updateMastery = async (request: {
-        id: string;
-        topicSlug: string;
-        correct: boolean;
-        optionNumber: number;
-        questionId: number;
-      }) => {
-        try {
-          //update mastery of student
-          const res = await axios.post(
-            "/api/pybkt/update",
-            request //returns { Mastery: .... }
-          ); //use data destructuring to get data from the promise object
-          console.log("Res Data");
-          console.log(request);
-          console.log(res.data);
-          return res.data;
-        } catch (error) {
-          console.log("update error");
-          console.log(request);
-          console.log(error);
-        }
-      };
-
-      //should output mastery skill
-      const updated = await updateMastery({
-        id: session?.data?.user?.id as string,
-        topicSlug: questionDisplay?.[currentQuestion]?.question
-          ?.topicSlug as string,
-        correct: attempt[currentQuestion]?.isCorrect as boolean,
-        optionNumber: optionNumber,
-        questionId: questionDisplay?.[currentQuestion]?.question
-          ?.questionId as number,
-      });
-
-      setLoading(false);
-      console.log(session?.data?.user?.id);
-      console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
-      console.log(attempt[currentQuestion]?.isCorrect);
-      console.log(attempt[currentQuestion]?.question);
-      //get the topic from here, also change to get attempts from prisma instead instead of state
-      console.log(attempt[currentQuestion]?.question?.topicSlug);
-      // const topicSlug = questionDisplay?.[currentQuestion]?.question?.topicSlug;
-      // const topicCount = attempt.filter(
-      //   (item) => item.question?.topicSlug === topicSlug
-      // ).length;
-      // console.log(topicCount);
-      // console.log(attempt);
-
-      console.log(optionNumber);
-      console.log(questionDisplay?.[currentQuestion]?.question?.questionId);
-      console.log(updated);
-      console.log(currentQuestion);
-      console.log(questionDisplay?.length);
+      //update attempt -> check attempt -> update pybkt (update mastery table) -> check mastery table
 
       //update attempt table in prisma
       const updateAttempts = async (request: {
@@ -260,7 +200,7 @@ const LoadTopic = ({
       console.log(updatedAttempts);
 
       //checks attempt table in prisma
-      const checkAnswer = async (request: {
+      const attemptCheck = async (request: {
         id: string;
         topicSlug: string;
       }) => {
@@ -270,12 +210,10 @@ const LoadTopic = ({
           return res.data;
         } catch (error) {
           console.log("attempt error");
-          // console.log(request);
-          // console.log(error);
         }
       };
 
-      const checkAttempts = await checkAnswer({
+      const checkAttempts = await attemptCheck({
         id: session?.data?.user?.id as string,
         topicSlug: questionDisplay?.[currentQuestion]?.question
           ?.topicSlug as string,
@@ -283,64 +221,157 @@ const LoadTopic = ({
       console.log(checkAttempts);
       console.log(checkAttempts.length);
 
-      //get all users in prisma
-      const getUsers = async () => {
-        try {
-          //update mastery of student
-          const res = await axios.get("/api/forum/getAllUsers"); //use data destructuring to get data from the promise object
-          return res.data;
-        } catch (error) {
-          console.log("attempt error");
-          // console.log(request);
-          // console.log(error);
-        }
-      };
-
-      const allUsers = await getUsers();
-      console.log(allUsers);
-      //get all emails with ADMIN role
-      const maillist = allUsers
-        .filter((attribute: { role: string }) => {
-          return attribute.role == "ADMIN";
-        })
-        .map((admins: { email: string }) => admins.email);
-
-      //checks if email condition met
-      const emailCheck = async (request: {
-        id: string;
-        topicName: string;
-        name: string;
-        email: string[];
-      }) => {
-        try {
-          //activate email api
-          const res = await axios.post("/api/question/sendEmail", request); //use data destructuring to get data from the promise object
-          return res.data;
-        } catch (error) {
-          console.log("attempt error");
-          // console.log(request);
-          // console.log(error);
-        }
-      };
+      //check condition
       //correctness count last 5 to check if all wrong (need to refine)
-      const topicCount = checkAttempts
+      const topicErrorCount = checkAttempts
         .slice(-5)
         .filter(
           (item: { isCorrect: boolean }) => item.isCorrect === false
         ).length;
-      console.log(topicCount);
-      if (topicCount === 5) {
-        const email = await emailCheck({
-          id: session?.data?.user?.id as string,
-          topicName: questionDisplay?.[currentQuestion]?.question?.topic
-            ?.topicName as string,
-          name: checkAttempts[0].user.name,
-          //compile all email of ADMIN status
-          email: maillist,
-        });
-        console.log(email);
+      console.log(topicErrorCount);
+
+      // const wrongMeter = question;
+
+      let masteryConditionFlag = false;
+      if (topicErrorCount === 5) {
+        masteryConditionFlag = true;
       }
-      console.log(topicCount);
+
+      const updateMastery = async (request: {
+        id: string;
+        topicSlug: string;
+        correct: boolean;
+        optionNumber: number;
+        questionId: number;
+        masteryConditionFlag: boolean;
+        courseSlug: string;
+      }) => {
+        try {
+          //update mastery of student
+          const res = await axios.post(
+            "/api/pybkt/update",
+            request //returns { Mastery: .... }
+          ); //use data destructuring to get data from the promise object
+          console.log(res.data);
+          return res.data;
+        } catch (error) {
+          console.log("update error");
+          console.log(error);
+        }
+      };
+
+      //should output mastery skill
+      const updated = await updateMastery({
+        id: session?.data?.user?.id as string,
+        topicSlug: questionDisplay?.[currentQuestion]?.question
+          ?.topicSlug as string,
+        correct: attempt[currentQuestion]?.isCorrect as boolean,
+        optionNumber: optionNumber,
+        questionId: questionDisplay?.[currentQuestion]?.question
+          ?.questionId as number,
+        masteryConditionFlag: masteryConditionFlag as boolean,
+        courseSlug: questionDisplay?.[currentQuestion]?.courseSlug as string,
+      });
+
+      setLoading(false);
+      console.log(session?.data?.user?.id);
+      console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
+      console.log(attempt[currentQuestion]?.isCorrect);
+      console.log(attempt[currentQuestion]?.question);
+      //get the topic from here, also change to get attempts from prisma instead instead of state
+      console.log(attempt[currentQuestion]?.question?.topicSlug);
+      // const topicSlug = questionDisplay?.[currentQuestion]?.question?.topicSlug;
+      // const topicCount = attempt.filter(
+      //   (item) => item.question?.topicSlug === topicSlug
+      // ).length;
+      // console.log(topicCount);
+      // console.log(attempt);
+
+      console.log(optionNumber);
+      console.log(questionDisplay?.[currentQuestion]?.question?.questionId);
+      console.log(updated);
+      console.log(currentQuestion);
+      console.log(questionDisplay?.length);
+
+      // //checks mastery table in prisma
+      // const checkMastery = async (request: {
+      //   id: string;
+      //   topicSlug: string;
+      // }) => {
+      //   try {
+      //     //update mastery of student
+      //     const res = await axios.post("/api/question/checkMastery", request); //use data destructuring to get data from the promise object
+      //     return res.data;
+      //   } catch (error) {
+      //     console.log("attempt error");
+      //     // console.log(request);
+      //     // console.log(error);
+      //   }
+      // };
+
+      // const masteryCheck = await checkMastery({
+      //   id: session?.data?.user?.id as string,
+      //   topicSlug: questionDisplay?.[currentQuestion]?.question
+      //     ?.topicSlug as string,
+      // });
+      // console.log(masteryCheck);
+
+      //checks if email condition met
+      // const emailCheck = async (request: {
+      //   id: string;
+      //   topicName: string;
+      //   name: string;
+      //   email: string[];
+      // }) => {
+      //   try {
+      //     //activate email api
+      //     const res = await axios.post("/api/question/sendEmail", request); //use data destructuring to get data from the promise object
+      //     return res.data;
+      //   } catch (error) {
+      //     console.log("attempt error");
+      //     // console.log(request);
+      //     // console.log(error);
+      //   }
+      // };
+
+      // //check if total errorMeter modulo 20
+      // const errorCheck = async (request: {
+      //   id: string;
+      //   courseSlug: string;
+      // }) => {
+      //   try {
+      //     //update mastery of student
+      //     const res = await axios.post("/api/question/checkError", request); //use data destructuring to get data from the promise object
+      //     return res.data;
+      //   } catch (error) {
+      //     console.log("attempt error");
+      //   }
+      // };
+
+      // console.log(questionDisplay?.[currentQuestion]?.courseSlug);
+
+      // const checkErrorAmt = await errorCheck({
+      //   id: session?.data?.user?.id as string,
+      //   courseSlug: questionDisplay?.[currentQuestion]?.courseSlug as string,
+      // });
+
+      // //check condition
+      // if (
+      //   masteryConditionFlag === true &&
+      //   checkErrorAmt.errorMeter % 20 === 0 &&
+      //   checkErrorAmt.errorMeter !== 0
+      // ) {
+      // }
+
+      // const email = await emailCheck({
+      //   id: session?.data?.user?.id as string,
+      //   topicName: questionDisplay?.[currentQuestion]?.question?.topic
+      //     ?.topicName as string,
+      //   name: checkAttempts[0].user.name,
+      //   //compile all email of ADMIN status
+      //   email: maillist,
+      // });
+      // console.log(email);
 
       if (currentQuestion + 1 === questionDisplay?.length) {
         console.log("reached the end");

@@ -13,6 +13,8 @@ export default async function handler(
     correct: boolean;
     optionNumber: number;
     questionId: number;
+    masteryConditionFlag: boolean;
+    courseSlug: string;
   }) => {
     //check if masteryLevel === 0 =>
     axios
@@ -77,28 +79,64 @@ export default async function handler(
 
   const display = await displayData(req.body);
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+  //update errorMeter + 1 if false
+  if (req.body.correct === false) {
+    const wrongness = await prisma.mastery.update({
+      where: {
+        userId_topicSlug: {
+          userId: req.body.id as string,
+          topicSlug: req.body.topicSlug as string,
+        },
+      },
+      data: {
+        errorMeter: {
+          increment: 1,
+        },
+      },
+    });
+    console.log(wrongness);
   }
 
-  // update instead of create (in Mastery table) if exist
-  const mastery: Mastery = await prisma.mastery.upsert({
-    where: {
-      userId_topicSlug: {
+  if (req.body.masteryConditionFlag === true) {
+    // update instead of create (in Mastery table) if exist
+    const mastery: Mastery = await prisma.mastery.upsert({
+      where: {
+        userId_topicSlug: {
+          userId: req.body.id as string,
+          topicSlug: req.body.topicSlug as string,
+        },
+      },
+      update: {
+        masteryLevel: display.Mastery,
+        topicPing: req.body.masteryConditionFlag as boolean,
+      },
+      create: {
         userId: req.body.id as string,
         topicSlug: req.body.topicSlug as string,
+        masteryLevel: display.Mastery,
       },
-    },
-    update: {
-      masteryLevel: display.Mastery,
-    },
-    create: {
-      userId: req.body.id as string,
-      topicSlug: req.body.topicSlug as string,
-      masteryLevel: display.Mastery,
-    },
-  });
-  console.log(mastery);
+    });
+    console.log(mastery);
+  } else {
+    // update instead of create (in Mastery table) if exist
+    const mastery: Mastery = await prisma.mastery.upsert({
+      where: {
+        userId_topicSlug: {
+          userId: req.body.id as string,
+          topicSlug: req.body.topicSlug as string,
+        },
+      },
+      update: {
+        masteryLevel: display.Mastery,
+      },
+      create: {
+        userId: req.body.id as string,
+        topicSlug: req.body.topicSlug as string,
+        masteryLevel: display.Mastery,
+      },
+    });
+    console.log(mastery);
+  }
 
   // //updates attempt after each submission
   // const updateAttempt = await prisma.attempt.create({
