@@ -15,5 +15,5 @@ jobs:
     steps:
       - name: Call API
         run: |
-          curl --request POST \
-          --url https://localhost:3000/api/email/sendEmailActual \
+          curl --request GET \
+          --url http://localhost:3000/api/email/sendEmailActual \
