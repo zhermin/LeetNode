@@ -1,4 +1,12 @@
-import { Center, Box, Group, Loader, Progress, Title } from "@mantine/core";
+import {
+  Center,
+  Box,
+  Group,
+  Loader,
+  Progress,
+  Title,
+  Text,
+} from "@mantine/core";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -41,6 +49,8 @@ const ProgressBar = ({
       });
   }, [topicSlug, session?.data?.user?.id]);
 
+  console.log(session?.data?.user?.id);
+  console.log(topicSlug);
   const results = details;
   // const results = masteryDisplay[0]?.masteryLevel;
   const roundedResults = Math.round((results as number) * 10000) / 100;
@@ -56,7 +66,11 @@ const ProgressBar = ({
         <Box pt="xl">
           <Group position="apart">
             <Title order={3}>{topicName}</Title>
-            <Title order={2}>{roundedResults}%</Title>
+            {roundedResults !== 0 ? (
+              <Title order={2}>{roundedResults}%</Title>
+            ) : (
+              <Text fw={600}>Do a {`${topicName}`} question first!</Text>
+            )}
           </Group>
           <Progress
             mt="md"

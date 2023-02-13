@@ -4,7 +4,7 @@ import type { AppType } from "next/app";
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 
-// React-Query
+// React-Query, Axios and Toasts
 import {
   Hydrate,
   DehydratedState,
@@ -13,8 +13,8 @@ import {
   MutationCache,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import toast from "react-hot-toast";
 import { AxiosError } from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 // Styles
 import "../styles/globals.css";
@@ -78,6 +78,7 @@ const LeetNode: AppType<{
               <Component {...pageProps} />
             </MantineProvider>
           </ColorSchemeProvider>
+          <Toaster />
           <ReactQueryDevtools position="bottom-right" />
         </Hydrate>
       </QueryClientProvider>
