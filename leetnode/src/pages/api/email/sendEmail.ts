@@ -114,37 +114,38 @@ export default async function handler(
     ""
   );
 
-  // // Create a transporter for sending the email
-  // const transporter = nodemailer.createTransport({
-  //   host: "smtp.gmail.com",
-  //   port: 587,
-  //   secure: false,
-  //   //need to put email in .env file in the future
-  //   auth: {
-  //     user: "contact.leetnode@gmail.com",
-  //     pass: process.env.GMAIL_PASS,
-  //   },
-  // });
+  // Create a transporter for sending the email
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    //need to put email in .env file in the future
+    auth: {
+      user: "contact.leetnode@gmail.com",
+      pass: process.env.GMAIL_PASS,
+    },
+  });
 
-  // // Define the email options
-  // const mailOptions = {
-  //   from: "contact.leetnode@gmail.com",
-  //   //need to change this to the prof email, currently is to user's email
-  //   to: `${maillist}`,
-  //   subject: "Here are the list of students that require help",
-  //   text: `Here are the list of students that require help:\n${templateString}`,
-  // };
-
-  // transporter.sendMail(
-  //   mailOptions,
-  //   (error: Error | null, info: { response: string }) => {
-  //     if (error) {
-  //       console.log(error);
-  //     } else {
-  //       console.log("Email sent: " + info.response);
-  //     }
-  //   }
-  // );
+  // Define the email options
+  const mailOptions = {
+    from: "contact.leetnode@gmail.com",
+    //need to change this to the prof email, currently is to user's email
+    to: `${maillist}`,
+    subject: "Here are the list of students that require help",
+    text: `Here are the list of students that require help:\n${templateString}`,
+  };
+  new Promise((resolve, reject) => {
+    transporter.sendMail(
+      mailOptions,
+      (error: Error | null, info: { response: string }) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve("Email sent: " + info.response);
+        }
+      }
+    );
+  });
 
   // // res.status(200).json(templateString);
   try {
