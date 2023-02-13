@@ -46,6 +46,7 @@
     "rehype-raw": "^6.1.1",
     "remark-math": "^5.1.1",
     "sharp": "^0.31.3",
+    "swr": "^2.0.3",
     "zod": "^3.20.2"
   },
   "devDependencies": {

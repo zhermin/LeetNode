@@ -1,33 +1,35 @@
+import axios from "axios";
+import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import useSWRImmutable from "swr";
+
 import {
-  createStyles,
-  Header,
-  Container,
-  Button,
-  UnstyledButton,
-  Group,
-  Text,
-  Menu,
   Box,
-  useMantineColorScheme,
-  SegmentedControl,
+  Button,
   Center,
+  Container,
+  createStyles,
+  Group,
+  Header,
+  Menu,
+  SegmentedControl,
+  Text,
+  UnstyledButton,
+  useMantineColorScheme
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBook,
-  IconStar,
-  IconSettings,
-  IconLogout,
   IconChevronDown,
-  IconSun,
+  IconLogout,
   IconMoon,
+  IconSettings,
+  IconStar,
+  IconSun
 } from "@tabler/icons";
-import { useMediaQuery } from "@mantine/hooks";
-
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useSession, signIn, signOut } from "next-auth/react";
-import toast from "react-hot-toast";
 
 const HEADER_HEIGHT = 80;
 
@@ -102,6 +104,22 @@ export default function Navbar() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
+  const fetcher = useCallback(
+    async (url: string) => {
+      const response = await axios.post(url, {
+        id: session?.data?.user?.id,
+      });
+      console.log("fetching swr");
+      return response?.data;
+    },
+    [session?.data?.user?.id]
+  );
+
+  const { data: userInfo, error } = useSWRImmutable("/api/user/get", fetcher);
+  useEffect(() => {
+    console.log("useEfect", userInfo?.image);
+  }, [userInfo]);
+
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
       <Container className={classes.inner}>
@@ -158,15 +176,16 @@ export default function Navbar() {
                     weight={500}
                     color={theme.colors.gray[9]}
                   >
-                    {session?.data?.user?.name}
+                    {userInfo ? userInfo?.name : <span>Loading</span>}
                   </Text>
                   <Image
-                    src={session?.data?.user?.image || ""}
-                    alt={session?.data?.user?.name || ""}
+                    src={userInfo?.image || ""}
+                    alt={userInfo?.name}
                     className="ml-1 rounded-full"
                     width={25}
                     height={25}
                   />
+
                   <IconChevronDown size={12} stroke={1.5} />
                 </Group>
               </UnstyledButton>
