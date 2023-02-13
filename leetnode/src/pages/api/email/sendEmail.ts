@@ -1,9 +1,12 @@
-import { NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { prisma } from "@/server/db/client";
 import { Mastery } from "@prisma/client";
 
-export default async function handler(res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   const now = new Date().getTime();
 
