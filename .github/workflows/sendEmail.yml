@@ -1,0 +1,16 @@
+name: Daily Email API
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  send_email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call API
+        run: |
+          curl --request GET \
+          --url https://leetnode-git-dev-zhermin.vercel.app/api/email/sendEmail \

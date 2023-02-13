@@ -27,6 +27,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
+import toast from "react-hot-toast";
 
 const HEADER_HEIGHT = 80;
 
@@ -185,6 +186,22 @@ export default function Navbar() {
                   } else {
                     document.documentElement.classList.remove("dark");
                   }
+
+                  // notification for color scheme change
+                  toast.success(
+                    value === "dark"
+                      ? "Dark mode enabled"
+                      : "Light mode enabled",
+                    {
+                      position: "top-right",
+                      duration: 3000,
+                      style: {
+                        background:
+                          value === "dark" ? theme.colors.dark[9] : "",
+                        color: value === "dark" ? theme.white : "",
+                      },
+                    }
+                  );
                 }}
                 data={[
                   {
