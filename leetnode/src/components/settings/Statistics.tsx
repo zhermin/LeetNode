@@ -51,8 +51,8 @@ export default function Statistics({ data }: TableReviewsProps) {
 
   return (
     <ScrollArea>
-      <h1 style={{ textAlign: "center" }}>Statistics</h1>
-      <hr />
+      <h1 className="text-center">Statistics</h1>
+      <hr className="h-px my-4 bg-gray-200 border-0" />
       <Group position="right">
         <SegmentedControl
           value={view}

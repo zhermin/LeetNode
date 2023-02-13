@@ -1,7 +1,8 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import useSWRImmutable from "swr";
 
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
@@ -117,11 +118,30 @@ export default function Settings() {
   const [active, setActive] = useState("Account");
 
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
-  const [userNusnetId, setUserNusnetId] = useState("");
-  const [userImage, setUserImage] = useState("");
 
   const [masteryData, setMasteryData] = useState();
+
+  const fetcher = useCallback(
+    async (url: string) => {
+      const response = await axios.post(url, {
+        id: session?.data?.user?.id,
+      });
+      console.log("fetching swr");
+      return response?.data;
+    },
+    [session?.data?.user?.id]
+  );
+
+  const { data: userInfo, error } = useSWRImmutable("/api/user/get", fetcher); // Off auto-revalidation
+
+  useEffect(() => {
+    // Update the loading state
+    if (userInfo) {
+      setLoading(false);
+    } else if (!userInfo) {
+      setLoading(true);
+    }
+  }, [userInfo]);
 
   const links = data.map((item) => (
     <a
@@ -139,25 +159,6 @@ export default function Settings() {
       <span>{item.label}</span>
     </a>
   ));
-
-  useEffect(() => {
-    setLoading(true);
-    console.log("fetching data");
-    axios
-      .post("/api/user/get", {
-        id: session?.data?.user?.id,
-      })
-      .then((response) => {
-        setUserName(response?.data?.name);
-        setUserNusnetId(response?.data?.nusnetId);
-        setUserImage(response?.data?.image);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setLoading(false);
-        console.log(error);
-      });
-  }, [session?.data?.user?.id]);
 
   useEffect(() => {
     axios
@@ -181,7 +182,7 @@ export default function Settings() {
       header={
         <>
           <LeetNodeHeader />
-          <LeetNodeNavbar userName={userName} userImage={userImage} />
+          <LeetNodeNavbar />
         </>
       }
       navbar={
@@ -195,8 +196,8 @@ export default function Settings() {
             <div className={classes.header}>
               <Center>
                 <Image
-                  src={userImage || ""}
-                  alt={userName || ""}
+                  src={userInfo?.image || ""}
+                  alt={userInfo?.name || ""}
                   className="new-line ml-1 rounded-full mb-3"
                   width={100}
                   height={100}
@@ -209,7 +210,7 @@ export default function Settings() {
                   weight={500}
                   color={theme.colors.gray[9]}
                 >
-                  {userName}
+                  {userInfo?.name}
                 </Text>
               </Center>
             </div>
@@ -237,17 +238,7 @@ export default function Settings() {
               <Loader />
             </Center>
           ) : (
-            <>
-              <Account
-                loading={loading}
-                userName={userName}
-                setUserName={setUserName}
-                userNusnetId={userNusnetId}
-                setUserNusnetId={setUserNusnetId}
-                userImage={userImage}
-                setUserImage={setUserImage}
-              />
-            </>
+            <Account userInfo={userInfo} />
           )
         ) : active === "Statistics" ? (
           <Statistics data={masteryData} />

@@ -104,21 +104,7 @@ export default function Navbar() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
-  const fetcher = useCallback(
-    async (url: string) => {
-      const response = await axios.post(url, {
-        id: session?.data?.user?.id,
-      });
-      console.log("fetching swr");
-      return response?.data;
-    },
-    [session?.data?.user?.id]
-  );
-
-  const { data: userInfo, error } = useSWRImmutable("/api/user/get", fetcher);
-  useEffect(() => {
-    console.log("useEfect", userInfo?.image);
-  }, [userInfo]);
+  const { data: userInfo, error } = useSWRImmutable("/api/user/get"); // Off auto-revalidation
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
@@ -176,7 +162,7 @@ export default function Navbar() {
                     weight={500}
                     color={theme.colors.gray[9]}
                   >
-                    {userInfo ? userInfo?.name : <span>Loading</span>}
+                    {userInfo?.name}
                   </Text>
                   <Image
                     src={userInfo?.image || ""}
@@ -281,7 +267,7 @@ export default function Navbar() {
 
               <Menu.Item
                 component={Link}
-                href="/"
+                href="/settings"
                 icon={<IconSettings size={14} stroke={1.5} />}
               >
                 Account settings
