@@ -1,12 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { prisma } from "@/server/db/client";
 import { Mastery } from "@prisma/client";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(res: NextApiResponse) {
   const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   const now = new Date().getTime();
 
@@ -146,5 +143,9 @@ export default async function handler(
   );
 
   // res.status(200).json(templateString);
-  res.status(200).json({ success: "Email sent!" });
+  try {
+    res.status(200).json({ success: "Email sent!" }); // should be displaying mastery table
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
 }

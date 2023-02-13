@@ -16,4 +16,4 @@ jobs:
       - name: Call API
         run: |
           curl --request GET \
-          --url http://localhost:3000/api/email/sendEmailActual \
+          --url https://leetnode-git-dev-zhermin.vercel.app/api/email/sendEmail \
