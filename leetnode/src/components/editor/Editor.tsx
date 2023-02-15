@@ -16,7 +16,6 @@ export default function Editor() {
       value={quillHtml}
       theme="snow"
       bounds={".quill"}
-      placeholder="Compose an epic..."
       modules={Editor.modules}
       formats={undefined}
     />

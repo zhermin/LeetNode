@@ -1,33 +1,35 @@
-import {
-  createStyles,
-  Header,
-  Container,
-  Button,
-  UnstyledButton,
-  Group,
-  Text,
-  Menu,
-  Box,
-  useMantineColorScheme,
-  SegmentedControl,
-  Center,
-} from "@mantine/core";
-import {
-  IconBook,
-  IconStar,
-  IconSettings,
-  IconLogout,
-  IconChevronDown,
-  IconSun,
-  IconMoon,
-} from "@tabler/icons";
-import { useMediaQuery } from "@mantine/hooks";
-
-import { useState } from "react";
-import Link from "next/link";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
+import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+
+import {
+	Box,
+	Burger,
+	Button,
+	Center,
+	Container,
+	createStyles,
+	Flex,
+	Group,
+	Header,
+	Menu,
+	SegmentedControl,
+	Text,
+	UnstyledButton,
+	useMantineColorScheme
+} from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
+import {
+	IconBook,
+	IconChevronDown,
+	IconLogout,
+	IconMoon,
+	IconSettings,
+	IconStar,
+	IconSun
+} from "@tabler/icons";
 
 const HEADER_HEIGHT = 80;
 
@@ -94,7 +96,39 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export default function Navbar() {
+const FullLogo = () => (
+  <Link href="/">
+    <Image
+      src="/logo/leetnode-banner-white.png"
+      alt="LeetNode"
+      width="0"
+      height="0"
+      sizes="100vw"
+      className="h-auto w-full max-h-12"
+    />
+  </Link>
+);
+
+const SmallLogo = () => (
+  <Link href="/">
+    <Image
+      src="/logo/leetnode-logo-square.png"
+      alt="LeetNode"
+      width="0"
+      height="0"
+      sizes="100vw"
+      className="h-6 w-full rounded-full"
+    />
+  </Link>
+);
+
+export default function Navbar({
+  sidebarOpened,
+  setSidebarOpened,
+}: {
+  sidebarOpened: boolean;
+  setSidebarOpened?: Dispatch<SetStateAction<boolean>>;
+}) {
   const session = useSession();
 
   const { classes, theme, cx } = useStyles();
@@ -105,28 +139,19 @@ export default function Navbar() {
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
       <Container className={classes.inner}>
-        {mobile ? (
-          <Link href="/">
-            <Image
-              src="/logo/leetnode-logo-square.png"
-              alt="LeetNode"
-              width="0"
-              height="0"
-              sizes="100vw"
-              className="h-6 w-full rounded-full"
+        {setSidebarOpened ? (
+          <Flex align="center" gap="xl">
+            <Burger
+              opened={sidebarOpened}
+              onClick={() => setSidebarOpened((o) => !o)}
+              color={theme.colors.gray[6]}
             />
-          </Link>
+            <FullLogo />
+          </Flex>
+        ) : mobile ? (
+          <SmallLogo />
         ) : (
-          <Link href="/">
-            <Image
-              src="/logo/leetnode-banner-white.png"
-              alt="LeetNode"
-              width="0"
-              height="0"
-              sizes="100vw"
-              className="h-auto w-full max-h-12"
-            />
-          </Link>
+          <FullLogo />
         )}
 
         {session.status === "unauthenticated" && (

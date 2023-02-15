@@ -11,25 +11,28 @@ import MarkdownLatex from "@/components/MarkdownLatex";
 import LeetNodeNavbar from "@/components/Navbar";
 import { CustomMath } from "@/server/Utils";
 import {
+	ActionIcon,
 	AppShell,
-	Burger,
+	Box,
 	Button,
-	Container,
+	Center,
+	Chip,
+	Code,
 	createStyles,
-	Grid,
-	Group,
-	Header,
-	MediaQuery,
+	Divider,
+	Flex,
 	Modal,
 	Navbar,
 	ScrollArea,
 	SegmentedControl,
 	Select,
 	SimpleGrid,
+	Stack,
 	Text,
 	TextInput
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { randomId } from "@mantine/hooks";
 import {
 	Icon2fa,
 	IconBellRinging,
@@ -41,11 +44,14 @@ import {
 	IconLogout,
 	IconMessage2,
 	IconMessages,
+	IconPlus,
 	IconReceipt2,
 	IconReceiptRefund,
+	IconRefresh,
 	IconSettings,
 	IconShoppingCart,
 	IconSwitchHorizontal,
+	IconTrash,
 	IconUsers
 } from "@tabler/icons";
 
@@ -94,10 +100,9 @@ const tabs = {
 export default function Test() {
   const { theme, classes, cx } = useStyles();
   const [section, setSection] = useState<"account" | "general">("account");
-  const [active, setActive] = useState("Latex");
-  const [opened, setOpened] = useState(false);
+  const [active, setActive] = useState("Editor");
+  const [sidebarOpened, setSidebarOpened] = useState(false);
   const [editorOpened, setEditorOpened] = useState(false);
-  const [expr, setExpr] = useState("");
 
   const [numPages, setNumPages] = React.useState(1);
   const [pageNumber, setPageNumber] = React.useState(1);
@@ -111,8 +116,8 @@ export default function Test() {
     },
     qn_variables: ["V", "R_1", "R_2", "R_3"],
     variable_ranges: {
-      V: { toRandomize: true, min: 1, max: 12, decimalPlaces: 2 },
-      R_1: { toRandomize: false },
+      V: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
+      R_1: { toRandomize: false }, // 20 possibilites
       R_2: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
       R_3: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
     },
@@ -125,15 +130,15 @@ export default function Test() {
     ],
     Answer: "I_4",
     units: {
-      V: "V",
+      V: "\\text{V}",
       R_1: "\\Omega",
       R_2: "\\Omega",
       R_3: "\\Omega",
-      I_1: "A",
-      I_2: "A",
-      I_3: "A",
-      I_4: "A",
-      Answer: "A",
+      I_1: "\\Omega",
+      I_2: "\\text{A}",
+      I_3: "\\text{A}",
+      I_4: "\\text{A}",
+      Answer: "\\text{A}",
     },
   });
 
@@ -154,7 +159,7 @@ Given the circuit below, find the total current flowing through the circuit.
 
 $$
 ${qn1Data.qn_variables
-  .map((key) => `${key} = ${qn1Data.variables[key]} ${qn1Data.units[key]}`)
+  .map((key) => `${key} = ${qn1Data.variables[key]}~${qn1Data.units[key]}`)
   .join(",~")}
 $$
 
@@ -164,7 +169,7 @@ ${qn1Data.expressions
   .map(
     (expr) => `
 $$
-${expr}~~~\\text{ (Unit: ${qn1Data.units[expr.split("=")[0]?.trim() ?? ""]})}
+${expr}~~~(${qn1Data.units[expr.split("=")[0]?.trim() ?? ""]})
 $$
 `
   )
@@ -204,16 +209,252 @@ $$
     </a>
   ));
 
+  // Question Generator
+
   const form = useForm({
     initialValues: {
       title: "",
       courseName: "CS1010",
-      postType: "Content",
+      topics: "Content",
+      difficulty: "Medium",
+      variables: [
+        {
+          key: randomId(),
+          name: "",
+          unit: "",
+          default: "",
+          forStudents: true,
+          randomize: false,
+          isFinalAnswer: false,
+        },
+      ],
+      methods: [{ key: 1, expr: "" }],
     },
     validate: {
       title: (value) => value.trim().length === 0,
     },
   });
+
+  const [finalAnsPreview, setFinalAnsPreview] = useState(
+    "\\text{Invalid Variables or Methods}"
+  );
+  const handleFinalAnsPreviewChange = () => {
+    const rawVariables: {
+      [key: string]: number;
+    } = form.values.variables.reduce(
+      (obj, item) => ({
+        ...obj,
+        [item.name]: item.default,
+      }),
+      {}
+    );
+
+    for (const method of form.values.methods) {
+      evaluate(method.expr, rawVariables);
+    }
+
+    const finalAnswer = form.values.variables.find(
+      (item) => item.isFinalAnswer
+    );
+    if (finalAnswer && finalAnswer.name && finalAnswer.unit) {
+      setFinalAnsPreview(`
+        ${finalAnswer.name} (${finalAnswer.unit}) = ${
+        rawVariables[finalAnswer.name]
+      }`);
+    } else {
+      setFinalAnsPreview("\\text{Invalid Variables or Methods}");
+    }
+    toast.success("Preview Updated!");
+  };
+
+  const varFields = form.values.variables.map((item, index) => (
+    <Stack
+      key={item.key}
+      bg={theme.colors.gray[1]}
+      p="md"
+      my="md"
+      className="rounded-md"
+    >
+      <Flex gap="md" align="center">
+        <TextInput
+          label="Variable Name"
+          placeholder="R_{TH}"
+          sx={{ flex: 1 }}
+          value={item.name}
+          onChange={(event) => {
+            form.setFieldValue(`variables.${index}.name`, event.target.value);
+          }}
+        />
+        <TextInput
+          label="Unit"
+          placeholder="\text{A} or \Omega"
+          sx={{ flex: 1 }}
+          value={item.unit}
+          onChange={(event) => {
+            form.setFieldValue(`variables.${index}.unit`, event.target.value);
+          }}
+        />
+        <TextInput
+          label="Default Value"
+          placeholder={
+            form.values.variables[index]?.forStudents ? "20" : "Derived"
+          }
+          sx={{ flex: 1 }}
+          disabled={!item.forStudents}
+          value={item.default}
+          onChange={(event) => {
+            form.setFieldValue(
+              `variables.${index}.default`,
+              event.target.value
+            );
+          }}
+        />
+        <Box
+          sx={{ flex: 1, alignSelf: "stretch" }}
+          className="bg-slate-200 rounded-md border border-solid border-slate-300"
+        >
+          <Latex>{`$$ ${item.name}${item.unit ? "~(" + item.unit + ")" : ""}${
+            item.default ? "~=" + item.default : ""
+          } $$`}</Latex>
+        </Box>
+        <Chip
+          onClick={() => {
+            form.setFieldValue(`variables.${index}.isFinalAnswer`, false);
+            form.setFieldValue(`variables.${index}.default`, "");
+          }}
+          {...form.getInputProps(`variables.${index}.forStudents`, {
+            type: "checkbox",
+          })}
+        >
+          For Students
+        </Chip>
+        {item.forStudents ? (
+          <Chip
+            disabled={!item.forStudents}
+            {...form.getInputProps(`variables.${index}.randomize`, {
+              type: "checkbox",
+            })}
+          >
+            Random
+          </Chip>
+        ) : (
+          <Chip
+            color="red"
+            disabled={
+              !item.isFinalAnswer &&
+              form.values.variables.some((item) => item.isFinalAnswer)
+            }
+            // onClick={handleFinalAnsPreviewChange}
+            {...form.getInputProps(`variables.${index}.isFinalAnswer`, {
+              type: "checkbox",
+            })}
+          >
+            Final Ans
+          </Chip>
+        )}
+        <ActionIcon
+          variant="transparent"
+          onClick={() => form.removeListItem("variables", index)}
+        >
+          <IconTrash size={16} />
+        </ActionIcon>
+      </Flex>
+      {item.randomize && item.forStudents && (
+        <Flex gap="md" align="center">
+          <Text fw={500} fz="sm">
+            Min
+          </Text>
+          <TextInput
+            placeholder="1"
+            sx={{ flex: 1 }}
+            onChange={(event) => {
+              form.setFieldValue(`variables.${index}.min`, event.target.value);
+            }}
+          />
+          <Text fw={500} fz="sm">
+            Max
+          </Text>
+          <TextInput
+            placeholder="30"
+            sx={{ flex: 1 }}
+            onChange={(event) => {
+              form.setFieldValue(`variables.${index}.max`, event.target.value);
+            }}
+          />
+          <Text fw={500} fz="sm">
+            Decimal Places
+          </Text>
+          <TextInput
+            placeholder="0"
+            sx={{ flex: 1 }}
+            onChange={(event) => {
+              form.setFieldValue(`variables.${index}.step`, event.target.value);
+            }}
+          />
+        </Flex>
+      )}
+    </Stack>
+  ));
+
+  const newVar = () => {
+    form.insertListItem("variables", {
+      key: randomId(),
+      name: "",
+      forStudents: true,
+      randomize: false,
+      isFinalAnswer: false,
+    });
+  };
+
+  const methodFields = form.values.methods.map((item, index) => (
+    <Flex
+      key={item.key}
+      gap="md"
+      align="center"
+      bg={theme.colors.gray[1]}
+      p="md"
+      my="md"
+      className="rounded-md"
+    >
+      <Text color="dimmed">{item.key}</Text>
+      <TextInput
+        placeholder="R_{TH} = \frac{R_2*R_3}{R_2+R_3}"
+        sx={{ flex: 1 }}
+        value={item.expr}
+        onChange={(event) => {
+          form.setFieldValue(`methods.${index}.expr`, event.target.value);
+        }}
+      />
+      <Box
+        sx={{ flex: 1, alignSelf: "stretch" }}
+        className="bg-slate-200 rounded-md border border-solid border-slate-300"
+      >
+        <Latex>{`$$ ${item.expr} $$`}</Latex>
+      </Box>
+      <ActionIcon
+        variant="transparent"
+        onClick={() => form.removeListItem("methods", index)}
+      >
+        <IconTrash size={16} />
+      </ActionIcon>
+    </Flex>
+  ));
+
+  const newMethod = () => {
+    form.insertListItem("methods", {
+      key: methodFields.length + 1,
+      expr: "",
+    });
+  };
+
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => {
+    setHydrated(true);
+  }, []);
+  if (!hydrated) {
+    // Returns null on first render, so the client and server match
+    return null;
+  }
 
   return (
     <AppShell
@@ -229,92 +470,87 @@ $$
       header={
         <>
           <LeetNodeHeader />
-          <Header height={80}>
-            <Container
-              style={{ display: "flex", alignItems: "center", height: "100%" }}
-            >
-              <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                <Burger
-                  opened={opened}
-                  onClick={() => setOpened((opened) => !opened)}
-                  size="sm"
-                  color={theme.colors.gray[6]}
-                  mr="xl"
-                />
-              </MediaQuery>
-              <LeetNodeNavbar />
-            </Container>
-          </Header>
+          <LeetNodeNavbar
+            sidebarOpened={sidebarOpened}
+            setSidebarOpened={setSidebarOpened}
+          />
         </>
       }
       footer={<LeetNodeFooter />}
       navbar={
-        <Navbar
-          p="md"
-          hiddenBreakpoint="sm"
-          hidden={!opened}
-          width={{ sm: 200, lg: 300 }}
-        >
-          <Navbar.Section>
-            <Text
-              weight={500}
-              size="sm"
-              className={classes.title}
-              color="dimmed"
-              mb="xs"
-            >
-              bgluesticker@mantine.dev
-            </Text>
+        sidebarOpened ? (
+          <Navbar
+            p="md"
+            hiddenBreakpoint="sm"
+            hidden={!sidebarOpened}
+            width={{ sm: 200, lg: 300 }}
+          >
+            <Navbar.Section>
+              <Text
+                weight={500}
+                size="sm"
+                className={classes.title}
+                color="dimmed"
+                mb="xs"
+              >
+                Question Generator
+              </Text>
 
-            <SegmentedControl
-              value={section}
-              onChange={(value: "account" | "general") => setSection(value)}
-              transitionTimingFunction="ease"
-              fullWidth
-              data={[
-                { label: "Account", value: "account" },
-                { label: "System", value: "general" },
-              ]}
-            />
-          </Navbar.Section>
+              <SegmentedControl
+                value={section}
+                onChange={(value: "account" | "general") => setSection(value)}
+                transitionTimingFunction="ease"
+                fullWidth
+                data={[
+                  { label: "Account", value: "account" },
+                  { label: "System", value: "general" },
+                ]}
+              />
+            </Navbar.Section>
 
-          <Navbar.Section grow mt="xl">
-            {links}
-          </Navbar.Section>
+            <Navbar.Section grow mt="xl">
+              {links}
+            </Navbar.Section>
 
-          <Navbar.Section className={classes.footer}>
-            <a className={classes.link} onClick={() => setEditorOpened(true)}>
-              <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
-              <span>Open Editor</span>
-            </a>
+            <Navbar.Section className={classes.footer}>
+              <a className={classes.link} onClick={() => setEditorOpened(true)}>
+                <IconSwitchHorizontal
+                  className={classes.linkIcon}
+                  stroke={1.5}
+                />
+                <span>Open Editor</span>
+              </a>
 
-            <a
-              className={classes.link}
-              onClick={() => {
-                const newQn1Data = { ...qn1Data };
-                for (const v of qn1Data.qn_variables) {
-                  if (qn1Data.variable_ranges[v]?.toRandomize) {
-                    newQn1Data.variables[v] = CustomMath.random(
-                      qn1Data.variable_ranges[v]?.min ?? 0,
-                      qn1Data.variable_ranges[v]?.max ?? 0,
-                      qn1Data.variable_ranges[v]?.decimalPlaces ?? 0
-                    );
+              <a
+                className={classes.link}
+                onClick={() => {
+                  const newQn1Data = { ...qn1Data };
+                  for (const v of qn1Data.qn_variables) {
+                    if (qn1Data.variable_ranges[v]?.toRandomize) {
+                      newQn1Data.variables[v] = CustomMath.random(
+                        qn1Data.variable_ranges[v]?.min ?? 0,
+                        qn1Data.variable_ranges[v]?.max ?? 0,
+                        qn1Data.variable_ranges[v]?.decimalPlaces ?? 0
+                      );
+                    }
                   }
-                }
 
-                for (const expr of qn1Data.expressions) {
-                  evaluate(expr, newQn1Data.variables);
-                }
-                console.log(newQn1Data.variables.Answer);
+                  for (const expr of qn1Data.expressions) {
+                    evaluate(expr, newQn1Data.variables);
+                  }
+                  console.log(newQn1Data.variables.Answer);
 
-                setQn1Data(newQn1Data);
-              }}
-            >
-              <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Randomize</span>
-            </a>
-          </Navbar.Section>
-        </Navbar>
+                  setQn1Data(newQn1Data);
+                }}
+              >
+                <IconLogout className={classes.linkIcon} stroke={1.5} />
+                <span>Randomize</span>
+              </a>
+            </Navbar.Section>
+          </Navbar>
+        ) : (
+          <></>
+        )
       }
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
@@ -331,7 +567,7 @@ $$
             <Document file={slide} onLoadSuccess={onDocumentLoadSuccess}>
               <Page pageNumber={pageNumber} />
             </Document>
-            <Group>
+            <Flex gap="md">
               <Button
                 onClick={() => {
                   if (pageNumber > 1) {
@@ -350,7 +586,7 @@ $$
               >
                 {">"}
               </Button>
-            </Group>
+            </Flex>
             <p>
               Page {pageNumber} of {numPages}
             </p>
@@ -388,55 +624,152 @@ $$
                 required
                 {...form.getInputProps("title")}
               />
+
               <SimpleGrid
-                cols={2}
+                cols={3}
                 mt="lg"
-                mb="lg"
                 breakpoints={[{ maxWidth: "sm", cols: 1 }]}
               >
                 <Select
+                  data={["CS1010", "CS2101", "CS2102"]}
+                  placeholder="Select course"
+                  label="Course Name"
+                  defaultValue="CS1010"
+                  required
+                  {...form.getInputProps("course")}
+                />
+                <Select
                   data={["Content", "Quiz", "Misc"]}
-                  placeholder="Choose thread type"
-                  label="Thread Type"
+                  placeholder="Select all tested topics"
+                  label="Topics"
                   defaultValue="Content"
+                  required
                   {...form.getInputProps("postType")}
                 />
                 <Select
-                  data={["CS1010", "CS2101", "CS2102"]}
-                  placeholder="Choose course"
-                  label="Course Name"
-                  defaultValue="CS1010"
-                  {...form.getInputProps("course")}
+                  data={["Easy", "Medium", "Hard"]}
+                  placeholder="Select question difficulty"
+                  label="Difficulty"
+                  required
+                  {...form.getInputProps("difficulty")}
                 />
               </SimpleGrid>
-              <Text size="sm" weight={500}>
+
+              <Text weight={500} size="sm" mb="xs" mt="lg">
                 Question
               </Text>
               <Editor />
-              <Text size="sm" weight={500} mt="lg">
-                Method
+
+              <Text weight={500} size="sm" mt="xl">
+                Variables
               </Text>
-              <Grid mb="lg" justify="center" align="center" w="99%" grow>
-                <Grid.Col span={1}>
-                  <TextInput
-                    placeholder="R_{TH} = \frac{R_2*R_3}{R_2+R_3}"
-                    name="title"
-                    value={expr}
-                    onChange={(e) => setExpr(e.target.value)}
-                  />
-                </Grid.Col>
-                <Grid.Col
-                  span={1}
-                  className="bg-slate-200 rounded-md border border-solid border-slate-400"
+              {varFields.length > 0 ? (
+                <>
+                  {varFields}
+                  <Button
+                    fullWidth
+                    variant="light"
+                    color="gray"
+                    className="bg-gray-100"
+                    radius="sm"
+                    mt="lg"
+                    onClick={() => newVar()}
+                  >
+                    <IconPlus size={16} />
+                  </Button>
+                </>
+              ) : (
+                <Center mt="lg">
+                  <Text color="dimmed" align="center">
+                    Add at least one variable
+                  </Text>
+                  <ActionIcon
+                    variant="light"
+                    color="gray"
+                    className="bg-gray-100"
+                    radius="xl"
+                    ml="lg"
+                    onClick={() => newVar()}
+                  >
+                    <IconPlus size={16} />
+                  </ActionIcon>
+                </Center>
+              )}
+
+              <Text weight={500} size="sm" mt="xl">
+                Methods
+              </Text>
+              {methodFields.length > 0 ? (
+                <>
+                  {methodFields}
+                  <Button
+                    fullWidth
+                    variant="light"
+                    color="gray"
+                    className="bg-gray-100"
+                    radius="sm"
+                    mt="lg"
+                    onClick={() => newMethod()}
+                  >
+                    <IconPlus size={16} />
+                  </Button>
+                </>
+              ) : (
+                <Center mt="lg">
+                  <Text color="dimmed" align="center">
+                    Add at least one method
+                  </Text>
+                  <ActionIcon
+                    variant="light"
+                    color="gray"
+                    className="bg-gray-100"
+                    radius="xl"
+                    ml="lg"
+                    onClick={() => newMethod()}
+                  >
+                    <IconPlus size={16} />
+                  </ActionIcon>
+                </Center>
+              )}
+
+              <Flex mt="xl" mb="md" align="center">
+                <Text weight={500} size="sm">
+                  Final Answer Preview
+                </Text>
+                <ActionIcon
+                  variant="light"
+                  color="cyan"
+                  radius="xl"
+                  ml="lg"
+                  onClick={handleFinalAnsPreviewChange}
                 >
-                  <Latex>{`$$ ${expr} $$`}</Latex>
-                </Grid.Col>
-              </Grid>
-              <Group position="center" mt="xl">
-                <Button type="submit" size="md">
-                  Create Question
-                </Button>
-              </Group>
+                  <IconRefresh size={16} />
+                </ActionIcon>
+              </Flex>
+              <Box
+                sx={{ flex: 1, alignSelf: "stretch" }}
+                className="bg-slate-200 rounded-md border border-solid border-slate-300"
+              >
+                <Latex>{`$$ ${finalAnsPreview} $$`}</Latex>
+              </Box>
+
+              <Divider mt="xl" variant="dashed" />
+              <Button
+                fullWidth
+                variant="light"
+                color="cyan"
+                radius="sm"
+                my="xl"
+                type="submit"
+                onClick={() => newMethod()}
+              >
+                Create Question
+              </Button>
+
+              <Text size="sm" weight={500} mt="md">
+                Form Data
+              </Text>
+              <Code block>{JSON.stringify(form.values, null, 2)}</Code>
             </form>
           </>
         ) : (
