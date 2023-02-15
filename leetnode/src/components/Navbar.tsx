@@ -126,7 +126,7 @@ export default function Navbar({
   sidebarOpened,
   setSidebarOpened,
 }: {
-  sidebarOpened: boolean;
+  sidebarOpened?: boolean;
   setSidebarOpened?: Dispatch<SetStateAction<boolean>>;
 }) {
   const session = useSession();
@@ -139,7 +139,7 @@ export default function Navbar({
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
       <Container className={classes.inner}>
-        {setSidebarOpened ? (
+        {sidebarOpened !== undefined && setSidebarOpened ? (
           <Flex align="center" gap="xl">
             <Burger
               opened={sidebarOpened}
