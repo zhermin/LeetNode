@@ -1,22 +1,32 @@
+import "react-quill/dist/quill.snow.css";
+
+import axios, { AxiosError } from "axios";
+import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
+
+import ForumPost from "@/components/course/ForumPost";
 import {
-  Group,
+  Anchor,
+  Avatar,
   Badge,
   Button,
-  Text,
-  Container,
   Center,
-  Loader,
-  Title,
-  Modal,
-  TextInput,
-  SimpleGrid,
-  Select,
-  Pagination,
-  Table,
-  Avatar,
-  Anchor,
+  Container,
   Divider,
+  Group,
+  Loader,
+  Modal,
+  Pagination,
+  Select,
+  SimpleGrid,
+  Table,
+  Text,
+  TextInput,
+  Title,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { Comment, PostMedia } from "@prisma/client";
 import {
   QueryKey,
   useMutation,
@@ -24,14 +34,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
-import { useCallback, useMemo, useState } from "react";
-import ForumPost from "@/components/course/ForumPost";
-import { Comment, PostMedia } from "@prisma/client";
-import { useForm } from "@mantine/form";
-import { useSession } from "next-auth/react";
-import "react-quill/dist/quill.snow.css";
-import dynamic from "next/dynamic";
+
 import DateDiffCalc from "./DateDiffCalc";
 
 const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
@@ -313,77 +316,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       });
     }
   });
-
-  // const DateDiff = {
-  //   inSeconds: function (
-  //     d1: { getTime: () => number },
-  //     d2: { getTime: () => number }
-  //   ) {
-  //     const t2 = d2.getTime();
-  //     const t1 = d1.getTime();
-
-  //     return (t2 - t1) / 1000;
-  //   },
-
-  //   inMinutes: function (
-  //     d1: { getTime: () => number },
-  //     d2: { getTime: () => number }
-  //   ) {
-  //     const t2 = d2.getTime();
-  //     const t1 = d1.getTime();
-
-  //     return (t2 - t1) / 60000;
-  //   },
-
-  //   inHours: function (
-  //     d1: { getTime: () => number },
-  //     d2: { getTime: () => number }
-  //   ) {
-  //     const t2 = d2.getTime();
-  //     const t1 = d1.getTime();
-
-  //     return (t2 - t1) / 3600000;
-  //   },
-
-  //   inDays: function (
-  //     d1: { getTime: () => number },
-  //     d2: { getTime: () => number }
-  //   ) {
-  //     const t2 = d2.getTime();
-  //     const t1 = d1.getTime();
-
-  //     return (t2 - t1) / (24 * 3600 * 1000);
-  //   },
-
-  //   inWeeks: function (
-  //     d1: { getTime: () => number },
-  //     d2: { getTime: () => number }
-  //   ) {
-  //     const t2 = d2.getTime();
-  //     const t1 = d1.getTime();
-
-  //     return (t2 - t1) / (24 * 3600 * 1000 * 7);
-  //   },
-
-  //   inMonths: function (
-  //     d1: { getFullYear: () => number; getMonth: () => number },
-  //     d2: { getFullYear: () => number; getMonth: () => number }
-  //   ) {
-  //     const d1Y = d1.getFullYear();
-  //     const d2Y = d2.getFullYear();
-  //     const d1M = d1.getMonth();
-  //     const d2M = d2.getMonth();
-
-  //     return d2M + 12 * d2Y - (d1M + 12 * d1Y);
-  //   },
-
-  //   inYears: function (
-  //     d1: { getFullYear: () => number },
-  //     d2: { getFullYear: () => number }
-  //   ) {
-  //     return d2.getFullYear() - d1.getFullYear();
-  //   },
-  // };
 
   return (
     <>

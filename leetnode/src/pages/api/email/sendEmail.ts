@@ -149,13 +149,8 @@ export default async function handler(
 
   // // res.status(200).json(templateString);
   try {
-    res.status(200).json(templateString);
+    res.status(200).json({ success: "Email sent!" });
   } catch (err) {
     res.status(500).json({ error: err });
   }
-  // try {
-  //   res.status(200).json({ success: "Email sent!" });
-  // } catch (err) {
-  //   res.status(500).json({ error: err });
-  // }
 }

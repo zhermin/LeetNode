@@ -1,7 +1,16 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 
 const Header = ({ title = "Personalized Path Mastery" }) => {
   const fullTitle = `LeetNode — ${title}`;
+  const session = useSession();
+
+  axios
+    .post("/api/updateLastActive", { id: session?.data?.user?.id as string })
+    .then((response) => console.log(response))
+    .catch((error) => console.error(error));
+
   return (
     <Head>
       <title>{fullTitle}</title>

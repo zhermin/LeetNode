@@ -1,33 +1,35 @@
+import axios from "axios";
+import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 import {
-  createStyles,
-  Header,
-  Container,
-  Button,
-  UnstyledButton,
-  Group,
-  Text,
-  Menu,
   Box,
-  useMantineColorScheme,
-  SegmentedControl,
+  Button,
   Center,
+  Container,
+  createStyles,
+  Group,
+  Header,
+  Menu,
+  SegmentedControl,
+  Text,
+  UnstyledButton,
+  useMantineColorScheme,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBook,
-  IconStar,
-  IconSettings,
-  IconLogout,
   IconChevronDown,
-  IconSun,
+  IconLogout,
   IconMoon,
+  IconSettings,
+  IconStar,
+  IconSun,
+  IconUser,
 } from "@tabler/icons";
-import { useMediaQuery } from "@mantine/hooks";
-
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useSession, signIn, signOut } from "next-auth/react";
-import toast from "react-hot-toast";
 
 const HEADER_HEIGHT = 80;
 
@@ -101,6 +103,22 @@ export default function Navbar() {
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get("/api/forum/getAllUsers")
+      .then((response) => {
+        const filteredUser = response.data.filter(
+          (user: { id: string }) =>
+            user.id == (session?.data?.user?.id as string)
+        );
+        if (!admin && filteredUser[0]?.role === "ADMIN") {
+          setAdmin(true);
+        }
+      })
+      .catch((error) => console.error(error));
+  }, [admin, session?.data?.user?.id]);
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
@@ -267,6 +285,15 @@ export default function Navbar() {
               >
                 Account settings
               </Menu.Item>
+              {admin && (
+                <Menu.Item
+                  component={Link}
+                  href="/prof"
+                  icon={<IconUser size={14} stroke={1.5} />}
+                >
+                  Admin Panel
+                </Menu.Item>
+              )}
               <Menu.Item
                 onClick={() => signOut({ callbackUrl: "/" })}
                 icon={<IconLogout size={14} stroke={1.5} />}

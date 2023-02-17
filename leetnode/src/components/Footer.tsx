@@ -1,3 +1,6 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
+
 import { createStyles, Footer as MantineFooter, Text } from "@mantine/core";
 
 const useStyles = createStyles((theme) => ({
@@ -17,6 +20,12 @@ const useStyles = createStyles((theme) => ({
 
 export default function Footer() {
   const { classes } = useStyles();
+  const session = useSession();
+
+  axios
+    .post("/api/updateLastActive", { id: session?.data?.user?.id as string })
+    .then((response) => console.log(response))
+    .catch((error) => console.error(error));
 
   return (
     <MantineFooter className={classes.footer} height={60}>
