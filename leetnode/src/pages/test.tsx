@@ -17,8 +17,6 @@ import {
 	AppShell,
 	Box,
 	Button,
-	Center,
-	Chip,
 	Code,
 	createStyles,
 	Divider,
@@ -32,6 +30,7 @@ import {
 	SimpleGrid,
 	Stack,
 	Text,
+	Textarea,
 	TextInput,
 	Tooltip
 } from "@mantine/core";
@@ -41,6 +40,8 @@ import { Prism } from "@mantine/prism";
 import {
 	Icon2fa,
 	IconBellRinging,
+	IconBulb,
+	IconChecks,
 	IconCode,
 	IconDatabaseImport,
 	IconDice3,
@@ -224,7 +225,6 @@ $$
 
   const form = useForm({
     initialValues: {
-      title: "",
       courseName: "CS1010",
       topics: "Content",
       difficulty: "Medium",
@@ -285,18 +285,28 @@ $$
         {
           key: randomId(),
           expr: "I_1 = V_{\\alpha} / R_1",
+          hasExplanation: false,
         },
         {
           key: randomId(),
           expr: "I_3 = V_{\\alpha} / R_3",
+          hasExplanation: false,
         },
         {
           key: randomId(),
           expr: "I_2 = V_{\\alpha} / R_2",
+          hasExplanation: false,
         },
         {
           key: randomId(),
           expr: "I_{final} = (I_1 + I_2 + I_3) * \\delta_{offset}",
+          hasExplanation: false,
+        },
+      ],
+      hints: [
+        {
+          key: randomId(),
+          hint: "Recall that the current through a resistor can be found using Ohm's Law.",
         },
       ],
     },
@@ -443,7 +453,7 @@ $$
   };
 
   const varFields = form.values.variables.map((item, index) => (
-    <Draggable key={item.key} index={index} draggableId={index.toString()}>
+    <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Stack
           p="md"
@@ -491,30 +501,59 @@ $$
               }${item.default ? "=" + item.default : ""}$$`}</Latex>
             </Box>
             <Stack align="center" spacing="xs">
-              <Chip
-                color="red"
-                disabled={
-                  !item.isFinalAnswer &&
-                  form.values.variables.some((item) => item.isFinalAnswer)
-                }
-                onClick={() => {
-                  form.setFieldValue(`variables.${index}.randomize`, false);
-                  form.setFieldValue(`variables.${index}.default`, undefined);
-                }}
-                {...form.getInputProps(`variables.${index}.isFinalAnswer`, {
-                  type: "checkbox",
-                })}
-              >
-                Final Ans
-              </Chip>
-              <Chip
-                disabled={item.isFinalAnswer}
-                {...form.getInputProps(`variables.${index}.randomize`, {
-                  type: "checkbox",
-                })}
-              >
-                Random
-              </Chip>
+              {(item.isFinalAnswer ||
+                form.values.variables.every((item) => !item.isFinalAnswer)) && (
+                <Tooltip label="Set Final Answer" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    className={
+                      item.isFinalAnswer
+                        ? "border border-red-600 bg-red-50"
+                        : ""
+                    }
+                    disabled={
+                      !item.isFinalAnswer &&
+                      form.values.variables.some((item) => item.isFinalAnswer)
+                    }
+                    onClick={() => {
+                      form.setFieldValue(`variables.${index}.randomize`, false);
+                      form.setFieldValue(
+                        `variables.${index}.default`,
+                        undefined
+                      );
+                      form.setFieldValue(
+                        `variables.${index}.isFinalAnswer`,
+                        !item.isFinalAnswer
+                      );
+                    }}
+                  >
+                    <IconChecks size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              {!item.isFinalAnswer && (
+                <Tooltip label="Randomize" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    disabled={item.isFinalAnswer}
+                    className={
+                      item.randomize
+                        ? "border border-green-600 bg-green-50"
+                        : ""
+                    }
+                    onClick={() => {
+                      form.setFieldValue(
+                        `variables.${index}.randomize`,
+                        !item.randomize
+                      );
+                    }}
+                  >
+                    <IconDice3 size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Stack>
             <ActionIcon
               variant="transparent"
@@ -566,7 +605,83 @@ $$
   };
 
   const methodFields = form.values.methods.map((item, index) => (
-    <Draggable key={item.key} index={index} draggableId={index.toString()}>
+    <Draggable key={item.key} index={index} draggableId={item.key}>
+      {(provided) => (
+        <Stack
+          p="md"
+          my="md"
+          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+        >
+          <Flex gap="md" align="center">
+            <ActionIcon variant="transparent" {...provided.dragHandleProps}>
+              <IconGripVertical size={18} />
+            </ActionIcon>
+            <Text color="dimmed">#{index + 1}</Text>
+            <TextInput
+              sx={{ flex: 1 }}
+              {...form.getInputProps(`methods.${index}.expr`)}
+            />
+            <Box
+              sx={{ flex: 1, alignSelf: "stretch" }}
+              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+            >
+              <Latex>{`$$ ${item.expr} $$`}</Latex>
+            </Box>
+            <Tooltip label="Add Explanation" withArrow>
+              <ActionIcon
+                variant="default"
+                radius="xl"
+                className={
+                  item.hasExplanation
+                    ? "border border-green-600 bg-green-50"
+                    : ""
+                }
+                onClick={() => {
+                  form.setFieldValue(
+                    `methods.${index}.hasExplanation`,
+                    !item.hasExplanation
+                  );
+                }}
+              >
+                <IconBulb size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <ActionIcon
+              variant="transparent"
+              onClick={() => form.removeListItem("methods", index)}
+            >
+              <IconTrash size={16} />
+            </ActionIcon>
+          </Flex>
+          {item.hasExplanation && (
+            <Flex gap="md" align="center">
+              <Text fw={500} fz="sm">
+                Explanation <span className="text-red-500">*</span>
+              </Text>
+              <Textarea
+                sx={{ flex: 1 }}
+                required={item.hasExplanation}
+                {...form.getInputProps(`methods.${index}.explanation`)}
+              />
+            </Flex>
+          )}
+        </Stack>
+      )}
+    </Draggable>
+  ));
+
+  const newMethod = () => {
+    form.insertListItem("methods", {
+      key: randomId(),
+      expr: "",
+      hasExplanation: false,
+    });
+  };
+
+  const hintFields = form.values.hints.map((item, index) => (
+    <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Flex
           gap="md"
@@ -581,19 +696,14 @@ $$
             <IconGripVertical size={18} />
           </ActionIcon>
           <Text color="dimmed">#{index + 1}</Text>
-          <TextInput
+          <Textarea
             sx={{ flex: 1 }}
-            {...form.getInputProps(`methods.${index}.expr`)}
+            required
+            {...form.getInputProps(`hints.${index}.hint`)}
           />
-          <Box
-            sx={{ flex: 1, alignSelf: "stretch" }}
-            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-          >
-            <Latex>{`$$ ${item.expr} $$`}</Latex>
-          </Box>
           <ActionIcon
             variant="transparent"
-            onClick={() => form.removeListItem("methods", index)}
+            onClick={() => form.removeListItem("hints", index)}
           >
             <IconTrash size={16} />
           </ActionIcon>
@@ -602,10 +712,10 @@ $$
     </Draggable>
   ));
 
-  const newMethod = () => {
-    form.insertListItem("methods", {
+  const newHint = () => {
+    form.insertListItem("hints", {
       key: randomId(),
-      expr: "",
+      hint: "",
     });
   };
 
@@ -770,22 +880,12 @@ $$
                 e.preventDefault();
                 // mutation.mutate({
                 //   userId: session?.data?.user?.id as string,
-                //   title: form.values.title,
                 //   message: message,
                 //   courseName: form.values.courseName,
                 //   postType: form.values.postType,
                 // });
               }}
             >
-              <TextInput
-                label="Title"
-                placeholder="Title"
-                name="title"
-                variant="filled"
-                required
-                {...form.getInputProps("title")}
-              />
-
               <SimpleGrid
                 cols={3}
                 mt="lg"
@@ -821,13 +921,13 @@ $$
               </Text>
               <Editor />
 
-              <Flex mt="xl" mb="md" align="center">
+              <Flex mt="xl" align="center">
                 <Text weight={500} size="sm">
                   Variables <span className="text-red-500">*</span>
                 </Text>
                 <Tooltip
                   multiline
-                  width={300}
+                  width={350}
                   withArrow
                   label="Variable names must start with an alphabet and can only contain
                 alphabets, numbers, underscores and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end."
@@ -842,72 +942,44 @@ $$
                   </ActionIcon>
                 </Tooltip>
               </Flex>
-              {varFields.length > 0 ? (
-                <>
-                  <DragDropContext
-                    onDragEnd={({ destination, source }) =>
-                      form.reorderListItem("variables", {
-                        from: source.index,
-                        to: destination?.index ?? source.index,
-                      })
-                    }
-                  >
-                    <Droppable droppableId="vars-dnd" direction="vertical">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                        >
-                          {varFields}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+              <DragDropContext
+                onDragEnd={({ destination, source }) =>
+                  form.reorderListItem("variables", {
+                    from: source.index,
+                    to: destination?.index ?? source.index,
+                  })
+                }
+              >
+                <Droppable droppableId="vars-dnd" direction="vertical">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {varFields}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+              <Button
+                fullWidth
+                variant="light"
+                color="gray"
+                className="bg-gray-100"
+                radius="sm"
+                mt="md"
+                onClick={() => newVar()}
+              >
+                <IconPlus size={16} />
+              </Button>
 
-                  <Button
-                    fullWidth
-                    variant="light"
-                    color="gray"
-                    className="bg-gray-100"
-                    radius="sm"
-                    mt="lg"
-                    onClick={() => newVar()}
-                  >
-                    <IconPlus size={16} />
-                  </Button>
-                </>
-              ) : (
-                <Center mt="lg">
-                  <Text
-                    color="dimmed"
-                    align="center"
-                    className="border border-gray-400"
-                  >
-                    Add at least one variable
-                  </Text>
-                  <ActionIcon
-                    variant="light"
-                    color="gray"
-                    className="bg-gray-100"
-                    radius="xl"
-                    ml="lg"
-                    onClick={() => newVar()}
-                  >
-                    <IconPlus size={16} />
-                  </ActionIcon>
-                </Center>
-              )}
-
-              <Flex mt="xl" mb="md" align="center">
+              <Flex mt="xl" align="center">
                 <Text weight={500} size="sm">
                   Methods <span className="text-red-500">*</span>
                 </Text>
                 <Tooltip
                   multiline
-                  width={300}
+                  width={350}
                   withArrow
-                  label="Method expressions must have 1 and only 1 equal sign in the middle. The result from the left side will be assigned to the variable on the right side."
+                  label="Expressions must have 1 and only 1 equal sign in the middle. The result from the left side will be assigned to the variable on the right side. Explanations will only be shown after attempting the question."
                 >
                   <ActionIcon
                     variant="transparent"
@@ -919,62 +991,83 @@ $$
                   </ActionIcon>
                 </Tooltip>
               </Flex>
-              {methodFields.length > 0 ? (
-                <>
-                  <DragDropContext
-                    onDragEnd={({ destination, source }) =>
-                      form.reorderListItem("methods", {
-                        from: source.index,
-                        to: destination?.index ?? source.index,
-                      })
-                    }
-                  >
-                    <Droppable droppableId="methods-dnd" direction="vertical">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                        >
-                          {methodFields}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+              <DragDropContext
+                onDragEnd={({ destination, source }) =>
+                  form.reorderListItem("methods", {
+                    from: source.index,
+                    to: destination?.index ?? source.index,
+                  })
+                }
+              >
+                <Droppable droppableId="methods-dnd" direction="vertical">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {methodFields}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+              <Button
+                fullWidth
+                variant="light"
+                color="gray"
+                className="bg-gray-100"
+                radius="sm"
+                mt="md"
+                onClick={() => newMethod()}
+              >
+                <IconPlus size={16} />
+              </Button>
 
-                  <Button
-                    fullWidth
-                    variant="light"
-                    color="gray"
-                    className="bg-gray-100"
-                    radius="sm"
-                    mt="lg"
-                    onClick={() => newMethod()}
-                  >
-                    <IconPlus size={16} />
-                  </Button>
-                </>
-              ) : (
-                <Center mt="lg">
-                  <Text
-                    color="dimmed"
-                    align="center"
-                    className="border border-gray-400"
-                  >
-                    Add at least one method
-                  </Text>
+              <Flex mt="xl" align="center">
+                <Text weight={500} size="sm">
+                  Hints
+                </Text>
+                <Tooltip
+                  multiline
+                  width={350}
+                  withArrow
+                  label="Hints are optional and can be seen when attempting the question."
+                >
                   <ActionIcon
-                    variant="light"
-                    color="gray"
-                    className="bg-gray-100"
+                    variant="transparent"
                     radius="xl"
                     ml="lg"
-                    onClick={() => newMethod()}
+                    className="cursor-help"
                   >
-                    <IconPlus size={16} />
+                    <IconHelp size={20} color="black" />
                   </ActionIcon>
-                </Center>
-              )}
+                </Tooltip>
+              </Flex>
+              <DragDropContext
+                onDragEnd={({ destination, source }) =>
+                  form.reorderListItem("hints", {
+                    from: source.index,
+                    to: destination?.index ?? source.index,
+                  })
+                }
+              >
+                <Droppable droppableId="hints-dnd" direction="vertical">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {hintFields}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+              <Button
+                fullWidth
+                variant="light"
+                color="gray"
+                className="bg-gray-100"
+                radius="sm"
+                mt="md"
+                onClick={() => newHint()}
+              >
+                <IconPlus size={16} />
+              </Button>
 
               <Flex mt="xl" mb="md" align="center">
                 <Text weight={500} size="sm">
