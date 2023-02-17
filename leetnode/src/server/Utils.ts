@@ -30,6 +30,7 @@ export const CustomMath = (function () {
     },
     // Random number between min and max (inclusive) with decimalPlaces
     random: function (min: number, max: number, decimalPlaces: number) {
+      if (min == 0 && max == 0) return 0;
       return this.round(Math.random() * (max - min + 1) + min, decimalPlaces);
     },
   };

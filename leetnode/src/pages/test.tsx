@@ -1,15 +1,17 @@
 import { evaluate } from "mathjs";
 import dynamic from "next/dynamic";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Latex from "react-latex-next";
 import { Document, Page } from "react-pdf";
+import { z } from "zod";
 
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import MarkdownLatex from "@/components/MarkdownLatex";
 import LeetNodeNavbar from "@/components/Navbar";
 import { CustomMath } from "@/server/Utils";
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
 	ActionIcon,
 	AppShell,
@@ -23,22 +25,29 @@ import {
 	Flex,
 	Modal,
 	Navbar,
+	NumberInput,
 	ScrollArea,
 	SegmentedControl,
 	Select,
 	SimpleGrid,
 	Stack,
 	Text,
-	TextInput
+	TextInput,
+	Tooltip
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { useForm, zodResolver } from "@mantine/form";
 import { randomId } from "@mantine/hooks";
+import { Prism } from "@mantine/prism";
 import {
 	Icon2fa,
 	IconBellRinging,
+	IconCode,
 	IconDatabaseImport,
+	IconDice3,
 	IconFileAnalytics,
 	IconFingerprint,
+	IconGripVertical,
+	IconHelp,
 	IconKey,
 	IconLicense,
 	IconLogout,
@@ -52,7 +61,8 @@ import {
 	IconShoppingCart,
 	IconSwitchHorizontal,
 	IconTrash,
-	IconUsers
+	IconUsers,
+	IconX
 } from "@tabler/icons";
 
 const Editor = dynamic(import("@/components/editor/Editor"), {
@@ -103,9 +113,10 @@ export default function Test() {
   const [active, setActive] = useState("Editor");
   const [sidebarOpened, setSidebarOpened] = useState(false);
   const [editorOpened, setEditorOpened] = useState(false);
+  const [rawDataOpened, setRawDataOpened] = useState(false);
 
-  const [numPages, setNumPages] = React.useState(1);
-  const [pageNumber, setPageNumber] = React.useState(1);
+  const [numPages, setNumPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
 
   const [qn1Data, setQn1Data] = useState<QuestionData>({
     variables: {
@@ -220,235 +231,386 @@ $$
       variables: [
         {
           key: randomId(),
-          name: "",
-          unit: "",
-          default: "",
-          forStudents: true,
+          name: "R_2",
+          randomize: false,
+          isFinalAnswer: false,
+          unit: "\\Omega",
+          default: 10,
+        },
+        {
+          key: randomId(),
+          name: "R_3",
+          unit: "\\Omega",
+          default: 8,
           randomize: false,
           isFinalAnswer: false,
         },
+        {
+          key: randomId(),
+          name: "V_{\\alpha}",
+          randomize: true,
+          isFinalAnswer: false,
+          unit: "\\text{V}",
+          default: 12,
+          min: 1,
+          max: 30,
+          decimalPlaces: 0,
+        },
+        {
+          key: randomId(),
+          name: "I_{final}",
+          randomize: false,
+          isFinalAnswer: true,
+          unit: "\\text{A}",
+          decimalPlaces: 2,
+        },
+        {
+          key: randomId(),
+          name: "R_1",
+          randomize: false,
+          isFinalAnswer: false,
+          unit: "\\Omega",
+          default: 4,
+        },
+        {
+          key: randomId(),
+          randomize: false,
+          isFinalAnswer: false,
+          decimalPlaces: 0,
+          name: "\\delta_{offset}",
+          default: 1000,
+        },
       ],
-      methods: [{ key: 1, expr: "" }],
+      methods: [
+        {
+          key: randomId(),
+          expr: "I_1 = V_{\\alpha} / R_1",
+        },
+        {
+          key: randomId(),
+          expr: "I_3 = V_{\\alpha} / R_3",
+        },
+        {
+          key: randomId(),
+          expr: "I_2 = V_{\\alpha} / R_2",
+        },
+        {
+          key: randomId(),
+          expr: "I_{final} = (I_1 + I_2 + I_3) * \\delta_{offset}",
+        },
+      ],
     },
-    validate: {
-      title: (value) => value.trim().length === 0,
-    },
+    validateInputOnChange: true,
+    validate: zodResolver(
+      z.object({
+        variables: z.array(
+          z.object({
+            name: z
+              .string()
+              .trim()
+              .regex(
+                /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_]*$/,
+                { message: "Invalid name" }
+              )
+              .min(1, { message: "Cannot be empty" }),
+            default: z.number(),
+            min: z.number(),
+            max: z.number(),
+            decimalPlaces: z.number().int().min(0).max(10),
+          })
+        ),
+        methods: z.array(
+          z.object({
+            expr: z
+              .string()
+              .trim()
+              .regex(/^[^=]+=[^=]+$/, { message: "Invalid expression" })
+              .min(1, { message: "Cannot be empty" }),
+          })
+        ),
+      })
+    ),
   });
 
+  const [preview, setPreview] = useState("\\text{Refresh to View Variables}");
   const [finalAnsPreview, setFinalAnsPreview] = useState(
-    "\\text{Invalid Variables or Methods}"
+    "\\text{Refresh to View Final Answer}"
   );
-  const handleFinalAnsPreviewChange = () => {
+  const handlePreviewChange = (toRandomize: boolean) => {
+    const cleaned = (str: string) => str.replace(/[\\{}]/g, "");
     const rawVariables: {
       [key: string]: number;
-    } = form.values.variables.reduce(
-      (obj, item) => ({
-        ...obj,
-        [item.name]: item.default,
-      }),
-      {}
-    );
+    } = form.values.variables
+      .sort((a, b) => {
+        if (!a.name || !b.name) return 0;
+        if (a.isFinalAnswer) return 1;
+        if (b.isFinalAnswer) return -1;
+        return a.name.localeCompare(b.name);
+      })
+      .reduce((obj, item) => {
+        const itemName = cleaned(item.name);
+        if (toRandomize && item.randomize) {
+          return {
+            ...obj,
+            [itemName]: CustomMath.random(
+              Number(item.min),
+              Number(item.max),
+              Number(item.decimalPlaces)
+            ),
+          };
+        }
+        return {
+          ...obj,
+          [itemName]: item.default,
+        };
+      }, {});
 
+    const invalidMessage = "\\text{Invalid Variables or Methods}";
     for (const method of form.values.methods) {
-      evaluate(method.expr, rawVariables);
+      try {
+        evaluate(cleaned(method.expr), rawVariables);
+      } catch (e) {
+        toast.error(
+          (t) => (
+            <Stack ml="md">
+              <Flex>
+                <Text fw={600} fz="sm">
+                  Error: {e instanceof Error ? e.message : "Unknown Error"}
+                </Text>
+                <ActionIcon ml="auto" onClick={() => toast.dismiss(t.id)}>
+                  <IconX size={18} />
+                </ActionIcon>
+              </Flex>
+              <Text fz="sm">Check or reorder variables & methods in:</Text>
+              <Text fz="sm">
+                <Text mr="xs" span>
+                  #{form.values.methods.indexOf(method) + 1}
+                </Text>
+                <Code>{method.expr}</Code>
+              </Text>
+            </Stack>
+          ),
+          {
+            duration: 10000,
+            style: {
+              border: `1px solid ${theme.colors.red[5]}`,
+            },
+          }
+        );
+        setPreview(invalidMessage);
+        setFinalAnsPreview(invalidMessage);
+        return;
+      }
     }
 
     const finalAnswer = form.values.variables.find(
       (item) => item.isFinalAnswer
     );
-    if (finalAnswer && finalAnswer.name && finalAnswer.unit) {
+    if (finalAnswer && finalAnswer.name) {
       setFinalAnsPreview(`
-        ${finalAnswer.name} (${finalAnswer.unit}) = ${
-        rawVariables[finalAnswer.name]
-      }`);
+        ${finalAnswer.name} ${
+        finalAnswer.unit ? "~(" + finalAnswer.unit + ")" : ""
+      } = ${CustomMath.round(
+        Number(rawVariables[cleaned(finalAnswer.name)]),
+        finalAnswer?.decimalPlaces ?? 3
+      )}`);
     } else {
-      setFinalAnsPreview("\\text{Invalid Variables or Methods}");
+      setFinalAnsPreview(invalidMessage);
     }
-    toast.success("Preview Updated!");
+
+    setPreview(
+      form.values.variables
+        .filter((item) => !item.isFinalAnswer)
+        .map((item) => {
+          return `${item.name} ${
+            item.unit ? "~(" + item.unit + ")" : ""
+          } &= ${CustomMath.round(
+            Number(rawVariables[cleaned(item.name)]),
+            item?.decimalPlaces ?? finalAnswer?.decimalPlaces ?? 3
+          )}`;
+        })
+        .join("\\\\")
+    );
+
+    if (toRandomize) {
+      toast("Randomized!", {
+        icon: "🎲",
+        duration: 700,
+      });
+    } else {
+      toast.success("Preview Updated!");
+    }
   };
 
   const varFields = form.values.variables.map((item, index) => (
-    <Stack
-      key={item.key}
-      bg={theme.colors.gray[1]}
-      p="md"
-      my="md"
-      className="rounded-md"
-    >
-      <Flex gap="md" align="center">
-        <TextInput
-          label="Variable Name"
-          placeholder="R_{TH}"
-          sx={{ flex: 1 }}
-          value={item.name}
-          onChange={(event) => {
-            form.setFieldValue(`variables.${index}.name`, event.target.value);
-          }}
-        />
-        <TextInput
-          label="Unit"
-          placeholder="\text{A} or \Omega"
-          sx={{ flex: 1 }}
-          value={item.unit}
-          onChange={(event) => {
-            form.setFieldValue(`variables.${index}.unit`, event.target.value);
-          }}
-        />
-        <TextInput
-          label="Default Value"
-          placeholder={
-            form.values.variables[index]?.forStudents ? "20" : "Derived"
-          }
-          sx={{ flex: 1 }}
-          disabled={!item.forStudents}
-          value={item.default}
-          onChange={(event) => {
-            form.setFieldValue(
-              `variables.${index}.default`,
-              event.target.value
-            );
-          }}
-        />
-        <Box
-          sx={{ flex: 1, alignSelf: "stretch" }}
-          className="bg-slate-200 rounded-md border border-solid border-slate-300"
+    <Draggable key={item.key} index={index} draggableId={index.toString()}>
+      {(provided) => (
+        <Stack
+          p="md"
+          my="md"
+          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
         >
-          <Latex>{`$$ ${item.name}${item.unit ? "~(" + item.unit + ")" : ""}${
-            item.default ? "~=" + item.default : ""
-          } $$`}</Latex>
-        </Box>
-        <Chip
-          onClick={() => {
-            form.setFieldValue(`variables.${index}.isFinalAnswer`, false);
-            form.setFieldValue(`variables.${index}.default`, "");
-          }}
-          {...form.getInputProps(`variables.${index}.forStudents`, {
-            type: "checkbox",
-          })}
-        >
-          For Students
-        </Chip>
-        {item.forStudents ? (
-          <Chip
-            disabled={!item.forStudents}
-            {...form.getInputProps(`variables.${index}.randomize`, {
-              type: "checkbox",
-            })}
-          >
-            Random
-          </Chip>
-        ) : (
-          <Chip
-            color="red"
-            disabled={
-              !item.isFinalAnswer &&
-              form.values.variables.some((item) => item.isFinalAnswer)
-            }
-            // onClick={handleFinalAnsPreviewChange}
-            {...form.getInputProps(`variables.${index}.isFinalAnswer`, {
-              type: "checkbox",
-            })}
-          >
-            Final Ans
-          </Chip>
-        )}
-        <ActionIcon
-          variant="transparent"
-          onClick={() => form.removeListItem("variables", index)}
-        >
-          <IconTrash size={16} />
-        </ActionIcon>
-      </Flex>
-      {item.randomize && item.forStudents && (
-        <Flex gap="md" align="center">
-          <Text fw={500} fz="sm">
-            Min
-          </Text>
-          <TextInput
-            placeholder="1"
-            sx={{ flex: 1 }}
-            onChange={(event) => {
-              form.setFieldValue(`variables.${index}.min`, event.target.value);
-            }}
-          />
-          <Text fw={500} fz="sm">
-            Max
-          </Text>
-          <TextInput
-            placeholder="30"
-            sx={{ flex: 1 }}
-            onChange={(event) => {
-              form.setFieldValue(`variables.${index}.max`, event.target.value);
-            }}
-          />
-          <Text fw={500} fz="sm">
-            Decimal Places
-          </Text>
-          <TextInput
-            placeholder="0"
-            sx={{ flex: 1 }}
-            onChange={(event) => {
-              form.setFieldValue(`variables.${index}.step`, event.target.value);
-            }}
-          />
-        </Flex>
+          <Flex gap="md" align="center">
+            <ActionIcon variant="transparent" {...provided.dragHandleProps}>
+              <IconGripVertical size={18} />
+            </ActionIcon>
+            <TextInput
+              label="Name"
+              withAsterisk
+              sx={{ flex: 1 }}
+              {...form.getInputProps(`variables.${index}.name`)}
+            />
+            <TextInput
+              label="Unit"
+              sx={{ flex: 1 }}
+              {...form.getInputProps(`variables.${index}.unit`)}
+            />
+            {form.values.variables[index]?.isFinalAnswer ? (
+              <NumberInput
+                label="Decimal Places"
+                withAsterisk
+                sx={{ flex: 1 }}
+                {...form.getInputProps(`variables.${index}.decimalPlaces`)}
+              />
+            ) : (
+              <NumberInput
+                label="Default"
+                withAsterisk
+                sx={{ flex: 1 }}
+                {...form.getInputProps(`variables.${index}.default`)}
+              />
+            )}
+            <Box
+              sx={{ flex: 2, alignSelf: "stretch" }}
+              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+            >
+              <Latex>{`$$ ${item.name ?? ""}${
+                item.unit ? "~(" + item.unit + ")" : ""
+              }${item.default ? "=" + item.default : ""}$$`}</Latex>
+            </Box>
+            <Stack align="center" spacing="xs">
+              <Chip
+                color="red"
+                disabled={
+                  !item.isFinalAnswer &&
+                  form.values.variables.some((item) => item.isFinalAnswer)
+                }
+                onClick={() => {
+                  form.setFieldValue(`variables.${index}.randomize`, false);
+                  form.setFieldValue(`variables.${index}.default`, undefined);
+                }}
+                {...form.getInputProps(`variables.${index}.isFinalAnswer`, {
+                  type: "checkbox",
+                })}
+              >
+                Final Ans
+              </Chip>
+              <Chip
+                disabled={item.isFinalAnswer}
+                {...form.getInputProps(`variables.${index}.randomize`, {
+                  type: "checkbox",
+                })}
+              >
+                Random
+              </Chip>
+            </Stack>
+            <ActionIcon
+              variant="transparent"
+              onClick={() => form.removeListItem("variables", index)}
+            >
+              <IconTrash size={16} />
+            </ActionIcon>
+          </Flex>
+          {item.randomize && !item.isFinalAnswer && (
+            <Flex gap="md" align="center">
+              <Text fw={500} fz="sm">
+                Min <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                {...form.getInputProps(`variables.${index}.min`)}
+              />
+              <Text fw={500} fz="sm">
+                Max <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                {...form.getInputProps(`variables.${index}.max`)}
+              />
+              <Text fw={500} fz="sm">
+                Decimal Places <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                {...form.getInputProps(`variables.${index}.decimalPlaces`)}
+              />
+            </Flex>
+          )}
+        </Stack>
       )}
-    </Stack>
+    </Draggable>
   ));
 
   const newVar = () => {
     form.insertListItem("variables", {
       key: randomId(),
-      name: "",
-      forStudents: true,
       randomize: false,
       isFinalAnswer: false,
+      name: "",
     });
   };
 
   const methodFields = form.values.methods.map((item, index) => (
-    <Flex
-      key={item.key}
-      gap="md"
-      align="center"
-      bg={theme.colors.gray[1]}
-      p="md"
-      my="md"
-      className="rounded-md"
-    >
-      <Text color="dimmed">{item.key}</Text>
-      <TextInput
-        placeholder="R_{TH} = \frac{R_2*R_3}{R_2+R_3}"
-        sx={{ flex: 1 }}
-        value={item.expr}
-        onChange={(event) => {
-          form.setFieldValue(`methods.${index}.expr`, event.target.value);
-        }}
-      />
-      <Box
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="bg-slate-200 rounded-md border border-solid border-slate-300"
-      >
-        <Latex>{`$$ ${item.expr} $$`}</Latex>
-      </Box>
-      <ActionIcon
-        variant="transparent"
-        onClick={() => form.removeListItem("methods", index)}
-      >
-        <IconTrash size={16} />
-      </ActionIcon>
-    </Flex>
+    <Draggable key={item.key} index={index} draggableId={index.toString()}>
+      {(provided) => (
+        <Flex
+          gap="md"
+          align="center"
+          p="md"
+          my="md"
+          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+        >
+          <ActionIcon variant="transparent" {...provided.dragHandleProps}>
+            <IconGripVertical size={18} />
+          </ActionIcon>
+          <Text color="dimmed">#{index + 1}</Text>
+          <TextInput
+            sx={{ flex: 1 }}
+            {...form.getInputProps(`methods.${index}.expr`)}
+          />
+          <Box
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+          >
+            <Latex>{`$$ ${item.expr} $$`}</Latex>
+          </Box>
+          <ActionIcon
+            variant="transparent"
+            onClick={() => form.removeListItem("methods", index)}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Flex>
+      )}
+    </Draggable>
   ));
 
   const newMethod = () => {
     form.insertListItem("methods", {
-      key: methodFields.length + 1,
+      key: randomId(),
       expr: "",
     });
   };
 
-  const [hydrated, setHydrated] = React.useState(false);
-  React.useEffect(() => {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
     setHydrated(true);
   }, []);
   if (!hydrated) {
@@ -538,7 +700,6 @@ $$
                   for (const expr of qn1Data.expressions) {
                     evaluate(expr, newQn1Data.variables);
                   }
-                  console.log(newQn1Data.variables.Answer);
 
                   setQn1Data(newQn1Data);
                 }}
@@ -656,16 +817,54 @@ $$
               </SimpleGrid>
 
               <Text weight={500} size="sm" mb="xs" mt="lg">
-                Question
+                Question <span className="text-red-500">*</span>
               </Text>
               <Editor />
 
-              <Text weight={500} size="sm" mt="xl">
-                Variables
-              </Text>
+              <Flex mt="xl" mb="md" align="center">
+                <Text weight={500} size="sm">
+                  Variables <span className="text-red-500">*</span>
+                </Text>
+                <Tooltip
+                  multiline
+                  width={300}
+                  withArrow
+                  label="Variable names must start with an alphabet and can only contain
+                alphabets, numbers, underscores and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end."
+                >
+                  <ActionIcon
+                    variant="transparent"
+                    radius="xl"
+                    ml="lg"
+                    className="cursor-help"
+                  >
+                    <IconHelp size={20} color="black" />
+                  </ActionIcon>
+                </Tooltip>
+              </Flex>
               {varFields.length > 0 ? (
                 <>
-                  {varFields}
+                  <DragDropContext
+                    onDragEnd={({ destination, source }) =>
+                      form.reorderListItem("variables", {
+                        from: source.index,
+                        to: destination?.index ?? source.index,
+                      })
+                    }
+                  >
+                    <Droppable droppableId="vars-dnd" direction="vertical">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                        >
+                          {varFields}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+
                   <Button
                     fullWidth
                     variant="light"
@@ -680,7 +879,11 @@ $$
                 </>
               ) : (
                 <Center mt="lg">
-                  <Text color="dimmed" align="center">
+                  <Text
+                    color="dimmed"
+                    align="center"
+                    className="border border-gray-400"
+                  >
                     Add at least one variable
                   </Text>
                   <ActionIcon
@@ -696,12 +899,49 @@ $$
                 </Center>
               )}
 
-              <Text weight={500} size="sm" mt="xl">
-                Methods
-              </Text>
+              <Flex mt="xl" mb="md" align="center">
+                <Text weight={500} size="sm">
+                  Methods <span className="text-red-500">*</span>
+                </Text>
+                <Tooltip
+                  multiline
+                  width={300}
+                  withArrow
+                  label="Method expressions must have 1 and only 1 equal sign in the middle. The result from the left side will be assigned to the variable on the right side."
+                >
+                  <ActionIcon
+                    variant="transparent"
+                    radius="xl"
+                    ml="lg"
+                    className="cursor-help"
+                  >
+                    <IconHelp size={20} color="black" />
+                  </ActionIcon>
+                </Tooltip>
+              </Flex>
               {methodFields.length > 0 ? (
                 <>
-                  {methodFields}
+                  <DragDropContext
+                    onDragEnd={({ destination, source }) =>
+                      form.reorderListItem("methods", {
+                        from: source.index,
+                        to: destination?.index ?? source.index,
+                      })
+                    }
+                  >
+                    <Droppable droppableId="methods-dnd" direction="vertical">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                        >
+                          {methodFields}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+
                   <Button
                     fullWidth
                     variant="light"
@@ -716,7 +956,11 @@ $$
                 </>
               ) : (
                 <Center mt="lg">
-                  <Text color="dimmed" align="center">
+                  <Text
+                    color="dimmed"
+                    align="center"
+                    className="border border-gray-400"
+                  >
                     Add at least one method
                   </Text>
                   <ActionIcon
@@ -734,21 +978,49 @@ $$
 
               <Flex mt="xl" mb="md" align="center">
                 <Text weight={500} size="sm">
-                  Final Answer Preview
+                  Preview
                 </Text>
-                <ActionIcon
-                  variant="light"
-                  color="cyan"
-                  radius="xl"
-                  ml="lg"
-                  onClick={handleFinalAnsPreviewChange}
-                >
-                  <IconRefresh size={16} />
-                </ActionIcon>
+                <Tooltip label="Refresh" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    ml="lg"
+                    onClick={() => handlePreviewChange(false)}
+                  >
+                    <IconRefresh size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Randomize" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    ml="sm"
+                    onClick={() => handlePreviewChange(true)}
+                  >
+                    <IconDice3 size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Raw Data" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    ml="sm"
+                    onClick={() => setRawDataOpened(true)}
+                  >
+                    <IconCode size={16} />
+                  </ActionIcon>
+                </Tooltip>
               </Flex>
               <Box
                 sx={{ flex: 1, alignSelf: "stretch" }}
-                className="bg-slate-200 rounded-md border border-solid border-slate-300"
+                className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+              >
+                <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
+              </Box>
+              <Box
+                mt="md"
+                sx={{ flex: 1, alignSelf: "stretch" }}
+                className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
               >
                 <Latex>{`$$ ${finalAnsPreview} $$`}</Latex>
               </Box>
@@ -766,10 +1038,16 @@ $$
                 Create Question
               </Button>
 
-              <Text size="sm" weight={500} mt="md">
-                Form Data
-              </Text>
-              <Code block>{JSON.stringify(form.values, null, 2)}</Code>
+              <Modal
+                title="Raw Data"
+                opened={rawDataOpened}
+                onClose={() => setRawDataOpened(false)}
+                overflow="inside"
+              >
+                <Prism language="json">
+                  {JSON.stringify(form.values, null, 2)}
+                </Prism>
+              </Modal>
             </form>
           </>
         ) : (
@@ -913,7 +1191,6 @@ $$
 for (const expr of qn2_data.expressions) {
   evaluate(expr, qn2_data.variables);
 }
-console.log(qn2_data.variables.Answer);
 
 const slide =
   "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w1s1-fundamentals-of-electricity.pdf";
