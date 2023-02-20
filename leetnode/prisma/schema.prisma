@@ -126,6 +126,8 @@ model Mastery {
   userId        String
   topicSlug     String
   masteryLevel  Float    @default(0)
+  weeklyMasteryLevel Float @default(0)
+  fortnightMasteryLevel  Float    @default(0)
   topicPing     Boolean  @default(false)
   lastFlagged   DateTime?
   errorMeter    Int      @default(0)

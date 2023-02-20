@@ -9,6 +9,7 @@ specifiers:
   '@mantine/hooks': ^5.9.5
   '@mantine/next': ^5.9.5
   '@mantine/rte': ^5.9.5
+  '@mantine/utils': ^5.10.4
   '@next-auth/prisma-adapter': ^1.0.5
   '@prisma/client': ^4.8.0
   '@tabler/icons': ^1.118.0
@@ -23,6 +24,7 @@ specifiers:
   '@typescript-eslint/parser': ^5.47.0
   autoprefixer: ^10.4.13
   axios: ^1.2.1
+  chart.js: ^4.2.1
   cloudinary: ^1.33.0
   embla-carousel-react: ^7.0.5
   eslint: 8.30.0
@@ -37,6 +39,7 @@ specifiers:
   prettier-plugin-tailwindcss: ^0.2.1
   prisma: ^4.8.0
   react: 18.2.0
+  react-chartjs-2: ^5.2.0
   react-dom: 18.2.0
   react-hot-toast: ^2.4.0
   react-latex-next: ^2.2.0
@@ -47,7 +50,6 @@ specifiers:
   rehype-raw: ^6.1.1
   remark-math: ^5.1.1
   sharp: ^0.31.3
-  swr: ^2.0.3
   tailwindcss: ^3.2.4
   ts-node: ^10.9.1
   typescript: 4.9.4
@@ -62,11 +64,13 @@ dependencies:
   '@mantine/hooks': 5.10.0_react@18.2.0
   '@mantine/next': 5.10.0_d5xj5jipthoiwqd5a5nbaex2p4
   '@mantine/rte': 5.10.0_3m53ouna3laykmqkiimzgz4i2m
+  '@mantine/utils': 5.10.4_react@18.2.0
   '@next-auth/prisma-adapter': 1.0.5_pmiftlxd73swft3i7kjlxtgxni
   '@tabler/icons': 1.119.0_biqbaboplfbrettd7655fr4n2y
   '@tanstack/react-query': 4.22.0_biqbaboplfbrettd7655fr4n2y
   '@types/nodemailer': 6.4.7
   axios: 1.2.2
+  chart.js: 4.2.1
   cloudinary: 1.33.0
   embla-carousel-react: 7.0.5_react@18.2.0
   katex: 0.16.4
@@ -75,6 +79,7 @@ dependencies:
   next-superjson-plugin: 0.5.3_4jth3s7cpp4vevq7cz6bexafye
   nodemailer: 6.9.1
   react: 18.2.0
+  react-chartjs-2: 5.2.0_t5yjg6ab35jnsudnh2qdighszm
   react-dom: 18.2.0_react@18.2.0
   react-hot-toast: 2.4.0_owo25xnefcwdq3zjgtohz6dbju
   react-latex-next: 2.2.0_v2m5e27vhdewzwhryxwfaorcca
@@ -85,7 +90,6 @@ dependencies:
   rehype-raw: 6.1.1
   remark-math: 5.1.1
   sharp: 0.31.3
-  swr: 2.0.3_react@18.2.0
   zod: 3.20.2
 
 devDependencies:
@@ -574,6 +578,10 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
 
+  /@kurkle/color/0.3.2:
+    resolution: {integrity: sha512-fuscdXJ9G1qb7W8VdHi+IwRqij3lBkosAm4ydQtEmbY58OzHXqQhvlxqEkoz0yssNVn38bcpRWgA9PP+OGoisw==}
+    dev: false
+
   /@mantine/carousel/5.10.0_hzmlq6vyapjyogfbtcru4ga64a:
     resolution: {integrity: sha512-nEZXJw96Y6lu952BlMT0txlhJf7XkllnGk9Mpmsrm6bKDD/dJM6oOZAFfwSj1QNPJpm4bYTmG/404BSQvm60WA==}
     peerDependencies:
@@ -693,6 +701,14 @@ packages:
 
   /@mantine/utils/5.10.0_react@18.2.0:
     resolution: {integrity: sha512-mHnNm0ajIa8qLAIEwv82N6+7YKecynOA3I8vzgBHXS2x4HwGsHITFYGmMh2LNpx5dRL034tObfEFYZXqncyEDw==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 18.2.0
+    dev: false
+
+  /@mantine/utils/5.10.4_react@18.2.0:
+    resolution: {integrity: sha512-Xrx7Pk+GOwk/0P0qa/JEknZ5AzUBRnD+Ghz1Wu3z4w32NwsNSgq/8YvFVhvxAP7FMbi7Z5xicHzHmhXy1BvZrw==}
     peerDependencies:
       react: '>=16.8.0'
     dependencies:
@@ -1801,6 +1817,13 @@ packages:
 
   /character-entities/2.0.2:
     resolution: {integrity: sha512-shx7oQ0Awen/BRIdkjkvz54PnEEI/EjwXDSIZp86/KKdbafHh1Df/RYGBhn4hbe2+uKC9FnT5UCEdyPz3ai9hQ==}
+    dev: false
+
+  /chart.js/4.2.1:
+    resolution: {integrity: sha512-6YbpQ0nt3NovAgOzbkSSeeAQu/3za1319dPUQTXn9WcOpywM8rGKxJHrhS8V8xEkAlk8YhEfjbuAPfUyp6jIsw==}
+    engines: {pnpm: ^7.0.0}
+    dependencies:
+      '@kurkle/color': 0.3.2
     dev: false
 
   /chokidar/3.5.3:
@@ -4685,6 +4708,16 @@ packages:
       strip-json-comments: 2.0.1
     dev: false
 
+  /react-chartjs-2/5.2.0_t5yjg6ab35jnsudnh2qdighszm:
+    resolution: {integrity: sha512-98iN5aguJyVSxp5U3CblRLH67J8gkfyGNbiK3c+l1QI/G4irHMPQw44aEPmjVag+YKTyQ260NcF82GTQ3bdscA==}
+    peerDependencies:
+      chart.js: ^4.1.1
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      chart.js: 4.2.1
+      react: 18.2.0
+    dev: false
+
   /react-dom/18.2.0_react@18.2.0:
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -5302,16 +5335,6 @@ packages:
   /supports-preserve-symlinks-flag/1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
-
-  /swr/2.0.3_react@18.2.0:
-    resolution: {integrity: sha512-sGvQDok/AHEWTPfhUWXEHBVEXmgGnuahyhmRQbjl9XBYxT/MSlAzvXEKQpyM++bMPaI52vcWS2HiKNaW7+9OFw==}
-    engines: {pnpm: '7'}
-    peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      react: 18.2.0
-      use-sync-external-store: 1.2.0_react@18.2.0
-    dev: false
 
   /synckit/0.8.4:
     resolution: {integrity: sha512-Dn2ZkzMdSX827QbowGbU/4yjWuvNaCoScLLoMo/yKbu+P4GBR6cRGKZH27k6a9bRzdqcyd1DE96pQtQ6uNkmyw==}

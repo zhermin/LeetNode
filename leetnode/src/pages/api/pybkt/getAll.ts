@@ -15,10 +15,25 @@ export default async function handler(
         },
         select: {
           topicSlug: true,
-          masteryLevel: true,
+          masteryLevel: req.body.period === "current",
+          weeklyMasteryLevel: req.body.period === "week",
+          fortnightMasteryLevel: req.body.period === "fortnight",
         },
       });
-      res.status(200).json(getMastery);
+      const mastery =
+        req.body.period === "current"
+          ? "masteryLevel"
+          : req.body.period === "week"
+          ? "weeklyMasteryLevel"
+          : "fortnightMasteryLevel";
+      // Rename the key to masteryLevel for easier access
+      const allMastery = getMastery.map((topic) => {
+        return {
+          topicSlug: topic.topicSlug,
+          masteryLevel: topic[`${mastery}`],
+        };
+      });
+      res.status(200).json(allMastery);
     } catch (err) {
       res.status(400).json({ message: "Something went wrong" });
     }

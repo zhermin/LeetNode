@@ -17,7 +17,6 @@ export default async function handler(
         select: {
           nusnetId: true,
           name: true,
-          email: true,
           image: true,
         },
       });

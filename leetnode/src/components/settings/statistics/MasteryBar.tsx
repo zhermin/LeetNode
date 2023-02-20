@@ -1,13 +1,4 @@
-import { useState } from "react";
-
-import {
-  Group,
-  Progress,
-  ScrollArea,
-  SegmentedControl,
-  Table,
-  Text
-} from "@mantine/core";
+import { Group, Progress, ScrollArea, Table, Text } from "@mantine/core";
 
 interface TableReviewsProps {
   data: {
@@ -16,17 +7,15 @@ interface TableReviewsProps {
   }[];
 }
 
-export default function Statistics({ data }: TableReviewsProps) {
-  const [view, setView] = useState("bar");
-
-  const rows = data.map((row) => {
+export default function MasteryBar({ data }: TableReviewsProps) {
+  const rows = data?.map((row) => {
     return (
       <tr key={row.topicSlug}>
         <td className="capitalize">{row.topicSlug.replace(/-/g, " ")}</td>
         <td>
           <Group position="apart">
             <Text size="xs" color="cyan" weight={700}>
-              {row.masteryLevel}%
+              {row.masteryLevel * 100}%
             </Text>
             <Text size="xs" color="red" weight={700}>
               {}%
@@ -51,19 +40,6 @@ export default function Statistics({ data }: TableReviewsProps) {
 
   return (
     <ScrollArea>
-      <h1 className="text-center">Statistics</h1>
-      <hr className="h-px my-4 bg-gray-200 border-0" />
-      <Group position="right">
-        <SegmentedControl
-          value={view}
-          onChange={setView}
-          data={[
-            { label: "Bar", value: "bar" },
-            { label: "Radar", value: "week" },
-            { label: "Pie Chart", value: "month" },
-          ]}
-        />
-      </Group>
       <Table sx={{ minWidth: 800 }} verticalSpacing="xs">
         <thead>
           <tr>

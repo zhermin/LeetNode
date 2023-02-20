@@ -2,38 +2,101 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { useSWRConfig } from "swr";
+import { toast } from "react-hot-toast";
 
 import { Button, Center, FileInput, Group, TextInput } from "@mantine/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export default function Account(props) {
+interface User {
+  userInfo: {
+    nusnetId: string;
+    name: string;
+    image: string;
+  };
+}
+
+export default function Account({ userInfo }: User) {
   const session = useSession();
 
-  const userInfo = props.userInfo;
   const [userName, setUserName] = useState(userInfo.name || "");
   const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId || "");
   const [userImage, setUserImage] = useState(userInfo.image || "");
 
   const [file, setFile] = useState<File | null>(null);
-  const { mutate } = useSWRConfig();
-  const [uploading, setUploading] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  // Update the user in the DB
+  const { mutate: updateUser, isLoading: updateUserLoading } = useMutation(
+    async (image: string = userInfo.image) => {
+      return await axios.post("/api/user/update", {
+        id: session?.data?.user?.id,
+        name: userName,
+        nusnetId: userNusnetId.toUpperCase(),
+        image: image,
+      });
+    },
+    {
+      onSuccess: (res) => {
+        queryClient.setQueryData(["userInfo", session?.data?.user?.id], {
+          nusnetId: res.data.nusnetId,
+          name: res.data.name,
+          image: res.data.image,
+        });
+        setUserImage(res.data.image);
+        toast.success("Updated!", { id: "updateUserInfo" }); // Notification for successful update
+      },
+      onError: () => {
+        toast.error("Failed", { id: "updateUserInfo" }); // Notification for failed update
+      },
+    }
+  );
+
+  const { mutate: uploadImage, isLoading: uploadImageLoading } = useMutation(
+    async () => {
+      // Generate signature
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const res = await axios.post("/api/signature", {
+        id: session?.data?.user?.id,
+        timestamp: timestamp,
+      });
+      const [signature, key] = [res.data.signature, res.data.key];
+
+      // Upload profile picture into server
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("api_key", key);
+      formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
+      formData.append("folder", "profiles");
+      formData.append("public_id", session?.data?.user?.id);
+      formData.append("timestamp", `${timestamp}`);
+      formData.append("signature", signature);
+      return await axios.post(
+        "https://api.cloudinary.com/v1_1/demcj8g8y/image/upload/",
+        formData
+      );
+    },
+    {
+      onSuccess: (res) => {
+        updateUser(res?.data?.eager?.[0]?.url);
+      },
+      onError: () => {
+        toast.error("Failed", { id: "updateUserInfo" }); // Notification for failed update
+      },
+    }
+  );
 
   // Upload file into server and update DB
   const handleSubmit = (e) => {
     e.preventDefault();
     setUserNusnetId(userNusnetId.toUpperCase());
-    setUploading(true);
 
-    try {
-      // If user inputs a file
-      if (file) {
-        const timestamp = Math.round(new Date().getTime() / 1000);
-        generateSignature(timestamp); // Generate signature, upload file into server and update DB
-      } else {
-        updateUser(); // Update DB
-      }
-    } catch (error) {
-      console.log(error);
+    toast.loading("Updating...", { id: "updateUserInfo" }); // Notification for updating user
+    // If user inputs a file
+    if (file) {
+      uploadImage(); // Generate signature, upload file into server and update DB
+    } else {
+      updateUser(); // Update DB
     }
   };
 
@@ -42,77 +105,6 @@ export default function Account(props) {
     setUserName(userInfo.name);
     setUserNusnetId(userInfo.nusnetId);
   }, [userInfo.name, userInfo.nusnetId]);
-
-  // Update the user in the DB
-  const updateUser = useCallback(
-    (image = userInfo.image) => {
-      axios
-        .post("/api/user/update", {
-          id: session?.data?.user?.id,
-          name: userName,
-          nusnetId: userNusnetId.toUpperCase(),
-          image: image,
-        })
-        .then(() => {
-          setUploading(false);
-          mutate("/api/user/get"); // Trigger a revalidation with key "/api/user/get"
-        });
-    },
-    [session?.data?.user?.id, userName, userNusnetId, userInfo.image, mutate]
-  );
-
-  // Generate signature and upload profile picture into server
-  const generateSignature = useCallback(
-    (timestamp: number) => {
-      // Signed upload
-      const uploadImage = (
-        timestamp: number,
-        signature: string,
-        key: string
-      ) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", key);
-        formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
-        formData.append("folder", "profiles");
-        formData.append("public_id", session?.data?.user?.id);
-        formData.append("timestamp", `${timestamp}`);
-        formData.append("signature", signature);
-        axios
-          .post(
-            "https://api.cloudinary.com/v1_1/demcj8g8y/image/upload/",
-            formData
-          )
-          .then((response) => {
-            // Once file is uploaded, get the URL (transformation configs) and call another function to update DB
-            setUserImage(response?.data?.eager?.[0]?.url);
-            updateUser(response?.data?.eager?.[0]?.url);
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      };
-
-      // Get signature for signed uploads
-      axios
-        .post("/api/signature", {
-          id: session?.data?.user?.id,
-          timestamp: timestamp,
-        })
-        .then((response) => {
-          // Upload file into server after signing
-          uploadImage(
-            timestamp,
-            response?.data?.signature,
-            response?.data?.key
-          );
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    [session?.data?.user?.id, file, updateUser]
-  );
 
   return (
     <>
@@ -172,7 +164,7 @@ export default function Account(props) {
               onChange={setFile}
             />
             <p
-              className="mt-1 text-gray-50 text-xs italic"
+              className="mt-1 text-gray-500 text-xs italic"
               id="file_input_help"
             >
               * PNG / JPG ONLY
@@ -187,7 +179,7 @@ export default function Account(props) {
               !/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ||
               !/^\w{5,}$/.test(userName)
             }
-            loading={uploading}
+            loading={updateUserLoading || uploadImageLoading}
           >
             Confirm
           </Button>

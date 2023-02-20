@@ -2,9 +2,8 @@ import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import useSWRImmutable from "swr";
 
 import {
   Box,
@@ -14,6 +13,7 @@ import {
   createStyles,
   Group,
   Header,
+  Loader,
   Menu,
   SegmentedControl,
   Text,
@@ -30,6 +30,7 @@ import {
   IconStar,
   IconSun
 } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
 const HEADER_HEIGHT = 80;
 
@@ -104,7 +105,20 @@ export default function Navbar() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
-  const { data: userInfo, error } = useSWRImmutable("/api/user/get"); // Off auto-revalidation
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+  );
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
@@ -156,21 +170,27 @@ export default function Navbar() {
                 })}
               >
                 <Group spacing={7}>
-                  <Text
-                    className={classes.userName}
-                    sx={{ lineHeight: 1 }}
-                    weight={500}
-                    color={theme.colors.gray[9]}
-                  >
-                    {userInfo?.name}
-                  </Text>
-                  <Image
-                    src={userInfo?.image || ""}
-                    alt={userInfo?.name}
-                    className="ml-1 rounded-full"
-                    width={25}
-                    height={25}
-                  />
+                  {isLoading === true || isError === true ? (
+                    <Loader />
+                  ) : (
+                    <>
+                      <Text
+                        className={classes.userName}
+                        sx={{ lineHeight: 1 }}
+                        weight={500}
+                        color={theme.colors.gray[9]}
+                      >
+                        {userInfo?.name}
+                      </Text>
+                      <Image
+                        src={userInfo?.image || ""}
+                        alt={userInfo?.name || ""}
+                        className="ml-1 rounded-full"
+                        width={25}
+                        height={25}
+                      />
+                    </>
+                  )}
 
                   <IconChevronDown size={12} stroke={1.5} />
                 </Group>

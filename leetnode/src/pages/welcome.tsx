@@ -1,25 +1,23 @@
-import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/router";
-import { signIn, useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
 import {
-  createStyles,
-  TextInput,
-  Paper,
-  Title,
-  Text,
+  Button,
   Center,
   Container,
-  Button,
+  createStyles,
   Loader,
+  Paper,
+  Text,
+  TextInput,
+  Title,
 } from "@mantine/core";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const isUserInitialized = async () => {
   try {

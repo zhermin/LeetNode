@@ -1,15 +1,14 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
-import useSWRImmutable from "swr";
+import { useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
 import Account from "@/components/settings/Account";
 import Calendar from "@/components/settings/Calendar";
-import Statistics from "@/components/settings/Statistics";
+import Statistics from "@/components/settings/statistics/Statistics";
 import {
   AppShell,
   Center,
@@ -25,6 +24,7 @@ import {
   IconReportAnalytics,
   IconUser
 } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
@@ -117,31 +117,20 @@ export default function Settings() {
   const { classes, theme, cx } = useStyles();
   const [active, setActive] = useState("Account");
 
-  const [loading, setLoading] = useState(true);
-
-  const [masteryData, setMasteryData] = useState();
-
-  const fetcher = useCallback(
-    async (url: string) => {
-      const response = await axios.post(url, {
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
         id: session?.data?.user?.id,
       });
-      console.log("fetching swr");
-      return response?.data;
+      return res?.data;
     },
-    [session?.data?.user?.id]
+    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
   );
-
-  const { data: userInfo, error } = useSWRImmutable("/api/user/get", fetcher); // Off auto-revalidation
-
-  useEffect(() => {
-    // Update the loading state
-    if (userInfo) {
-      setLoading(false);
-    } else if (!userInfo) {
-      setLoading(true);
-    }
-  }, [userInfo]);
 
   const links = data.map((item) => (
     <a
@@ -159,14 +148,6 @@ export default function Settings() {
       <span>{item.label}</span>
     </a>
   ));
-
-  useEffect(() => {
-    axios
-      .post("/api/pybkt/getAll", { id: session?.data?.user?.id })
-      .then((response) => {
-        setMasteryData(response?.data);
-      });
-  }, []);
 
   return (
     <AppShell
@@ -233,7 +214,7 @@ export default function Settings() {
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
         {active === "Account" ? (
-          loading === true ? (
+          isLoading === true || isError === true ? (
             <Center style={{ height: 500 }}>
               <Loader />
             </Center>
@@ -241,7 +222,7 @@ export default function Settings() {
             <Account userInfo={userInfo} />
           )
         ) : active === "Statistics" ? (
-          <Statistics data={masteryData} />
+          <Statistics />
         ) : active === "Calendar" ? (
           <Calendar />
         ) : (
