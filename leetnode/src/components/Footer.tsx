@@ -23,7 +23,9 @@ export default function Footer() {
   const session = useSession();
 
   axios
-    .post("/api/updateLastActive", { id: session?.data?.user?.id as string })
+    .post("/api/prof/updateLastActive", {
+      id: session?.data?.user?.id as string,
+    })
     .then((response) => console.log(response))
     .catch((error) => console.error(error));
 

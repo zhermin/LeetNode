@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 
-import Analytics from "@/components/admin/Analytics";
+import Courses from "@/components/admin/Courses";
 import Dashboard from "@/components/admin/Dashboard";
 import Settings from "@/components/admin/Settings";
 import Users from "@/components/admin/Users";
@@ -22,6 +22,14 @@ import {
   ThemeIcon,
   UnstyledButton,
 } from "@mantine/core";
+import {
+  Attempt,
+  Course,
+  Mastery,
+  Role,
+  Topic,
+  UserCourseQuestion,
+} from "@prisma/client";
 import {
   IconAdjustments,
   IconFileAnalytics,
@@ -157,6 +165,31 @@ const useStyles = createStyles((theme, _params, getRef) => {
   };
 });
 
+interface UsersWithMasteriesAndAttempts {
+  id: string;
+  nusnetId: string | null;
+  name: string;
+  email: string;
+  emailVerified: Date | null;
+  image: string;
+  lastActive: string;
+  role: Role;
+  masteries: Mastery[];
+  attempts: Attempt[];
+}
+[];
+
+interface TopicsInterface {
+  topicLevel: string;
+  topicSlug: string;
+  topicName: string;
+}
+[];
+
+type CourseInfoType = Course & { topic: Topic } & {
+  userCourseQuestion: UserCourseQuestion;
+};
+
 export default function AdminPage() {
   // Mantine
   const { classes, cx } = useStyles();
@@ -166,30 +199,65 @@ export default function AdminPage() {
   // Sidebar Tabs based on Fetched Data
   const tabs = [
     { label: "Dashboard", icon: IconGauge },
-    { label: "Analytics", icon: IconPresentationAnalytics },
+    { label: "Courses", icon: IconPresentationAnalytics },
     { label: "Users", icon: IconFileAnalytics },
     { label: "Settings", icon: IconAdjustments },
   ];
 
   // Use the useQuery hook to make the API call to get all users
   const {
-    data: users,
-    isLoading: isLoadingUsers,
-    isFetching: isFetchingUsers,
-    isError: isErrorUsers,
-  } = useQuery(["all-users"], async () => {
-    const res = await axios.get("/api/forum/getAllUsers");
+    data: usersData,
+    isLoading: isLoadingUsersData,
+    isFetching: isFetchingUsersData,
+    isError: isErrorUsersData,
+  } = useQuery<UsersWithMasteriesAndAttempts[]>(
+    ["all-users-data"],
+    async () => {
+      const res = await axios.get("/api/prof/getAllUsersData");
+      console.log(res.data);
+      return res.data;
+    }
+  );
+  const {
+    data: topics,
+    isLoading: isLoadingTopics,
+    isFetching: isFetchingTopics,
+    isError: isErrorTopics,
+  } = useQuery(["all-topics"], async () => {
+    const res = await axios.get("/api/prof/getAllTopics");
     console.log(res.data);
     return res.data;
   });
 
-  if (isLoadingUsers || isFetchingUsers || !users)
+  const {
+    data: courses,
+    isLoading: isLoadingCourses,
+    isFetching: isFetchingCourses,
+    isError: isErrorCourses,
+  } = useQuery(["all-courses"], async () => {
+    const res = await axios.get("/api/prof/getAllCourses");
+    console.log(res.data);
+    return res.data;
+  });
+
+  if (
+    isLoadingUsersData ||
+    isFetchingUsersData ||
+    !usersData ||
+    isLoadingTopics ||
+    isFetchingTopics ||
+    !topics ||
+    isLoadingCourses ||
+    isFetchingCourses ||
+    !courses
+  )
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
-  if (isErrorUsers) return <div>Something went wrong!</div>;
+  if (isErrorUsersData || isErrorTopics || isErrorCourses)
+    return <div>Something went wrong!</div>;
 
   return (
     <>
@@ -249,74 +317,22 @@ export default function AdminPage() {
                 </UnstyledButton>
               </Navbar.Section>
             ))}
-
-            {/* <Navbar.Section className={classes.navbarEntry}>
-          <UnstyledButton className={classes.control}>
-            <Box
-              sx={(theme) => ({
-                padding: theme.spacing.sm,
-                display: "flex",
-                alignItems: "center",
-              })}
-            >
-              <Group position="apart" spacing={0}>
-                <ThemeIcon variant="light" size={30}>
-                  <IconGauge />
-                </ThemeIcon>
-                <Box ml="md">Dashboard</Box>
-              </Group>
-            </Box>
-          </UnstyledButton>
-        </Navbar.Section>
-
-        <Navbar.Section className={classes.navbarEntry}>
-          <UnstyledButton className={classes.control}>
-            <Box
-              sx={(theme) => ({
-                padding: theme.spacing.sm,
-                display: "flex",
-                alignItems: "center",
-              })}
-            >
-              <Group position="apart" spacing={0}>
-                <ThemeIcon variant="light" size={30}>
-                  <IconGauge />
-                </ThemeIcon>
-                <Box ml="md">Dashboard</Box>
-              </Group>
-            </Box>
-          </UnstyledButton>
-        </Navbar.Section>
-
-        <Navbar.Section className={classes.navbarEntry}>
-          <UnstyledButton className={classes.control}>
-            <Box
-              sx={(theme) => ({
-                padding: theme.spacing.sm,
-                display: "flex",
-                alignItems: "center",
-              })}
-            >
-              <Group position="apart" spacing={0}>
-                <ThemeIcon variant="light" size={30}>
-                  <IconGauge />
-                </ThemeIcon>
-                <Box ml="md">Dashboard</Box>
-              </Group>
-            </Box>
-          </UnstyledButton>
-        </Navbar.Section> */}
           </Navbar>
         }
       >
         <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
           {active === "Dashboard" ? (
             <Dashboard />
-          ) : active === "Analytics" ? (
-            <Analytics />
+          ) : active === "Courses" ? (
+            <Courses courses={courses as CourseInfoType[]} />
           ) : active === "Users" ? (
-            <Users users={users} />
+            // <Box onClick={() => queryClient.invalidateQueries(["all-users"])}>
+            <Users
+              users={usersData as UsersWithMasteriesAndAttempts[]}
+              topics={topics as TopicsInterface[]}
+            />
           ) : (
+            // </Box>
             <Settings />
           )}
         </ScrollArea.Autosize>
