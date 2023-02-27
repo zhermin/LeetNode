@@ -1,5 +1,12 @@
-import { Level, CourseType, QuestionDifficulty } from "@prisma/client";
-import { Topic, Question, Answer, QuestionMedia } from "@prisma/client";
+import {
+	Answer,
+	CourseType,
+	Level,
+	Question,
+	QuestionDifficulty,
+	QuestionMedia,
+	Topic
+} from "@prisma/client";
 
 export const Topics: Topic[] = [
   {
@@ -19,7 +26,7 @@ export const Topics: Topic[] = [
   },
   {
     topicSlug: "kcl",
-    topicName: "Kirchhoff's Circuit Law",
+    topicName: "Kirchhoff's Current Law",
     topicLevel: Level.Foundational,
   },
   {

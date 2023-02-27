@@ -1,3 +1,4 @@
+import axios from "axios";
 import { evaluate } from "mathjs";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -17,10 +18,12 @@ import {
 	AppShell,
 	Box,
 	Button,
+	Center,
 	Code,
 	createStyles,
 	Divider,
 	Flex,
+	Loader,
 	Modal,
 	Navbar,
 	NumberInput,
@@ -37,6 +40,7 @@ import {
 import { useForm, zodResolver } from "@mantine/form";
 import { randomId } from "@mantine/hooks";
 import { Prism } from "@mantine/prism";
+import { CourseType, Level } from "@prisma/client";
 import {
 	Icon2fa,
 	IconBellRinging,
@@ -65,6 +69,7 @@ import {
 	IconUsers,
 	IconX
 } from "@tabler/icons";
+import { useQueries } from "@tanstack/react-query";
 
 const Editor = dynamic(import("@/components/editor/Editor"), {
   ssr: false,
@@ -225,8 +230,9 @@ $$
 
   const form = useForm({
     initialValues: {
-      courseName: "CS1010",
-      topics: "Content",
+      title: "Given voltage and 3 resistors, find I_3 and I_final",
+      course: "Circuit Analysis Techniques",
+      topic: "Ohm's Law",
       difficulty: "Medium",
       variables: [
         {
@@ -247,6 +253,14 @@ $$
         },
         {
           key: randomId(),
+          name: "I_3",
+          randomize: false,
+          isFinalAnswer: true,
+          unit: "\\text{A}",
+          decimalPlaces: 2,
+        },
+        {
+          key: randomId(),
           name: "V_{\\alpha}",
           randomize: true,
           isFinalAnswer: false,
@@ -258,11 +272,11 @@ $$
         },
         {
           key: randomId(),
-          name: "I_{final}",
+          name: "I_{\\text{final}}",
           randomize: false,
           isFinalAnswer: true,
           unit: "\\text{A}",
-          decimalPlaces: 2,
+          decimalPlaces: 1,
         },
         {
           key: randomId(),
@@ -271,14 +285,6 @@ $$
           isFinalAnswer: false,
           unit: "\\Omega",
           default: 4,
-        },
-        {
-          key: randomId(),
-          randomize: false,
-          isFinalAnswer: false,
-          decimalPlaces: 0,
-          name: "\\delta_{offset}",
-          default: 1000,
         },
       ],
       methods: [
@@ -299,7 +305,7 @@ $$
         },
         {
           key: randomId(),
-          expr: "I_{final} = (I_1 + I_2 + I_3) * \\delta_{offset}",
+          expr: "I_{\\text{final}} = (I_1 + I_2 + I_3)",
           hasExplanation: false,
         },
       ],
@@ -313,31 +319,43 @@ $$
     validateInputOnChange: true,
     validate: zodResolver(
       z.object({
-        variables: z.array(
-          z.object({
-            name: z
-              .string()
-              .trim()
-              .regex(
-                /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_]*$/,
-                { message: "Invalid name" }
-              )
-              .min(1, { message: "Cannot be empty" }),
-            default: z.number(),
-            min: z.number(),
-            max: z.number(),
-            decimalPlaces: z.number().int().min(0).max(10),
-          })
-        ),
-        methods: z.array(
-          z.object({
-            expr: z
-              .string()
-              .trim()
-              .regex(/^[^=]+=[^=]+$/, { message: "Invalid expression" })
-              .min(1, { message: "Cannot be empty" }),
-          })
-        ),
+        title: z.string().trim().min(5, { message: "Title is too short" }),
+        course: z.string().min(1, { message: "Please pick a course" }),
+        topic: z.string().min(1, { message: "Please pick a topic" }),
+        variables: z
+          .array(
+            z.object({
+              name: z
+                .string()
+                .trim()
+                .regex(
+                  /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_]*$/,
+                  { message: "Invalid name" }
+                )
+                .min(1, { message: "Cannot be empty" }),
+              randomize: z.boolean(),
+              isFinalAnswer: z.boolean(),
+              unit: z.string().optional(),
+              default: z.number().optional(),
+              min: z.number().optional(),
+              max: z.number().optional(),
+              decimalPlaces: z.number().int().min(0).max(10).optional(),
+            })
+          )
+          .nonempty({ message: "Please add at least 1 variable" }),
+        methods: z
+          .array(
+            z.object({
+              expr: z
+                .string()
+                .trim()
+                .regex(/^[^=]+=[^=]+$/, { message: "Invalid expression" })
+                .min(1, { message: "Cannot be empty" }),
+              hasExplanation: z.boolean(),
+              explanation: z.string().optional(),
+            })
+          )
+          .nonempty({ message: "Please add at least 1 method" }),
       })
     ),
   });
@@ -347,6 +365,7 @@ $$
     "\\text{Refresh to View Final Answer}"
   );
   const handlePreviewChange = (toRandomize: boolean) => {
+    form.clearErrors();
     const cleaned = (str: string) => str.replace(/[\\{}]/g, "");
     const rawVariables: {
       [key: string]: number;
@@ -413,34 +432,60 @@ $$
       }
     }
 
-    const finalAnswer = form.values.variables.find(
+    const finalAnswers = form.values.variables.filter(
       (item) => item.isFinalAnswer
     );
-    if (finalAnswer && finalAnswer.name) {
-      setFinalAnsPreview(`
-        ${finalAnswer.name} ${
-        finalAnswer.unit ? "~(" + finalAnswer.unit + ")" : ""
-      } = ${CustomMath.round(
-        Number(rawVariables[cleaned(finalAnswer.name)]),
-        finalAnswer?.decimalPlaces ?? 3
-      )}`);
+    if (finalAnswers.length > 0) {
+      setFinalAnsPreview(
+        finalAnswers
+          .map((finalAnswer) => {
+            if (!finalAnswer.name) return "";
+
+            const finalValue = CustomMath.round(
+              Number(rawVariables[cleaned(finalAnswer.name)]),
+              finalAnswer?.decimalPlaces ?? 3
+            );
+
+            // randomly generate 3 incorrect answers +/- 5% to 20%
+            const incorrectAnswers = (
+              CustomMath.nRandomItems(
+                CustomMath.generateRange(0.05, 0.2, 0.05),
+                3
+              ) as number[]
+            ).map((val) =>
+              CustomMath.round(
+                finalValue * (1 + val),
+                finalAnswer?.decimalPlaces ?? 3
+              )
+            );
+
+            return `${finalAnswer.name} ${
+              finalAnswer.unit ? "~(" + finalAnswer.unit + ")" : ""
+            } &= ${finalValue} ~|~ ${incorrectAnswers.join("~|~")}`;
+          })
+          .join("\\\\")
+      );
     } else {
       setFinalAnsPreview(invalidMessage);
     }
 
-    setPreview(
-      form.values.variables
-        .filter((item) => !item.isFinalAnswer)
-        .map((item) => {
-          return `${item.name} ${
-            item.unit ? "~(" + item.unit + ")" : ""
-          } &= ${CustomMath.round(
-            Number(rawVariables[cleaned(item.name)]),
-            item?.decimalPlaces ?? finalAnswer?.decimalPlaces ?? 3
-          )}`;
-        })
-        .join("\\\\")
-    );
+    if (form.values.variables.length > 0) {
+      setPreview(
+        form.values.variables
+          .filter((item) => !item.isFinalAnswer)
+          .map((item) => {
+            return `${item.name} ${
+              item.unit ? "~(" + item.unit + ")" : ""
+            } &= ${CustomMath.round(
+              Number(rawVariables[cleaned(item.name)]),
+              item?.decimalPlaces ?? 3
+            )}`;
+          })
+          .join("\\\\")
+      );
+    } else {
+      setPreview(invalidMessage);
+    }
 
     if (toRandomize) {
       toast("Randomized!", {
@@ -450,6 +495,7 @@ $$
     } else {
       toast.success("Preview Updated!");
     }
+    form.validate();
   };
 
   const varFields = form.values.variables.map((item, index) => (
@@ -468,7 +514,7 @@ $$
             </ActionIcon>
             <TextInput
               label="Name"
-              withAsterisk
+              required
               sx={{ flex: 1 }}
               {...form.getInputProps(`variables.${index}.name`)}
             />
@@ -480,15 +526,15 @@ $$
             {form.values.variables[index]?.isFinalAnswer ? (
               <NumberInput
                 label="Decimal Places"
-                withAsterisk
                 sx={{ flex: 1 }}
+                required={form.values.variables[index]?.isFinalAnswer}
                 {...form.getInputProps(`variables.${index}.decimalPlaces`)}
               />
             ) : (
               <NumberInput
                 label="Default"
-                withAsterisk
                 sx={{ flex: 1 }}
+                required={!form.values.variables[index]?.isFinalAnswer}
                 {...form.getInputProps(`variables.${index}.default`)}
               />
             )}
@@ -501,59 +547,44 @@ $$
               }${item.default ? "=" + item.default : ""}$$`}</Latex>
             </Box>
             <Stack align="center" spacing="xs">
-              {(item.isFinalAnswer ||
-                form.values.variables.every((item) => !item.isFinalAnswer)) && (
-                <Tooltip label="Set Final Answer" withArrow>
-                  <ActionIcon
-                    variant="default"
-                    radius="xl"
-                    className={
-                      item.isFinalAnswer
-                        ? "border border-red-600 bg-red-50"
-                        : ""
-                    }
-                    disabled={
-                      !item.isFinalAnswer &&
-                      form.values.variables.some((item) => item.isFinalAnswer)
-                    }
-                    onClick={() => {
-                      form.setFieldValue(`variables.${index}.randomize`, false);
-                      form.setFieldValue(
-                        `variables.${index}.default`,
-                        undefined
-                      );
-                      form.setFieldValue(
-                        `variables.${index}.isFinalAnswer`,
-                        !item.isFinalAnswer
-                      );
-                    }}
-                  >
-                    <IconChecks size={16} />
-                  </ActionIcon>
-                </Tooltip>
-              )}
-              {!item.isFinalAnswer && (
-                <Tooltip label="Randomize" withArrow>
-                  <ActionIcon
-                    variant="default"
-                    radius="xl"
-                    disabled={item.isFinalAnswer}
-                    className={
-                      item.randomize
-                        ? "border border-green-600 bg-green-50"
-                        : ""
-                    }
-                    onClick={() => {
-                      form.setFieldValue(
-                        `variables.${index}.randomize`,
-                        !item.randomize
-                      );
-                    }}
-                  >
-                    <IconDice3 size={16} />
-                  </ActionIcon>
-                </Tooltip>
-              )}
+              <Tooltip label="Set Final Answer" withArrow>
+                <ActionIcon
+                  variant="default"
+                  radius="xl"
+                  className={
+                    item.isFinalAnswer ? "border border-red-600 bg-red-50" : ""
+                  }
+                  disabled={item.randomize}
+                  onClick={() => {
+                    form.setFieldValue(`variables.${index}.randomize`, false);
+                    form.setFieldValue(`variables.${index}.default`, undefined);
+                    form.setFieldValue(
+                      `variables.${index}.isFinalAnswer`,
+                      !item.isFinalAnswer
+                    );
+                  }}
+                >
+                  <IconChecks size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Randomize" withArrow>
+                <ActionIcon
+                  variant="default"
+                  radius="xl"
+                  disabled={item.isFinalAnswer}
+                  className={
+                    item.randomize ? "border border-green-600 bg-green-50" : ""
+                  }
+                  onClick={() => {
+                    form.setFieldValue(
+                      `variables.${index}.randomize`,
+                      !item.randomize
+                    );
+                  }}
+                >
+                  <IconDice3 size={16} />
+                </ActionIcon>
+              </Tooltip>
             </Stack>
             <ActionIcon
               variant="transparent"
@@ -723,6 +754,52 @@ $$
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  const [courses, topics] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-course-names"],
+        queryFn: () => {
+          return axios.get("/api/forum/getAllCourseNames");
+        },
+      },
+      {
+        queryKey: ["all-topic-names"],
+        queryFn: () => {
+          return axios.get("/api/forum/getAllTopicNames");
+        },
+      },
+    ],
+  });
+
+  if (!courses.data || !topics.data) {
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
+  }
+
+  const coursesArr = courses.data.data.map(
+    (course: { courseName: string; courseLevel: Level; type: CourseType }) => {
+      return {
+        value: course.courseName,
+        label: course.courseName,
+        group: course.type === CourseType.Quiz ? "Quiz" : course.courseLevel,
+      };
+    }
+  );
+
+  const topicsArr = topics.data.data.map(
+    (topic: { topicName: string; topicLevel: string }) => {
+      return {
+        value: topic.topicName,
+        label: topic.topicName,
+        group: topic.topicLevel,
+      };
+    }
+  );
+
   if (!hydrated) {
     // Returns null on first render, so the client and server match
     return null;
@@ -876,36 +953,44 @@ $$
         ) : active === "Editor" ? (
           <>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // mutation.mutate({
-                //   userId: session?.data?.user?.id as string,
-                //   message: message,
-                //   courseName: form.values.courseName,
-                //   postType: form.values.postType,
-                // });
-              }}
+              onSubmit={form.onSubmit(
+                (values: typeof form.values) => {
+                  console.log(values);
+                  toast.success("Form submitted successfully");
+                },
+                (errors: typeof form.errors) => {
+                  Object.keys(errors).forEach((key) => {
+                    toast.error(errors[key] as string);
+                  });
+                }
+              )}
             >
+              <TextInput
+                label="Title"
+                placeholder="Short Description"
+                name="title"
+                required
+                {...form.getInputProps("title")}
+              />
+
               <SimpleGrid
                 cols={3}
                 mt="lg"
                 breakpoints={[{ maxWidth: "sm", cols: 1 }]}
               >
                 <Select
-                  data={["CS1010", "CS2101", "CS2102"]}
+                  data={coursesArr}
                   placeholder="Select course"
                   label="Course Name"
-                  defaultValue="CS1010"
                   required
                   {...form.getInputProps("course")}
                 />
                 <Select
-                  data={["Content", "Quiz", "Misc"]}
-                  placeholder="Select all tested topics"
+                  data={topicsArr}
+                  placeholder="Select key tested topic"
                   label="Topics"
-                  defaultValue="Content"
                   required
-                  {...form.getInputProps("postType")}
+                  {...form.getInputProps("topic")}
                 />
                 <Select
                   data={["Easy", "Medium", "Hard"]}
@@ -936,7 +1021,10 @@ $$
                     variant="transparent"
                     radius="xl"
                     ml="lg"
-                    className="cursor-help"
+                    className="cursor"
+                    component="a"
+                    href="https://mathjs.org/docs/expressions/syntax.html"
+                    target="_blank"
                   >
                     <IconHelp size={20} color="black" />
                   </ActionIcon>
@@ -1115,7 +1203,7 @@ $$
                 sx={{ flex: 1, alignSelf: "stretch" }}
                 className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
               >
-                <Latex>{`$$ ${finalAnsPreview} $$`}</Latex>
+                <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
               </Box>
 
               <Divider mt="xl" variant="dashed" />
@@ -1126,7 +1214,6 @@ $$
                 radius="sm"
                 my="xl"
                 type="submit"
-                onClick={() => newMethod()}
               >
                 Create Question
               </Button>
