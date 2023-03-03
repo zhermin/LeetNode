@@ -14,68 +14,68 @@ import LeetNodeNavbar from "@/components/Navbar";
 import { CustomMath } from "@/server/Utils";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
-	ActionIcon,
-	AppShell,
-	Badge,
-	Box,
-	Button,
-	Center,
-	Code,
-	createStyles,
-	Divider,
-	Flex,
-	Loader,
-	Modal,
-	Navbar,
-	NumberInput,
-	ScrollArea,
-	SegmentedControl,
-	Select,
-	SimpleGrid,
-	Stack,
-	Table,
-	Text,
-	Textarea,
-	TextInput,
-	Tooltip
+  ActionIcon,
+  AppShell,
+  Badge,
+  Box,
+  Button,
+  Center,
+  Code,
+  createStyles,
+  Divider,
+  Flex,
+  Loader,
+  Modal,
+  Navbar,
+  NumberInput,
+  ScrollArea,
+  SegmentedControl,
+  Select,
+  SimpleGrid,
+  Stack,
+  Table,
+  Text,
+  Textarea,
+  TextInput,
+  Tooltip,
 } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
 import { randomId } from "@mantine/hooks";
 import { Prism } from "@mantine/prism";
 import {
-	CourseType,
-	Level,
-	Question,
-	QuestionDifficulty,
-	Topic
+  CourseType,
+  Level,
+  Question,
+  QuestionDifficulty,
+  Topic,
 } from "@prisma/client";
 import {
-	Icon2fa,
-	IconBellRinging,
-	IconBulb,
-	IconChecks,
-	IconCode,
-	IconDatabaseImport,
-	IconDice3,
-	IconFileAnalytics,
-	IconFingerprint,
-	IconGripVertical,
-	IconHelp,
-	IconKey,
-	IconLicense,
-	IconLogout,
-	IconMessage2,
-	IconMessages,
-	IconPlus,
-	IconReceipt2,
-	IconReceiptRefund,
-	IconRefresh,
-	IconSettings,
-	IconShoppingCart,
-	IconSwitchHorizontal,
-	IconTrash,
-	IconUsers,
-	IconX
+  Icon2fa,
+  IconBellRinging,
+  IconBulb,
+  IconChecks,
+  IconCode,
+  IconDatabaseImport,
+  IconDice3,
+  IconFileAnalytics,
+  IconFingerprint,
+  IconGripVertical,
+  IconHelp,
+  IconKey,
+  IconLicense,
+  IconLogout,
+  IconMessage2,
+  IconMessages,
+  IconPlus,
+  IconReceipt2,
+  IconReceiptRefund,
+  IconRefresh,
+  IconSettings,
+  IconShoppingCart,
+  IconSwitchHorizontal,
+  IconTrash,
+  IconUsers,
+  IconX,
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
@@ -83,22 +83,6 @@ const Editor = dynamic(import("@/components/editor/Editor"), {
   ssr: false,
   loading: () => <p>Loading Editor...</p>,
 });
-
-type QuestionData = {
-  variables: Record<string, number>;
-  qn_variables: string[];
-  variable_ranges: {
-    [key: string]: {
-      toRandomize: boolean;
-      min?: number;
-      max?: number;
-      decimalPlaces?: number;
-    };
-  };
-  expressions: string[];
-  Answer: string;
-  units: Record<string, string>;
-};
 
 const tabs = {
   account: [
@@ -135,84 +119,6 @@ export default function Test() {
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
-
-  const [qn1Data, setQn1Data] = useState<QuestionData>({
-    variables: {
-      V: 12,
-      R_1: 4,
-      R_2: 8,
-      R_3: 10,
-    },
-    qn_variables: ["V", "R_1", "R_2", "R_3"],
-    variable_ranges: {
-      V: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
-      R_1: { toRandomize: false }, // 20 possibilites
-      R_2: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
-      R_3: { toRandomize: true, min: 1, max: 20, decimalPlaces: 2 },
-    },
-    expressions: [
-      "I_1 = V / R_1",
-      "I_2 = V / R_2",
-      "I_3 = V / R_3",
-      "I_4 = I_1 + I_2 + I_3",
-      "Answer = I_4",
-    ],
-    Answer: "I_4",
-    units: {
-      V: "\\text{V}",
-      R_1: "\\Omega",
-      R_2: "\\Omega",
-      R_3: "\\Omega",
-      I_1: "\\Omega",
-      I_2: "\\text{A}",
-      I_3: "\\text{A}",
-      I_4: "\\text{A}",
-      Answer: "\\text{A}",
-    },
-  });
-
-  for (const expr of qn1Data.expressions) {
-    evaluate(expr, qn1Data.variables);
-  }
-
-  const [qn1Markdown, setQn1Markdown] = useState(``);
-  useEffect(() => {
-    setQn1Markdown(`
-## Q1: Ohm's Law
-
-Given the circuit below, find the total current flowing through the circuit.
-
-![qn1 circuit diagram](testqn1.png)
-
-### Variables
-
-$$
-${qn1Data.qn_variables
-  .map((key) => `${key} = ${qn1Data.variables[key]}~${qn1Data.units[key]}`)
-  .join(",~")}
-$$
-
-### Method
-
-${qn1Data.expressions
-  .map(
-    (expr) => `
-$$
-${expr}~~~(${qn1Data.units[expr.split("=")[0]?.trim() ?? ""]})
-$$
-`
-  )
-  .join("")}
-
-### Answer
-
-$$
-${qn1Data.Answer} = ${qn1Data.variables[qn1Data.Answer]?.toFixed(2)} ${
-      qn1Data.units[qn1Data.Answer]
-    }
-$$
-`);
-  }, [qn1Data]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -817,7 +723,7 @@ $$
     useAddQuestion();
 
   const handleAddQuestion = async (values: typeof form.values) =>
-    await addQuestion({
+    addQuestion({
       variationId: 0,
       topicSlug: values.topic,
       questionTitle: values.title,
@@ -838,7 +744,7 @@ $$
     );
   }
 
-  const topicsArr = topics.data.map(
+  const allTopics = topics.data.map(
     (topic: { topicName: string; topicSlug: string; topicLevel: string }) => {
       return {
         label: topic.topicName,
@@ -920,27 +826,10 @@ $$
 
               <a
                 className={classes.link}
-                onClick={() => {
-                  const newQn1Data = { ...qn1Data };
-                  for (const v of qn1Data.qn_variables) {
-                    if (qn1Data.variable_ranges[v]?.toRandomize) {
-                      newQn1Data.variables[v] = CustomMath.random(
-                        qn1Data.variable_ranges[v]?.min ?? 0,
-                        qn1Data.variable_ranges[v]?.max ?? 0,
-                        qn1Data.variable_ranges[v]?.decimalPlaces ?? 0
-                      );
-                    }
-                  }
-
-                  for (const expr of qn1Data.expressions) {
-                    evaluate(expr, newQn1Data.variables);
-                  }
-
-                  setQn1Data(newQn1Data);
-                }}
+                onClick={() => toast("Toast!", { icon: "🍞" })}
               >
                 <IconLogout className={classes.linkIcon} stroke={1.5} />
-                <span>Randomize</span>
+                <span>Toast!</span>
               </a>
             </Navbar.Section>
           </Navbar>
@@ -990,13 +879,11 @@ $$
           </>
         ) : active === "Latex" ? (
           <>
-            <MarkdownLatex>{qn1Markdown}</MarkdownLatex>
-            <hr />
-            <MarkdownLatex>{qn2_markdown}</MarkdownLatex>
-            <hr />
-            <MarkdownLatex>{markdown_latex}</MarkdownLatex>
-            <hr />
-            <MarkdownLatex>{circuitikz_test}</MarkdownLatex>
+            <MarkdownLatex>{`Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
+
+$$
+L = \\frac{1}{2} \\rho v^2 S C_L
+$$`}</MarkdownLatex>
           </>
         ) : active === "Editor" ? (
           <>
@@ -1050,7 +937,7 @@ $$
                   {...form.getInputProps("difficulty")}
                 />
                 <Select
-                  data={topicsArr}
+                  data={allTopics}
                   placeholder="Select key topic tested"
                   label="Key Topic"
                   required
@@ -1430,140 +1317,6 @@ $$
       </ScrollArea.Autosize>
     </AppShell>
   );
-}
-
-const markdown_latex = `Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
-
-$$
-L = \\frac{1}{2} \\rho v^2 S C_L
-$$`;
-
-// DONE
-// TODO: range data for each variable
-// TODO: maybe list of variables for students only
-// TODO: try randomizing
-
-// TODO: maybe have one-line descriptions for each step (optional)
-// TODO: incorporate hints
-// TODO: expressions validation (must have = sign)
-// TODO: site responsive
-// TODO: variable name rules
-// TODO: random range rules / test on x cases
-// TODO: circuitikz live editor
-// TODO: wrong options generator / logic
-// TODO: dynamic form
-
-const qn2_data: QuestionData = {
-  variables: {
-    R_1: 10,
-    R_2: 15,
-    R_3: 20,
-    R_4: 25,
-    V_1: 12,
-    V_2: 8,
-  },
-  qn_variables: ["R_1", "R_2", "R_3", "R_4", "V_1", "V_2"],
-  variable_ranges: {
-    R_1: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
-    R_2: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
-    R_3: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
-    R_4: { toRandomize: true, min: 1, max: 20, decimalPlaces: 0 },
-    V_1: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
-    V_2: { toRandomize: true, min: 1, max: 12, decimalPlaces: 0 },
-  },
-  expressions: [
-    "R_TH = (R_2*R_3) / (R_2+R_3)",
-    "V_TH = V_1*(R_2/(R_2+R_3)) + V_2*(R_3/(R_2+R_3))",
-    "I_L = V_TH / (R_TH + R_4)",
-    "V_L = I_L * R_4",
-    "P_L = V_L * I_L",
-    "Answer = P_L",
-  ],
-  Answer: "P_L",
-  units: {
-    R_1: "\\Omega",
-    R_2: "\\Omega",
-    R_3: "\\Omega",
-    R_4: "\\Omega",
-    V_1: "V",
-    V_2: "V",
-    R_TH: "\\Omega",
-    V_TH: "V",
-    I_L: "A",
-    V_L: "V",
-    P_L: "W",
-    Answer: "W",
-  },
-};
-
-const qn2_markdown = `
-## Q2: Thevenin Theorem
-
-Given the circuit below, find the power across the load resistor R4 using the Thevenin theorem.
-
-![qn2 circuit diagram](testqn1.png)
-
-### Variables
-
-$$
-${Object.keys(qn2_data.variables)
-  .map((key) => `${key} = ${qn2_data.variables[key]} ${qn2_data.units[key]}`)
-  .join(",~")}
-$$
-
-### Method
-
-1. Calculate the Thevenin resistance:
-
-$$
-R_{TH} = \\frac{R_2*R_3}{R_2+R_3}
-$$
-
-2. Calculate the Thevenin voltage:
-
-$$
-V_{TH} = V_1*\\frac{R_2}{R_2+R_3} + V_2*\\frac{R_3}{R_2+R_3}
-$$
-
-3. Calculate the load current:
-
-$$
-I_{L} = \\frac{V_{TH}}{R_{TH} + R_4}
-$$
-
-4. Calculate the voltage across the load resistor:
-
-$$
-V_L = I_L * R_4
-$$
-
-5. Calculate the power across the load resistor:
-
-$$
-P_L = V_L * I_L
-$$
-
-6. Answer
-
-$$
-${qn2_data.expressions[qn2_data.expressions.length - 1]} \\text{ | Unit: ${
-  qn2_data.units[qn2_data.Answer]
-}}
-$$
-`;
-
-const circuitikz_test = `
-$$
-\\begin{aligned}
-
-A(s) &= \\left( \\cfrac{\\partial r}{\\partial s} \\Delta s\\right) \\left( \\cfrac{\\partial r}{\\partial t} \\Delta t\\right) \\\\ &= \\left| \\cfrac{\\partial r}{\\partial t} \\cfrac{\\partial r}{\\partial s} \\right| dsdt = dS
-
-\\end{aligned}
-$$
-`;
-
-for (const expr of qn2_data.expressions) {
-  evaluate(expr, qn2_data.variables);
 }
 
 const slide =
