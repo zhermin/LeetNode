@@ -1,42 +1,43 @@
-import {
-  Group,
-  Badge,
-  Button,
-  Text,
-  Container,
-  Center,
-  Loader,
-  Title,
-  Modal,
-  TextInput,
-  SimpleGrid,
-  Select,
-  Pagination,
-  Table,
-  Avatar,
-  Anchor,
-  Divider,
-} from "@mantine/core";
-import {
-  QueryKey,
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
-import { useCallback, useMemo, useState } from "react";
-import ForumPost from "@/components/course/ForumPost";
-import { Comment, PostMedia } from "@prisma/client";
-import { useForm } from "@mantine/form";
 import { useSession } from "next-auth/react";
-import "react-quill/dist/quill.snow.css";
 import dynamic from "next/dynamic";
+import { useState } from "react";
+
+import ForumPost from "@/components/course/ForumPost";
+import {
+	Anchor,
+	Avatar,
+	Badge,
+	Button,
+	Center,
+	Container,
+	Divider,
+	Group,
+	Loader,
+	Modal,
+	Pagination,
+	Select,
+	SimpleGrid,
+	Table,
+	Text,
+	TextInput,
+	Title
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { Comment, PostMedia } from "@prisma/client";
+import {
+	QueryKey,
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient
+} from "@tanstack/react-query";
+
 import DateDiffCalc from "./DateDiffCalc";
 
-const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
+const Editor = dynamic(import("@/components/editor/Editor"), {
   ssr: false,
-  loading: () => <p>Loading ...</p>,
+  loading: () => <p>Loading Editor...</p>,
 });
 
 type postType = {
@@ -66,13 +67,11 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const [postCourseFilter, setPostCourseFilter] = useState<string | null>(
     courseName
   );
-  // const [postTopicFilter, setPostTopicFilter] = useState<string | null>("All");
   const [postTypeFilter, setPostTypeFilter] = useState<string | null>("All");
 
   const [postCourseFilterStagger, setPostCourseFilterStagger] = useState<
     string | null
   >(courseName);
-  // const [postTopicFilterStagger, setPostTopicFilterStagger] = useState<string | null>("All");
   const [postTypeFilterStagger, setPostTypeFilterStagger] = useState<
     string | null
   >("All");
@@ -81,64 +80,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
 
   const session = useSession();
   const queryClient = useQueryClient();
-
-  const handleImageUpload = useCallback(
-    (file: File): Promise<string> =>
-      new Promise(async (resolve, reject) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", "w2ul1sgu");
-        try {
-          const res = await axios.post(
-            "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
-            formData
-          ); //use data destructuring to get data from the promise object
-          resolve(res.data.secure_url);
-        } catch (error) {
-          console.log(error);
-          reject(error);
-        }
-      }),
-
-    []
-  );
-
-  const people: { value: string }[] = [];
-  axios.get("/api/forum/getAllUsers").then((res) => {
-    res.data.map((e: { name: string }) => {
-      const jsonstr = `{"value":"${e.name}"}`;
-      people.push(JSON.parse(jsonstr));
-    });
-  });
-
-  const tags: { value: string }[] = [];
-  axios.get("/api/forum/getAllTopicNames").then((res) => {
-    res.data.map((e: { topicName: string }) => {
-      const jsonstr = `{"value":"${e.topicName}"}`;
-      tags.push(JSON.parse(jsonstr));
-    });
-  });
-
-  const mentions = useMemo(
-    () => ({
-      allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
-      mentionDenotationChars: ["@", "#"],
-      defaultMenuOrientation: "top",
-      source: (
-        searchTerm: string,
-        renderList: (arg0: { value: string }[]) => void,
-        mentionChar: string
-      ) => {
-        const list = mentionChar === "@" ? people : tags;
-        const includesSearchTerm = list.filter((item) =>
-          item.value.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        renderList(includesSearchTerm.slice(0, 5));
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
 
   const [posts, courses, topics] = useQueries({
     queries: [
@@ -255,7 +196,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const indexOfLastPost = currentPage * Number(postsPerPage);
   const indexOfFirstPost = indexOfLastPost - Number(postsPerPage);
   let filteredCoursePosts: string;
-  // let filteredTopicPosts;
   let filteredTypePosts;
 
   // console.log(posts.data.data);
@@ -462,17 +402,10 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 <Text size={"sm"} weight={500}>
                   Message
                 </Text>
-                <QuillNoSSRWrapper
-                  // modules={modules}
+                <Editor
+                  upload_preset="forum_media"
                   value={message}
                   onChange={setMessage}
-                  onImageUpload={handleImageUpload}
-                  mentions={mentions}
-                  styles={{
-                    toolbar: {
-                      zIndex: 0,
-                    },
-                  }}
                 />
                 <Group position="center" mt="xl">
                   <Button type="submit" size="md">

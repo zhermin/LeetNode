@@ -1,81 +1,55 @@
-import {
-  ActionIcon,
-  Avatar,
-  Badge,
-  Blockquote,
-  Box,
-  Button,
-  Center,
-  createStyles,
-  CSSObject,
-  Divider,
-  Flex,
-  Group,
-  keyframes,
-  Loader,
-  MantineTheme,
-  NavLink,
-  Popover,
-  Select,
-  SimpleGrid,
-  Text,
-  Title,
-  TypographyStylesProvider,
-} from "@mantine/core";
-import { PostMedia, Comment, CommentMedia } from "@prisma/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { useSession } from "next-auth/react";
-import {
-  Dispatch,
-  MouseEventHandler,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
 import dynamic from "next/dynamic";
-import DateDiffCalc from "./DateDiffCalc";
 import {
-  IconChevronLeft,
-  IconCornerDownRight,
-  IconDotsVertical,
-  IconThumbDown,
-  IconThumbUp,
-  IconX,
+	Dispatch,
+	MouseEventHandler,
+	SetStateAction,
+	useEffect,
+	useState
+} from "react";
+
+import {
+	ActionIcon,
+	Avatar,
+	Badge,
+	Blockquote,
+	Box,
+	Button,
+	Center,
+	createStyles,
+	CSSObject,
+	Divider,
+	Flex,
+	Group,
+	keyframes,
+	Loader,
+	MantineTheme,
+	NavLink,
+	Popover,
+	Select,
+	Text,
+	Title,
+	TypographyStylesProvider
+} from "@mantine/core";
+import { Comment, CommentMedia, PostMedia } from "@prisma/client";
+import {
+	IconChevronLeft,
+	IconCornerDownRight,
+	IconDotsVertical,
+	IconThumbDown,
+	IconThumbUp,
+	IconX
 } from "@tabler/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useGetFetchQuery } from "./CourseDiscussion";
-const QuillNoSSRWrapper = dynamic(import("@mantine/rte"), {
+import DateDiffCalc from "./DateDiffCalc";
+
+const Editor = dynamic(import("@/components/editor/Editor"), {
   ssr: false,
-  loading: () => <p>Loading ...</p>,
+  loading: () => <p>Loading Editor...</p>,
 });
-
-type postType = {
-  postId: string;
-  userId: string;
-  title: string;
-  postType: string;
-  message: string;
-  likes: number;
-  createdAt: string;
-  updatedAt: string;
-  postMedia: PostMedia[];
-  comment: Comment[];
-} | null;
-
-export const flash = keyframes({
-  from: { backgroundColor: "rgb(141, 152, 166)" },
-  to: { backgroundColor: "none" },
-});
-
-const useStyles = createStyles(() => ({
-  flash: {
-    animationName: `${flash}`,
-    animationDuration: "1.5s",
-    animationIterationCount: "initial",
-  },
-}));
 
 const ForumPost = ({
   postId,
@@ -87,7 +61,7 @@ const ForumPost = ({
   users: { id: string; image: string; value: string }[];
 }) => {
   const [message, setMessage] = useState("");
-  const [sort, setSort] = useState<string | null>("oldest");
+  const [sort, setSort] = useState<string | null>("newest");
   const [voted, setVoted] = useState<number>(0);
   const [displayLikes, setDisplayLikes] = useState<number>();
   const [replying, setReplying] = useState<string | null>();
@@ -187,50 +161,6 @@ const ForumPost = ({
     });
     return tags;
   });
-
-  const handleImageUpload = useCallback(
-    (file: File): Promise<string> =>
-      new Promise(async (resolve, reject) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", "w2ul1sgu");
-        try {
-          const res = await axios.post(
-            "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
-            formData
-          ); //use data destructuring to get data from the promise object
-          resolve(res.data.secure_url);
-        } catch (error) {
-          console.log(error);
-          reject(error);
-        }
-      }),
-
-    []
-  );
-
-  const mentions = useMemo(
-    () => ({
-      allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
-      mentionDenotationChars: ["@", "#"],
-      defaultMenuOrientation: "top",
-      source: (
-        searchTerm: string,
-        renderList: (arg0: { value: string }[]) => void,
-        mentionChar: string
-      ) => {
-        const list = mentionChar === "@" ? users : topics;
-        const includesSearchTerm = list?.filter((item: { value: string }) =>
-          item.value.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        {
-          if (includesSearchTerm) renderList(includesSearchTerm.slice(0, 5));
-        }
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
 
   const addMutation = useMutation<
     Response,
@@ -347,16 +277,17 @@ const ForumPost = ({
         margin: "auto",
       })}
     >
-      <Button
-        onClick={handleBack}
-        leftIcon={<IconChevronLeft size={14} />}
-        styles={() => ({ leftIcon: { marginLeft: -5 } })}
-      >
-        Back
-      </Button>
-      <SimpleGrid cols={2} spacing="md"></SimpleGrid>
+      <Flex align="center" gap="xl" mb="md">
+        <Button
+          onClick={handleBack}
+          leftIcon={<IconChevronLeft size={14} />}
+          size="xs"
+        >
+          Back
+        </Button>
+        <Title>{post?.title}</Title>
+      </Flex>
 
-      <Title>{post?.title}</Title>
       <Group position="apart">
         <Group>
           <Text size="xs" color="dimmed">
@@ -389,18 +320,15 @@ const ForumPost = ({
             </ActionIcon>
           </Popover.Target>
           <Popover.Dropdown p={0}>
-            {post?.userId === session?.data?.user?.id ? (
-              <NavLink
-                label="Edit"
-                onClick={() => {
-                  handleEdit(post?.postId as string);
-                  setMessage(post?.message as string);
-                  setPostOpened(false);
-                }}
-              />
-            ) : (
-              ""
-            )}
+            <NavLink
+              label="Edit"
+              onClick={() => {
+                handleEdit(post?.postId as string);
+                setMessage(post?.message as string);
+                setPostOpened(false);
+              }}
+              disabled={session?.data?.user?.id !== post?.userId}
+            />
           </Popover.Dropdown>
         </Popover>
       </Group>
@@ -416,17 +344,10 @@ const ForumPost = ({
             });
           }}
         >
-          <QuillNoSSRWrapper
-            // modules={modules}
+          <Editor
+            upload_preset="forum_media"
             value={message}
             onChange={setMessage}
-            onImageUpload={handleImageUpload}
-            mentions={mentions}
-            styles={{
-              toolbar: {
-                zIndex: 0,
-              },
-            }}
           />
           <Group position="center" mt="xl">
             <Button type="submit">Edit message</Button>
@@ -463,20 +384,14 @@ const ForumPost = ({
           >
             <IconThumbDown />
           </ActionIcon>
-          <>
-            {post?.createdAt !== post?.updatedAt ? (
+          {post?.createdAt !== post?.updatedAt && (
+            <>
               <Divider orientation="vertical" />
-            ) : (
-              ""
-            )}
-            {post?.createdAt !== post?.updatedAt ? (
               <Text size={"sm"} color={"cyan.7"}>
                 Updated {DateDiffCalc(post?.updatedAt as string)}
               </Text>
-            ) : (
-              ""
-            )}
-          </>
+            </>
+          )}
         </Group>
         <Flex justify="flex-end" align="flex-end" direction="column">
           <Group>
@@ -506,72 +421,70 @@ const ForumPost = ({
           <Select
             value={sort}
             data={[
-              { value: "oldest", label: "Oldest" },
               { value: "newest", label: "Newest" },
+              { value: "oldest", label: "Oldest" },
             ]}
             onChange={(value) => {
               setSort(value);
-              if (value === "oldest" || value == "newest") {
-                comments.reverse();
-              }
+              comments.reverse();
             }}
           />
         </Group>
       </Group>
-      {comments.map(
-        (comment: {
-          commentId: string;
-          postId: string;
-          userId: string;
-          message: string;
-          likes: number;
-          createdAt: string;
-          updatedAt: string;
-          reply: string;
-          commentMedia: CommentMedia[];
-        }) => (
-          <Box key={comment.commentId} id={comment.commentId} mt={4}>
-            <Divider my="sm" />
-            <Group position="apart">
-              <Group>
-                <Avatar
-                  src={
-                    users.find(
-                      (user: { id: string }) => user.id === comment.userId
-                    )?.image
-                  }
-                  alt={comment.userId}
-                  radius="lg"
-                  size="sm"
-                />
-                <Title size="sm">
-                  {
-                    users.find(
-                      (user: { id: string }) => user.id === comment.userId
-                    )?.value
-                  }
-                </Title>
-              </Group>
-              <Popover
-                width={100}
-                position="bottom"
-                withArrow
-                shadow="md"
-                opened={commentEdit === comment.commentId && commentOpened}
-                onChange={setCommentOpened}
-              >
-                <Popover.Target>
-                  <ActionIcon size={"sm"}>
-                    <IconDotsVertical
-                      onClick={() => {
-                        setCommentOpened((o) => !o);
-                        setCommentEdit(comment.commentId);
-                      }}
-                    />
-                  </ActionIcon>
-                </Popover.Target>
-                <Popover.Dropdown p={0}>
-                  {comment?.userId === session?.data?.user?.id ? (
+      {comments
+        .map(
+          (comment: {
+            commentId: string;
+            postId: string;
+            userId: string;
+            message: string;
+            likes: number;
+            createdAt: string;
+            updatedAt: string;
+            reply: string;
+            commentMedia: CommentMedia[];
+          }) => (
+            <Box key={comment.commentId} id={comment.commentId} mt={4}>
+              <Divider my="sm" />
+              <Group position="apart">
+                <Group mb="md">
+                  <Avatar
+                    src={
+                      users.find(
+                        (user: { id: string }) => user.id === comment.userId
+                      )?.image
+                    }
+                    alt={comment.userId}
+                    radius="lg"
+                    size="sm"
+                  />
+                  <Title size="sm">
+                    {
+                      users.find(
+                        (user: { id: string }) => user.id === comment.userId
+                      )?.value
+                    }
+                  </Title>
+                </Group>
+                <Popover
+                  width={100}
+                  position="bottom"
+                  withArrow
+                  shadow="md"
+                  opened={commentEdit === comment.commentId && commentOpened}
+                  onChange={setCommentOpened}
+                >
+                  <Popover.Target>
+                    <ActionIcon size={"sm"}>
+                      <IconDotsVertical
+                        onClick={() => {
+                          setCommentOpened((o) => !o);
+                          setCommentEdit(comment.commentId);
+                        }}
+                      />
+                    </ActionIcon>
+                  </Popover.Target>
+                  <Popover.Dropdown p={0}>
                     <NavLink
                       label="Edit"
                       onClick={() => {
@@ -579,51 +492,39 @@ const ForumPost = ({
                         setMessage(comment.message);
                         setCommentOpened(false);
                       }}
+                      disabled={comment?.userId !== session?.data?.user?.id}
                     />
-                  ) : (
-                    ""
-                  )}
-                  <NavLink
-                    label="Reply"
-                    onClick={() => {
-                      handleReply(comment?.commentId);
-                      setCommentOpened(false);
-                    }}
-                  />
-                </Popover.Dropdown>
-              </Popover>
-            </Group>
-            {edit === comment.commentId ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  editCommentMutation.mutate({
-                    commentId: edit as string,
-                    message: message,
-                  });
-                }}
-              >
-                <QuillNoSSRWrapper
-                  // modules={modules}
-                  value={message}
-                  onChange={setMessage}
-                  onImageUpload={handleImageUpload}
-                  mentions={mentions}
-                  styles={{
-                    toolbar: {
-                      zIndex: 0,
-                    },
+                    <NavLink
+                      label="Reply"
+                      onClick={() => {
+                        handleReply(comment?.commentId);
+                        setCommentOpened(false);
+                      }}
+                    />
+                  </Popover.Dropdown>
+                </Popover>
+              </Group>
+              {edit === comment.commentId ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    editCommentMutation.mutate({
+                      commentId: edit as string,
+                      message: message,
+                    });
                   }}
-                />
-                <Group position="center" mt="xl">
-                  <Button type="submit" size="md">
-                    Edit message
-                  </Button>
-                  <Button onClick={() => setEdit(null)}>Cancel</Button>
-                </Group>
-              </form>
-            ) : comment.reply !== null ? (
-              <>
+                >
+                  <Editor
+                    upload_preset="forum_media"
+                    value={message}
+                    onChange={setMessage}
+                  />
+                  <Group position="center" mt="xl">
+                    <Button type="submit">Edit message</Button>
+                    <Button onClick={() => setEdit(null)}>Cancel</Button>
+                  </Group>
+                </form>
+              ) : comment.reply !== null ? (
                 <Box
                   sx={() => ({
                     wordWrap: "break-word",
@@ -713,48 +614,46 @@ const ForumPost = ({
                     </TypographyStylesProvider>
                   </Text>
                 </Box>
-              </>
-            ) : (
-              <Text styles={{ body: { wordWrap: "break-word" } }}>
-                <TypographyStylesProvider
-                  key={comment.commentId}
-                  className={
-                    goToComment === comment.commentId
-                      ? classes.flash
-                      : undefined
-                  }
-                >
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: `${comment.message}`,
-                    }}
-                  />
-                </TypographyStylesProvider>
-              </Text>
-            )}
-            <Group mt={"md"}>
-              <Text size="xs" color="dimmed">
-                {formatIsoDateTime(comment?.createdAt as string)}
-              </Text>
-              {Date.parse(comment?.createdAt) <
-              Date.parse(comment?.updatedAt) ? (
-                <Divider orientation="vertical" />
               ) : (
-                ""
-              )}
-              {Date.parse(comment?.createdAt) <
-              Date.parse(comment?.updatedAt) ? (
-                <Text size={"sm"} color={"cyan.7"}>
-                  Updated {DateDiffCalc(comment?.updatedAt as string)}
+                <Text styles={{ body: { wordWrap: "break-word" } }}>
+                  <TypographyStylesProvider
+                    key={comment.commentId}
+                    className={
+                      goToComment === comment.commentId
+                        ? classes.flash
+                        : undefined
+                    }
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: `${comment.message}`,
+                      }}
+                    />
+                  </TypographyStylesProvider>
                 </Text>
-              ) : (
-                ""
               )}
-            </Group>
-          </Box>
+              <Group mt={"md"}>
+                <Text size="xs" color="dimmed">
+                  {formatIsoDateTime(comment?.createdAt as string)}
+                </Text>
+                {Date.parse(comment?.createdAt) <
+                  Date.parse(comment?.updatedAt) && (
+                  <Divider orientation="vertical" />
+                )}
+                {Date.parse(comment?.createdAt) <
+                  Date.parse(comment?.updatedAt) && (
+                  <Text size={"sm"} color={"cyan.7"}>
+                    Updated {DateDiffCalc(comment?.updatedAt as string)}
+                  </Text>
+                )}
+              </Group>
+            </Box>
+          )
         )
-      )}
+        .reverse()}
+
       <Divider my="sm" />
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -766,10 +665,10 @@ const ForumPost = ({
           });
         }}
       >
-        <Text size={"sm"} weight={500}>
-          Message
+        <Text size={"sm"} weight={500} mt="lg" mb="sm">
+          New Comment
         </Text>
-        {replying ? (
+        {replying && (
           <Box onClick={() => setReplying(null)} sx={replyingHeaderStyle}>
             <Group>
               <ActionIcon pl={10} variant="transparent" size={"md"}>
@@ -790,24 +689,14 @@ const ForumPost = ({
               </Text>
             </Group>
           </Box>
-        ) : (
-          ""
         )}
-        {edit ? (
-          ""
-        ) : (
+
+        {!edit && (
           <>
-            <QuillNoSSRWrapper
-              // modules={modules}
+            <Editor
+              upload_preset="forum_media"
               value={message}
               onChange={setMessage}
-              onImageUpload={handleImageUpload}
-              mentions={mentions}
-              styles={{
-                toolbar: {
-                  zIndex: 0,
-                },
-              }}
             />
             <Group position="center" mt="xl">
               <Button type="submit" size="md">
@@ -822,6 +711,32 @@ const ForumPost = ({
 };
 
 export default ForumPost;
+
+type postType = {
+  postId: string;
+  userId: string;
+  title: string;
+  postType: string;
+  message: string;
+  likes: number;
+  createdAt: string;
+  updatedAt: string;
+  postMedia: PostMedia[];
+  comment: Comment[];
+} | null;
+
+const flash = keyframes({
+  from: { backgroundColor: "rgb(141, 152, 166)" },
+  to: { backgroundColor: "none" },
+});
+
+const useStyles = createStyles(() => ({
+  flash: {
+    animationName: `${flash}`,
+    animationDuration: "1.5s",
+    animationIterationCount: "initial",
+  },
+}));
 
 const replyBoxStyles = (theme: MantineTheme): CSSObject => ({
   backgroundColor:
@@ -849,7 +764,8 @@ const replyingHeaderStyle = (theme: MantineTheme): CSSObject => ({
     theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[3],
   textAlign: "center",
   paddingTop: 6,
-  paddingBottom: 3,
+  paddingBottom: 9,
+  marginBottom: -3,
   borderTopRightRadius: theme.radius.md,
   borderTopLeftRadius: theme.radius.md,
   borderBottom: 0,

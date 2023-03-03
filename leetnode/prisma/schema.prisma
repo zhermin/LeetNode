@@ -125,9 +125,12 @@ model UserCourseQuestion {
 model Mastery {
   userId       String
   topicSlug    String
-  masteryLevel Float  @default(0)
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic        Topic  @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+  masteryLevel Float     @default(0)
+  topicPing    Boolean   @default(false)
+  lastFlagged  DateTime?
+  errorMeter   Int       @default(0)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic        Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
   @@index([topicSlug])
@@ -163,8 +166,10 @@ model Question {
   questionId             Int                     @id @default(autoincrement())
   variationId            Int                     @default(1)
   topicSlug              String
-  questionContent        String                  @db.VarChar(500)
+  questionTitle          String?
   questionDifficulty     QuestionDifficulty
+  questionContent        String                  @db.Text
+  questionData           Json?
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
   attempts               Attempt[]
   questionMedia          QuestionMedia[]
@@ -207,7 +212,7 @@ model Post {
   postId     String      @id @default(cuid())
   userId     String
   title      String
-  message    String      @db.VarChar(700)
+  message    String      @db.Text
   likes      Int         @default(0)
   courseName String
   topicName  String? //kiv until dynamic loading implemented
@@ -257,7 +262,7 @@ model Comment {
   commentId    String         @id @default(cuid())
   postId       String
   userId       String
-  message      String         @db.VarChar(700)
+  message      String         @db.Text
   likes        Int            @default(0)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt

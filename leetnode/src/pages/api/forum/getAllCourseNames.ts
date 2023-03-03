@@ -18,6 +18,7 @@ export default async function handler(
       courseName: true,
       courseLevel: true,
       type: true,
+      topics: true,
     },
   });
 

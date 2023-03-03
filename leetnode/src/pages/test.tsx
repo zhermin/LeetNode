@@ -16,6 +16,7 @@ import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
 	ActionIcon,
 	AppShell,
+	Badge,
 	Box,
 	Button,
 	Center,
@@ -32,6 +33,7 @@ import {
 	Select,
 	SimpleGrid,
 	Stack,
+	Table,
 	Text,
 	Textarea,
 	TextInput,
@@ -40,7 +42,13 @@ import {
 import { useForm, zodResolver } from "@mantine/form";
 import { randomId } from "@mantine/hooks";
 import { Prism } from "@mantine/prism";
-import { CourseType, Level } from "@prisma/client";
+import {
+	CourseType,
+	Level,
+	Question,
+	QuestionDifficulty,
+	Topic
+} from "@prisma/client";
 import {
 	Icon2fa,
 	IconBellRinging,
@@ -69,7 +77,7 @@ import {
 	IconUsers,
 	IconX
 } from "@tabler/icons";
-import { useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 const Editor = dynamic(import("@/components/editor/Editor"), {
   ssr: false,
@@ -97,7 +105,7 @@ const tabs = {
     { link: "", label: "Slides and Videos", icon: IconBellRinging },
     { link: "", label: "Latex", icon: IconReceipt2 },
     { link: "", label: "Editor", icon: IconFingerprint },
-    { link: "", label: "2", icon: IconKey },
+    { link: "", label: "Questions", icon: IconKey },
     { link: "", label: "3", icon: IconDatabaseImport },
     { link: "", label: "4", icon: Icon2fa },
     { link: "", label: "5", icon: IconSettings },
@@ -117,9 +125,13 @@ export default function Test() {
   const { theme, classes, cx } = useStyles();
   const [section, setSection] = useState<"account" | "general">("account");
   const [active, setActive] = useState("Editor");
-  const [sidebarOpened, setSidebarOpened] = useState(false);
+  const [sidebarOpened, setSidebarOpened] = useState(true);
   const [editorOpened, setEditorOpened] = useState(false);
+  const [editorHtml, setEditorHtml] = useState("");
   const [rawDataOpened, setRawDataOpened] = useState(false);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [questionId, setQuestionId] = useState(0);
+  const [questionOpened, setQuestionOpened] = useState(false);
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
@@ -231,9 +243,8 @@ $$
   const form = useForm({
     initialValues: {
       title: "Given voltage and 3 resistors, find I_3 and I_final",
-      course: "Circuit Analysis Techniques",
-      topic: "Ohm's Law",
-      difficulty: "Medium",
+      difficulty: QuestionDifficulty.Medium,
+      topic: "",
       variables: [
         {
           key: randomId(),
@@ -291,22 +302,22 @@ $$
         {
           key: randomId(),
           expr: "I_1 = V_{\\alpha} / R_1",
-          hasExplanation: false,
+          explanation: undefined,
         },
         {
           key: randomId(),
           expr: "I_3 = V_{\\alpha} / R_3",
-          hasExplanation: false,
+          explanation: undefined,
         },
         {
           key: randomId(),
           expr: "I_2 = V_{\\alpha} / R_2",
-          hasExplanation: false,
+          explanation: undefined,
         },
         {
           key: randomId(),
           expr: "I_{\\text{final}} = (I_1 + I_2 + I_3)",
-          hasExplanation: false,
+          explanation: undefined,
         },
       ],
       hints: [
@@ -319,9 +330,15 @@ $$
     validateInputOnChange: true,
     validate: zodResolver(
       z.object({
-        title: z.string().trim().min(5, { message: "Title is too short" }),
-        course: z.string().min(1, { message: "Please pick a course" }),
+        title: z
+          .string()
+          .trim()
+          .min(5, { message: "Title is too short" })
+          .max(150, { message: "Title is too long" }),
         topic: z.string().min(1, { message: "Please pick a topic" }),
+        difficulty: z.nativeEnum(QuestionDifficulty, {
+          errorMap: () => ({ message: "Please pick a difficulty" }),
+        }),
         variables: z
           .array(
             z.object({
@@ -351,8 +368,14 @@ $$
                 .trim()
                 .regex(/^[^=]+=[^=]+$/, { message: "Invalid expression" })
                 .min(1, { message: "Cannot be empty" }),
-              hasExplanation: z.boolean(),
-              explanation: z.string().optional(),
+              explanation: z
+                .string()
+                .min(10, {
+                  message:
+                    "Please provide an explanation if you have toggled Add Explanation",
+                })
+                .optional()
+                .or(z.literal(undefined)),
             })
           )
           .nonempty({ message: "Please add at least 1 method" }),
@@ -366,7 +389,7 @@ $$
   );
   const handlePreviewChange = (toRandomize: boolean) => {
     form.clearErrors();
-    const cleaned = (str: string) => str.replace(/[\\{}]/g, "");
+    const cleaned = (str: string) => str.replace(/[\\{}]/g, "_");
     const rawVariables: {
       [key: string]: number;
     } = form.values.variables
@@ -665,14 +688,14 @@ $$
                 variant="default"
                 radius="xl"
                 className={
-                  item.hasExplanation
+                  item.explanation !== undefined
                     ? "border border-green-600 bg-green-50"
                     : ""
                 }
                 onClick={() => {
                   form.setFieldValue(
-                    `methods.${index}.hasExplanation`,
-                    !item.hasExplanation
+                    `methods.${index}.explanation`,
+                    item.explanation === undefined ? "" : undefined
                   );
                 }}
               >
@@ -686,14 +709,14 @@ $$
               <IconTrash size={16} />
             </ActionIcon>
           </Flex>
-          {item.hasExplanation && (
+          {item.explanation !== undefined && (
             <Flex gap="md" align="center">
               <Text fw={500} fz="sm">
                 Explanation <span className="text-red-500">*</span>
               </Text>
               <Textarea
                 sx={{ flex: 1 }}
-                required={item.hasExplanation}
+                required={item.explanation !== undefined}
                 {...form.getInputProps(`methods.${index}.explanation`)}
               />
             </Flex>
@@ -707,7 +730,6 @@ $$
     form.insertListItem("methods", {
       key: randomId(),
       expr: "",
-      hasExplanation: false,
     });
   };
 
@@ -755,24 +777,60 @@ $$
     setHydrated(true);
   }, []);
 
-  const [courses, topics] = useQueries({
-    queries: [
-      {
-        queryKey: ["all-course-names"],
-        queryFn: () => {
-          return axios.get("/api/forum/getAllCourseNames");
+  const [{ data: courses }, { data: topics }, { data: questions }] = useQueries(
+    {
+      queries: [
+        {
+          queryKey: ["all-course-names"],
+          queryFn: () => {
+            return axios.get("/api/forum/getAllCourseNames");
+          },
         },
-      },
-      {
-        queryKey: ["all-topic-names"],
-        queryFn: () => {
-          return axios.get("/api/forum/getAllTopicNames");
+        {
+          queryKey: ["all-topic-names"],
+          queryFn: () => {
+            return axios.get("/api/forum/getAllTopicNames");
+          },
         },
-      },
-    ],
-  });
+        {
+          queryKey: ["all-questions"],
+          queryFn: () => {
+            return axios.get("/api/question/getAllQuestions");
+          },
+        },
+      ],
+    }
+  );
 
-  if (!courses.data || !topics.data) {
+  const useAddQuestion = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (newQuestion: Omit<Question, "questionId">) =>
+        axios.post("/api/question/addQuestion", newQuestion),
+      onSuccess: () => {
+        queryClient.invalidateQueries(["all-questions"]);
+      },
+    });
+  };
+
+  const { mutate: addQuestion, isLoading: addQuestionLoading } =
+    useAddQuestion();
+
+  const handleAddQuestion = async (values: typeof form.values) =>
+    await addQuestion({
+      variationId: 0,
+      topicSlug: values.topic,
+      questionTitle: values.title,
+      questionDifficulty: values.difficulty,
+      questionContent: editorHtml,
+      questionData: {
+        variables: values.variables,
+        methods: values.methods,
+        hints: values.hints,
+      },
+    });
+
+  if (!courses || !topics || !questions) {
     return (
       <Center className="h-screen">
         <Loader />
@@ -780,21 +838,11 @@ $$
     );
   }
 
-  const coursesArr = courses.data.data.map(
-    (course: { courseName: string; courseLevel: Level; type: CourseType }) => {
+  const topicsArr = topics.data.map(
+    (topic: { topicName: string; topicSlug: string; topicLevel: string }) => {
       return {
-        value: course.courseName,
-        label: course.courseName,
-        group: course.type === CourseType.Quiz ? "Quiz" : course.courseLevel,
-      };
-    }
-  );
-
-  const topicsArr = topics.data.data.map(
-    (topic: { topicName: string; topicLevel: string }) => {
-      return {
-        value: topic.topicName,
         label: topic.topicName,
+        value: topic.topicSlug,
         group: topic.topicLevel,
       };
     }
@@ -908,7 +956,7 @@ $$
           size="xl"
           title="Markdown/LaTeX Editor"
         >
-          <Editor />
+          Old Editor used to be here
         </Modal>
         {active === "Slides and Videos" ? (
           <>
@@ -955,8 +1003,11 @@ $$
             <form
               onSubmit={form.onSubmit(
                 (values: typeof form.values) => {
-                  console.log(values);
-                  toast.success("Form submitted successfully");
+                  toast.promise(handleAddQuestion(values), {
+                    loading: "Adding question...",
+                    success: "Question added successfully!",
+                    error: "Error adding question, please contact support",
+                  });
                 },
                 (errors: typeof form.errors) => {
                   Object.keys(errors).forEach((key) => {
@@ -974,37 +1025,94 @@ $$
               />
 
               <SimpleGrid
-                cols={3}
+                cols={2}
                 mt="lg"
                 breakpoints={[{ maxWidth: "sm", cols: 1 }]}
               >
                 <Select
-                  data={coursesArr}
-                  placeholder="Select course"
-                  label="Course Name"
-                  required
-                  {...form.getInputProps("course")}
-                />
-                <Select
-                  data={topicsArr}
-                  placeholder="Select key tested topic"
-                  label="Topics"
-                  required
-                  {...form.getInputProps("topic")}
-                />
-                <Select
-                  data={["Easy", "Medium", "Hard"]}
+                  data={[
+                    {
+                      label: "Easy",
+                      value: QuestionDifficulty.Easy,
+                    },
+                    {
+                      label: "Medium",
+                      value: QuestionDifficulty.Medium,
+                    },
+                    {
+                      label: "Hard",
+                      value: QuestionDifficulty.Hard,
+                    },
+                  ]}
                   placeholder="Select question difficulty"
                   label="Difficulty"
                   required
                   {...form.getInputProps("difficulty")}
                 />
+                <Select
+                  data={topicsArr}
+                  placeholder="Select key topic tested"
+                  label="Key Topic"
+                  required
+                  onChange={(value) => {
+                    form.setFieldValue("topic", value ?? "");
+                    setFilteredCourses(
+                      courses.data.filter(
+                        (course: {
+                          topics: {
+                            topicSlug: string;
+                          }[];
+                        }) =>
+                          course.topics.some(
+                            (topic) => topic.topicSlug === value
+                          )
+                      )
+                    );
+                  }}
+                  error={form.errors.topic}
+                />
               </SimpleGrid>
+
+              <Text weight={500} size="sm" mb="xs" mt="lg">
+                Topics in Courses
+              </Text>
+              <Flex gap="sm" wrap="wrap">
+                {filteredCourses.length > 0 ? (
+                  filteredCourses.map(
+                    (course: {
+                      courseName: string;
+                      courseLevel: Level;
+                      type: CourseType;
+                    }) => (
+                      <Badge
+                        key={course.courseName}
+                        color={
+                          course.type === CourseType.Content
+                            ? course.courseLevel === Level.Foundational
+                              ? "green"
+                              : course.courseLevel === Level.Intermediate
+                              ? "yellow"
+                              : "red"
+                            : ""
+                        }
+                      >
+                        {course.courseName}
+                      </Badge>
+                    )
+                  )
+                ) : (
+                  <Badge color="dark">None</Badge>
+                )}
+              </Flex>
 
               <Text weight={500} size="sm" mb="xs" mt="lg">
                 Question <span className="text-red-500">*</span>
               </Text>
-              <Editor />
+              <Editor
+                upload_preset="question_media"
+                value={editorHtml}
+                onChange={setEditorHtml}
+              />
 
               <Flex mt="xl" align="center">
                 <Text weight={500} size="sm">
@@ -1015,7 +1123,7 @@ $$
                   width={350}
                   withArrow
                   label="Variable names must start with an alphabet and can only contain
-                alphabets, numbers, underscores and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end."
+                alphabets, numbers, underscores and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end. Dollar signs ($) are disabled as they clash with LaTeX."
                 >
                   <ActionIcon
                     variant="transparent"
@@ -1023,7 +1131,7 @@ $$
                     ml="lg"
                     className="cursor"
                     component="a"
-                    href="https://mathjs.org/docs/expressions/syntax.html"
+                    href="https://mathjs.org/docs/expressions/syntax.html#constants-and-variables"
                     target="_blank"
                   >
                     <IconHelp size={20} color="black" />
@@ -1214,21 +1322,107 @@ $$
                 radius="sm"
                 my="xl"
                 type="submit"
+                loading={addQuestionLoading}
               >
                 Create Question
               </Button>
 
               <Modal
+                size="xl"
                 title="Raw Data"
                 opened={rawDataOpened}
                 onClose={() => setRawDataOpened(false)}
                 overflow="inside"
               >
-                <Prism language="json">
+                <Prism language="json" withLineNumbers>
                   {JSON.stringify(form.values, null, 2)}
                 </Prism>
               </Modal>
             </form>
+          </>
+        ) : active === "Questions" ? (
+          <>
+            <Text weight={500} size="lg" mb="md">
+              All Questions
+            </Text>
+            {questions.data.length > 0 ? (
+              <>
+                <Table highlightOnHover>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Variation</th>
+                      <th>Title</th>
+                      <th>Difficulty</th>
+                      <th>Topic</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {questions.data.map((question: Question) => (
+                      <tr key={question.questionId}>
+                        <td>{question.questionId}</td>
+                        <td>{question.variationId}</td>
+                        <td>{question.questionTitle}</td>
+                        <td>{question.questionDifficulty}</td>
+                        <td>
+                          {
+                            topics.data.find(
+                              (topic: Topic) =>
+                                topic.topicSlug === question.topicSlug
+                            ).topicName
+                          }
+                        </td>
+                        <td>
+                          <Button
+                            variant="default"
+                            color="gray"
+                            radius="sm"
+                            onClick={() => {
+                              setQuestionId(question.questionId);
+                              setQuestionOpened(true);
+                            }}
+                          >
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+                <Modal
+                  size="xl"
+                  title="Question"
+                  opened={questionOpened}
+                  onClose={() => setQuestionOpened(false)}
+                  overflow="inside"
+                >
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        questionId !== 0 &&
+                        questions.data.find(
+                          (question: Question) =>
+                            question.questionId === questionId
+                        ).questionContent,
+                    }}
+                  />
+                  <Prism language="json" mt="xl" withLineNumbers>
+                    {JSON.stringify(
+                      questionId !== 0 &&
+                        questions.data.find(
+                          (question: Question) =>
+                            question.questionId === questionId
+                        ),
+                      null,
+                      2
+                    )}
+                  </Prism>
+                </Modal>
+              </>
+            ) : (
+              <Text>No questions found.</Text>
+            )}
           </>
         ) : (
           <></>

@@ -18,8 +18,6 @@ import toast, { Toaster } from "react-hot-toast";
 
 // Styles
 import "../styles/globals.css";
-import "katex/dist/katex.min.css";
-import "react-quill/dist/quill.snow.css";
 import {
   MantineProvider,
   ColorSchemeProvider,
@@ -48,7 +46,19 @@ const LeetNode: AppType<{
         mutationCache: new MutationCache({
           onError: (error) => {
             if (error instanceof AxiosError) {
+              if (error.response && error.response.data) {
+                const jsonStr = error.response.data.match(
+                  /<script id="__NEXT_DATA__".*?>(.*?)<\/script>/s
+                )[1];
+                const data = JSON.parse(jsonStr);
+                const errorMessage = data.err.message;
+                toast.error(`Please contact support\n\n${errorMessage}`);
+              }
               toast.error(error.message);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error("Unknown Error");
             }
           },
         }),

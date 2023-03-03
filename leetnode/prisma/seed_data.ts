@@ -364,7 +364,7 @@ export const Courses: CourseWithTopics = [
   },
 ];
 
-export const Questions: Question[] = [
+export const Questions: Omit<Question, "questionTitle" | "questionData">[] = [
   {
     questionId: 1,
     variationId: 1,
