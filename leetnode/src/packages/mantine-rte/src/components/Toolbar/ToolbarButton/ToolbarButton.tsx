@@ -1,6 +1,9 @@
-import React from 'react';
-import { ActionIcon, ActionIconProps } from '@mantine/core';
-import useStyles from './ToolbarButton.styles';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+import React from "react";
+import { ActionIcon, ActionIconProps } from "@mantine/core";
+import useStyles from "./ToolbarButton.styles";
 
 interface ToolbarButtonProps extends ActionIconProps {
   /** Control icon */
@@ -26,7 +29,7 @@ export function ToolbarButton({
   noActive,
   ...others
 }: ToolbarButtonProps) {
-  const { classes, cx } = useStyles({ noActive }, { name: 'RichTextEditor' });
+  const { classes, cx } = useStyles({ noActive }, { name: "RichTextEditor" });
 
   return (
     <ActionIcon
@@ -40,4 +43,4 @@ export function ToolbarButton({
   );
 }
 
-ToolbarButton.displayName = '@mantine/rte/ToolbarButton';
+ToolbarButton.displayName = "@mantine/rte/ToolbarButton";

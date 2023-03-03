@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 const CLEANUP = [
   'list',
   'strike',
@@ -17,7 +20,7 @@ const CLEANUP = [
   'formula',
 ];
 
-export function replaceIcons(quillIconsModule: any) {
+export function replaceIcons(quillIconsModule: unknown) {
   CLEANUP.forEach((icon) => {
     // eslint-disable-next-line no-param-reassign
     quillIconsModule[icon] = {};

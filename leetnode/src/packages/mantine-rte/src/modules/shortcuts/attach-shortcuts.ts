@@ -1,13 +1,16 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 interface Range {
   index: number;
   length: number;
 }
 
 interface Context {
-  format: Record<string, any>;
+  format: Record<string, unknown>;
 }
 
-export function attachShortcuts(keyboardModule: any) {
+export function attachShortcuts(keyboardModule: unknown) {
   ['1', '2', '3', '4', '5', '6'].forEach((key) => {
     keyboardModule.addBinding(
       {

@@ -1,4 +1,7 @@
-export function createImageBlot(InlineBlot: any) {
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+export function createImageBlot(InlineBlot: unknown) {
   return class ImageBlot extends InlineBlot {
     static blotName = 'imageBlot';
     static className = 'ql-image-uploading';

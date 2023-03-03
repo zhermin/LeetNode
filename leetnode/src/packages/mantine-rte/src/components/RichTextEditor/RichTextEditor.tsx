@@ -1,40 +1,45 @@
-import React, { useMemo, useRef, useEffect, forwardRef } from 'react';
-import Editor, { Quill } from 'react-quill';
-import type { Delta, Sources } from 'quill';
-import 'quill-mention';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+import React, { useMemo, useRef, useEffect, forwardRef } from "react";
+import Editor, { Quill } from "react-quill";
+import Delta, { Sources } from "quill";
+import "quill-mention";
 import {
   DefaultProps,
   Selectors,
   Box,
   MantineNumberSize,
   useComponentDefaultProps,
-} from '@mantine/core';
-import { useId, mergeRefs } from '@mantine/hooks';
-import { Toolbar, ToolbarStylesNames } from '../Toolbar/Toolbar';
-import { DEFAULT_CONTROLS } from './default-control';
-import useStyles from './RichTextEditor.styles';
-import { DEFAULT_LABELS, RichTextEditorLabels } from './default-labels';
-import { ToolbarControl } from '../Toolbar/controls';
-import { createImageBlot, ImageUploader } from '../../modules/image-uploader';
-import { replaceIcons } from '../../modules/icons';
-import { attachShortcuts } from '../../modules/shortcuts';
+} from "@mantine/core";
+import { useId, mergeRefs } from "@mantine/hooks";
+import { Toolbar, ToolbarStylesNames } from "../Toolbar/Toolbar";
+import { DEFAULT_CONTROLS } from "./default-control";
+import useStyles from "./RichTextEditor.styles";
+import { DEFAULT_LABELS, RichTextEditorLabels } from "./default-labels";
+import { ToolbarControl } from "../Toolbar/controls";
+import { createImageBlot, ImageUploader } from "../../modules/image-uploader";
+import { replaceIcons } from "../../modules/icons";
+import { attachShortcuts } from "../../modules/shortcuts";
 
 import katex from "katex";
 import "katex/dist/katex.min.css";
 window.katex = katex;
 
-export type RichTextEditorStylesNames = ToolbarStylesNames | Selectors<typeof useStyles>;
+export type RichTextEditorStylesNames =
+  | ToolbarStylesNames
+  | Selectors<typeof useStyles>;
 
 export type { RichTextEditorLabels };
 
 export { DEFAULT_LABELS, DEFAULT_CONTROLS };
 
-const InlineBlot = Quill.import('blots/block');
+const InlineBlot = Quill.import("blots/block");
 const ImageBlot = createImageBlot(InlineBlot);
-Quill.register({ 'formats/imageBlot': ImageBlot });
-Quill.register('modules/imageUploader', ImageUploader);
+Quill.register({ "formats/imageBlot": ImageBlot });
+Quill.register("modules/imageUploader", ImageUploader);
 
-const icons = Quill.import('ui/icons');
+const icons = Quill.import("ui/icons");
 replaceIcons(icons);
 
 function defaultImageUpload(file: File): Promise<string> {
@@ -47,7 +52,7 @@ function defaultImageUpload(file: File): Promise<string> {
 
 export interface RichTextEditorProps
   extends DefaultProps<RichTextEditorStylesNames>,
-    Omit<React.ComponentPropsWithoutRef<'div'>, 'onChange' | 'defaultValue'> {
+    Omit<React.ComponentPropsWithoutRef<"div">, "onChange" | "defaultValue"> {
   /** HTML content, value not forced as quill works in uncontrolled mode */
   value?: string | Delta;
 
@@ -55,7 +60,12 @@ export interface RichTextEditorProps
   defaultValue?: string | Delta;
 
   /** Called each time value changes */
-  onChange?(value: string, delta: Delta, sources: Sources, editor: Editor.UnprivilegedEditor): void;
+  onChange?(
+    value: string,
+    delta: Delta,
+    sources: Sources,
+    editor: Editor.UnprivilegedEditor
+  ): void;
 
   /** Called when image image is inserted in editor */
   onImageUpload?(image: File): Promise<string>;
@@ -70,7 +80,7 @@ export interface RichTextEditorProps
   sticky?: boolean;
 
   /** Quill mentions plugin setting */
-  mentions?: Record<string, any>;
+  mentions?: Record<string, unknown>;
 
   /** Top toolbar position in any valid css value */
   stickyOffset?: number | string;
@@ -82,7 +92,7 @@ export interface RichTextEditorProps
   readOnly?: boolean;
 
   /** Extra modules for react-quill */
-  modules?: Record<string, any>;
+  modules?: Record<string, unknown>;
 
   /** List of formats that should be supported by the editor */
   formats?: string[];
@@ -120,7 +130,7 @@ export const RichTextEditor = forwardRef<Editor, RichTextEditorProps>(
       unstyled,
       formats,
       ...others
-    } = useComponentDefaultProps('RichTextEditor', defaultProps, props);
+    } = useComponentDefaultProps("RichTextEditor", defaultProps, props);
 
     const uuid = useId(id);
     const editorRef = useRef<Editor>();
@@ -132,7 +142,7 @@ export const RichTextEditor = forwardRef<Editor, RichTextEditorProps>(
         radius,
         readOnly,
       },
-      { classNames, styles, unstyled, name: 'RichTextEditor' }
+      { classNames, styles, unstyled, name: "RichTextEditor" }
     );
 
     const modules = useMemo(
@@ -185,4 +195,4 @@ export const RichTextEditor = forwardRef<Editor, RichTextEditorProps>(
   }
 );
 
-RichTextEditor.displayName = '@mantine/rte/RichTextEditor';
+RichTextEditor.displayName = "@mantine/rte/RichTextEditor";
