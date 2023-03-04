@@ -165,7 +165,7 @@ model QuestionWithAddedTime {
 
 model Question {
   questionId             Int                     @id @default(autoincrement())
-  variationId            Int                     @default(1)
+  variationId            Int                     @default(0)
   topicSlug              String
   questionContent        String                  @db.VarChar(500)
   questionDifficulty     QuestionDifficulty

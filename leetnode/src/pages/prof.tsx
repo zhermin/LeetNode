@@ -23,11 +23,16 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import {
+  Answer,
   Attempt,
   Course,
   Mastery,
+  Question,
+  QuestionMedia,
+  QuestionWithAddedTime,
   Role,
   Topic,
+  User,
   UserCourseQuestion,
 } from "@prisma/client";
 import {
@@ -186,8 +191,22 @@ interface TopicsInterface {
 }
 [];
 
-type CourseInfoType = Course & { topic: Topic } & {
-  userCourseQuestion: UserCourseQuestion;
+type CourseInfoType = Course & {
+  topics: Topic[];
+  userCourseQuestions: UserCourseQuestion[];
+};
+
+type AttemptsInterface = Attempt & {
+  user: User;
+  question: Question;
+  answer: Question;
+};
+
+type QuestionsInterface = Question & {
+  attempts: Attempt[];
+  questionMedia: QuestionMedia[];
+  answers: Answer[];
+  questionsWithAddedTime: QuestionWithAddedTime[];
 };
 
 export default function AdminPage() {
@@ -240,6 +259,28 @@ export default function AdminPage() {
     return res.data;
   });
 
+  const {
+    data: attempts,
+    isLoading: isLoadingAttempts,
+    isFetching: isFetchingAttempts,
+    isError: isErrorAttempts,
+  } = useQuery(["all-attempts"], async () => {
+    const res = await axios.get("/api/prof/getAllAttempts");
+    console.log(res.data);
+    return res.data;
+  });
+
+  const {
+    data: questions,
+    isLoading: isLoadingQuestions,
+    isFetching: isFetchingQuestions,
+    isError: isErrorQuestions,
+  } = useQuery(["all-questions"], async () => {
+    const res = await axios.get("/api/prof/getAllQuestions");
+    console.log(res.data);
+    return res.data;
+  });
+
   if (
     isLoadingUsersData ||
     isFetchingUsersData ||
@@ -249,14 +290,26 @@ export default function AdminPage() {
     !topics ||
     isLoadingCourses ||
     isFetchingCourses ||
-    !courses
+    !courses ||
+    isLoadingAttempts ||
+    isFetchingAttempts ||
+    !attempts ||
+    isLoadingQuestions ||
+    isFetchingQuestions ||
+    !questions
   )
     return (
       <Center className="h-screen">
         <Loader />
       </Center>
     );
-  if (isErrorUsersData || isErrorTopics || isErrorCourses)
+  if (
+    isErrorUsersData ||
+    isErrorTopics ||
+    isErrorCourses ||
+    isErrorAttempts ||
+    isErrorQuestions
+  )
     return <div>Something went wrong!</div>;
 
   return (
@@ -322,17 +375,24 @@ export default function AdminPage() {
       >
         <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
           {active === "Dashboard" ? (
-            <Dashboard />
+            <Dashboard
+              users={usersData as UsersWithMasteriesAndAttempts[]}
+              courses={courses as CourseInfoType[]}
+              attempts={attempts as AttemptsInterface[]}
+            />
           ) : active === "Courses" ? (
-            <Courses courses={courses as CourseInfoType[]} />
+            <Courses
+              courses={courses as CourseInfoType[]}
+              users={usersData as UsersWithMasteriesAndAttempts[]}
+              attempts={attempts as AttemptsInterface[]}
+              questions={questions as QuestionsInterface[]}
+            />
           ) : active === "Users" ? (
-            // <Box onClick={() => queryClient.invalidateQueries(["all-users"])}>
             <Users
               users={usersData as UsersWithMasteriesAndAttempts[]}
               topics={topics as TopicsInterface[]}
             />
           ) : (
-            // </Box>
             <Settings />
           )}
         </ScrollArea.Autosize>

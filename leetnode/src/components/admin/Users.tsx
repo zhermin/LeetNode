@@ -497,6 +497,7 @@ const Users = ({
                           },
                         },
                         x: {
+                          max: 1,
                           beginAtZero: true,
                           ticks: {
                             callback: function (value) {
