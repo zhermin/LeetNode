@@ -18,6 +18,7 @@ export default async function handler(
           nusnetId: true,
           name: true,
           image: true,
+          role: true
         },
       });
       res.status(200).json(info);

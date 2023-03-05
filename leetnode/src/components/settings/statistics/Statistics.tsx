@@ -13,7 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import MasteryBar from "./MasteryBar";
 import Overview from "./Overview";
-import PieChart from "./PieChart";
 import RadarChart from "./RadarChart";
 
 export default function Statistics() {
@@ -68,17 +67,14 @@ export default function Statistics() {
           data={[
             { label: "Bar", value: "bar" },
             { label: "Radar", value: "radar" },
-            { label: "Pie Chart", value: "pie" },
           ]}
         />
       </Group>
 
       {view === "bar" ? (
         <MasteryBar data={masteryData} />
-      ) : view === "radar" ? (
-        <RadarChart data={masteryData} />
       ) : (
-        <PieChart data={masteryData} />
+        <RadarChart data={masteryData} />
       )}
     </ScrollArea>
   );

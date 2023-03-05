@@ -287,7 +287,7 @@ export default function Navbar() {
 
               <Menu.Item
                 component={Link}
-                href="/settings"
+                href={userInfo?.role === "ADMIN" ? "/prof" : "/user"}
                 icon={<IconSettings size={14} stroke={1.5} />}
               >
                 Account settings
