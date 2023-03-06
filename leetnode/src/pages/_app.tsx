@@ -13,7 +13,7 @@ import {
   MutationCache,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
 // Styles
@@ -34,6 +34,7 @@ const LeetNode: AppType<{
   session: Session | null;
   dehydratedState: DehydratedState;
 }> = ({ Component, pageProps: { session, dehydratedState, ...pageProps } }) => {
+  const toastId = React.useRef<string | undefined>(undefined);
   const [queryClient] = React.useState(
     () =>
       new QueryClient({
@@ -44,6 +45,15 @@ const LeetNode: AppType<{
           },
         },
         mutationCache: new MutationCache({
+          onMutate: () => {
+            toastId.current = toast.loading("Loading...");
+          },
+          onSuccess: (res) => {
+            const { data } = res as AxiosResponse;
+            toast.success(data.message ?? "Success!", {
+              id: toastId.current,
+            });
+          },
           onError: (error) => {
             if (error instanceof AxiosError) {
               if (error.response && error.response.data) {
@@ -75,6 +85,7 @@ const LeetNode: AppType<{
 
   return (
     <SessionProvider session={session}>
+      <Toaster />
       <QueryClientProvider client={queryClient}>
         <Hydrate state={dehydratedState}>
           <ColorSchemeProvider
@@ -89,7 +100,6 @@ const LeetNode: AppType<{
               <Component {...pageProps} />
             </MantineProvider>
           </ColorSchemeProvider>
-          <Toaster />
           <ReactQueryDevtools position="bottom-right" />
         </Hydrate>
       </QueryClientProvider>

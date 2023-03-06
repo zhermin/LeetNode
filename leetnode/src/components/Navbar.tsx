@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
+	Badge,
 	Box,
 	Burger,
 	Button,
@@ -21,6 +22,7 @@ import {
 	useMantineColorScheme
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
+import { Role } from "@prisma/client";
 import {
 	IconBook,
 	IconChevronDown,
@@ -104,7 +106,7 @@ const FullLogo = () => (
       width="0"
       height="0"
       sizes="100vw"
-      className="h-auto w-full max-h-12"
+      className="h-auto max-h-12 w-full"
     />
   </Link>
 );
@@ -253,16 +255,29 @@ export default function Navbar({
               <Menu.Divider />
 
               <Menu.Label>
-                <Text
-                  weight={700}
-                  color={
-                    theme.colorScheme === "dark"
-                      ? theme.colors.dark[0]
-                      : theme.colors.gray[9]
-                  }
-                >
-                  Signed In As:
-                </Text>
+                <Group position="apart">
+                  <Text
+                    weight={700}
+                    color={
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[0]
+                        : theme.colors.gray[9]
+                    }
+                  >
+                    Signed In As:
+                  </Text>
+                  <Badge
+                    color={
+                      session?.data?.user?.role === Role.SUPERUSER
+                        ? "red"
+                        : session?.data?.user?.role === Role.ADMIN
+                        ? "orange"
+                        : ""
+                    }
+                  >
+                    {session?.data?.user?.role}
+                  </Badge>
+                </Group>
                 {session?.data?.user?.email}
               </Menu.Label>
 

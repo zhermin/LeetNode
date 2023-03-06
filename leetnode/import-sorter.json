@@ -4,5 +4,6 @@
   "importStringConfiguration.maximumNumberOfImportExpressionsPerLine.count": 80,
   "importStringConfiguration.tabSize": 2,
   "importStringConfiguration.quoteMark": "double",
+  "importSorter.importStringConfiguration.trailingComma": "multiLine",
   "importSorter.generalConfiguration.exclude": ["_app*", "packages*"]
 }

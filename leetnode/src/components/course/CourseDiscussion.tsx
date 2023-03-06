@@ -5,32 +5,32 @@ import { useState } from "react";
 
 import ForumPost from "@/components/course/ForumPost";
 import {
-	Anchor,
-	Avatar,
-	Badge,
-	Button,
-	Center,
-	Container,
-	Divider,
-	Group,
-	Loader,
-	Modal,
-	Pagination,
-	Select,
-	SimpleGrid,
-	Table,
-	Text,
-	TextInput,
-	Title
+  Anchor,
+  Avatar,
+  Badge,
+  Button,
+  Center,
+  Container,
+  Divider,
+  Group,
+  Loader,
+  Modal,
+  Pagination,
+  Select,
+  SimpleGrid,
+  Table,
+  Text,
+  TextInput,
+  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Comment, PostMedia } from "@prisma/client";
 import {
-	QueryKey,
-	useMutation,
-	useQueries,
-	useQuery,
-	useQueryClient
+  QueryKey,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 import DateDiffCalc from "./DateDiffCalc";

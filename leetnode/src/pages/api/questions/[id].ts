@@ -10,15 +10,25 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
 
-  const question = await prisma.question.delete({
+  const { id } = req.query;
+  const question = await prisma.question.findFirst({
     where: {
-      questionId: req.body.questionId,
-    }
+      questionId: Number(id),
+    },
+    include: {
+      questionMedia: true,
+      topic: true,
+      attempts: {
+        where: {
+          userId: session?.user?.id,
+        },
+        orderBy: {
+          submittedAt: "desc",
+        },
+      },
+      answers: true,
+    },
   });
 
   res.status(200).json(question);

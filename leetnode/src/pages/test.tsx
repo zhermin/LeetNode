@@ -1,4 +1,5 @@
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { evaluate } from "mathjs";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ import {
   createStyles,
   Divider,
   Flex,
+  Group,
   Loader,
   Modal,
   Navbar,
@@ -57,6 +59,7 @@ import {
   IconCode,
   IconDatabaseImport,
   IconDice3,
+  IconEye,
   IconFileAnalytics,
   IconFingerprint,
   IconGripVertical,
@@ -66,6 +69,7 @@ import {
   IconLogout,
   IconMessage2,
   IconMessages,
+  IconPencil,
   IconPlus,
   IconReceipt2,
   IconReceiptRefund,
@@ -114,12 +118,12 @@ export default function Test() {
   const [editorHtml, setEditorHtml] = useState("");
   const [rawDataOpened, setRawDataOpened] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState([]);
-  const [questionId, setQuestionId] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [questionOpened, setQuestionOpened] = useState(false);
+  const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
-
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
   }
@@ -154,6 +158,14 @@ export default function Test() {
       variables: [
         {
           key: randomId(),
+          name: "R_1",
+          randomize: false,
+          isFinalAnswer: false,
+          unit: "\\Omega",
+          default: 4,
+        },
+        {
+          key: randomId(),
           name: "R_2",
           randomize: false,
           isFinalAnswer: false,
@@ -163,18 +175,10 @@ export default function Test() {
         {
           key: randomId(),
           name: "R_3",
+          randomize: false,
           unit: "\\Omega",
-          default: 8,
-          randomize: false,
           isFinalAnswer: false,
-        },
-        {
-          key: randomId(),
-          name: "I_3",
-          randomize: false,
-          isFinalAnswer: true,
-          unit: "\\text{A}",
-          decimalPlaces: 2,
+          default: 8,
         },
         {
           key: randomId(),
@@ -189,19 +193,19 @@ export default function Test() {
         },
         {
           key: randomId(),
+          name: "I_3",
+          randomize: false,
+          isFinalAnswer: true,
+          unit: "\\text{A}",
+          decimalPlaces: 2,
+        },
+        {
+          key: randomId(),
           name: "I_{\\text{final}}",
           randomize: false,
           isFinalAnswer: true,
           unit: "\\text{A}",
           decimalPlaces: 1,
-        },
-        {
-          key: randomId(),
-          name: "R_1",
-          randomize: false,
-          isFinalAnswer: false,
-          unit: "\\Omega",
-          default: 4,
         },
       ],
       methods: [
@@ -252,7 +256,7 @@ export default function Test() {
                 .string()
                 .trim()
                 .regex(
-                  /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_]*$/,
+                  /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_,]*$/,
                   { message: "Invalid name" }
                 )
                 .min(1, { message: "Cannot be empty" }),
@@ -295,7 +299,7 @@ export default function Test() {
   );
   const handlePreviewChange = (toRandomize: boolean) => {
     form.clearErrors();
-    const cleaned = (str: string) => str.replace(/[\\{}]/g, "_");
+    const cleaned = (str: string) => str.replace(/[\\{},]/g, "_");
     const rawVariables: {
       [key: string]: number;
     } = form.values.variables
@@ -368,23 +372,24 @@ export default function Test() {
       setFinalAnsPreview(
         finalAnswers
           .map((finalAnswer) => {
-            if (!finalAnswer.name) return "";
+            if (!finalAnswer.name || finalAnswer.decimalPlaces === undefined)
+              return "\\text{Invalid Variable}";
 
             const finalValue = CustomMath.round(
               Number(rawVariables[cleaned(finalAnswer.name)]),
-              finalAnswer?.decimalPlaces ?? 3
+              finalAnswer.decimalPlaces
             );
 
-            // randomly generate 3 incorrect answers +/- 5% to 20%
+            // randomly generate 3 incorrect answers +/- 30% to 90% (can add controls later)
             const incorrectAnswers = (
               CustomMath.nRandomItems(
-                CustomMath.generateRange(0.05, 0.2, 0.05),
-                3
+                3,
+                CustomMath.generateRange(0.3, 0.9, 0.2)
               ) as number[]
             ).map((val) =>
               CustomMath.round(
                 finalValue * (1 + val),
-                finalAnswer?.decimalPlaces ?? 3
+                finalAnswer.decimalPlaces
               )
             );
 
@@ -407,7 +412,7 @@ export default function Test() {
               item.unit ? "~(" + item.unit + ")" : ""
             } &= ${CustomMath.round(
               Number(rawVariables[cleaned(item.name)]),
-              item?.decimalPlaces ?? 3
+              item?.decimalPlaces ?? CustomMath.getDecimalPlaces(item.default)
             )}`;
           })
           .join("\\\\")
@@ -464,6 +469,10 @@ export default function Test() {
                 label="Default"
                 sx={{ flex: 1 }}
                 required={!form.values.variables[index]?.isFinalAnswer}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.default ?? 0
+                )}
+                hideControls
                 {...form.getInputProps(`variables.${index}.default`)}
               />
             )}
@@ -530,6 +539,10 @@ export default function Test() {
               <NumberInput
                 sx={{ flex: 1 }}
                 required={item.randomize}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.min ?? 0
+                )}
+                hideControls
                 {...form.getInputProps(`variables.${index}.min`)}
               />
               <Text fw={500} fz="sm">
@@ -538,6 +551,10 @@ export default function Test() {
               <NumberInput
                 sx={{ flex: 1 }}
                 required={item.randomize}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.max ?? 0
+                )}
+                hideControls
                 {...form.getInputProps(`variables.${index}.max`)}
               />
               <Text fw={500} fz="sm">
@@ -701,40 +718,65 @@ export default function Test() {
         {
           queryKey: ["all-questions"],
           queryFn: () => {
-            return axios.get("/api/question/getAllQuestions");
+            return axios.get("/api/questions");
           },
         },
       ],
     }
   );
 
-  const useAddQuestion = () => {
+  const useCRUDQuestion = () => {
     const queryClient = useQueryClient();
-    return useMutation({
+    const { mutate: addQuestion, status: addQuestionStatus } = useMutation({
       mutationFn: (newQuestion: Omit<Question, "questionId">) =>
-        axios.post("/api/question/addQuestion", newQuestion),
+        axios.post("/api/questions/add", newQuestion),
       onSuccess: () => {
         queryClient.invalidateQueries(["all-questions"]);
       },
     });
-  };
 
-  const { mutate: addQuestion, isLoading: addQuestionLoading } =
-    useAddQuestion();
-
-  const handleAddQuestion = async (values: typeof form.values) =>
-    addQuestion({
-      variationId: 0,
-      topicSlug: values.topic,
-      questionTitle: values.title,
-      questionDifficulty: values.difficulty,
-      questionContent: editorHtml,
-      questionData: {
-        variables: values.variables,
-        methods: values.methods,
-        hints: values.hints,
+    const { mutate: editQuestion, status: editQuestionStatus } = useMutation({
+      mutationFn: ({
+        questionId,
+        editedQuestion,
+      }: {
+        questionId: number;
+        editedQuestion: Omit<Question, "questionId">;
+      }) => axios.put(`/api/questions/edit?id=${questionId}`, editedQuestion),
+      onSuccess: () => {
+        queryClient.invalidateQueries(["all-questions"]);
       },
     });
+
+    const { mutate: deleteQuestion, status: deleteQuestionStatus } =
+      useMutation({
+        mutationFn: (questionId: number) =>
+          axios.delete(`/api/questions/delete?id=${questionId}`),
+        onSuccess: () => {
+          queryClient.invalidateQueries(["all-questions"]);
+        },
+      });
+
+    return {
+      addQuestion,
+      addQuestionStatus,
+      editQuestion,
+      editQuestionStatus,
+      deleteQuestion,
+      deleteQuestionStatus,
+    };
+  };
+
+  const {
+    addQuestion,
+    addQuestionStatus,
+    editQuestion,
+    editQuestionStatus,
+    deleteQuestion,
+    deleteQuestionStatus,
+  } = useCRUDQuestion();
+
+  console.log(editQuestion, editQuestionStatus); // TODO: Remove
 
   if (!courses || !topics || !questions) {
     return (
@@ -890,10 +932,17 @@ $$`}</MarkdownLatex>
             <form
               onSubmit={form.onSubmit(
                 (values: typeof form.values) => {
-                  toast.promise(handleAddQuestion(values), {
-                    loading: "Adding question...",
-                    success: "Question added successfully!",
-                    error: "Error adding question, please contact support",
+                  addQuestion({
+                    variationId: 0,
+                    topicSlug: values.topic,
+                    questionTitle: values.title,
+                    questionDifficulty: values.difficulty,
+                    questionContent: editorHtml,
+                    questionData: {
+                      variables: values.variables,
+                      methods: values.methods,
+                      hints: values.hints,
+                    },
                   });
                 },
                 (errors: typeof form.errors) => {
@@ -1010,7 +1059,7 @@ $$`}</MarkdownLatex>
                   width={350}
                   withArrow
                   label="Variable names must start with an alphabet and can only contain
-                alphabets, numbers, underscores and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end. Dollar signs ($) are disabled as they clash with LaTeX."
+                alphabets, numbers, underscores, commas and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end. Dollar signs ($) are disabled as they clash with LaTeX."
                 >
                   <ActionIcon
                     variant="transparent"
@@ -1209,7 +1258,7 @@ $$`}</MarkdownLatex>
                 radius="sm"
                 my="xl"
                 type="submit"
-                loading={addQuestionLoading}
+                loading={addQuestionStatus === "loading"}
               >
                 Create Question
               </Button>
@@ -1260,18 +1309,40 @@ $$`}</MarkdownLatex>
                             ).topicName
                           }
                         </td>
-                        <td>
-                          <Button
+                        <td className="flex gap-2">
+                          <ActionIcon
                             variant="default"
                             color="gray"
                             radius="sm"
                             onClick={() => {
-                              setQuestionId(question.questionId);
+                              setCurrentQuestion(question);
                               setQuestionOpened(true);
                             }}
                           >
-                            View
-                          </Button>
+                            <IconEye size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="default"
+                            color="gray"
+                            radius="sm"
+                            onClick={() => {
+                              setCurrentQuestion(question);
+                              setQuestionOpened(true);
+                            }}
+                          >
+                            <IconPencil size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="default"
+                            color="gray"
+                            radius="sm"
+                            onClick={() => {
+                              setCurrentQuestion(question);
+                              setConfirmDeleteOpened(true);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
                         </td>
                       </tr>
                     ))}
@@ -1286,25 +1357,51 @@ $$`}</MarkdownLatex>
                 >
                   <div
                     dangerouslySetInnerHTML={{
-                      __html:
-                        questionId !== 0 &&
-                        questions.data.find(
-                          (question: Question) =>
-                            question.questionId === questionId
-                        ).questionContent,
+                      __html: DOMPurify.sanitize(
+                        currentQuestion?.questionContent ?? ""
+                      ),
                     }}
                   />
                   <Prism language="json" mt="xl" withLineNumbers>
-                    {JSON.stringify(
-                      questionId !== 0 &&
-                        questions.data.find(
-                          (question: Question) =>
-                            question.questionId === questionId
-                        ),
-                      null,
-                      2
-                    )}
+                    {JSON.stringify(currentQuestion, null, 2)}
                   </Prism>
+                </Modal>
+                <Modal
+                  opened={confirmDeleteOpened}
+                  onClose={() => setConfirmDeleteOpened(false)}
+                  size="auto"
+                  withCloseButton={false}
+                  centered
+                >
+                  <Group position="apart" align="center" mb="lg">
+                    <Text weight={500} size="lg">
+                      Are you sure you want to delete this question?
+                    </Text>
+                    <ActionIcon
+                      variant="transparent"
+                      color="gray"
+                      radius="sm"
+                      onClick={() => setConfirmDeleteOpened(false)}
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                  <Button
+                    fullWidth
+                    variant="light"
+                    color="red"
+                    radius="sm"
+                    type="submit"
+                    loading={deleteQuestionStatus === "loading"}
+                    onClick={() => {
+                      if (currentQuestion) {
+                        deleteQuestion(currentQuestion.questionId);
+                        setConfirmDeleteOpened(false);
+                      }
+                    }}
+                  >
+                    Confirm Delete
+                  </Button>
                 </Modal>
               </>
             ) : (

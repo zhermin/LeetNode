@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
+
 import { prisma } from "@/server/db/client";
 
 export default async function handler(

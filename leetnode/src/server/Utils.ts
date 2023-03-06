@@ -1,4 +1,4 @@
-// Accurate decimal rounding
+// Accurate decimal rounding & custom math helper functions
 // https://stackoverflow.com/a/48764436/10928890
 export const CustomMath = (function () {
   return {
@@ -42,7 +42,7 @@ export const CustomMath = (function () {
       return array;
     },
     /** Selects the first n items from a shuffled array **/
-    nRandomItems: function (array: unknown[], n: number) {
+    nRandomItems: function (n: number, array: unknown[]) {
       const shuffled = this.shuffleArray(array);
       return shuffled.slice(0, n);
     },
@@ -57,5 +57,10 @@ export const CustomMath = (function () {
       }
       return result;
     },
+    /** Get number of decimal places from an integer or float **/
+    getDecimalPlaces: function (num: number) {
+      const decimalIndex = num.toString().indexOf('.');
+      return decimalIndex === -1 ? 0 : num.toString().length - decimalIndex - 1;
+    }
   };
 })();

@@ -46,6 +46,7 @@ model User {
   email           String               @unique
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
+  lastActive      DateTime?            @default(now())
   role            Role                 @default(USER)
   accounts        Account[]
   sessions        Session[]
@@ -58,6 +59,7 @@ model User {
 }
 
 enum Role {
+  SUPERUSER
   ADMIN
   USER
 }

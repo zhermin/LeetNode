@@ -1,21 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
 
 import { prisma } from "@/server/db/client";
-
-import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
 
-  const question = await prisma.question.create({
+  const { id } = req.query;
+  const question = await prisma.question.update({
+    where: {
+      questionId: Number(id),
+    },
     data: {
       variationId: req.body.variationId,
       topicSlug: req.body.topicSlug,
@@ -26,5 +22,8 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(question);
+  res.status(200).json({
+    message: `Question updated successfully`,
+    data: question,
+  });
 }

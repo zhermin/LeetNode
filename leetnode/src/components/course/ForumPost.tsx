@@ -1,45 +1,46 @@
 import axios, { AxiosError } from "axios";
+import DOMPurify from "dompurify";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import {
-	Dispatch,
-	MouseEventHandler,
-	SetStateAction,
-	useEffect,
-	useState
+  Dispatch,
+  MouseEventHandler,
+  SetStateAction,
+  useEffect,
+  useState,
 } from "react";
 
 import {
-	ActionIcon,
-	Avatar,
-	Badge,
-	Blockquote,
-	Box,
-	Button,
-	Center,
-	createStyles,
-	CSSObject,
-	Divider,
-	Flex,
-	Group,
-	keyframes,
-	Loader,
-	MantineTheme,
-	NavLink,
-	Popover,
-	Select,
-	Text,
-	Title,
-	TypographyStylesProvider
+  ActionIcon,
+  Avatar,
+  Badge,
+  Blockquote,
+  Box,
+  Button,
+  Center,
+  createStyles,
+  CSSObject,
+  Divider,
+  Flex,
+  Group,
+  keyframes,
+  Loader,
+  MantineTheme,
+  NavLink,
+  Popover,
+  Select,
+  Text,
+  Title,
+  TypographyStylesProvider,
 } from "@mantine/core";
 import { Comment, CommentMedia, PostMedia } from "@prisma/client";
 import {
-	IconChevronLeft,
-	IconCornerDownRight,
-	IconDotsVertical,
-	IconThumbDown,
-	IconThumbUp,
-	IconX
+  IconChevronLeft,
+  IconCornerDownRight,
+  IconDotsVertical,
+  IconThumbDown,
+  IconThumbUp,
+  IconX,
 } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -608,7 +609,7 @@ const ForumPost = ({
                     >
                       <div
                         dangerouslySetInnerHTML={{
-                          __html: `${comment.message}`,
+                          __html: DOMPurify.sanitize(comment.message),
                         }}
                       />
                     </TypographyStylesProvider>
@@ -626,7 +627,7 @@ const ForumPost = ({
                   >
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: `${comment.message}`,
+                        __html: DOMPurify.sanitize(comment.message),
                       }}
                     />
                   </TypographyStylesProvider>
