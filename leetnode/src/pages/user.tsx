@@ -1,6 +1,6 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
-import Image from "next/image";
+// import Image from "next/image";
 import { useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
@@ -42,7 +42,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       marginBottom: theme.spacing.md * 1.5,
       borderBottom: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-          .background!,
+          .background ?? theme.primaryColor,
         0.1
       )}`,
     },
@@ -52,7 +52,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       marginTop: theme.spacing.md,
       borderTop: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-          .background!,
+          .background ?? theme.primaryColor,
         0.1
       )}`,
     },
@@ -71,7 +71,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       "&:hover": {
         backgroundColor: theme.fn.lighten(
           theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background!,
+            .background ?? theme.primaryColor,
           0.1
         ),
       },
@@ -88,7 +88,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       "&, &:hover": {
         backgroundColor: theme.fn.lighten(
           theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background!,
+            .background ?? theme.primaryColor,
           0.15
         ),
         [`& .${icon}`]: {
