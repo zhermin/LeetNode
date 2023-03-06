@@ -30,11 +30,10 @@ export default function RadarChart({ data }: MasteryProps) {
   const label: string[] = [];
   const masteryLevel: number[] = [];
   data?.map((topic) => {
-    label.push(
-      topic.topicSlug
-        .replace(/-/g, " ") // Remove -
-        .replace(/\b\w/g, (l) => l.toUpperCase()) // Capitalise every word
-    );
+    topic.topicSlug = topic.topicSlug
+      .replace(/-/g, " ") // Remove -
+      .replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalise every word
+    label.push(topic.topicSlug.match(/\w+\s?\w*\s?\w*/g)); // Newline every 3 words
     masteryLevel.push(topic.masteryLevel * 100);
   });
   const mastery = {
@@ -50,7 +49,7 @@ export default function RadarChart({ data }: MasteryProps) {
     ],
   };
   return (
-    <div className="h-screen">
+    <div className="h-[90vh]">
       <Radar
         data={mastery}
         options={{
@@ -59,9 +58,14 @@ export default function RadarChart({ data }: MasteryProps) {
             r: {
               pointLabels: {
                 font: {
-                  size: 13,
+                  size: 12,
                 },
               },
+            },
+          },
+          plugins: {
+            tooltip: {
+              enabled: false, // Off the tooltip
             },
           },
         }}

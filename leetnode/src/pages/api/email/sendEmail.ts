@@ -30,6 +30,7 @@ export default async function handler(
             select: {
               nusnetId: true,
               name: true,
+              email: true
             },
           },
           topic: {
@@ -46,7 +47,6 @@ export default async function handler(
       // and those who haven't been pinged in a week
       const usersPing = checkError.filter(
         (record) =>
-        // record.errorMeter % 5 === 0 &&
         (record.lastFlagged === null ||
           now - new Date(record.lastFlagged as Date).getTime() >= oneWeek)
       );
@@ -60,12 +60,13 @@ export default async function handler(
 
       const rows = usersPing.map((student) => {
         return `
-    <tr>
-      <td style="border: 1px solid; width: 50%">${student.topic.topicName}</td>
-      <td style="border: 1px solid; text-align: center">${student.user.name}</td>
-      <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
-    </tr>
-    `;
+        <tr>
+          <td style="border: 1px solid; width: 50%">${student.topic.topicName}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.email}</td>
+        </tr>
+        `;
       }).join('');
 
       // get all emails with ADMIN role
@@ -77,6 +78,10 @@ export default async function handler(
           email: true,
         },
       });
+
+      if (admins.length === 0) {
+        res.status(404).json({ error: "Mailist empty" });
+      }
 
       // Convert to array of emails
       const maillist = admins.map((admin) => {
@@ -111,6 +116,7 @@ export default async function handler(
             <th style="border: 1px solid; text-align: center">Topic</th>
             <th style="border: 1px solid; text-align: center">Name</th>
             <th style="border: 1px solid; text-align: center">Student ID</th>
+            <th style="border: 1px solid; text-align: center">Email</th>
           </thead>
           <tbody>
             ${rows}

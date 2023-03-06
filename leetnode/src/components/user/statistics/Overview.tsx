@@ -4,7 +4,7 @@ import {
   Loader,
   Paper,
   RingProgress,
-  Text
+  Text,
 } from "@mantine/core";
 
 interface MasteryProps {

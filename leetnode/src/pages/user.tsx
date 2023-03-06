@@ -6,23 +6,24 @@ import { useState } from "react";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
-import Account from "@/components/settings/Account";
-import Calendar from "@/components/settings/Calendar";
-import Statistics from "@/components/settings/statistics/Statistics";
+import Account from "@/components/user/Account";
+import Challenge from "@/components/user/Challenge";
+import Statistics from "@/components/user/statistics/Statistics";
 import {
   AppShell,
+  Avatar,
   Center,
   createStyles,
   Loader,
   Navbar,
   ScrollArea,
-  Text
+  Text,
 } from "@mantine/core";
 import {
-  IconCalendarStats,
   IconLogout,
   IconReportAnalytics,
-  IconUser
+  IconTargetArrow,
+  IconUser,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
@@ -108,7 +109,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
 const data = [
   { link: "", label: "Account", icon: IconUser },
   { link: "", label: "Statistics", icon: IconReportAnalytics },
-  { link: "", label: "Calendar", icon: IconCalendarStats },
+  { link: "", label: "Challenge", icon: IconTargetArrow },
 ];
 
 export default function Settings() {
@@ -176,12 +177,18 @@ export default function Settings() {
           <Navbar.Section>
             <div className={classes.header}>
               <Center>
-                <Image
+                {/* <Image
                   src={userInfo?.image || ""}
                   alt={userInfo?.name || ""}
                   className="new-line ml-1 rounded-full mb-3"
                   width={100}
                   height={100}
+                /> */}
+                <Avatar
+                  size={100}
+                  src={userInfo?.image}
+                  radius={100}
+                  className="mb-3"
                 />
               </Center>
               <Center>
@@ -223,8 +230,8 @@ export default function Settings() {
           )
         ) : active === "Statistics" ? (
           <Statistics />
-        ) : active === "Calendar" ? (
-          <Calendar />
+        ) : active === "Challenge" ? (
+          <Challenge />
         ) : (
           <Text>Error</Text>
         )}
