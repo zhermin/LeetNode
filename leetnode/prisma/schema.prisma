@@ -48,6 +48,9 @@ model User {
   image           String               @default("https://robohash.org/LeetNode?set=set4")
   lastActive      DateTime?            @default(now())
   role            Role                 @default(USER)
+  loginStreak     Int                  @default(0)
+  firstQuestion   Boolean              @default(false)
+  points          Int                  @default(0)
   accounts        Account[]
   sessions        Session[]
   attempts        Attempt[]
@@ -125,14 +128,16 @@ model UserCourseQuestion {
 }
 
 model Mastery {
-  userId       String
-  topicSlug    String
-  masteryLevel Float     @default(0)
-  topicPing    Boolean   @default(false)
-  lastFlagged  DateTime?
-  errorMeter   Int       @default(0)
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic        Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+  userId                String
+  topicSlug             String
+  masteryLevel          Float     @default(0)
+  topicPing             Boolean   @default(false)
+  lastFlagged           DateTime?
+  errorMeter            Int       @default(0)
+  weeklyMasteryLevel    Float     @default(0)
+  fortnightMasteryLevel Float     @default(0)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic                 Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
   @@index([topicSlug])

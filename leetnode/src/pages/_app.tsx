@@ -85,7 +85,6 @@ const LeetNode: AppType<{
 
   return (
     <SessionProvider session={session}>
-      <Toaster />
       <QueryClientProvider client={queryClient}>
         <Hydrate state={dehydratedState}>
           <ColorSchemeProvider
@@ -100,6 +99,7 @@ const LeetNode: AppType<{
               <Component {...pageProps} />
             </MantineProvider>
           </ColorSchemeProvider>
+          <Toaster />
           <ReactQueryDevtools position="bottom-right" />
         </Hydrate>
       </QueryClientProvider>
