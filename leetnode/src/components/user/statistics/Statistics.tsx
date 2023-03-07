@@ -7,7 +7,7 @@ import {
   Group,
   Loader,
   ScrollArea,
-  SegmentedControl
+  SegmentedControl,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
@@ -36,7 +36,7 @@ export default function Statistics() {
     { keepPreviousData: true }
   );
 
-  if (isLoading || isError || masteryData?.length < 1) {
+  if (!masteryData || isLoading || isError) {
     return (
       <Center style={{ height: 500 }}>
         <Loader />

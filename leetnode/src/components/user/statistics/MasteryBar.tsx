@@ -9,14 +9,14 @@ import {
   Table,
   Text,
   TextInput,
-  UnstyledButton
+  UnstyledButton,
 } from "@mantine/core";
 import { keys } from "@mantine/utils";
 import {
   IconChevronDown,
   IconChevronUp,
   IconSearch,
-  IconSelector
+  IconSelector,
 } from "@tabler/icons";
 
 const useStyles = createStyles((theme) => ({
@@ -87,7 +87,7 @@ function filterData(data: RowData[], search: string) {
   const query = search.toLowerCase().trim();
   return data.filter((item) =>
     keys(data[0]).some((key: string) =>
-      item[key].toString().toLowerCase().includes(query)
+      item[key as keyof RowData].toString().toLowerCase().includes(query)
     )
   );
 }
@@ -105,15 +105,15 @@ function sortData(
   return filterData(
     [...data].sort((a, b) => {
       if (payload.reversed) {
-        if (typeof a[sortBy] === "number" || typeof b[sortBy] === "number") {
-          return b[sortBy] - a[sortBy];
-        }
-        return b[sortBy].localeCompare(a[sortBy]);
+        [a, b] = [b, a];
       }
-      if (typeof a[sortBy] === "number" || typeof b[sortBy] === "number") {
-        return a[sortBy] - b[sortBy];
+      // compare the two
+      if (a[sortBy] < b[sortBy]) {
+        return -1;
+      } else if (a[sortBy] > b[sortBy]) {
+        return 1;
       }
-      return a[sortBy].localeCompare(b[sortBy]);
+      return 0;
     }),
     payload.search
   );
@@ -212,7 +212,7 @@ export default function MasteryBar({ data }: TableSortProps) {
             rows
           ) : (
             <tr>
-              <td colSpan={Object.keys(data[0]).length}>
+              <td colSpan={Object.keys(data[0] ?? {}).length}>
                 <Text weight={500} align="center">
                   Nothing found
                 </Text>

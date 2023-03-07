@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// import { useState } from "react";
 import {
   Avatar,
   Center,
@@ -8,40 +7,39 @@ import {
   Loader,
   ScrollArea,
   Table,
-  Text
+  Text,
 } from "@mantine/core";
+import { User } from "@prisma/client";
 import { IconCrown } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
-
-// interface User {
-//   data: {
-//     avatar: string;
-//     name: string;
-//     email: string;
-//     job: string;
-//     id: string;
-//   }[];
-// }
 
 export default function Challenge() {
   const {
     data: allUsers,
     isLoading,
     isError,
-  } = useQuery(
+  } = useQuery<User[]>(
     ["challenge"],
     async () => {
       const res = await axios.get("/api/user/getPoints");
-      return res?.data;
+      return res.data;
     },
     { keepPreviousData: true }
   );
 
-  allUsers?.sort((user1, user2) => {
+  if (!allUsers || isLoading || isError) {
+    return (
+      <Center style={{ height: 500 }}>
+        <Loader />
+      </Center>
+    );
+  }
+
+  allUsers.sort((user1: User, user2: User) => {
     return user2.points - user1.points;
   });
 
-  const rows = allUsers?.map((user, index: number) => {
+  const rows = allUsers.map((user: User, index: number) => {
     return (
       <tr
         key={user.id}
@@ -96,14 +94,6 @@ export default function Challenge() {
       </tr>
     );
   });
-
-  if (isLoading || isError || allUsers?.length < 1) {
-    return (
-      <Center style={{ height: 500 }}>
-        <Loader />
-      </Center>
-    );
-  }
 
   return (
     <ScrollArea>

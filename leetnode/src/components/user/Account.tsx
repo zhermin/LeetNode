@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import { Button, Center, FileInput, Group, TextInput } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface User {
+interface AccountProps {
   userInfo: {
     nusnetId: string;
     name: string;
@@ -15,7 +15,7 @@ interface User {
   };
 }
 
-export default function Account({ userInfo }: User) {
+export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
 
   const [userName, setUserName] = useState(userInfo.name || "");
@@ -28,7 +28,7 @@ export default function Account({ userInfo }: User) {
 
   // Update the user in the DB
   const { mutate: updateUser, isLoading: updateUserLoading } = useMutation(
-    async (image: string = userInfo.image) => {
+    async (image: string) => {
       return await axios.post("/api/user/update", {
         id: session?.data?.user?.id,
         name: userName,
@@ -64,6 +64,13 @@ export default function Account({ userInfo }: User) {
 
       // Upload profile picture into server
       const formData = new FormData();
+      if (
+        !file ||
+        !(file.type === "image/jpeg" || file.type === "image/png") ||
+        !session?.data?.user?.id
+      ) {
+        throw new Error("Please upload a JPEG or PNG file");
+      }
       formData.append("file", file);
       formData.append("api_key", key);
       formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
@@ -80,14 +87,16 @@ export default function Account({ userInfo }: User) {
       onSuccess: (res) => {
         updateUser(res?.data?.eager?.[0]?.url);
       },
-      onError: () => {
-        toast.error("Failed", { id: "updateUserInfo" }); // Notification for failed update
+      onError: (e) => {
+        toast.error(e instanceof Error ? e.message : "Unknown error", {
+          id: "updateUserInfo",
+        }); // Notification for failed update
       },
     }
   );
 
   // Upload file into server and update DB
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUserNusnetId(userNusnetId.toUpperCase());
 
@@ -96,7 +105,7 @@ export default function Account({ userInfo }: User) {
     if (file) {
       uploadImage(); // Generate signature, upload file into server and update DB
     } else {
-      updateUser(); // Update DB
+      updateUser(userInfo.image); // Update DB
     }
   };
 

@@ -5,7 +5,7 @@ import {
   LineElement,
   PointElement,
   RadialLinearScale,
-  Tooltip
+  Tooltip,
 } from "chart.js";
 import React from "react";
 import { Radar } from "react-chartjs-2";
@@ -27,13 +27,14 @@ export default function RadarChart({ data }: MasteryProps) {
     Legend
   );
 
-  const label: string[] = [];
+  const label: string[][] = [];
   const masteryLevel: number[] = [];
-  data?.map((topic) => {
+  data.map((topic) => {
     topic.topicSlug = topic.topicSlug
       .replace(/-/g, " ") // Remove -
       .replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalise every word
-    label.push(topic.topicSlug.match(/\w+\s?\w*\s?\w*/g)); // Newline every 3 words
+    const splitLabel = topic.topicSlug.match(/(\S+\s*){1,3}/g); // Split into array of 3-word chunks
+    label.push(splitLabel as string[]);
     masteryLevel.push(topic.masteryLevel * 100);
   });
   const mastery = {

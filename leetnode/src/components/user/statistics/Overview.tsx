@@ -7,14 +7,14 @@ import {
   Text,
 } from "@mantine/core";
 
-interface MasteryProps {
+interface OverviewProps {
   data: {
     topicSlug: string;
     masteryLevel: number;
   }[];
 }
 
-export default function Overview({ data }: MasteryProps) {
+export default function Overview({ data }: OverviewProps) {
   // reduce will throw an error is data is not an array
   if (data?.length > 0) {
     const highestMastery = data?.reduce((max, topic) =>

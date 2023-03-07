@@ -1,6 +1,5 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
-// import Image from "next/image";
 import { useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
@@ -26,6 +25,133 @@ import {
   IconUser,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
+
+const tabs = [
+  { link: "", label: "Account", icon: IconUser },
+  { link: "", label: "Statistics", icon: IconReportAnalytics },
+  { link: "", label: "Challenge", icon: IconTargetArrow },
+];
+
+export default function Settings() {
+  const session = useSession();
+
+  const { classes, theme, cx } = useStyles();
+  const [active, setActive] = useState("Account");
+
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+  );
+
+  const links = tabs.map((item) => (
+    <a
+      className={cx(classes.link, {
+        [classes.linkActive]: item.label === active,
+      })}
+      href={item.link}
+      key={item.label}
+      onClick={(event) => {
+        event.preventDefault();
+        setActive(item.label);
+      }}
+    >
+      <item.icon className={classes.linkIcon} stroke={1.5} />
+      <span>{item.label}</span>
+    </a>
+  ));
+
+  return (
+    <AppShell
+      styles={{
+        main: {
+          background:
+            theme.colorScheme === "dark"
+              ? theme.colors.dark[8]
+              : theme.colors.gray[0],
+        },
+      }}
+      navbarOffsetBreakpoint="sm"
+      header={
+        <>
+          <LeetNodeHeader />
+          <LeetNodeNavbar />
+        </>
+      }
+      navbar={
+        <Navbar
+          height="100%"
+          width={{ sm: 300 }}
+          p="md"
+          className={classes.navbar}
+        >
+          <Navbar.Section>
+            <div className={classes.header}>
+              <Center>
+                <Avatar
+                  size={100}
+                  src={userInfo?.image}
+                  radius={100}
+                  className="mb-3"
+                />
+              </Center>
+              <Center>
+                <Text
+                  className={classes.userName}
+                  sx={{ lineHeight: 1, fontSize: "20px" }}
+                  weight={500}
+                  color={theme.colors.gray[9]}
+                >
+                  {userInfo?.name}
+                </Text>
+              </Center>
+            </div>
+            {links}
+          </Navbar.Section>
+
+          <Navbar.Section className={classes.footer}>
+            <a
+              href="#"
+              className={classes.link}
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              <IconLogout className={classes.linkIcon} stroke={1.5} />
+              <span>Logout</span>
+            </a>
+          </Navbar.Section>
+        </Navbar>
+      }
+      footer={<LeetNodeFooter />}
+    >
+      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+        {active === "Account" ? (
+          isLoading === true || isError === true ? (
+            <Center style={{ height: 500 }}>
+              <Loader />
+            </Center>
+          ) : (
+            <Account userInfo={userInfo} />
+          )
+        ) : active === "Statistics" ? (
+          <Statistics />
+        ) : active === "Challenge" ? (
+          <Challenge />
+        ) : (
+          <Text>Error</Text>
+        )}
+      </ScrollArea.Autosize>
+    </AppShell>
+  );
+}
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
@@ -105,137 +231,3 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
   };
 });
-
-const data = [
-  { link: "", label: "Account", icon: IconUser },
-  { link: "", label: "Statistics", icon: IconReportAnalytics },
-  { link: "", label: "Challenge", icon: IconTargetArrow },
-];
-
-export default function Settings() {
-  const session = useSession();
-
-  const { classes, theme, cx } = useStyles();
-  const [active, setActive] = useState("Account");
-
-  const {
-    data: userInfo,
-    isLoading,
-    isError,
-  } = useQuery(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
-      const res = await axios.post("/api/user/get", {
-        id: session?.data?.user?.id,
-      });
-      return res?.data;
-    },
-    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
-  );
-
-  const links = data.map((item) => (
-    <a
-      className={cx(classes.link, {
-        [classes.linkActive]: item.label === active,
-      })}
-      href={item.link}
-      key={item.label}
-      onClick={(event) => {
-        event.preventDefault();
-        setActive(item.label);
-      }}
-    >
-      <item.icon className={classes.linkIcon} stroke={1.5} />
-      <span>{item.label}</span>
-    </a>
-  ));
-
-  return (
-    <AppShell
-      styles={{
-        main: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[8]
-              : theme.colors.gray[0],
-        },
-      }}
-      navbarOffsetBreakpoint="sm"
-      header={
-        <>
-          <LeetNodeHeader />
-          <LeetNodeNavbar />
-        </>
-      }
-      navbar={
-        <Navbar
-          height="100%"
-          width={{ sm: 300 }}
-          p="md"
-          className={classes.navbar}
-        >
-          <Navbar.Section>
-            <div className={classes.header}>
-              <Center>
-                {/* <Image
-                  src={userInfo?.image || ""}
-                  alt={userInfo?.name || ""}
-                  className="new-line ml-1 rounded-full mb-3"
-                  width={100}
-                  height={100}
-                /> */}
-                <Avatar
-                  size={100}
-                  src={userInfo?.image}
-                  radius={100}
-                  className="mb-3"
-                />
-              </Center>
-              <Center>
-                <Text
-                  className={classes.userName}
-                  sx={{ lineHeight: 1, fontSize: "20px" }}
-                  weight={500}
-                  color={theme.colors.gray[9]}
-                >
-                  {userInfo?.name}
-                </Text>
-              </Center>
-            </div>
-            {links}
-          </Navbar.Section>
-
-          <Navbar.Section className={classes.footer}>
-            <a
-              href="#"
-              className={classes.link}
-              onClick={() => signOut({ callbackUrl: "/" })}
-            >
-              <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Logout</span>
-            </a>
-          </Navbar.Section>
-        </Navbar>
-      }
-      footer={<LeetNodeFooter />}
-    >
-      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
-        {active === "Account" ? (
-          isLoading === true || isError === true ? (
-            <Center style={{ height: 500 }}>
-              <Loader />
-            </Center>
-          ) : (
-            <Account userInfo={userInfo} />
-          )
-        ) : active === "Statistics" ? (
-          <Statistics />
-        ) : active === "Challenge" ? (
-          <Challenge />
-        ) : (
-          <Text>Error</Text>
-        )}
-      </ScrollArea.Autosize>
-    </AppShell>
-  );
-}
