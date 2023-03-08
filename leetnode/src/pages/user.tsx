@@ -16,13 +16,13 @@ import {
   Loader,
   Navbar,
   ScrollArea,
-  Text,
+  Text
 } from "@mantine/core";
 import {
   IconLogout,
   IconReportAnalytics,
   IconTargetArrow,
-  IconUser,
+  IconUser
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
@@ -70,6 +70,14 @@ export default function Settings() {
     </a>
   ));
 
+  if (!userInfo || isLoading || isError) {
+    return (
+      <Center style={{ height: 500 }}>
+        <Loader />
+      </Center>
+    );
+  }
+
   return (
     <AppShell
       styles={{
@@ -102,6 +110,7 @@ export default function Settings() {
                   src={userInfo?.image}
                   radius={100}
                   className="mb-3"
+                  imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
                 />
               </Center>
               <Center>
@@ -134,13 +143,7 @@ export default function Settings() {
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
         {active === "Account" ? (
-          isLoading === true || isError === true ? (
-            <Center style={{ height: 500 }}>
-              <Loader />
-            </Center>
-          ) : (
-            <Account userInfo={userInfo} />
-          )
+          <Account userInfo={userInfo} />
         ) : active === "Statistics" ? (
           <Statistics />
         ) : active === "Challenge" ? (

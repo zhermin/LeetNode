@@ -1,10 +1,16 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { Button, Center, FileInput, Group, TextInput } from "@mantine/core";
+import {
+  Avatar,
+  Button,
+  Center,
+  FileInput,
+  Group,
+  TextInput
+} from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface AccountProps {
@@ -20,7 +26,6 @@ export default function Account({ userInfo }: AccountProps) {
 
   const [userName, setUserName] = useState(userInfo.name || "");
   const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId || "");
-  const [userImage, setUserImage] = useState(userInfo.image || "");
 
   const [file, setFile] = useState<File | null>(null);
 
@@ -32,7 +37,7 @@ export default function Account({ userInfo }: AccountProps) {
       return await axios.post("/api/user/update", {
         id: session?.data?.user?.id,
         name: userName,
-        nusnetId: userNusnetId.toUpperCase(),
+        nusnetId: userNusnetId,
         image: image,
       });
     },
@@ -43,7 +48,6 @@ export default function Account({ userInfo }: AccountProps) {
           name: res.data.name,
           image: res.data.image,
         });
-        setUserImage(res.data.image);
         toast.success("Updated!", { id: "updateUserInfo" }); // Notification for successful update
       },
       onError: () => {
@@ -74,12 +78,12 @@ export default function Account({ userInfo }: AccountProps) {
       formData.append("file", file);
       formData.append("api_key", key);
       formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
-      formData.append("folder", "profiles");
+      formData.append("folder", "LeetNode/profile_media");
       formData.append("public_id", session?.data?.user?.id);
       formData.append("timestamp", `${timestamp}`);
       formData.append("signature", signature);
       return await axios.post(
-        "https://api.cloudinary.com/v1_1/demcj8g8y/image/upload/",
+        "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
         formData
       );
     },
@@ -132,10 +136,9 @@ export default function Account({ userInfo }: AccountProps) {
               onChange={(e) => setUserName(e.target.value)}
               required
             />
-            {/^\w{5,}$/.test(userName) ? null : (
+            {/^(\s*\w+\s*){5,}$/.test(userName) ? null : (
               <p className="text-red-500 text-xs italic">
-                Name must be at least 5 letters long and CANNOT contain spaces /
-                symbols
+                Name must contain at least 5 letters and CANNOT contain symbols
               </p>
             )}
             <TextInput
@@ -156,12 +159,12 @@ export default function Account({ userInfo }: AccountProps) {
           </div>
           <div className="col-span-1 flex-auto justify-center items-center">
             <Center className="mt-3">
-              <Image
-                src={userImage || ""}
-                alt={userName || ""}
-                className="new-line ml-1 rounded-full"
-                width={90}
-                height={90}
+              <Avatar
+                size={90}
+                src={userInfo?.image}
+                radius={100}
+                className="mb-3"
+                imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
               />
             </Center>
             <FileInput
@@ -186,7 +189,7 @@ export default function Account({ userInfo }: AccountProps) {
             size="md"
             disabled={
               !/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ||
-              !/^\w{5,}$/.test(userName)
+              !/^(\s*\w+\s*){5,}$/.test(userName)
             }
             loading={updateUserLoading || uploadImageLoading}
           >
