@@ -178,6 +178,7 @@ interface UsersWithMasteriesAndAttempts {
   emailVerified: Date | null;
   image: string;
   lastActive: string;
+  emailFrequency: string;
   role: Role;
   masteries: Mastery[];
   attempts: Attempt[];
@@ -393,7 +394,10 @@ export default function AdminPage() {
               topics={topics as TopicsInterface[]}
             />
           ) : (
-            <Settings />
+            <Settings
+              users={usersData as UsersWithMasteriesAndAttempts[]}
+              topics={topics as TopicsInterface[]}
+            />
           )}
         </ScrollArea.Autosize>
       </AppShell>
