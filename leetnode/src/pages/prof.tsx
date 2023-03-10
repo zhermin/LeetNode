@@ -162,9 +162,9 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
 
     footer: {
-      marginLeft: `calc(${theme.spacing.md} * -1)`,
-      marginRight: `calc(${theme.spacing.md} * -1)`,
-      borderTop: `${50} solid ${
+      marginLeft: -theme.spacing.md,
+      marginRight: -theme.spacing.md,
+      borderTop: `1px solid ${
         theme.colorScheme === "dark"
           ? theme.colors.dark[4]
           : theme.colors.gray[3]
