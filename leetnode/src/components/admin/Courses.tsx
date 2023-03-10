@@ -358,7 +358,7 @@ const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
                             ) && question.topicSlug === topic.topicSlug
                         )
                         .map((question) =>
-                          question.variationId === 0 ? (
+                          question.variationId === 1 ? (
                             <Accordion.Item
                               value={String(question.questionId)}
                               key={question.questionId}
@@ -548,17 +548,6 @@ const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
         >
           Courses Detailed Statistics
         </Title>
-
-        {/* <Text
-      color="dimmed"
-      className={classes.description}
-      align="center"
-      mt="md"
-      mb="lg"
-    >
-      Every once in a while, you’ll see a Golbat that’s missing some fangs.
-      This happens when hunger drives it to try biting a Steel-type Pokémon.
-    </Text> */}
         <Center>
           <SegmentedControl
             sx={(theme) => ({
@@ -632,7 +621,6 @@ const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
               ) : (
                 <IconSquareNumber2 color="orange" />
               )}
-              {/* <feature.icon size={50} stroke={2} color={theme.fn.primaryColor()} /> */}
               <Text
                 size="lg"
                 weight={500}

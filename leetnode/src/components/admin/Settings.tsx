@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 import { Carousel } from "@mantine/carousel";
 import {
@@ -88,6 +89,7 @@ const Settings = ({
   const [role, setRole] = useState("USER");
   const [deleteUser, setDeleteUser] = useState<string[]>([]);
   const [closeButton, setCloseButton] = useState(false);
+  const [confirmPopup, setConfirmPopup] = useState(false);
   const [editField, setEditField] = useState<
     {
       id: string;
@@ -184,6 +186,8 @@ const Settings = ({
         .then((response) => console.log(response.data))
         .catch((error) => console.error(error));
     }
+
+    toast.success("Successfully updated!");
   };
 
   const totalUsersPerPage = 5;
@@ -301,6 +305,30 @@ const Settings = ({
     // : setEditUser([...editUser, { id: userId, changeName, resetAttempt }]);
     <Container>
       <Modal
+        opened={confirmPopup}
+        onClose={() => {
+          setConfirmPopup(false);
+        }}
+        title="Confirm Changes?"
+        zIndex={201}
+        centered
+      >
+        <Group position="apart">
+          <Button onClick={() => setConfirmPopup(false)} color="red">
+            No
+          </Button>
+          <Button
+            onClick={() => {
+              handleSubmitChanges();
+              setConfirmPopup(false);
+            }}
+            color="green"
+          >
+            Yes
+          </Button>
+        </Group>
+      </Modal>
+      <Modal
         opened={editOpened}
         onClose={() => {
           // for (let i = 0; i < editField.length; i++) {
@@ -410,7 +438,7 @@ const Settings = ({
         </Transition> */}
         <Button
           leftIcon={<IconClick size={20} />}
-          onClick={() => handleSubmitChanges()}
+          onClick={() => setConfirmPopup(true)}
         >
           Confirm Changes
         </Button>

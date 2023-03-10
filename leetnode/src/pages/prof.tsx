@@ -1,4 +1,5 @@
 import axios from "axios";
+import Link from "next/link";
 import { useState } from "react";
 
 import Courses from "@/components/admin/Courses";
@@ -37,6 +38,7 @@ import {
 } from "@prisma/client";
 import {
   IconAdjustments,
+  IconArrowBarLeft,
   IconFileAnalytics,
   IconGauge,
   IconLock,
@@ -157,6 +159,16 @@ const useStyles = createStyles((theme, _params, getRef) => {
       padding: theme.spacing.sm,
       display: "flex",
       alignItems: "center",
+    },
+
+    footer: {
+      marginLeft: `calc(${theme.spacing.md} * -1)`,
+      marginRight: `calc(${theme.spacing.md} * -1)`,
+      borderTop: `${50} solid ${
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[4]
+          : theme.colors.gray[3]
+      }`,
     },
 
     appshell: {
@@ -371,6 +383,14 @@ export default function AdminPage() {
                 </UnstyledButton>
               </Navbar.Section>
             ))}
+            <Navbar.Section className={classes.footer}>
+              <Link href="/courses" passHref>
+                <Box className={classes.link}>
+                  <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
+                  <span>Back to Courses</span>
+                </Box>
+              </Link>
+            </Navbar.Section>
           </Navbar>
         }
       >
