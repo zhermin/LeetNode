@@ -162,13 +162,14 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
 
     footer: {
-      marginLeft: -theme.spacing.md,
-      marginRight: -theme.spacing.md,
+      marginLeft: `calc(${theme.spacing.md} * -1)`,
+      marginRight: `calc(${theme.spacing.md} * -1)`,
       borderTop: `1px solid ${
         theme.colorScheme === "dark"
           ? theme.colors.dark[4]
           : theme.colors.gray[3]
       }`,
+      paddingTop: theme.spacing.sm,
     },
 
     appshell: {
@@ -360,10 +361,10 @@ export default function AdminPage() {
                 <Box className={classes.adminBox}>Admin</Box>
               </Group>
             </Navbar.Section>
-
-            {tabs.map((item) => (
-              <Navbar.Section key={item.label} className={classes.navbarEntry}>
+            <Navbar.Section grow className={classes.navbarEntry}>
+              {tabs.map((item) => (
                 <UnstyledButton
+                  key={item.label}
                   className={cx(classes.control, {
                     [classes.linkActive]: item.label === active,
                   })}
@@ -381,8 +382,8 @@ export default function AdminPage() {
                     </Group>
                   </Box>
                 </UnstyledButton>
-              </Navbar.Section>
-            ))}
+              ))}
+            </Navbar.Section>
             <Navbar.Section className={classes.footer}>
               <Link href="/courses" passHref>
                 <Box className={classes.link}>
