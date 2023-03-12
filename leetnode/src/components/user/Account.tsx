@@ -9,7 +9,7 @@ import {
   Center,
   FileInput,
   Group,
-  TextInput
+  TextInput,
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -44,6 +44,7 @@ export default function Account({ userInfo }: AccountProps) {
     {
       onSuccess: (res) => {
         queryClient.setQueryData(["userInfo", session?.data?.user?.id], {
+          ...userInfo,
           nusnetId: res.data.nusnetId,
           name: res.data.name,
           image: res.data.image,

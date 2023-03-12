@@ -72,7 +72,12 @@ export default function Challenge() {
         </td>
         <td className="w-10/12">
           <Group spacing="sm">
-            <Avatar size={26} src={user.image} radius={26} />
+            <Avatar
+              size={26}
+              src={user.image}
+              radius={26}
+              imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
+            />
             <Text
               size="sm"
               weight={500}

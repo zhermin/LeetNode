@@ -1,15 +1,8 @@
-import {
-  Center,
-  Group,
-  Loader,
-  Paper,
-  RingProgress,
-  Text,
-} from "@mantine/core";
+import { Center, Loader, Paper, RingProgress, Text } from "@mantine/core";
 
 interface OverviewProps {
   data: {
-    topicSlug: string;
+    topicName: string;
     masteryLevel: number;
   }[];
 }
@@ -31,82 +24,76 @@ export default function Overview({ data }: OverviewProps) {
 
     return (
       <div className="grid gap-3 mb-6 grid-cols-2">
-        <div>
-          <Paper withBorder shadow="lg" radius="md" p="xs" key="highestMastery">
-            <Group>
-              <RingProgress
-                size={80}
-                roundCaps
-                thickness={8}
-                sections={[
-                  {
-                    value: highestMastery.masteryLevel * 100,
-                    color: "green",
-                  },
-                ]}
-                label={
-                  <Center>
-                    <Text className="font-bold">
-                      {highestMastery.masteryLevel * 100}%
-                    </Text>
-                  </Center>
-                }
-              />
+        <Paper
+          withBorder
+          shadow="lg"
+          radius="md"
+          p="xs"
+          key="highestMastery"
+          className="flex flex-row items-center"
+        >
+          <RingProgress
+            className="w-20%"
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[
+              {
+                value: highestMastery.masteryLevel,
+                color: "green",
+              },
+            ]}
+            label={
+              <Center>
+                <Text className="font-bold">
+                  {highestMastery.masteryLevel}%
+                </Text>
+              </Center>
+            }
+          />
+          <div className="ml-3">
+            <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
+              Highest Mastery
+            </Text>
+            <Text weight={700} size="lg">
+              {highestMastery.topicName}
+            </Text>
+          </div>
+        </Paper>
 
-              <div>
-                <Text
-                  color="dimmed"
-                  size="xs"
-                  transform="uppercase"
-                  weight={700}
-                >
-                  Highest Mastery
-                </Text>
-                <Text weight={700} size="xl" className="capitalize">
-                  {highestMastery.topicSlug.replace(/-/g, " ")}
-                </Text>
-              </div>
-            </Group>
-          </Paper>
-        </div>
-        <div>
-          <Paper withBorder shadow="lg" radius="md" p="xs" key="lowestMastery">
-            <Group>
-              <RingProgress
-                size={80}
-                roundCaps
-                thickness={8}
-                sections={[
-                  {
-                    value: lowestMastery.masteryLevel * 100,
-                    color: "red",
-                  },
-                ]}
-                label={
-                  <Center>
-                    <Text className="font-bold">
-                      {lowestMastery.masteryLevel * 100}%
-                    </Text>
-                  </Center>
-                }
-              />
-
-              <div>
-                <Text
-                  color="dimmed"
-                  size="xs"
-                  transform="uppercase"
-                  weight={700}
-                >
-                  Lowest Mastery
-                </Text>
-                <Text weight={700} size="xl" className="capitalize">
-                  {lowestMastery.topicSlug.replace(/-/g, " ")}
-                </Text>
-              </div>
-            </Group>
-          </Paper>
-        </div>
+        <Paper
+          withBorder
+          shadow="lg"
+          radius="md"
+          p="xs"
+          key="lowestMastery"
+          className="flex flex-row items-center"
+        >
+          <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[
+              {
+                value: lowestMastery.masteryLevel,
+                color: "red",
+              },
+            ]}
+            label={
+              <Center>
+                <Text className="font-bold">{lowestMastery.masteryLevel}%</Text>
+              </Center>
+            }
+          />
+          <div className="ml-3">
+            <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
+              Lowest Mastery
+            </Text>
+            <Text weight={700} size="lg">
+              {lowestMastery.topicName}
+            </Text>
+          </div>
+        </Paper>
       </div>
     );
   } else {

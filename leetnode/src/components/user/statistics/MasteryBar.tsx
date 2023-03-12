@@ -19,32 +19,8 @@ import {
   IconSelector,
 } from "@tabler/icons";
 
-const useStyles = createStyles((theme) => ({
-  th: {
-    padding: "0 !important",
-  },
-
-  control: {
-    width: "100%",
-    padding: `${theme.spacing.xs}px ${theme.spacing.md}px`,
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-    },
-  },
-
-  icon: {
-    width: 21,
-    height: 21,
-    borderRadius: 21,
-  },
-}));
-
 interface RowData {
-  topicSlug: string;
+  topicName: string;
   masteryLevel: number;
 }
 
@@ -145,26 +121,19 @@ export default function MasteryBar({ data }: TableSortProps) {
   };
 
   const rows = sortedData?.map((row) => (
-    <tr key={row.topicSlug}>
-      <td className="capitalize">{row.topicSlug.replace(/-/g, " ")}</td>
+    <tr key={row.topicName}>
+      <td>{row.topicName}</td>
       <td>
         <Group position="apart">
           <Text size="xs" color="cyan" weight={700}>
-            {row.masteryLevel * 100}%
-          </Text>
-          <Text size="xs" color="red" weight={700}>
-            {}%
+            {row.masteryLevel}%
           </Text>
         </Group>
         <Progress
           sections={[
             {
-              value: row.masteryLevel * 100,
+              value: row.masteryLevel,
               color: "cyan",
-            },
-            {
-              value: 0 * 100,
-              color: "red",
             },
           ]}
         />
@@ -191,9 +160,9 @@ export default function MasteryBar({ data }: TableSortProps) {
           <tr>
             <Th
               className="w-1/3"
-              sorted={sortBy === "topicSlug"}
+              sorted={sortBy === "topicName"}
               reversed={reverseSortDirection}
-              onSort={() => setSorting("topicSlug")}
+              onSort={() => setSorting("topicName")}
             >
               Topic
             </Th>
@@ -224,3 +193,27 @@ export default function MasteryBar({ data }: TableSortProps) {
     </ScrollArea>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  th: {
+    padding: "0 !important",
+  },
+
+  control: {
+    width: "100%",
+    padding: `${theme.spacing.xs}px ${theme.spacing.md}px`,
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+    },
+  },
+
+  icon: {
+    width: 21,
+    height: 21,
+    borderRadius: 21,
+  },
+}));

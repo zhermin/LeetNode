@@ -12,7 +12,7 @@ import { Radar } from "react-chartjs-2";
 
 interface MasteryProps {
   data: {
-    topicSlug: string;
+    topicName: string;
     masteryLevel: number;
   }[];
 }
@@ -30,12 +30,9 @@ export default function RadarChart({ data }: MasteryProps) {
   const label: string[][] = [];
   const masteryLevel: number[] = [];
   data.map((topic) => {
-    topic.topicSlug = topic.topicSlug
-      .replace(/-/g, " ") // Remove -
-      .replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalise every word
-    const splitLabel = topic.topicSlug.match(/(\S+\s*){1,3}/g); // Split into array of 3-word chunks
+    const splitLabel = topic.topicName.match(/(\S+\s*){1,3}/g); // Split into array of 3-word chunks
     label.push(splitLabel as string[]);
-    masteryLevel.push(topic.masteryLevel * 100);
+    masteryLevel.push(topic.masteryLevel);
   });
   const mastery = {
     labels: label,
@@ -50,7 +47,7 @@ export default function RadarChart({ data }: MasteryProps) {
     ],
   };
   return (
-    <div className="h-[90vh]">
+    <div className="h-screen">
       <Radar
         data={mastery}
         options={{
@@ -59,7 +56,7 @@ export default function RadarChart({ data }: MasteryProps) {
             r: {
               pointLabels: {
                 font: {
-                  size: 12,
+                  size: 11,
                 },
               },
             },

@@ -18,6 +18,10 @@ export default async function handler(
           nusnetId: true,
           name: true,
           image: true,
+          lastActive: true,
+          loginStreak: true,
+          firstQuestion: true,
+          points: true,
           role: true
         },
       });

@@ -41,8 +41,6 @@ export default async function handler(
         },
       });
 
-      console.log("checkerror", checkError);
-
       // Filter the records to find those who haven't been pinged before
       // and those who haven't been pinged in a week
       const usersPing = checkError.filter(
@@ -50,24 +48,6 @@ export default async function handler(
         (record.lastFlagged === null ||
           now - new Date(record.lastFlagged as Date).getTime() >= oneWeek)
       );
-
-      console.log("usersPing", usersPing);
-
-      const templateString = usersPing.map(
-        (student) =>
-          `Topic name: ${student.topic.topicName}\n Name: ${student.user.name} Matric No.: ${student.user.nusnetId}\n`
-      );
-
-      const rows = usersPing.map((student) => {
-        return `
-        <tr>
-          <td style="border: 1px solid; width: 50%">${student.topic.topicName}</td>
-          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
-          <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
-          <td style="border: 1px solid; text-align: center">${student.user.email}</td>
-        </tr>
-        `;
-      }).join('');
 
       // get all emails with ADMIN role
       const admins = await prisma.user.findMany({
@@ -88,6 +68,28 @@ export default async function handler(
         return admin.email;
       });
 
+      // For clients with plaintext support only
+      const templateString = usersPing.map(
+        (student) => `
+          Topic name: ${student.topic.topicName}\n
+          Name: ${student.user.name} 
+          Matric No.: ${student.user.nusnetId}
+          Email: ${student.user.email}\n
+          `
+      );
+
+      // HTML table rows
+      const rows = usersPing.map((student) => {
+        return `
+        <tr>
+          <td style="border: 1px solid; width: 50%">${student.topic.topicName}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.email}</td>
+        </tr>
+        `;
+      }).join('');
+
       // Create a transporter for sending the email
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
@@ -107,7 +109,7 @@ export default async function handler(
         subject: "LeetNode students' summary",
         text: `
         Here are the list of students that require help:\n\n${templateString}\n
-        Click here to view more: https://leetnode.vercel.app/prof
+        Click here to view more: https://leetnode.vercel.app/dashboard
         `,
         html: `
         <p>Here are the list of students that require help:</p>
@@ -123,7 +125,7 @@ export default async function handler(
           </tbody>
         </table>
         <p>
-          Click here to view more: <a href="https://leetnode.vercel.app/prof">Prof's dashboard</a>
+          Click here to view more: <a href="https://leetnode.vercel.app/dashboard">Prof's dashboard</a>
         </p>
         `,
       };

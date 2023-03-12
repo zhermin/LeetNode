@@ -14,23 +14,28 @@ export default async function handler(
           userId: req.body.id,
         },
         select: {
-          topicSlug: true,
-          masteryLevel: req.body.period === "current",
+          // topicSlug: true,
+          masteryLevel: req.body.period === "current" || true,
           weeklyMasteryLevel: req.body.period === "week",
           fortnightMasteryLevel: req.body.period === "fortnight",
+          topic: {
+            select: {
+              topicName: true,
+            }
+          }
         },
       });
       const mastery =
         req.body.period === "current"
           ? "masteryLevel"
           : req.body.period === "week"
-          ? "weeklyMasteryLevel"
-          : "fortnightMasteryLevel";
+            ? "weeklyMasteryLevel"
+            : "fortnightMasteryLevel";
       // Rename the key to masteryLevel for easier access
-      const allMastery = getMastery.map((topic) => {
+      const allMastery = getMastery.map((row) => {
         return {
-          topicSlug: topic.topicSlug,
-          masteryLevel: topic[`${mastery}`],
+          topicName: row.topic.topicName,
+          masteryLevel: Math.round(row[`${mastery}`] * 10000) / 100, // Convert to % with 2dp
         };
       });
       res.status(200).json(allMastery);
