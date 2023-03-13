@@ -1,11 +1,11 @@
 import {
-	Answer,
-	CourseType,
-	Level,
-	Question,
-	QuestionDifficulty,
-	QuestionMedia,
-	Topic
+  Answer,
+  CourseType,
+  Level,
+  Question,
+  QuestionDifficulty,
+  QuestionMedia,
+  Topic,
 } from "@prisma/client";
 
 export const Topics: Topic[] = [
@@ -364,7 +364,7 @@ export const Courses: CourseWithTopics = [
   },
 ];
 
-export const Questions: Omit<Question, "questionTitle" | "questionData">[] = [
+export const Questions: Omit<Question, "questionTitle" | "questionData" | "lastModified">[] = [
   {
     questionId: 1,
     variationId: 1,
