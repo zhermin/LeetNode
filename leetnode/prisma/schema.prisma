@@ -47,7 +47,7 @@ model User {
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
   role            Role                 @default(USER)
-  // lastActive      DateTime?            @default(now())
+  lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
   firstQuestion   Boolean              @default(true)
   points          Int                  @default(1)
@@ -178,7 +178,7 @@ model Question {
   questionDifficulty     QuestionDifficulty
   questionContent        String                  @db.Text
   questionData           Json?
-  lastModified           DateTime                @default(now())
+  // lastModified           DateTime                @default(now())
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
   attempts               Attempt[]
   questionMedia          QuestionMedia[]
