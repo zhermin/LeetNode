@@ -47,7 +47,7 @@ model User {
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
   role            Role                 @default(USER)
-  lastActive      DateTime?            @default(now())
+  // lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
   firstQuestion   Boolean              @default(true)
   points          Int                  @default(1)
