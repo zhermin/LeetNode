@@ -18,7 +18,7 @@ import {
   SegmentedControl,
   Text,
   UnstyledButton,
-  useMantineColorScheme
+  useMantineColorScheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
@@ -28,7 +28,7 @@ import {
   IconMoon,
   IconSettings,
   IconStar,
-  IconSun
+  IconSun,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
@@ -287,7 +287,7 @@ export default function Navbar() {
 
               <Menu.Item
                 component={Link}
-                href={userInfo?.role === "ADMIN" ? "/prof" : "/user"}
+                href="/dashboard"
                 icon={<IconSettings size={14} stroke={1.5} />}
               >
                 Account settings

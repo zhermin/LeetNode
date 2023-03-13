@@ -20,8 +20,9 @@ export default async function handler(
                     id: true,
                     name: true,
                     image: true,
-                    // loginStreak: true,
-                    // firstQuestion: true,
+                    lastActive: true,
+                    loginStreak: true,
+                    firstQuestion: true,
                     points: true
                 },
             });

@@ -5,9 +5,6 @@ import { useState } from "react";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
-import Account from "@/components/user/Account";
-import Challenge from "@/components/user/Challenge";
-import Statistics from "@/components/user/statistics/Statistics";
 import {
   AppShell,
   Avatar,
@@ -16,15 +13,19 @@ import {
   Loader,
   Navbar,
   ScrollArea,
-  Text
+  Text,
 } from "@mantine/core";
 import {
   IconLogout,
   IconReportAnalytics,
   IconTargetArrow,
-  IconUser
+  IconUser,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
+
+import Account from "./Account";
+import Challenge from "./challenge/Challenge";
+import Statistics from "./statistics/Statistics";
 
 const tabs = [
   { link: "", label: "Account", icon: IconUser },
@@ -32,7 +33,7 @@ const tabs = [
   { link: "", label: "Challenge", icon: IconTargetArrow },
 ];
 
-export default function Settings() {
+export default function User() {
   const session = useSession();
 
   const { classes, theme, cx } = useStyles();
@@ -98,8 +99,9 @@ export default function Settings() {
       navbar={
         <Navbar
           height="100%"
-          width={{ sm: 300 }}
+          width={{ sm: 200, lg: 300, base: 100 }}
           p="md"
+          hiddenBreakpoint="sm"
           className={classes.navbar}
         >
           <Navbar.Section>

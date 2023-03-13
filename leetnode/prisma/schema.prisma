@@ -49,7 +49,8 @@ model User {
   lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
   firstQuestion   Boolean              @default(true)
-  points          Int                  @default(2)
+  points          Int                  @default(1)
+  emailFrequency  String               @default("Everyday")
   role            Role                 @default(USER)
   accounts        Account[]
   sessions        Session[]

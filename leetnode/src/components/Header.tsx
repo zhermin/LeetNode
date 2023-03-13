@@ -49,13 +49,23 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           firstQuestion: res.data.firstQuestion,
           points: res.data.points,
         });
-        toast(`Login Streak: ${res?.data?.loginStreak} 💰+2`, {
-          icon: "📅",
-          id: "updateActive",
-        }); // Notification for successful update
+        toast(
+          () => (
+            <span>
+              Login Streak: {res?.data?.loginStreak} ⚡
+              <span className="text-yellow-600">
+                +{res?.data?.loginStreak < 5 ? res?.data?.loginStreak : 5}
+              </span>
+            </span>
+          ),
+          {
+            icon: "📅",
+            id: "updateActive",
+          }
+        ); // Notification for successful update
       },
       onError: () => {
-        toast("Error updating points system", {
+        toast.error("Error updating points system", {
           id: "updateActive",
         }); // Notification for failed update
       },
@@ -78,7 +88,10 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
               currentDatetime: currentDatetime,
               loginStreak: userInfo.loginStreak + 1,
               firstQuestion: true,
-              points: userInfo.points + 2,
+              points:
+                userInfo.loginStreak + 1 < 5
+                  ? userInfo.points + userInfo.loginStreak + 1
+                  : userInfo.points + 5, // Cumulative addition of points based on streak (caps at 5)
             });
           } else {
             // Not consecutive days
@@ -86,7 +99,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
               currentDatetime: currentDatetime,
               loginStreak: 1,
               firstQuestion: true,
-              points: userInfo.points,
+              points: userInfo.points + 1,
             });
           }
         }
