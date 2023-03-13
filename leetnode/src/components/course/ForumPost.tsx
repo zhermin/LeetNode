@@ -47,7 +47,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGetFetchQuery } from "./CourseDiscussion";
 import DateDiffCalc from "./DateDiffCalc";
 
-const Editor = dynamic(import("@/components/editor/Editor"), {
+const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,
   loading: () => <p>Loading Editor...</p>,
 });

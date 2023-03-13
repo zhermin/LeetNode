@@ -50,7 +50,8 @@ model User {
   lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
   firstQuestion   Boolean              @default(true)
-  points          Int                  @default(0)
+  points          Int                  @default(1)
+  emailFrequency  String               @default("Everyday") // TODO: Change to enum
   accounts        Account[]
   sessions        Session[]
   attempts        Attempt[]
@@ -177,6 +178,7 @@ model Question {
   questionDifficulty     QuestionDifficulty
   questionContent        String                  @db.Text
   questionData           Json?
+  lastModified           DateTime                @default(now())
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
   attempts               Attempt[]
   questionMedia          QuestionMedia[]
