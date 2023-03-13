@@ -1,45 +1,23 @@
-import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/router";
-import { signIn, useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
 import {
-  createStyles,
-  TextInput,
-  Paper,
-  Title,
-  Text,
+  Button,
   Center,
   Container,
-  Button,
+  createStyles,
   Loader,
+  Paper,
+  Text,
+  TextInput,
+  Title,
 } from "@mantine/core";
-
-const isUserInitialized = async () => {
-  try {
-    const { data } = await axios.get("/api/init");
-    return data;
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error checking if user initialized");
-  }
-};
-
-const initializeUser = async (nusnetId: string) => {
-  try {
-    const { data } = await axios.post("/api/init", { nusnetId });
-    return data;
-  } catch (error) {
-    console.error(error);
-    throw new Error("Unable to initialize user");
-  }
-};
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export default function WelcomePage() {
   const { classes } = useStyles();
@@ -53,10 +31,10 @@ export default function WelcomePage() {
   const [calledPush, setCalledPush] = useState(false);
 
   // If user is already initialized, redirect to courses page
-  const { data: getNusnetId } = useQuery(
-    ["is-user-initialized"],
-    isUserInitialized
-  );
+  const { data: getNusnetId } = useQuery<{ nusnetId: string }>({
+    queryKey: ["is-user-initialized"],
+    queryFn: () => axios.get("/api/init"),
+  });
 
   useEffect(() => {
     if (getNusnetId?.nusnetId != null) {
@@ -79,9 +57,9 @@ export default function WelcomePage() {
   }, [router, getNusnetId, calledPush]);
 
   // Else, initialize user with form submission
-  const { mutate, isLoading: mutationIsLoading } = useMutation(initializeUser, {
-    onSuccess: (data) => {
-      console.log(data);
+  const { mutate, isLoading: mutationIsLoading } = useMutation({
+    mutationFn: (nusnetId: string) => axios.post("/api/init", { nusnetId }),
+    onSuccess: () => {
       setLoaded(false);
       router.push("/courses");
     },

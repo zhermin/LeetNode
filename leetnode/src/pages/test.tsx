@@ -705,21 +705,15 @@ export default function Test() {
       queries: [
         {
           queryKey: ["all-course-names"],
-          queryFn: () => {
-            return axios.get("/api/forum/getAllCourseNames");
-          },
+          queryFn: () => axios.get("/api/forum/getAllCourseNames"),
         },
         {
           queryKey: ["all-topic-names"],
-          queryFn: () => {
-            return axios.get("/api/forum/getAllTopicNames");
-          },
+          queryFn: () => axios.get("/api/forum/getAllTopicNames"),
         },
         {
           queryKey: ["all-questions"],
-          queryFn: () => {
-            return axios.get("/api/questions");
-          },
+          queryFn: () => axios.get("/api/questions"),
         },
       ],
     }

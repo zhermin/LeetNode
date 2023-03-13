@@ -1,10 +1,10 @@
-// Next and Next-Auth
+// React, Next and Next-Auth
 import React from "react";
 import type { AppType } from "next/app";
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 
-// React-Query, Axios and Toasts
+// Data Fetching: React-Query and Axios
 import {
   Hydrate,
   DehydratedState,
@@ -14,9 +14,11 @@ import {
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AxiosError, AxiosResponse } from "axios";
+
+// Notification System: React-Hot-Toast
 import toast, { Toaster } from "react-hot-toast";
 
-// Styles
+// Styles: Mantine and Tailwind
 import "../styles/globals.css";
 import {
   MantineProvider,
@@ -25,7 +27,7 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 
-// React PDF Renderer
+// Others: React PDF Renderer
 import { pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -50,26 +52,39 @@ const LeetNode: AppType<{
           },
           onSuccess: (res) => {
             const { data } = res as AxiosResponse;
-            toast.success(data.message ?? "Success!", {
-              id: toastId.current,
-            });
+            if (data && data.message) {
+              toast.success(data.message, {
+                id: toastId.current,
+              });
+            } else {
+              toast.success("Success!", {
+                id: toastId.current,
+              });
+            }
           },
           onError: (error) => {
-            if (error instanceof AxiosError) {
-              if (error.response && error.response.data) {
-                const jsonStr = error.response.data.match(
-                  /<script id="__NEXT_DATA__".*?>(.*?)<\/script>/s
-                )[1];
-                const data = JSON.parse(jsonStr);
-                const errorMessage = data.err.message;
-                toast.error(`Please contact support\n\n${errorMessage}`);
-              }
-              toast.error(error.message);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error("Unknown Error");
+            let errorMessage = "Unknown Error";
+
+            // TEMP: If error is from Prisma (database), ugly-extract the error message
+            if (
+              error instanceof AxiosError &&
+              error.response &&
+              error.response.data
+            ) {
+              const jsonStr = error.response.data.match(
+                /<script id="__NEXT_DATA__".*?>(.*?)<\/script>/s
+              )[1];
+              const data = JSON.parse(jsonStr);
+              errorMessage = data.err.message;
             }
+
+            if (error instanceof Error || error instanceof AxiosError) {
+              errorMessage = error.message;
+            }
+
+            toast.error(`Please contact support\n\n${errorMessage}`, {
+              id: toastId.current,
+            });
           },
         }),
       })
