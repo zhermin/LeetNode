@@ -2,7 +2,7 @@ name: Daily Email API
 
 on:
   schedule:
-    - cron: "0 9 * * *" # 5PM SUN SGT
+    - cron: "0 9 * * *" # 5PM SGT
   workflow_dispatch:
 
 jobs:
