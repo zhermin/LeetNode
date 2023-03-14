@@ -1,10 +1,8 @@
 name: Daily Email API
 
 on:
-  push:
-    branches: [settings]
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 9 * * *" # 5PM SUN SGT
   workflow_dispatch:
 
 jobs:

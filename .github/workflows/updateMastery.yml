@@ -1,8 +1,6 @@
 name: Update Weekly Mastery API
 
 on:
-  push:
-    branches: [settings]
   schedule:
     - cron: "0 15 * * SUN" # 11PM SUN SGT
   workflow_dispatch:
