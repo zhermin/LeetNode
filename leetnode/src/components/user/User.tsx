@@ -125,6 +125,16 @@ export default function User() {
                   {userInfo?.name}
                 </Text>
               </Center>
+              <Center>
+                <Text
+                  className={classes.userName}
+                  sx={{ lineHeight: 1, fontSize: "16px" }}
+                  weight={400}
+                  color={theme.colors.gray[9]}
+                >
+                  ({userInfo?.nickname})
+                </Text>
+              </Center>
             </div>
             {links}
           </Navbar.Section>

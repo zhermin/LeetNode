@@ -29,14 +29,12 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     async (variables: {
       currentDatetime: Date;
       loginStreak: number;
-      firstQuestion: boolean;
       points: number;
     }) => {
       return await axios.post("/api/user/updatePoints", {
         id: session?.data?.user?.id,
         lastActive: variables.currentDatetime,
         loginStreak: variables.loginStreak,
-        firstQuestion: variables.firstQuestion,
         points: variables.points,
       });
     },
@@ -46,9 +44,9 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           ...userInfo,
           lastActive: res.data.lastActive,
           loginStreak: res.data.loginStreak,
-          firstQuestion: res.data.firstQuestion,
           points: res.data.points,
         });
+        queryClient.invalidateQueries(["challenge"]); // Sync the points in both tabs of the challenge page
         toast(
           () => (
             <span>
@@ -87,7 +85,6 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
             updateActive({
               currentDatetime: currentDatetime,
               loginStreak: userInfo.loginStreak + 1,
-              firstQuestion: true,
               points:
                 userInfo.loginStreak + 1 < 5
                   ? userInfo.points + userInfo.loginStreak + 1
@@ -98,19 +95,34 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
             updateActive({
               currentDatetime: currentDatetime,
               loginStreak: 1,
-              firstQuestion: true,
               points: userInfo.points + 1,
             });
           }
+        } else {
+          // Same day
+          // Calculate number of seconds till midnight
+          const midnight = new Date(); // get midnight
+          midnight.setDate(midnight.getDate() + 1);
+          midnight.setHours(0, 0, 0, 0);
+          const msTillMidnight = midnight.getTime() - currentDatetime.getTime(); // ms to next midnight
+
+          // Trigger at midnight
+          const countdown = setTimeout(() => {
+            updateActive({
+              currentDatetime: currentDatetime,
+              loginStreak: userInfo.loginStreak + 1,
+              points:
+                userInfo.loginStreak + 1 < 5
+                  ? userInfo.points + userInfo.loginStreak + 1
+                  : userInfo.points + 5, // Cumulative addition of points based on streak (caps at 5)
+            }); // Mutation will trigger the useEffect loop to automatically calculate the no. of seconds for the following midnight and so forth
+          }, msTillMidnight);
+          return () => clearTimeout(countdown); // Clear timeout when unmount
         }
       }
     };
 
     checkActive(); // Run immediately once user logs in
-    const interval = setInterval(() => {
-      checkActive();
-    }, 60000); // Run every minute
-    return () => clearInterval(interval); // Clear interval when unmount
   }, [userInfo, isLoading, isError, updateActive]);
 
   const fullTitle = `LeetNode — ${title}`;

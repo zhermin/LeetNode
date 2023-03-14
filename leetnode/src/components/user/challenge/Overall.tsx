@@ -1,26 +1,9 @@
 import { Avatar, Center, Group, ScrollArea, Table, Text } from "@mantine/core";
+import { User } from "@prisma/client";
 import { IconCrown } from "@tabler/icons";
 
 interface OverallProps {
-  allUsers: {
-    id: string;
-    name: string;
-    image: string;
-    lastActive: Date;
-    loginStreak: number;
-    firstQuestion: boolean;
-    points: number;
-  }[];
-}
-
-interface User {
-  id: string;
-  name: string;
-  image: string;
-  lastActive: Date;
-  loginStreak: number;
-  firstQuestion: boolean;
-  points: number;
+  allUsers: User[];
 }
 
 export default function Overall({ allUsers }: OverallProps) {
@@ -66,7 +49,7 @@ export default function Overall({ allUsers }: OverallProps) {
               weight={500}
               c={index === 0 || index === 1 || index === 2 ? "black" : ""} // visibility
             >
-              {user.name}
+              {user.nickname ?? user.name}
             </Text>
           </Group>
         </td>

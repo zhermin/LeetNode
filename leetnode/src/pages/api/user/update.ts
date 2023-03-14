@@ -16,7 +16,7 @@ export default async function handler(
         },
         data: {
           nusnetId: req.body.nusnetId,
-          name: req.body.name,
+          nickname: req.body.nickname,
           image: req.body.image,
         },
       });

@@ -19,10 +19,8 @@ export default async function handler(
                 select: {
                     id: true,
                     name: true,
+                    nickname: true,
                     image: true,
-                    lastActive: true,
-                    loginStreak: true,
-                    firstQuestion: true,
                     points: true
                 },
             });

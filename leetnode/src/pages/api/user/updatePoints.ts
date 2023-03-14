@@ -17,7 +17,6 @@ export default async function handler(
                 data: {
                     lastActive: req.body.lastActive,
                     loginStreak: req.body.loginStreak,
-                    firstQuestion: req.body.firstQuestion,
                     points: req.body.points
                 },
             });

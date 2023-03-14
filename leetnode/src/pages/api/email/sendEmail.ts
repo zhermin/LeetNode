@@ -52,7 +52,8 @@ export default async function handler(
       // get all emails with ADMIN role
       const admins = await prisma.user.findMany({
         where: {
-          role: "ADMIN",
+          role: "ADMIN" || "SUPERUSER",
+          emailFrequency: "Everyday" // will add filter in the future
         },
         select: {
           email: true,

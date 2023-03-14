@@ -11,21 +11,20 @@ import {
   Group,
   TextInput,
 } from "@mantine/core";
+import { User } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface AccountProps {
-  userInfo: {
-    nusnetId: string;
-    name: string;
-    image: string;
-  };
+  userInfo: User;
 }
 
 export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
 
-  const [userName, setUserName] = useState(userInfo.name || "");
-  const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId || "");
+  const [userName, setUserName] = useState(
+    userInfo.nickname ?? (userInfo.name || "")
+  );
+  const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId ?? "");
 
   const [file, setFile] = useState<File | null>(null);
 
@@ -36,8 +35,8 @@ export default function Account({ userInfo }: AccountProps) {
     async (image: string) => {
       return await axios.post("/api/user/update", {
         id: session?.data?.user?.id,
-        name: userName,
         nusnetId: userNusnetId,
+        nickname: userName,
         image: image,
       });
     },
@@ -46,7 +45,7 @@ export default function Account({ userInfo }: AccountProps) {
         queryClient.setQueryData(["userInfo", session?.data?.user?.id], {
           ...userInfo,
           nusnetId: res.data.nusnetId,
-          name: res.data.name,
+          nickname: res.data.nickname,
           image: res.data.image,
         });
         toast.success("Updated!", { id: "updateUserInfo" }); // Notification for successful update
@@ -116,9 +115,9 @@ export default function Account({ userInfo }: AccountProps) {
 
   // Reset form
   const handleReset = useCallback(() => {
-    setUserName(userInfo.name);
-    setUserNusnetId(userInfo.nusnetId);
-  }, [userInfo.name, userInfo.nusnetId]);
+    setUserName(userInfo.nickname ?? userInfo.name);
+    setUserNusnetId(userInfo.nusnetId ?? "");
+  }, [userInfo.nickname, userInfo.name, userInfo.nusnetId]);
 
   return (
     <>
@@ -130,7 +129,7 @@ export default function Account({ userInfo }: AccountProps) {
             <TextInput
               className="mt-4"
               type="text"
-              label="Name"
+              label="Nickname (Visible to everyone)"
               name="name"
               variant="filled"
               value={userName}
@@ -139,7 +138,8 @@ export default function Account({ userInfo }: AccountProps) {
             />
             {/^(\s*\w+\s*){5,}$/.test(userName) ? null : (
               <p className="text-red-500 text-xs italic">
-                Name must contain at least 5 letters and CANNOT contain symbols
+                Nickname must contain at least 5 letters and CANNOT contain
+                symbols
               </p>
             )}
             <TextInput

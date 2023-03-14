@@ -3,20 +3,11 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 import { Center, Loader, ScrollArea, SegmentedControl } from "@mantine/core";
+import { User } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
 import Overall from "./Overall";
 import Personal from "./Personal";
-
-interface User {
-  id: string;
-  name: string;
-  image: string;
-  lastActive: Date;
-  loginStreak: number;
-  firstQuestion: boolean;
-  points: number;
-}
 
 export default function Challenge() {
   const session = useSession();
@@ -29,7 +20,7 @@ export default function Challenge() {
   } = useQuery(
     ["challenge"],
     async () => {
-      const res = await axios.get("/api/user/getPoints");
+      const res = await axios.get("/api/user/getAllUsersPoints");
       return res.data;
     },
     { keepPreviousData: true }
@@ -43,6 +34,7 @@ export default function Challenge() {
     );
   }
 
+  // sort by descending order
   allUsers?.sort((user1: User, user2: User) => {
     return user2.points - user1.points;
   });
@@ -68,7 +60,7 @@ export default function Challenge() {
         fullWidth
       />
       {view === "personal" ? (
-        <Personal userInfo={{ ...allUsers[index], index }} />
+        <Personal index={index} />
       ) : (
         <Overall allUsers={allUsers} />
       )}

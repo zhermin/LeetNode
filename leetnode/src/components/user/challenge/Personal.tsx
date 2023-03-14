@@ -1,27 +1,64 @@
-import { Center, Group, Paper, RingProgress, Text } from "@mantine/core";
-import { Calendar } from "@mantine/dates";
+import axios from "axios";
+import { useSession } from "next-auth/react";
+
 import {
+  Center,
+  Group,
+  Loader,
+  Paper,
+  RingProgress,
+  Text,
+} from "@mantine/core";
+import { Calendar } from "@mantine/dates";
+import { User } from "@prisma/client";
+import {
+  IconCheck,
   IconCheckbox,
-  IconCircleCheck,
+  IconChecks,
   IconFlame,
   IconSquare,
 } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
+interface UserData extends User {
+  attempts: { [timestamp: string]: number };
+}
 interface PersonalProps {
-  userInfo: {
-    id: string;
-    name: string;
-    image: string;
-    lastActive: Date;
-    loginStreak: number;
-    firstQuestion: boolean;
-    points: number;
-    index: number;
-  };
+  index: number;
 }
 
-export default function Personal({ userInfo }: PersonalProps) {
-  const lastActive = new Date(userInfo.lastActive);
+export default function Personal({ index }: PersonalProps) {
+  const session = useSession();
+
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery<UserData>(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { enabled: !!session?.data?.user?.id }
+  );
+
+  if (!userInfo || isLoading || isError) {
+    return (
+      <Center style={{ height: 500 }}>
+        <Loader />
+      </Center>
+    );
+  }
+
+  // Pre-processing to render the calendar
+  const lastActive = new Date(userInfo.lastActive ?? ""); // lastActive
+  const startDateTime = new Date();
+  startDateTime.setDate(lastActive.getDate() - userInfo.loginStreak + 1); // Start of login streak
+  startDateTime.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
+  lastActive.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
 
   return (
     <div>
@@ -76,7 +113,7 @@ export default function Personal({ userInfo }: PersonalProps) {
           </Text>
           <Center>
             <Text weight={700} size="lg" className="mr-1">
-              #{userInfo.index + 1}
+              #{index + 1}
             </Text>
             <Text weight={700} size="sm" color="grey">
               ({userInfo.points}⚡)
@@ -88,7 +125,7 @@ export default function Personal({ userInfo }: PersonalProps) {
             Question attempted today
           </Text>
           <Center>
-            {userInfo.firstQuestion === false ? (
+            {(userInfo.attempts[lastActive.toDateString()] ?? 0) > 0 ? (
               <IconCheckbox color="green" />
             ) : (
               <IconSquare color="orange" />
@@ -103,18 +140,21 @@ export default function Personal({ userInfo }: PersonalProps) {
           onChange={() => {
             return null; // Do nothing
           }}
-          minDate={new Date(lastActive.getFullYear(), lastActive.getMonth())}
-          maxDate={
-            new Date(lastActive.getFullYear(), lastActive.getMonth() + 1)
-          }
           renderDay={(date) => {
             const day = date.getDate();
 
-            return day > lastActive.getDate() - userInfo.loginStreak &&
-              day <= lastActive.getDate() ? (
-              <Center>
-                <IconCircleCheck />
-              </Center>
+            return date >= startDateTime && date <= lastActive ? (
+              date.toDateString() in userInfo.attempts ? (
+                <div className="flex">
+                  <IconChecks color="green" />
+                  {day}
+                </div>
+              ) : (
+                <div className="flex">
+                  <IconCheck color="orange" />
+                  {day}
+                </div>
+              )
             ) : (
               <>{day}</>
             );
