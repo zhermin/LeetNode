@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -127,13 +127,15 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
   }, [userInfo, isLoading, isError, updateActive]);
 
   // Periodically updates last active datetime if user is logged in
+  const intervalRef = useRef<NodeJS.Timeout>();
+
   useEffect(() => {
     const updateLastActive = async () => {
       try {
         const { data } = await axios.post("/api/prof/updateLastActive", {
           id: session?.data?.user?.id as string,
         });
-        console.log("Last active updated:", data);
+        console.log("Last Active Updated @", new Date(data.lastActive));
       } catch (error) {
         console.error(error);
       }
@@ -144,11 +146,15 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     }
 
     // Schedules update every 5 minutes
-    const intervalId = setInterval(updateLastActive, 5 * 60 * 1000);
+    intervalRef.current = setInterval(updateLastActive, 1 * 60 * 1000);
 
     // Clean up interval when component unmounts
-    return () => clearInterval(intervalId);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      console.log("Component unmounted");
+      clearInterval(intervalRef.current);
+      intervalRef.current = undefined;
+    };
+  }, [session?.data?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Head>

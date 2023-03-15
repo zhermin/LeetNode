@@ -52,10 +52,15 @@ const LeetNode: AppType<{
           },
           onSuccess: (res) => {
             const { data } = res as AxiosResponse;
-            if (data && data.message) {
-              toast.success(data.message, {
-                id: toastId.current,
-              });
+            if (data) {
+              if (data.customToast) {
+                toast.remove(toastId.current);
+              }
+              if (data.message) {
+                toast.success(data.message, {
+                  id: toastId.current,
+                });
+              }
             } else {
               toast.success("Success!", {
                 id: toastId.current,
