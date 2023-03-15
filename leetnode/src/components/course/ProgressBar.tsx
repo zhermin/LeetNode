@@ -1,15 +1,16 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+
 import {
-  Center,
   Box,
+  Center,
   Group,
   Loader,
   Progress,
-  Title,
   Text,
+  Title,
 } from "@mantine/core";
-import axios from "axios";
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
 
 const ProgressBar = ({
   topicSlug,
@@ -18,20 +19,8 @@ const ProgressBar = ({
   topicSlug: string;
   topicName: string;
 }) => {
-  //get mastery level to be display on page
-
-  //this method displays mastery based on prisma database
-  // const masteryDisplay = [];
-  // for (let i = 0; i < masteryLevel.length; i++) {
-  //   if (masteryLevel[i]?.topicSlug == topicSlug) {
-  //     masteryDisplay.push(masteryLevel[i]);
-  //   }
-  // }
-  // console.log(masteryDisplay); //should return [{userId: ,topicSlug: , masteryLevel: ,}]
-
   const session = useSession();
 
-  //this  method displays mastery based on api calls
   const [details, setDetails] = useState(0);
   const [loading, setLoading] = useState(false);
 

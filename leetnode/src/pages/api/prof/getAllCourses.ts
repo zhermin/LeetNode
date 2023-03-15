@@ -6,14 +6,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.comment.findMany({
+  const getAllCourses = await prisma.course.findMany({
     include: {
-      commentMedia: true,
-    },
-    where: {
-      postId: req.body.postId,
+      topics: true,
+      userCourseQuestions: true,
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json(getAllCourses);
 }

@@ -6,14 +6,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.comment.findMany({
-    include: {
-      commentMedia: true,
-    },
+  const emailFreq = await prisma.user.update({
     where: {
-      postId: req.body.postId,
+      id: req.body.id,
+    },
+    data: {
+      emailFrequency: req.body.emailFreq,
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json(emailFreq);
 }

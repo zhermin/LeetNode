@@ -6,14 +6,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.comment.findMany({
+  const getAllAttempts = await prisma.attempt.findMany({
     include: {
-      commentMedia: true,
-    },
-    where: {
-      postId: req.body.postId,
+      user: true,
+      question: true,
+      answer: true,
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json(getAllAttempts);
 }

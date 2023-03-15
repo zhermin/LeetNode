@@ -2,7 +2,7 @@ import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
@@ -29,6 +29,7 @@ import {
   IconSettings,
   IconStar,
   IconSun,
+  IconUser,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
@@ -104,6 +105,22 @@ export default function Navbar() {
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get("/api/forum/getAllUsers")
+      .then((response) => {
+        const filteredUser = response.data.filter(
+          (user: { id: string }) =>
+            user.id == (session?.data?.user?.id as string)
+        );
+        if (!admin && filteredUser[0]?.role === "ADMIN") {
+          setAdmin(true);
+        }
+      })
+      .catch((error) => console.error(error));
+  }, [admin, session?.data?.user?.id]);
 
   const {
     data: userInfo,
@@ -292,6 +309,15 @@ export default function Navbar() {
               >
                 Account settings
               </Menu.Item>
+              {admin && (
+                <Menu.Item
+                  component={Link}
+                  href="/prof"
+                  icon={<IconUser size={14} stroke={1.5} />}
+                >
+                  Admin Panel
+                </Menu.Item>
+              )}
               <Menu.Item
                 onClick={() => signOut({ callbackUrl: "/" })}
                 icon={<IconLogout size={14} stroke={1.5} />}

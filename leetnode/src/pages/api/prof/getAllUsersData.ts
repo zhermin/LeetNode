@@ -6,14 +6,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.comment.findMany({
+  //updates lastActive after each submission
+  const getUsersData = await prisma.user.findMany({
     include: {
-      commentMedia: true,
-    },
-    where: {
-      postId: req.body.postId,
+      masteries: true,
+      attempts: true,
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json(getUsersData);
 }

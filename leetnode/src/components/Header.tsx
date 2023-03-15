@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Header = ({ title = "Personalized Path Mastery" }) => {
+  const fullTitle = `LeetNode — ${title}`;
   const session = useSession();
   const queryClient = useQueryClient();
 
@@ -125,7 +126,28 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     checkActive(); // Run immediately once user logs in
   }, [userInfo, isLoading, isError, updateActive]);
 
-  const fullTitle = `LeetNode — ${title}`;
+  useEffect(() => {
+    const updateLastActive = async () => {
+      try {
+        const { data } = await axios.post("/api/prof/updateLastActive", {
+          id: session?.data?.user?.id as string,
+        });
+        console.log("Last active updated:", data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    // Update last active immediately on component mount
+    updateLastActive();
+
+    // Schedule update every 5 minutes
+    const intervalId = setInterval(updateLastActive, 5 * 60 * 1000);
+
+    // Clean up interval when component unmounts
+    return () => clearInterval(intervalId);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Head>
       <title>{fullTitle}</title>

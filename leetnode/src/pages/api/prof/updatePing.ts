@@ -6,19 +6,18 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const postLikes = await prisma.postLikes.upsert({
+  //updates topicPing after each submission
+  const updatePing = await prisma.mastery.update({
     where: {
-      postId_userId: {
-        postId: req.body.postId,
+      userId_topicSlug: {
         userId: req.body.userId,
+        topicSlug: req.body.topicSlug,
       },
     },
-    update: {},
-    create: {
-      postId: req.body.postId,
-      userId: req.body.userId,
-      likes: 0,
+    data: {
+      topicPing: req.body.newPing,
     },
   });
-  res.status(200).json(postLikes);
+
+  res.status(200).json(updatePing);
 }

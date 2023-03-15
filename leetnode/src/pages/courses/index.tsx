@@ -1,33 +1,34 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import toast from "react-hot-toast";
+
+import Dots from "@/components/Dots";
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import Dots from "@/components/Dots";
-
 import { Carousel } from "@mantine/carousel";
 import {
-  createStyles,
-  Text,
-  Title,
-  Container,
+  Badge,
   Box,
   Card,
-  Group,
-  Badge,
   Center,
+  Container,
+  createStyles,
+  Group,
   Loader,
+  Text,
+  Title,
 } from "@mantine/core";
-
-import Link from "next/link";
 import { Course, CourseType, Level } from "@prisma/client";
-import { getAllCoursesData } from "../api/courses";
-import axios from "axios";
 import {
   dehydrate,
   QueryCache,
   QueryClient,
   useQuery,
 } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+
+import { getAllCoursesData } from "../api/courses";
 
 type allCoursesType = (Course & {
   topics: {
@@ -128,6 +129,7 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 
 export default function CoursesPage() {
   const { classes } = useStyles();
+  const session = useSession();
 
   const { data: courses } = useQuery<allCoursesType>(
     ["all-courses"],
@@ -150,6 +152,23 @@ export default function CoursesPage() {
       </Center>
     );
   }
+
+  const handleInitUser = async (
+    course: Course & { topics: { topicSlug: string }[] }
+  ) => {
+    console.log(course.topics);
+    try {
+      const { data } = await axios.post(`/api/pybkt/init`, {
+        id: session?.data?.user?.id,
+        topics: course.topics,
+      });
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to initialise");
+    }
+  };
 
   return (
     <>
@@ -181,7 +200,12 @@ export default function CoursesPage() {
           {courses
             .filter((course) => course.type === CourseType.Quiz)
             .map((course) => (
-              <Carousel.Slide key={course.courseSlug}>
+              <Carousel.Slide
+                key={course.courseSlug}
+                onClick={() => {
+                  handleInitUser(course);
+                }}
+              >
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -212,7 +236,12 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide key={course.courseSlug}>
+              <Carousel.Slide
+                key={course.courseSlug}
+                onClick={() => {
+                  handleInitUser(course);
+                }}
+              >
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -242,7 +271,12 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide key={course.courseSlug}>
+              <Carousel.Slide
+                key={course.courseSlug}
+                onClick={() => {
+                  handleInitUser(course);
+                }}
+              >
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -273,7 +307,12 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide key={course.courseSlug}>
+              <Carousel.Slide
+                key={course.courseSlug}
+                onClick={() => {
+                  handleInitUser(course);
+                }}
+              >
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
