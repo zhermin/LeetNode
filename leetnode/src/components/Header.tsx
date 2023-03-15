@@ -126,6 +126,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     checkActive(); // Run immediately once user logs in
   }, [userInfo, isLoading, isError, updateActive]);
 
+  // Periodically updates last active datetime if user is logged in
   useEffect(() => {
     const updateLastActive = async () => {
       try {
@@ -138,10 +139,11 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
       }
     };
 
-    // Update last active immediately on component mount
-    updateLastActive();
+    if (session?.data?.user?.id) {
+      updateLastActive();
+    }
 
-    // Schedule update every 5 minutes
+    // Schedules update every 5 minutes
     const intervalId = setInterval(updateLastActive, 5 * 60 * 1000);
 
     // Clean up interval when component unmounts
