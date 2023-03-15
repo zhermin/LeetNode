@@ -1,17 +1,26 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
+import { useEffect } from "react";
 
 const Header = ({ title = "Personalized Path Mastery" }) => {
   const fullTitle = `LeetNode — ${title}`;
   const session = useSession();
 
-  axios
-    .post("/api/prof/updateLastActive", {
-      id: session?.data?.user?.id as string,
-    })
-    .then((response) => console.log(response))
-    .catch((error) => console.error(error));
+  useEffect(() => {
+    const updateLastActive = async () => {
+      try {
+        const { data } = await axios.post("/api/prof/updateLastActive", {
+          id: session?.data?.user?.id as string,
+        });
+        return data;
+      } catch (error) {
+        console.error(error);
+        throw new Error("Unable to update last active");
+      }
+    };
+    updateLastActive();
+  }, [session?.data?.user?.id]);
 
   return (
     <Head>
