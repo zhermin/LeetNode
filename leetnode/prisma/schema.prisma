@@ -47,11 +47,11 @@ model User {
   email           String               @unique
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
+  role            Role                 @default(USER)
   lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
   points          Int                  @default(1)
-  emailFrequency  String               @default("Everyday")
-  role            Role                 @default(USER)
+  emailFrequency  Frequency            @default(Daily)
   accounts        Account[]
   sessions        Session[]
   attempts        Attempt[]
@@ -63,8 +63,17 @@ model User {
 }
 
 enum Role {
+  SUPERUSER
   ADMIN
   USER
+}
+
+enum Frequency {
+  Daily
+  Weekly
+  Fortnightly
+  Monthly
+  Never
 }
 
 model Attempt {
@@ -72,14 +81,15 @@ model Attempt {
   userId         String
   questionId     Int
   attemptOption  Int
+  attemptValue   Float? // TODO: Directly check against dynamic answer options
+  courseSlug     String
   isCorrect      Boolean
   submittedAt    DateTime @default(now())
-  courseSlug     String
   attemptSeconds Int? // KIV
-  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
   answer         Answer   @relation(fields: [questionId, attemptOption], references: [questionId, optionNumber], onDelete: Cascade)
+  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
 
   @@unique([userId, questionId, submittedAt])
   @@index([questionId, attemptOption])
@@ -132,16 +142,16 @@ model UserCourseQuestion {
 }
 
 model Mastery {
-  userId        String
-  topicSlug     String
-  masteryLevel  Float    @default(0)
-  weeklyMasteryLevel Float @default(0)
-  fortnightMasteryLevel  Float    @default(0)
-  topicPing     Boolean  @default(false)
-  lastFlagged   DateTime?
-  errorMeter    Int      @default(0)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic         Topic    @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+  userId                  String
+  topicSlug               String
+  masteryLevel            Float     @default(0)
+  topicPing               Boolean   @default(false)
+  lastFlagged             DateTime?
+  errorMeter              Int       @default(0)
+  weeklyMasteryLevel      Float     @default(0)
+  fortnightlyMasteryLevel Float     @default(0)
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic                   Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
   @@index([topicSlug])
@@ -177,8 +187,11 @@ model Question {
   questionId             Int                     @id @default(autoincrement())
   variationId            Int                     @default(0)
   topicSlug              String
-  questionContent        String                  @db.VarChar(500)
+  questionTitle          String?
   questionDifficulty     QuestionDifficulty
+  questionContent        String                  @db.Text
+  questionData           Json?
+  lastModified           DateTime                @default(now())
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
   attempts               Attempt[]
   questionMedia          QuestionMedia[]
@@ -221,7 +234,7 @@ model Post {
   postId     String      @id @default(cuid())
   userId     String
   title      String
-  message    String      @db.VarChar(700)
+  message    String      @db.Text
   likes      Int         @default(0)
   courseName String
   topicName  String? //kiv until dynamic loading implemented
@@ -271,7 +284,7 @@ model Comment {
   commentId    String         @id @default(cuid())
   postId       String
   userId       String
-  message      String         @db.VarChar(700)
+  message      String         @db.Text
   likes        Int            @default(0)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt

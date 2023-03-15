@@ -9,6 +9,8 @@ export default async function handler(
   const posts = await prisma.topic.findMany({
     select: {
       topicName: true,
+      topicSlug: true,
+      topicLevel: true,
     },
   });
 

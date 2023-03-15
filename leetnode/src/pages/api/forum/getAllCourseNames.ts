@@ -9,6 +9,9 @@ export default async function handler(
   const posts = await prisma.course.findMany({
     select: {
       courseName: true,
+      courseLevel: true,
+      type: true,
+      topics: true,
     },
   });
 

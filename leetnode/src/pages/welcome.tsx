@@ -19,26 +19,6 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-const isUserInitialized = async () => {
-  try {
-    const { data } = await axios.get("/api/init");
-    return data;
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error checking if user initialized");
-  }
-};
-
-const initializeUser = async (nusnetId: string) => {
-  try {
-    const { data } = await axios.post("/api/init", { nusnetId });
-    return data;
-  } catch (error) {
-    console.error(error);
-    throw new Error("Unable to initialize user");
-  }
-};
-
 export default function WelcomePage() {
   const { classes } = useStyles();
 
@@ -51,10 +31,10 @@ export default function WelcomePage() {
   const [calledPush, setCalledPush] = useState(false);
 
   // If user is already initialized, redirect to courses page
-  const { data: getNusnetId } = useQuery(
-    ["is-user-initialized"],
-    isUserInitialized
-  );
+  const { data: getNusnetId } = useQuery<{ nusnetId: string }>({
+    queryKey: ["is-user-initialized"],
+    queryFn: () => axios.get("/api/init"),
+  });
 
   useEffect(() => {
     if (getNusnetId?.nusnetId != null) {
@@ -77,9 +57,9 @@ export default function WelcomePage() {
   }, [router, getNusnetId, calledPush]);
 
   // Else, initialize user with form submission
-  const { mutate, isLoading: mutationIsLoading } = useMutation(initializeUser, {
-    onSuccess: (data) => {
-      console.log(data);
+  const { mutate, isLoading: mutationIsLoading } = useMutation({
+    mutationFn: (nusnetId: string) => axios.post("/api/init", { nusnetId }),
+    onSuccess: () => {
       setLoaded(false);
       router.push("/courses");
     },

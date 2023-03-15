@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
+
 import { prisma } from "@/server/db/client";
 
 export default async function handler(
@@ -23,7 +24,10 @@ export default async function handler(
       },
     });
 
-    res.status(200).json({ nusnetId: nusnetId?.nusnetId });
+    res.status(200).json({
+      message: "User already initialized",
+      nusnetId: nusnetId?.nusnetId,
+    });
   }
 
   // POST request to add nusnetId into user and initialize userCourseQuestions and Mastery
@@ -84,6 +88,6 @@ export default async function handler(
       }),
     });
 
-    res.status(200).json({ message: "User initialized" });
+    res.status(200).json({ message: "Welcome to LeetNode!" });
   }
 }

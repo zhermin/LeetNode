@@ -2,15 +2,18 @@ import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
+  Badge,
   Box,
+  Burger,
   Button,
   Center,
   Container,
   createStyles,
+  Flex,
   Group,
   Header,
   Loader,
@@ -21,6 +24,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
+import { Role } from "@prisma/client";
 import {
   IconBook,
   IconChevronDown,
@@ -98,7 +102,39 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export default function Navbar() {
+const FullLogo = () => (
+  <Link href="/">
+    <Image
+      src="/logo/leetnode-banner-white.png"
+      alt="LeetNode"
+      width="0"
+      height="0"
+      sizes="100vw"
+      className="h-auto max-h-12 w-full"
+    />
+  </Link>
+);
+
+const SmallLogo = () => (
+  <Link href="/">
+    <Image
+      src="/logo/leetnode-logo-square.png"
+      alt="LeetNode"
+      width="0"
+      height="0"
+      sizes="100vw"
+      className="h-6 w-full rounded-full"
+    />
+  </Link>
+);
+
+export default function Navbar({
+  sidebarOpened,
+  setSidebarOpened,
+}: {
+  sidebarOpened?: boolean;
+  setSidebarOpened?: Dispatch<SetStateAction<boolean>>;
+}) {
   const session = useSession();
 
   const { classes, theme, cx } = useStyles();
@@ -140,28 +176,19 @@ export default function Navbar() {
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
       <Container className={classes.inner}>
-        {mobile ? (
-          <Link href="/">
-            <Image
-              src="/logo/leetnode-logo-square.png"
-              alt="LeetNode"
-              width="0"
-              height="0"
-              sizes="100vw"
-              className="h-6 w-full rounded-full"
+        {sidebarOpened !== undefined && setSidebarOpened ? (
+          <Flex align="center" gap="xl">
+            <Burger
+              opened={sidebarOpened}
+              onClick={() => setSidebarOpened((o) => !o)}
+              color={theme.colors.gray[6]}
             />
-          </Link>
+            <FullLogo />
+          </Flex>
+        ) : mobile ? (
+          <SmallLogo />
         ) : (
-          <Link href="/">
-            <Image
-              src="/logo/leetnode-banner-white.png"
-              alt="LeetNode"
-              width="0"
-              height="0"
-              sizes="100vw"
-              className="h-auto w-full max-h-12"
-            />
-          </Link>
+          <FullLogo />
         )}
 
         {session.status === "unauthenticated" && (
@@ -270,16 +297,29 @@ export default function Navbar() {
               <Menu.Divider />
 
               <Menu.Label>
-                <Text
-                  weight={700}
-                  color={
-                    theme.colorScheme === "dark"
-                      ? theme.colors.dark[0]
-                      : theme.colors.gray[9]
-                  }
-                >
-                  Signed In As:
-                </Text>
+                <Group position="apart">
+                  <Text
+                    weight={700}
+                    color={
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[0]
+                        : theme.colors.gray[9]
+                    }
+                  >
+                    Signed In As:
+                  </Text>
+                  <Badge
+                    color={
+                      session?.data?.user?.role === Role.SUPERUSER
+                        ? "red"
+                        : session?.data?.user?.role === Role.ADMIN
+                        ? "orange"
+                        : ""
+                    }
+                  >
+                    {session?.data?.user?.role}
+                  </Badge>
+                </Group>
                 {session?.data?.user?.email}
               </Menu.Label>
 

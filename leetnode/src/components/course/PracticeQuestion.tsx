@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Dispatch, Key, SetStateAction, useState } from "react";
 import Latex from "react-latex-next";
 
+import { UserQuestionWithAttemptsType } from "@/pages/courses/[courseSlug]";
 import {
   Button,
   Center,
@@ -14,14 +15,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import {
-  Answer,
-  Attempt,
-  Question,
-  QuestionDifficulty,
-  QuestionMedia,
-  Topic,
-} from "@prisma/client";
+import { Question, QuestionDifficulty } from "@prisma/client";
 
 const LoadTopic = ({
   questionDisplay,
@@ -37,24 +31,7 @@ const LoadTopic = ({
   currentCourse
 }: {
   questionDisplay:
-    | {
-        addedTime: Date;
-        courseSlug: string;
-        question: {
-          answers: Answer[];
-          attempts: Attempt[];
-          questionContent: string;
-          questionDifficulty: string;
-          questionId: number;
-          variationId: number;
-          topicSlug: string;
-          questionMedia: QuestionMedia[];
-          topic: Topic;
-        };
-        questionId: number;
-        userId: string;
-      }[]
-    | undefined;
+    UserQuestionWithAttemptsType;
   selectedOptions: {
     answerByUser: string;
   }[];

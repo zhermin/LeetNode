@@ -1,48 +1,248 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { Document, Page } from "react-pdf";
-import MarkdownLatex from "@/components/MarkdownLatex";
 
-import { useState } from "react";
-import LeetNodeHeader from "@/components/Header";
-import LeetNodeNavbar from "@/components/Navbar";
+import QuestionViewer from "@/components/editor/QuestionViewer";
 import LeetNodeFooter from "@/components/Footer";
+import LeetNodeHeader from "@/components/Header";
+import MarkdownLatex from "@/components/MarkdownLatex";
+import LeetNodeNavbar from "@/components/Navbar";
 import {
   AppShell,
-  Header,
+  Button,
+  createStyles,
+  Flex,
+  Modal,
   Navbar,
+  ScrollArea,
   SegmentedControl,
   Text,
-  createStyles,
-  ScrollArea,
-  Button,
-  MediaQuery,
-  Burger,
-  Group,
-  Container,
 } from "@mantine/core";
 import {
-  IconShoppingCart,
-  IconLicense,
-  IconMessage2,
+  Icon2fa,
   IconBellRinging,
-  IconMessages,
+  IconDatabaseImport,
+  IconFileAnalytics,
   IconFingerprint,
   IconKey,
-  IconSettings,
-  Icon2fa,
-  IconUsers,
-  IconFileAnalytics,
-  IconDatabaseImport,
+  IconLicense,
+  IconLogout,
+  IconMessage2,
+  IconMessages,
   IconReceipt2,
   IconReceiptRefund,
-  IconLogout,
+  IconSettings,
+  IconShoppingCart,
   IconSwitchHorizontal,
+  IconUsers,
 } from "@tabler/icons";
+
+const tabs = {
+  account: [
+    { link: "", label: "Slides and Videos", icon: IconBellRinging },
+    { link: "", label: "Latex", icon: IconReceipt2 },
+    { link: "", label: "Editor", icon: IconFingerprint },
+    { link: "", label: "Questions", icon: IconKey },
+    { link: "", label: "3", icon: IconDatabaseImport },
+    { link: "", label: "4", icon: Icon2fa },
+    { link: "", label: "5", icon: IconSettings },
+  ],
+  general: [
+    { link: "", label: "Orders", icon: IconShoppingCart },
+    { link: "", label: "Receipts", icon: IconLicense },
+    { link: "", label: "Reviews", icon: IconMessage2 },
+    { link: "", label: "Messages", icon: IconMessages },
+    { link: "", label: "LeetNodeers", icon: IconUsers },
+    { link: "", label: "Refunds", icon: IconReceiptRefund },
+    { link: "", label: "Files", icon: IconFileAnalytics },
+  ],
+};
+
+export default function Test() {
+  const { theme, classes, cx } = useStyles();
+  const [section, setSection] = useState<"account" | "general">("account");
+  const [active, setActive] = useState("Editor");
+  const [sidebarOpened, setSidebarOpened] = useState(true);
+  const [editorOpened, setEditorOpened] = useState(false);
+
+  const [numPages, setNumPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+  }
+
+  const links = tabs[section].map((item) => (
+    <a
+      className={cx(classes.link, {
+        [classes.linkActive]: item.label === active,
+      })}
+      href={item.link}
+      key={item.label}
+      onClick={(event) => {
+        event.preventDefault();
+        toast(`Switched to ${item.label}!`, {
+          icon: "🚀",
+        });
+        setActive(item.label);
+      }}
+    >
+      <item.icon className={classes.linkIcon} stroke={1.5} />
+      <span>{item.label}</span>
+    </a>
+  ));
+
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  if (!hydrated) {
+    // Returns null on first render, so the client and server match
+    return null;
+  }
+
+  return (
+    <AppShell
+      styles={{
+        main: {
+          background:
+            theme.colorScheme === "dark"
+              ? theme.colors.dark[8]
+              : theme.colors.gray[0],
+        },
+      }}
+      navbarOffsetBreakpoint="sm"
+      header={
+        <>
+          <LeetNodeHeader />
+          <LeetNodeNavbar
+            sidebarOpened={sidebarOpened}
+            setSidebarOpened={setSidebarOpened}
+          />
+        </>
+      }
+      footer={<LeetNodeFooter />}
+      navbar={
+        sidebarOpened ? (
+          <Navbar
+            p="md"
+            hiddenBreakpoint="sm"
+            hidden={!sidebarOpened}
+            width={{ sm: 200, lg: 300 }}
+          >
+            <Navbar.Section>
+              <Text
+                weight={500}
+                size="sm"
+                className={classes.title}
+                color="dimmed"
+                mb="xs"
+              >
+                Question Generator
+              </Text>
+
+              <SegmentedControl
+                value={section}
+                onChange={(value: "account" | "general") => setSection(value)}
+                transitionTimingFunction="ease"
+                fullWidth
+                data={[
+                  { label: "Account", value: "account" },
+                  { label: "System", value: "general" },
+                ]}
+              />
+            </Navbar.Section>
+
+            <Navbar.Section grow mt="xl">
+              {links}
+            </Navbar.Section>
+
+            <Navbar.Section className={classes.footer}>
+              <a className={classes.link} onClick={() => setEditorOpened(true)}>
+                <IconSwitchHorizontal
+                  className={classes.linkIcon}
+                  stroke={1.5}
+                />
+                <span>Open Editor</span>
+              </a>
+
+              <a
+                className={classes.link}
+                onClick={() => toast("Toast!", { icon: "🍞" })}
+              >
+                <IconLogout className={classes.linkIcon} stroke={1.5} />
+                <span>Toast!</span>
+              </a>
+            </Navbar.Section>
+          </Navbar>
+        ) : (
+          <></>
+        )
+      }
+    >
+      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+        <Modal
+          opened={editorOpened}
+          onClose={() => setEditorOpened(false)}
+          size="xl"
+          title="Markdown/LaTeX Editor"
+        >
+          Old Editor used to be here
+        </Modal>
+        {active === "Slides and Videos" ? (
+          <>
+            <Document file={slide} onLoadSuccess={onDocumentLoadSuccess}>
+              <Page pageNumber={pageNumber} />
+            </Document>
+            <Flex gap="md">
+              <Button
+                onClick={() => {
+                  if (pageNumber > 1) {
+                    setPageNumber(pageNumber - 1);
+                  }
+                }}
+              >
+                {"<"}
+              </Button>
+              <Button
+                onClick={() => {
+                  if (pageNumber < numPages) {
+                    setPageNumber(pageNumber + 1);
+                  }
+                }}
+              >
+                {">"}
+              </Button>
+            </Flex>
+            <p>
+              Page {pageNumber} of {numPages}
+            </p>
+            <MarkdownLatex>{markdown_with_video}</MarkdownLatex>
+          </>
+        ) : active === "Latex" ? (
+          <>
+            <MarkdownLatex>{`Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
+
+$$
+L = \\frac{1}{2} \\rho v^2 S C_L
+$$`}</MarkdownLatex>
+          </>
+        ) : active === "Editor" ? (
+          <QuestionViewer />
+        ) : active === "Questions" ? (
+          <></>
+        ) : (
+          <></>
+        )}
+      </ScrollArea.Autosize>
+    </AppShell>
+  );
+}
 
 const slide =
   "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w1s1-fundamentals-of-electricity.pdf";
 
-const test = `# This is a header
+const markdown_with_video = `# This is header 1
 
 And this is a paragraph. By default, Tailwind removes all styles. We can override that in globals.css.
 
@@ -93,6 +293,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
+      cursor: "pointer",
 
       "&:hover": {
         backgroundColor:
@@ -143,176 +344,3 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
   };
 });
-
-const tabs = {
-  account: [
-    { link: "", label: "Notifications", icon: IconBellRinging },
-    { link: "", label: "Billing", icon: IconReceipt2 },
-    { link: "", label: "Security", icon: IconFingerprint },
-    { link: "", label: "SSH Keys", icon: IconKey },
-    { link: "", label: "Databases", icon: IconDatabaseImport },
-    { link: "", label: "Authentication", icon: Icon2fa },
-    { link: "", label: "Other Settings", icon: IconSettings },
-  ],
-  general: [
-    { link: "", label: "Orders", icon: IconShoppingCart },
-    { link: "", label: "Receipts", icon: IconLicense },
-    { link: "", label: "Reviews", icon: IconMessage2 },
-    { link: "", label: "Messages", icon: IconMessages },
-    { link: "", label: "LeetNodeers", icon: IconUsers },
-    { link: "", label: "Refunds", icon: IconReceiptRefund },
-    { link: "", label: "Files", icon: IconFileAnalytics },
-  ],
-};
-
-export default function Test() {
-  const { theme, classes, cx } = useStyles();
-  const [section, setSection] = useState<"account" | "general">("account");
-  const [active, setActive] = useState("Billing");
-  const [opened, setOpened] = useState(false);
-
-  const [numPages, setNumPages] = React.useState(1);
-  const [pageNumber, setPageNumber] = React.useState(1);
-
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-  }
-
-  const links = tabs[section].map((item) => (
-    <a
-      className={cx(classes.link, {
-        [classes.linkActive]: item.label === active,
-      })}
-      href={item.link}
-      key={item.label}
-      onClick={(event) => {
-        event.preventDefault();
-        setActive(item.label);
-      }}
-    >
-      <item.icon className={classes.linkIcon} stroke={1.5} />
-      <span>{item.label}</span>
-    </a>
-  ));
-
-  return (
-    <AppShell
-      styles={{
-        main: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[8]
-              : theme.colors.gray[0],
-        },
-      }}
-      navbarOffsetBreakpoint="sm"
-      header={
-        <>
-          <LeetNodeHeader />
-          <Header height={80}>
-            <Container
-              style={{ display: "flex", alignItems: "center", height: "100%" }}
-            >
-              <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                <Burger
-                  opened={opened}
-                  onClick={() => setOpened((opened) => !opened)}
-                  size="sm"
-                  color={theme.colors.gray[6]}
-                  mr="xl"
-                />
-              </MediaQuery>
-              <LeetNodeNavbar />
-            </Container>
-          </Header>
-        </>
-      }
-      footer={<LeetNodeFooter />}
-      navbar={
-        <Navbar
-          p="md"
-          hiddenBreakpoint="sm"
-          hidden={!opened}
-          width={{ sm: 200, lg: 300 }}
-        >
-          <Navbar.Section>
-            <Text
-              weight={500}
-              size="sm"
-              className={classes.title}
-              color="dimmed"
-              mb="xs"
-            >
-              bgluesticker@mantine.dev
-            </Text>
-
-            <SegmentedControl
-              value={section}
-              onChange={(value: "account" | "general") => setSection(value)}
-              transitionTimingFunction="ease"
-              fullWidth
-              data={[
-                { label: "Account", value: "account" },
-                { label: "System", value: "general" },
-              ]}
-            />
-          </Navbar.Section>
-
-          <Navbar.Section grow mt="xl">
-            {links}
-          </Navbar.Section>
-
-          <Navbar.Section className={classes.footer}>
-            <a
-              href="#"
-              className={classes.link}
-              onClick={(event) => event.preventDefault()}
-            >
-              <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
-              <span>Change account</span>
-            </a>
-
-            <a
-              href="#"
-              className={classes.link}
-              onClick={(event) => event.preventDefault()}
-            >
-              <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Logout</span>
-            </a>
-          </Navbar.Section>
-        </Navbar>
-      }
-    >
-      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
-        <Document file={slide} onLoadSuccess={onDocumentLoadSuccess}>
-          <Page pageNumber={pageNumber} />
-        </Document>
-        <Group>
-          <Button
-            onClick={() => {
-              if (pageNumber > 1) {
-                setPageNumber(pageNumber - 1);
-              }
-            }}
-          >
-            {"<"}
-          </Button>
-          <Button
-            onClick={() => {
-              if (pageNumber < numPages) {
-                setPageNumber(pageNumber + 1);
-              }
-            }}
-          >
-            {">"}
-          </Button>
-        </Group>
-        <p>
-          Page {pageNumber} of {numPages}
-        </p>
-        <MarkdownLatex>{test}</MarkdownLatex>
-      </ScrollArea.Autosize>
-    </AppShell>
-  );
-}

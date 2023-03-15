@@ -16,20 +16,20 @@ export default async function handler(
         select: {
           masteryLevel: req.body.period === "current" || true,
           weeklyMasteryLevel: req.body.period === "week",
-          fortnightMasteryLevel: req.body.period === "fortnight",
+          fortnightlyMasteryLevel: req.body.period === "fortnight",
           topic: {
             select: {
               topicName: true,
-            }
-          }
+            },
+          },
         },
       });
       const mastery =
         req.body.period === "current"
           ? "masteryLevel"
           : req.body.period === "week"
-            ? "weeklyMasteryLevel"
-            : "fortnightMasteryLevel";
+          ? "weeklyMasteryLevel"
+          : "fortnightlyMasteryLevel";
       // Rename the key to masteryLevel for easier access
       const allMastery = getMastery.map((row) => {
         return {
