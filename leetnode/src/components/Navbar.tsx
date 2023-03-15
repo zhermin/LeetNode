@@ -13,6 +13,7 @@ import {
   createStyles,
   Group,
   Header,
+  Loader,
   Menu,
   SegmentedControl,
   Text,
@@ -30,6 +31,7 @@ import {
   IconSun,
   IconUser,
 } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
 const HEADER_HEIGHT = 80;
 
@@ -120,6 +122,21 @@ export default function Navbar() {
       .catch((error) => console.error(error));
   }, [admin, session?.data?.user?.id]);
 
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+  );
+
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
       <Container className={classes.inner}>
@@ -170,21 +187,28 @@ export default function Navbar() {
                 })}
               >
                 <Group spacing={7}>
-                  <Text
-                    className={classes.userName}
-                    sx={{ lineHeight: 1 }}
-                    weight={500}
-                    color={theme.colors.gray[9]}
-                  >
-                    {session?.data?.user?.name}
-                  </Text>
-                  <Image
-                    src={session?.data?.user?.image || ""}
-                    alt={session?.data?.user?.name || ""}
-                    className="ml-1 rounded-full"
-                    width={25}
-                    height={25}
-                  />
+                  {isLoading === true || isError === true ? (
+                    <Loader />
+                  ) : (
+                    <>
+                      <Text
+                        className={classes.userName}
+                        sx={{ lineHeight: 1 }}
+                        weight={500}
+                        color={theme.colors.gray[9]}
+                      >
+                        {userInfo?.name}
+                      </Text>
+                      <Image
+                        src={userInfo?.image || ""}
+                        alt={userInfo?.name || ""}
+                        className="ml-1 rounded-full"
+                        width={25}
+                        height={25}
+                      />
+                    </>
+                  )}
+
                   <IconChevronDown size={12} stroke={1.5} />
                 </Group>
               </UnstyledButton>
@@ -280,7 +304,7 @@ export default function Navbar() {
 
               <Menu.Item
                 component={Link}
-                href="/"
+                href="/dashboard"
                 icon={<IconSettings size={14} stroke={1.5} />}
               >
                 Account settings

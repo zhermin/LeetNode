@@ -43,10 +43,13 @@ model User {
   id              String               @id @default(cuid())
   nusnetId        String?              @unique // KIV
   name            String
+  nickname        String?
   email           String               @unique
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
   lastActive      DateTime?            @default(now())
+  loginStreak     Int                  @default(1)
+  points          Int                  @default(1)
   emailFrequency  String               @default("Everyday")
   role            Role                 @default(USER)
   accounts        Account[]
@@ -132,6 +135,8 @@ model Mastery {
   userId        String
   topicSlug     String
   masteryLevel  Float    @default(0)
+  weeklyMasteryLevel Float @default(0)
+  fortnightMasteryLevel  Float    @default(0)
   topicPing     Boolean  @default(false)
   lastFlagged   DateTime?
   errorMeter    Int      @default(0)
