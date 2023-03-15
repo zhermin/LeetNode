@@ -1,18 +1,19 @@
-import { Dispatch, Key, SetStateAction, useState } from "react";
 import axios from "axios";
-import Image from "next/image";
-import Latex from "react-latex-next";
-import {
-  createStyles,
-  Center,
-  Loader,
-  Title,
-  Text,
-  Button,
-  Radio,
-  Paper,
-} from "@mantine/core";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { Dispatch, Key, SetStateAction, useState } from "react";
+import Latex from "react-latex-next";
+
+import {
+  Button,
+  Center,
+  createStyles,
+  Loader,
+  Paper,
+  Radio,
+  Text,
+  Title,
+} from "@mantine/core";
 import {
   Answer,
   Attempt,
@@ -33,6 +34,7 @@ const LoadTopic = ({
   setQuestionHistory,
   endReached,
   setEndReached,
+  currentCourse
 }: {
   questionDisplay:
     | {
@@ -94,6 +96,7 @@ const LoadTopic = ({
   >;
   endReached: boolean;
   setEndReached: Dispatch<SetStateAction<boolean>>;
+  currentCourse: string;
 }) => {
   const { classes } = useStyles();
   const session = useSession();
@@ -179,6 +182,7 @@ const LoadTopic = ({
         correct: boolean;
         optionNumber: number;
         questionId: number;
+        courseSlug: string;
       }) => {
         try {
           //update mastery of student
@@ -196,6 +200,7 @@ const LoadTopic = ({
         optionNumber: optionNumber,
         questionId: questionDisplay?.[currentQuestion]?.question
           ?.questionId as number,
+        courseSlug: currentCourse,
       });
       console.log(updatedAttempts);
 

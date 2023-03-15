@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@/server/db/client";
 
 export default async function handler(
@@ -12,6 +13,7 @@ export default async function handler(
       questionId: req.body.questionId,
       attemptOption: req.body.optionNumber,
       isCorrect: req.body.correct,
+      courseSlug: req.body.courseSlug,
     },
   });
   console.log(updateAttempt.attemptId);

@@ -1,68 +1,67 @@
+import axios from "axios";
+import { GetStaticProps } from "next";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { Document, Page } from "react-pdf";
+
+import CourseDiscussion from "@/components/course/CourseDiscussion";
+import PracticeQuestion from "@/components/course/PracticeQuestion";
+import QuestionHistory from "@/components/course/QuestionHistory";
+import ResultsPage from "@/components/course/ResultsPage";
+import LeetNodeFooter from "@/components/Footer";
+import LeetNodeHeader from "@/components/Header";
+import MarkdownLatex from "@/components/MarkdownLatex";
+import LeetNodeNavbar from "@/components/Navbar";
+import { prisma } from "@/server/db/client";
 import {
-  Course,
+  AppShell,
+  Box,
+  Burger,
+  Button,
+  Center,
+  Container,
+  createStyles,
+  Group,
+  Header,
+  Loader,
+  MediaQuery,
+  Navbar as Sidebar,
+  ScrollArea,
+  SegmentedControl,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+} from "@mantine/core";
+import {
   Answer,
   Attempt,
+  Course,
+  Mastery,
   Question,
+  QuestionDifficulty,
   QuestionMedia,
   QuestionWithAddedTime,
   Topic,
   UserCourseQuestion,
-  Mastery,
-  QuestionDifficulty,
 } from "@prisma/client";
-import { prisma } from "@/server/db/client";
-
-import axios from "axios";
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { getCourseDetails } from "../api/courses/[courseSlug]";
-import { useQuery } from "@tanstack/react-query";
-
-import LeetNodeHeader from "@/components/Header";
-import LeetNodeNavbar from "@/components/Navbar";
-import LeetNodeFooter from "@/components/Footer";
-import PracticeQuestion from "@/components/course/PracticeQuestion";
-import ResultsPage from "@/components/course/ResultsPage";
-import CourseDiscussion from "@/components/course/CourseDiscussion";
-import QuestionHistory from "@/components/course/QuestionHistory";
-import MarkdownLatex from "@/components/MarkdownLatex";
-import { Document, Page } from "react-pdf";
-
-import {
-  createStyles,
-  AppShell,
-  Header,
-  Navbar as Sidebar,
-  SegmentedControl,
-  ScrollArea,
-  Box,
-  Container,
-  Burger,
-  MediaQuery,
-  Text,
-  Center,
-  Loader,
-  Button,
-  Tooltip,
-  Group,
-  Stack,
-  Title,
-} from "@mantine/core";
 import {
   IconApps,
-  IconPresentation,
-  IconVideo,
-  IconReportSearch,
-  IconMessages,
-  IconZoomQuestion,
-  IconTarget,
   IconArrowBarLeft,
   IconArrowLeft,
   IconArrowRight,
   IconChartLine,
+  IconMessages,
+  IconPresentation,
+  IconReportSearch,
+  IconTarget,
+  IconVideo,
+  IconZoomQuestion,
 } from "@tabler/icons";
-import { GetStaticProps } from "next";
+import { useQuery } from "@tanstack/react-query";
+
+import { getCourseDetails } from "../api/courses/[courseSlug]";
 
 type CourseInfoType = {
   topics: (Topic & {
@@ -325,6 +324,7 @@ export default function CourseMainPage({
             setQuestionHistory={setQuestionHistory}
             endReached={endReached}
             setEndReached={setEndReached}
+            currentCourse={router.query.courseSlug as string}
           />
         ) : active === "Attempts" ? (
           <QuestionHistory
