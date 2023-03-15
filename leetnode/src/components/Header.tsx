@@ -13,14 +13,21 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
         const { data } = await axios.post("/api/prof/updateLastActive", {
           id: session?.data?.user?.id as string,
         });
-        return data;
+        console.log("Last active updated:", data);
       } catch (error) {
         console.error(error);
-        throw new Error("Unable to update last active");
       }
     };
+
+    // Update last active immediately on component mount
     updateLastActive();
-  }, [session?.data?.user?.id]);
+
+    // Schedule update every 5 minutes
+    const intervalId = setInterval(updateLastActive, 5 * 60 * 1000);
+
+    // Clean up interval when component unmounts
+    return () => clearInterval(intervalId);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Head>
