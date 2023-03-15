@@ -43,15 +43,15 @@ model User {
   id              String               @id @default(cuid())
   nusnetId        String?              @unique // KIV
   name            String
+  nickname        String?
   email           String               @unique
   emailVerified   DateTime? // KIV
   image           String               @default("https://robohash.org/LeetNode?set=set4")
   role            Role                 @default(USER)
   lastActive      DateTime?            @default(now())
   loginStreak     Int                  @default(1)
-  firstQuestion   Boolean              @default(true)
   points          Int                  @default(1)
-  emailFrequency  String               @default("Everyday") // TODO: Change to enum
+  emailFrequency  Frequency            @default(Daily)
   accounts        Account[]
   sessions        Session[]
   attempts        Attempt[]
@@ -68,20 +68,32 @@ enum Role {
   USER
 }
 
+enum Frequency {
+  Daily
+  Weekly
+  Fortnightly
+  Monthly
+  Never
+}
+
 model Attempt {
   attemptId      String   @id @default(cuid())
   userId         String
   questionId     Int
   attemptOption  Int
+  attemptValue   Float? // TODO: Directly check against dynamic answer options
+  courseSlug     String
   isCorrect      Boolean
   submittedAt    DateTime @default(now())
   attemptSeconds Int? // KIV
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
   answer         Answer   @relation(fields: [questionId, attemptOption], references: [questionId, optionNumber], onDelete: Cascade)
+  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
 
   @@unique([userId, questionId, submittedAt])
   @@index([questionId, attemptOption])
+  @@index([courseSlug])
 }
 
 // QUESTION BANK
@@ -113,6 +125,7 @@ model Course {
   topics              Topic[]
   userCourseQuestions UserCourseQuestion[]
   posts               Post[]
+  attempts            Attempt[]
 }
 
 model UserCourseQuestion {
@@ -129,16 +142,16 @@ model UserCourseQuestion {
 }
 
 model Mastery {
-  userId                String
-  topicSlug             String
-  masteryLevel          Float     @default(0)
-  topicPing             Boolean   @default(false)
-  lastFlagged           DateTime?
-  errorMeter            Int       @default(0)
-  weeklyMasteryLevel    Float     @default(0)
-  fortnightMasteryLevel Float     @default(0)
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic                 Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
+  userId                  String
+  topicSlug               String
+  masteryLevel            Float     @default(0)
+  topicPing               Boolean   @default(false)
+  lastFlagged             DateTime?
+  errorMeter              Int       @default(0)
+  weeklyMasteryLevel      Float     @default(0)
+  fortnightlyMasteryLevel Float     @default(0)
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic                   Topic     @relation(fields: [topicSlug], references: [topicSlug], onDelete: Cascade)
 
   @@id([userId, topicSlug])
   @@index([topicSlug])
@@ -178,7 +191,7 @@ model Question {
   questionDifficulty     QuestionDifficulty
   questionContent        String                  @db.Text
   questionData           Json?
-  // lastModified           DateTime                @default(now())
+  lastModified           DateTime                @default(now())
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
   attempts               Attempt[]
   questionMedia          QuestionMedia[]

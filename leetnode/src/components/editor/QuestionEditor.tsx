@@ -572,8 +572,9 @@ export default function QuestionEditor({
   const useCRUDQuestion = () => {
     const queryClient = useQueryClient();
     const { mutate: addQuestion, status: addQuestionStatus } = useMutation({
-      mutationFn: (newQuestion: Omit<Question, "questionId">) =>
-        axios.post("/api/questions/add", newQuestion),
+      mutationFn: (
+        newQuestion: Omit<Question, "questionId" | "lastModified">
+      ) => axios.post("/api/questions/add", newQuestion),
       onSuccess: () => {
         queryClient.invalidateQueries(["all-questions"]);
         setQuestionAddOpened(false);
@@ -680,6 +681,7 @@ export default function QuestionEditor({
             editQuestion({
               questionId: questionId,
               editedQuestion: {
+                lastModified: new Date(),
                 variationId: values.variationId,
                 topicSlug: values.topic,
                 questionTitle: values.title,
