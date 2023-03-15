@@ -23,7 +23,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { Attempt, Mastery, Role } from "@prisma/client";
+import { Attempt, Frequency, Mastery, Role } from "@prisma/client";
 import { IconClick, IconEdit, IconTrash } from "@tabler/icons";
 
 interface UsersWithMasteriesAndAttempts {
@@ -457,13 +457,10 @@ const Settings = ({
         my="sm"
         label="Edit Your Email Alert Frequency"
         placeholder="Choose your alert frequency"
-        data={[
-          { value: "Everyday", label: "Everyday" },
-          { value: "Once A Week", label: "Once a Week" },
-          { value: "Once Every 2 Weeks", label: "Once Every 2 Weeks" },
-          { value: "Once A Month", label: "Once A Month" },
-          { value: "Never", label: "Never" },
-        ]}
+        data={Object.keys(Frequency).map((key) => ({
+          label: Frequency[key as keyof typeof Frequency],
+          value: key,
+        }))}
         value={selfEmailFreq}
         onChange={setSelfEmailFreq}
         w={250}
