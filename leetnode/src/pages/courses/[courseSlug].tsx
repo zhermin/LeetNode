@@ -63,21 +63,25 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getCourseDetails } from "../api/courses/[courseSlug]";
 
-type CourseInfoType = {
+export type CourseInfoType = {
   topics: (Topic & {
     mastery: Mastery[];
   })[];
   userCourseQuestions: (UserCourseQuestion & {
-    questionsWithAddedTime: (QuestionWithAddedTime & {
+    questionsWithAddedTime: UserQuestionWithAttemptsType;
+  })[];
+} | null;
+
+export type UserQuestionWithAttemptsType =
+  | (QuestionWithAddedTime & {
       question: Question & {
         answers: Answer[];
         attempts: Attempt[];
         topic: Topic;
         questionMedia: QuestionMedia[];
       };
-    })[];
-  })[];
-} | null;
+    })[]
+  | undefined;
 
 export default function CourseMainPage({
   courseDetails,
