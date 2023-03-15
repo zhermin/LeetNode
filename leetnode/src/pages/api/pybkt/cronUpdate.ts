@@ -17,7 +17,7 @@ export default async function handler(
         },
       });
 
-      // Update weeklyMasteryLevel and fortnightMasteryLevel
+      // Update weeklyMasteryLevel and fortnightlyMasteryLevel
       getMastery.map(async (row) => {
         await prisma.mastery.update({
           where: {
@@ -28,7 +28,7 @@ export default async function handler(
           },
           data: {
             weeklyMasteryLevel: row.masteryLevel,
-            fortnightMasteryLevel: row.weeklyMasteryLevel,
+            fortnightlyMasteryLevel: row.weeklyMasteryLevel,
           },
         });
       });
