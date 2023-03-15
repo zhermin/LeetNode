@@ -17,31 +17,31 @@ export default async function handler(
     masteryConditionFlag: boolean;
     courseSlug: string;
   }) => {
-    //check if masteryLevel === 0 =>
-    axios
-      .get(
-        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
-          },
-        }
-      )
-      .catch(function (error) {
-        console.log("reached error");
-        if (
-          error.response.data.detail === `Student ID ${req.id} does NOT exists`
-        ) {
-          axios.post(
-            `https://pybkt-api-deployment.herokuapp.com/add-student/${req.id}/${req.topicSlug}/`,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
-              },
-            }
-          );
-        }
-      });
+    // //check if masteryLevel === 0 =>
+    // axios
+    //   .get(
+    //     `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}/`,
+    //     {
+    //       headers: {
+    //         Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+    //       },
+    //     }
+    //   )
+    //   .catch(function (error) {
+    //     console.log("reached error");
+    //     if (
+    //       error.response.data.detail === `Student ID ${req.id} does NOT exists`
+    //     ) {
+    //       axios.post(
+    //         `https://pybkt-api-deployment.herokuapp.com/add-student/${req.id}/${req.topicSlug}/`,
+    //         {
+    //           headers: {
+    //             Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+    //           },
+    //         }
+    //       );
+    //     }
+    //   });
 
     //patch then get data then update mastery
     const res = await axios.patch(

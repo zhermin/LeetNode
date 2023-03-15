@@ -2,7 +2,7 @@ name: Daily Email API
 
 on:
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 9 * * *" # 5PM SGT
   workflow_dispatch:
 
 jobs:
@@ -14,3 +14,4 @@ jobs:
         run: |
           curl --request GET \
           --url https://leetnode-git-dev-zhermin.vercel.app/api/email/sendEmail \
+          --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'

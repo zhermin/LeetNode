@@ -1,37 +1,41 @@
+import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
-	Badge,
-	Box,
-	Burger,
-	Button,
-	Center,
-	Container,
-	createStyles,
-	Flex,
-	Group,
-	Header,
-	Menu,
-	SegmentedControl,
-	Text,
-	UnstyledButton,
-	useMantineColorScheme
+  Badge,
+  Box,
+  Burger,
+  Button,
+  Center,
+  Container,
+  createStyles,
+  Flex,
+  Group,
+  Header,
+  Loader,
+  Menu,
+  SegmentedControl,
+  Text,
+  UnstyledButton,
+  useMantineColorScheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { Role } from "@prisma/client";
 import {
-	IconBook,
-	IconChevronDown,
-	IconLogout,
-	IconMoon,
-	IconSettings,
-	IconStar,
-	IconSun
+  IconBook,
+  IconChevronDown,
+  IconLogout,
+  IconMoon,
+  IconSettings,
+  IconStar,
+  IconSun,
+  IconUser,
 } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
 const HEADER_HEIGHT = 80;
 
@@ -137,6 +141,37 @@ export default function Navbar({
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get("/api/forum/getAllUsers")
+      .then((response) => {
+        const filteredUser = response.data.filter(
+          (user: { id: string }) =>
+            user.id == (session?.data?.user?.id as string)
+        );
+        if (!admin && filteredUser[0]?.role === "ADMIN") {
+          setAdmin(true);
+        }
+      })
+      .catch((error) => console.error(error));
+  }, [admin, session?.data?.user?.id]);
+
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user/get", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+  );
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>
@@ -179,21 +214,28 @@ export default function Navbar({
                 })}
               >
                 <Group spacing={7}>
-                  <Text
-                    className={classes.userName}
-                    sx={{ lineHeight: 1 }}
-                    weight={500}
-                    color={theme.colors.gray[9]}
-                  >
-                    {session?.data?.user?.name}
-                  </Text>
-                  <Image
-                    src={session?.data?.user?.image || ""}
-                    alt={session?.data?.user?.name || ""}
-                    className="ml-1 rounded-full"
-                    width={25}
-                    height={25}
-                  />
+                  {isLoading === true || isError === true ? (
+                    <Loader />
+                  ) : (
+                    <>
+                      <Text
+                        className={classes.userName}
+                        sx={{ lineHeight: 1 }}
+                        weight={500}
+                        color={theme.colors.gray[9]}
+                      >
+                        {userInfo?.name}
+                      </Text>
+                      <Image
+                        src={userInfo?.image || ""}
+                        alt={userInfo?.name || ""}
+                        className="ml-1 rounded-full"
+                        width={25}
+                        height={25}
+                      />
+                    </>
+                  )}
+
                   <IconChevronDown size={12} stroke={1.5} />
                 </Group>
               </UnstyledButton>
@@ -302,11 +344,20 @@ export default function Navbar({
 
               <Menu.Item
                 component={Link}
-                href="/"
+                href="/dashboard"
                 icon={<IconSettings size={14} stroke={1.5} />}
               >
                 Account settings
               </Menu.Item>
+              {admin && (
+                <Menu.Item
+                  component={Link}
+                  href="/prof"
+                  icon={<IconUser size={14} stroke={1.5} />}
+                >
+                  Admin Panel
+                </Menu.Item>
+              )}
               <Menu.Item
                 onClick={() => signOut({ callbackUrl: "/" })}
                 icon={<IconLogout size={14} stroke={1.5} />}
