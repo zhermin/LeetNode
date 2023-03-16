@@ -159,7 +159,7 @@ export default function Navbar({
         })
         .catch((error) => console.error(error));
     }
-  }, [admin, session?.data?.user?.id, session?.status]);
+  }, [admin, session?.data?.user?.id]);
 
   const {
     data: userInfo,
