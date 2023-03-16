@@ -144,19 +144,22 @@ export default function Navbar({
   const [admin, setAdmin] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("/api/forum/getAllUsers")
-      .then((response) => {
-        const filteredUser = response.data.filter(
-          (user: { id: string }) =>
-            user.id == (session?.data?.user?.id as string)
-        );
-        if (!admin && filteredUser[0]?.role === "ADMIN") {
-          setAdmin(true);
-        }
-      })
-      .catch((error) => console.error(error));
-  }, [admin, session?.data?.user?.id]);
+    if (!!session?.data?.user?.id) {
+      // If authenticated
+      axios
+        .get("/api/forum/getAllUsers")
+        .then((response) => {
+          const filteredUser = response.data.filter(
+            (user: { id: string }) =>
+              user.id == (session?.data?.user?.id as string)
+          );
+          if (!admin && filteredUser[0]?.role === "ADMIN") {
+            setAdmin(true);
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+  }, [admin, session?.data?.user?.id, session?.status]);
 
   const {
     data: userInfo,

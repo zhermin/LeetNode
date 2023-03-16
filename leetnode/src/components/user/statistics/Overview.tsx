@@ -1,4 +1,4 @@
-import { Center, Loader, Paper, RingProgress, Text } from "@mantine/core";
+import { Center, Paper, RingProgress, Text } from "@mantine/core";
 
 interface OverviewProps {
   data: {
@@ -23,7 +23,7 @@ export default function Overview({ data }: OverviewProps) {
     );
 
     return (
-      <div className="grid gap-3 mb-6 grid-cols-2">
+      <div className="mb-6 grid grid-cols-2 gap-3">
         <Paper
           withBorder
           shadow="lg"
@@ -97,10 +97,6 @@ export default function Overview({ data }: OverviewProps) {
       </div>
     );
   } else {
-    return (
-      <Center>
-        <Loader />
-      </Center>
-    );
+    return <Center>No mastery found</Center>;
   }
 }

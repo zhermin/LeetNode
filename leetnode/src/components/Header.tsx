@@ -131,19 +131,17 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
 
   useEffect(() => {
     const updateLastActive = async () => {
-      try {
-        const { data } = await axios.post("/api/prof/updateLastActive", {
-          id: session?.data?.user?.id as string,
-        });
-        console.log("Last Active Updated @", new Date(data.lastActive));
-      } catch (error) {
-        console.error(error);
+      if (!!session?.data?.user?.id) {
+        try {
+          const { data } = await axios.post("/api/prof/updateLastActive", {
+            id: session?.data?.user?.id as string,
+          });
+          console.log("Last Active Updated @", new Date(data.lastActive));
+        } catch (error) {
+          console.error(error);
+        }
       }
     };
-
-    if (session?.data?.user?.id) {
-      updateLastActive();
-    }
 
     // Schedules update every 5 minutes
     intervalRef.current = setInterval(updateLastActive, 1 * 60 * 1000);
