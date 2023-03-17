@@ -10,14 +10,10 @@ import { prisma } from "../../../server/db/client";
 export const authOptions: NextAuthOptions = {
   // Include user.id on session
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token, user }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
-        const user = await prisma.user.findUnique({ where: { id: token.sub } });
-        if (!user) {
-          throw new Error("User not found");
-        }
-        session.user.role = user.role;
+        session.user.role = user?.role ? user.role : token.role;
       }
       return session;
     },
@@ -25,6 +21,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },

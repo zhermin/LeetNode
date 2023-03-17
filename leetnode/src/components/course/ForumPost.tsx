@@ -13,7 +13,6 @@ import {
 import {
   ActionIcon,
   Avatar,
-  Badge,
   Blockquote,
   Box,
   Button,
@@ -33,7 +32,7 @@ import {
   Title,
   TypographyStylesProvider,
 } from "@mantine/core";
-import { Comment, CommentMedia, PostMedia } from "@prisma/client";
+import { Comment, CommentMedia, PostMedia, PostType } from "@prisma/client";
 import {
   IconChevronLeft,
   IconCornerDownRight,
@@ -44,6 +43,7 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { PostTypeBadge } from "../misc/Badges";
 import { useGetFetchQuery } from "./CourseDiscussion";
 import DateDiffCalc from "./DateDiffCalc";
 
@@ -153,7 +153,7 @@ const ForumPost = ({
     isLoading: isLoadingTopics,
     isFetching: isFetchingTopics,
     isError: isErrorTopics,
-  } = useQuery(["all-topics"], async () => {
+  } = useQuery(["all-topic-names"], async () => {
     const res = await axios.get("/api/forum/getAllTopicNames");
     const tags: { value: string }[] = [];
     res.data.map((e: { topicName: string }) => {
@@ -294,18 +294,7 @@ const ForumPost = ({
           <Text size="xs" color="dimmed">
             {formatIsoDateTime(post?.createdAt as string)}
           </Text>
-          <Badge
-            color={
-              post?.postType === "Content"
-                ? "cyan"
-                : post?.postType === "Quiz"
-                ? "blue"
-                : "gray"
-            }
-            variant="light"
-          >
-            {post?.postType}
-          </Badge>
+          <PostTypeBadge postType={post?.postType} />
         </Group>
         <Popover
           width={100}
@@ -717,7 +706,7 @@ type postType = {
   postId: string;
   userId: string;
   title: string;
-  postType: string;
+  postType: PostType;
   message: string;
   likes: number;
   createdAt: string;

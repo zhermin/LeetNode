@@ -11,6 +11,11 @@ import {
 import { Bar } from "react-chartjs-2";
 
 import {
+  AttemptsInfoType,
+  CoursesInfoType,
+  UsersWithMasteriesAndAttemptsType,
+} from "@/pages/admin";
+import {
   Box,
   Center,
   Container,
@@ -20,16 +25,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import {
-  Attempt,
-  Course,
-  Mastery,
-  Question,
-  Role,
-  Topic,
-  User,
-  UserCourseQuestion,
-} from "@prisma/client";
 import {
   IconHandClick,
   IconUserCheck,
@@ -50,39 +45,14 @@ ChartJS.register(
 
 ChartJS.defaults.font.size = 16;
 
-interface UsersWithMasteriesAndAttempts {
-  id: string;
-  nusnetId: string | null;
-  name: string;
-  email: string;
-  emailVerified: Date | null;
-  image: string;
-  lastActive: string;
-  role: Role;
-  masteries: Mastery[];
-  attempts: Attempt[];
-}
-[];
-
-type CourseInfoType = Course & {
-  topics: Topic[];
-  userCourseQuestions: UserCourseQuestion[];
-};
-
-type AttemptsInterface = Attempt & {
-  user: User;
-  question: Question;
-  answer: Question;
-};
-
-const Dashboard = ({
+const Overview = ({
   users,
   courses,
   attempts,
 }: {
-  users: UsersWithMasteriesAndAttempts[];
-  courses: CourseInfoType[];
-  attempts: AttemptsInterface[];
+  users: UsersWithMasteriesAndAttemptsType;
+  courses: CoursesInfoType[];
+  attempts: AttemptsInfoType;
 }) => {
   console.log(attempts);
 
@@ -340,7 +310,7 @@ const Dashboard = ({
                     transform="uppercase"
                     weight={700}
                   >
-                    Worst Student
+                    Weakest Student
                   </Text>
                   <Text weight={700} size="xl">
                     {worstStudent}
@@ -461,4 +431,4 @@ const Dashboard = ({
   );
 };
 
-export default Dashboard;
+export default Overview;

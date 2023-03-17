@@ -7,7 +7,6 @@ import ForumPost from "@/components/course/ForumPost";
 import {
   Anchor,
   Avatar,
-  Badge,
   Button,
   Center,
   Container,
@@ -24,7 +23,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Comment, PostMedia } from "@prisma/client";
+import { Comment, PostMedia, PostType } from "@prisma/client";
 import {
   QueryKey,
   useMutation,
@@ -33,6 +32,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { PostTypeBadge } from "../misc/Badges";
 import DateDiffCalc from "./DateDiffCalc";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
@@ -44,7 +44,7 @@ type postType = {
   postId: string;
   userId: string;
   title: string;
-  postType: string;
+  postType: PostType;
   message: string;
   likes: number;
   courseSlug: string;
@@ -468,18 +468,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                       </Group>
                     </td>
                     <td>
-                      <Badge
-                        color={
-                          post?.postType === "Content"
-                            ? "cyan"
-                            : post?.postType === "Quiz"
-                            ? "blue"
-                            : "gray"
-                        }
-                        variant="light"
-                      >
-                        {post?.postType}
-                      </Badge>
+                      <PostTypeBadge postType={post?.postType} />
                     </td>
                   </tr>
                 ))}

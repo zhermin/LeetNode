@@ -13,6 +13,12 @@ import { useState } from "react";
 import Latex from "react-latex-next";
 
 import {
+  AttemptsInfoType,
+  CoursesInfoType,
+  QuestionsInfoType,
+  UsersWithMasteriesAndAttemptsType,
+} from "@/pages/admin";
+import {
   Accordion,
   Button,
   Card,
@@ -32,19 +38,6 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import {
-  Answer,
-  Attempt,
-  Course,
-  Mastery,
-  Question,
-  QuestionMedia,
-  QuestionWithAddedTime,
-  Role,
-  Topic,
-  User,
-  UserCourseQuestion,
-} from "@prisma/client";
 import {
   IconCheck,
   IconPlus,
@@ -66,118 +59,22 @@ ChartJS.register(
   Filler
 );
 
-type CourseInfoType = Course & {
-  topics: Topic[];
-  userCourseQuestions: UserCourseQuestion[];
-};
-
-interface UsersWithMasteriesAndAttempts {
-  id: string;
-  nusnetId: string | null;
-  name: string;
-  email: string;
-  emailVerified: Date | null;
-  image: string;
-  lastActive: string;
-  role: Role;
-  masteries: Mastery[];
-  attempts: Attempt[];
-}
-[];
-
-type AttemptsInterface = Attempt & {
-  user: User;
-  question: Question;
-  answer: Question;
-};
-
-type QuestionsInterface = Question & {
-  attempts: Attempt[];
-  questionMedia: QuestionMedia[];
-  answers: Answer[];
-  questionsWithAddedTime: QuestionWithAddedTime[];
-};
-
-interface CoursesProps {
-  courses: CourseInfoType[];
-  users: UsersWithMasteriesAndAttempts[];
-  attempts: AttemptsInterface[];
-  questions: QuestionsInterface[];
-}
-
-const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
-    },
-  },
-
-  card: {
-    border: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[1]
-    }`,
-  },
-
-  cardTitle: {
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-    },
-  },
-  action: {
-    position: "absolute",
-    bottom: theme.spacing.xl,
-    right: theme.spacing.xl,
-  },
-
-  item: {
-    backgroundColor: theme.white,
-    borderBottom: 0,
-    borderRadius: theme.radius.md,
-    boxShadow: theme.shadows.xs,
-    overflow: "hidden",
-    border: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[1]
-    }`,
-  },
-
-  control: {
-    fontSize: theme.fontSizes.lg,
-    padding: `${theme.spacing.lg}px ${theme.spacing.xl}px`,
-    color: theme.black,
-
-    "&:hover": {
-      backgroundColor: "transparent",
-    },
-  },
-
-  image: {
-    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
-  },
-}));
-
-const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
+const Courses = ({
+  courses,
+  users,
+  attempts,
+  questions,
+}: {
+  courses: CoursesInfoType[];
+  users: UsersWithMasteriesAndAttemptsType;
+  attempts: AttemptsInfoType;
+  questions: QuestionsInfoType;
+}) => {
   const { classes } = useStyles();
 
   const [sort, setSort] = useState("All Courses");
   const [opened, setOpened] = useState(false);
-  const [details, setDetails] = useState<CourseInfoType | null>();
+  const [details, setDetails] = useState<CoursesInfoType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
   console.log(users);
@@ -539,13 +436,7 @@ const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
         ))}
       </Modal>
       <Container size="lg" py="xl">
-        <Title
-          order={2}
-          className={classes.title}
-          align="center"
-          mt="md"
-          mb="lg"
-        >
+        <Title order={2} align="center" mb="lg" className={classes.title}>
           Courses Detailed Statistics
         </Title>
         <Center>
@@ -652,3 +543,70 @@ const Courses = ({ courses, users, attempts, questions }: CoursesProps) => {
 };
 
 export default Courses;
+
+const useStyles = createStyles((theme) => ({
+  title: {
+    fontSize: 34,
+    fontWeight: 900,
+    [theme.fn.smallerThan("sm")]: {
+      fontSize: 24,
+    },
+    "&::after": {
+      content: '""',
+      display: "block",
+      backgroundColor: theme.fn.primaryColor(),
+      width: 45,
+      height: 2,
+      marginTop: theme.spacing.sm,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
+  },
+
+  card: {
+    border: `1px solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[1]
+    }`,
+  },
+
+  cardTitle: {
+    "&::after": {
+      content: '""',
+      display: "block",
+      backgroundColor: theme.fn.primaryColor(),
+      width: 45,
+      height: 2,
+      marginTop: theme.spacing.sm,
+    },
+  },
+  action: {
+    position: "absolute",
+    bottom: theme.spacing.xl,
+    right: theme.spacing.xl,
+  },
+
+  item: {
+    backgroundColor: theme.white,
+    borderBottom: 0,
+    borderRadius: theme.radius.md,
+    boxShadow: theme.shadows.xs,
+    overflow: "hidden",
+    border: `1px solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[1]
+    }`,
+  },
+
+  control: {
+    fontSize: theme.fontSizes.lg,
+    padding: `${theme.spacing.lg}px ${theme.spacing.xl}px`,
+    color: theme.black,
+
+    "&:hover": {
+      backgroundColor: "transparent",
+    },
+  },
+
+  image: {
+    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
+  },
+}));

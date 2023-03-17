@@ -24,6 +24,7 @@ export default async function handler(
         },
       },
       answers: true,
+      questionsWithAddedTime: true,
     },
   });
 

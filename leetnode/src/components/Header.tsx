@@ -139,11 +139,12 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           console.log("Last Active Updated @", new Date(data.lastActive));
         } catch (error) {
           console.error(error);
+          clearInterval(intervalRef.current);
         }
       }
     };
 
-    // Schedules update every 5 minutes
+    // Schedules update every few minutes
     intervalRef.current = setInterval(updateLastActive, 1 * 60 * 1000);
 
     // Clean up interval when component unmounts
@@ -152,7 +153,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
       clearInterval(intervalRef.current);
       intervalRef.current = undefined;
     };
-  }, [session?.data?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.data?.user?.id]);
 
   return (
     <Head>
@@ -161,7 +162,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
         name="description"
         content="Achieve mastery in concepts by doing questions tailored to your skill level. Receive feedback on your progression and challenge yourself as you advance through progressively more advanced questions for each individual topic."
       />
-      <link rel="icon" href="/logo/leetnode-logo.png" />
+      <link rel="icon" href="favicon.ico" />
     </Head>
   );
 };

@@ -1,100 +1,20 @@
-import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import Dots from "@/components/Dots";
-
+import Image from "next/image";
 import Link from "next/link";
+
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import Dots from "@/components/misc/Dots";
+import Navbar from "@/components/Navbar";
 import {
-  createStyles,
-  Title,
-  Text,
-  Button,
   Box,
+  Button,
   Container,
+  createStyles,
   Grid,
   Stack,
+  Text,
+  Title,
 } from "@mantine/core";
-import Image from "next/image";
-
-const useStyles = createStyles((theme) => ({
-  wrapper: {
-    position: "relative",
-    paddingTop: 80,
-    paddingBottom: 80,
-
-    "@media (max-width: 755px)": {
-      paddingTop: 80,
-      paddingBottom: 60,
-    },
-  },
-
-  inner: {
-    position: "relative",
-    zIndex: 1,
-  },
-
-  dots: {
-    position: "absolute",
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[5]
-        : theme.colors.gray[1],
-
-    "@media (max-width: 568px)": {
-      display: "none",
-    },
-  },
-
-  title: {
-    textAlign: "center",
-    fontWeight: 800,
-    fontSize: 48,
-    letterSpacing: -1,
-    color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    marginBottom: theme.spacing.xs,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-    "@media (max-width: 520px)": {
-      fontSize: 28,
-      textAlign: "left",
-    },
-  },
-
-  description: {
-    textAlign: "center",
-
-    "@media (max-width: 520px)": {
-      textAlign: "left",
-      fontSize: theme.fontSizes.md,
-    },
-  },
-
-  controls: {
-    marginTop: theme.spacing.lg,
-    display: "flex",
-    justifyContent: "center",
-
-    "@media (max-width: 520px)": {
-      flexDirection: "column",
-    },
-  },
-
-  control: {
-    "&:not(:first-of-type)": {
-      marginLeft: theme.spacing.md,
-    },
-
-    "@media (max-width: 520px)": {
-      height: 42,
-      fontSize: theme.fontSizes.md,
-
-      "&:not(:first-of-type)": {
-        marginTop: theme.spacing.md,
-        marginLeft: 0,
-      },
-    },
-  },
-}));
 
 export default function Home() {
   const { classes, theme } = useStyles();
@@ -182,3 +102,83 @@ export default function Home() {
     </>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  wrapper: {
+    position: "relative",
+    paddingTop: 80,
+    paddingBottom: 80,
+
+    "@media (max-width: 755px)": {
+      paddingTop: 80,
+      paddingBottom: 60,
+    },
+  },
+
+  inner: {
+    position: "relative",
+    zIndex: 1,
+  },
+
+  dots: {
+    position: "absolute",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[5]
+        : theme.colors.gray[1],
+
+    "@media (max-width: 568px)": {
+      display: "none",
+    },
+  },
+
+  title: {
+    textAlign: "center",
+    fontWeight: 800,
+    fontSize: 48,
+    letterSpacing: -1,
+    color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    marginBottom: theme.spacing.xs,
+    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+
+    "@media (max-width: 520px)": {
+      fontSize: 28,
+      textAlign: "left",
+    },
+  },
+
+  description: {
+    textAlign: "center",
+
+    "@media (max-width: 520px)": {
+      textAlign: "left",
+      fontSize: theme.fontSizes.md,
+    },
+  },
+
+  controls: {
+    marginTop: theme.spacing.lg,
+    display: "flex",
+    justifyContent: "center",
+
+    "@media (max-width: 520px)": {
+      flexDirection: "column",
+    },
+  },
+
+  control: {
+    "&:not(:first-of-type)": {
+      marginLeft: theme.spacing.md,
+    },
+
+    "@media (max-width: 520px)": {
+      height: 42,
+      fontSize: theme.fontSizes.md,
+
+      "&:not(:first-of-type)": {
+        marginTop: theme.spacing.md,
+        marginLeft: 0,
+      },
+    },
+  },
+}));

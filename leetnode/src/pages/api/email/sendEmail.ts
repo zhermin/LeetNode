@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 
 import { prisma } from "@/server/db/client";
-import { Frequency, Mastery } from "@prisma/client";
+import { Frequency, Mastery, Role } from "@prisma/client";
 
 export default async function handler(
   req: NextApiRequest,
@@ -52,7 +52,7 @@ export default async function handler(
       // get all emails with ADMIN role
       const admins = await prisma.user.findMany({
         where: {
-          role: "ADMIN" || "SUPERUSER",
+          role: Role.SUPERUSER || Role.ADMIN,
           emailFrequency: Frequency.Daily // will add filter in the future
         },
         select: {

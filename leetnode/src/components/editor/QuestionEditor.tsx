@@ -58,6 +58,7 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
+import { CourseTypeBadge } from "../misc/Badges";
 import { FormQuestionType } from "./QuestionViewer";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
@@ -756,22 +757,7 @@ export default function QuestionEditor({
               courseName: string;
               courseLevel: Level;
               type: CourseType;
-            }) => (
-              <Badge
-                key={course.courseName}
-                color={
-                  course.type === CourseType.Content
-                    ? course.courseLevel === Level.Foundational
-                      ? "green"
-                      : course.courseLevel === Level.Intermediate
-                      ? "yellow"
-                      : "red"
-                    : ""
-                }
-              >
-                {course.courseName}
-              </Badge>
-            )
+            }) => <CourseTypeBadge key={course.courseName} course={course} />
           )
         ) : (
           <Badge color="dark">None</Badge>

@@ -2,11 +2,10 @@ import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
-  Badge,
   Box,
   Burger,
   Button,
@@ -28,79 +27,17 @@ import { Role } from "@prisma/client";
 import {
   IconBook,
   IconChevronDown,
+  IconGauge,
+  IconLock,
   IconLogout,
   IconMoon,
-  IconSettings,
-  IconStar,
   IconSun,
-  IconUser,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
+import { RoleBadge } from "./misc/Badges";
+
 const HEADER_HEIGHT = 80;
-
-const useStyles = createStyles((theme) => ({
-  header: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
-    borderBottom: `1px solid ${
-      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
-    }`,
-  },
-
-  inner: {
-    height: HEADER_HEIGHT,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  logoFull: {
-    [theme.fn.smallerThan("xs")]: {
-      display: "none",
-    },
-  },
-
-  logoSmall: {
-    [theme.fn.largerThan("xs")]: {
-      display: "none",
-    },
-  },
-
-  item: {
-    "&[data-hovered]": {
-      backgroundColor: theme.colors.cyan[0],
-      color: theme.colors.cyan[7],
-    },
-  },
-
-  user: {
-    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-    borderRadius: theme.radius.sm,
-    transition: "background-color 100ms ease",
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[8]
-          : theme.colors.cyan[0],
-      borderRadius: theme.radius.md,
-    },
-  },
-
-  userName: {
-    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    [theme.fn.smallerThan("sm")]: {
-      display: "none",
-    },
-  },
-
-  userActive: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
-  },
-}));
 
 const FullLogo = () => (
   <Link href="/">
@@ -141,25 +78,6 @@ export default function Navbar({
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [userMenuOpened, setUserMenuOpened] = useState(false);
-  const [admin, setAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!!session?.data?.user?.id) {
-      // If authenticated
-      axios
-        .get("/api/forum/getAllUsers")
-        .then((response) => {
-          const filteredUser = response.data.filter(
-            (user: { id: string }) =>
-              user.id == (session?.data?.user?.id as string)
-          );
-          if (!admin && filteredUser[0]?.role === "ADMIN") {
-            setAdmin(true);
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-  }, [admin, session?.data?.user?.id]);
 
   const {
     data: userInfo,
@@ -311,17 +229,7 @@ export default function Navbar({
                   >
                     Signed In As:
                   </Text>
-                  <Badge
-                    color={
-                      session?.data?.user?.role === Role.SUPERUSER
-                        ? "red"
-                        : session?.data?.user?.role === Role.ADMIN
-                        ? "orange"
-                        : ""
-                    }
-                  >
-                    {session?.data?.user?.role}
-                  </Badge>
+                  <RoleBadge />
                 </Group>
                 {session?.data?.user?.email}
               </Menu.Label>
@@ -330,33 +238,28 @@ export default function Navbar({
 
               <Menu.Item
                 component={Link}
-                href="/courses"
-                icon={<IconBook size={14} stroke={1.5} />}
+                href="/dashboard"
+                icon={<IconGauge size={14} stroke={1.5} />}
               >
-                Courses
+                Dashboard
               </Menu.Item>
               <Menu.Item
                 component={Link}
-                href="/profile"
-                icon={<IconStar size={14} stroke={1.5} />}
+                href="/courses"
+                icon={<IconBook size={14} stroke={1.5} />}
               >
-                Masteries
+                Learn
               </Menu.Item>
 
               <Menu.Divider />
 
-              <Menu.Item
-                component={Link}
-                href="/dashboard"
-                icon={<IconSettings size={14} stroke={1.5} />}
-              >
-                Account settings
-              </Menu.Item>
-              {admin && (
+              {(session?.data?.user?.role === Role.SUPERUSER ||
+                session?.data?.user?.role === Role.ADMIN) && (
                 <Menu.Item
                   component={Link}
-                  href="/prof"
-                  icon={<IconUser size={14} stroke={1.5} />}
+                  href="/admin"
+                  icon={<IconLock size={14} stroke={1.5} />}
+                  color={theme.colors.red[6]}
                 >
                   Admin Panel
                 </Menu.Item>
@@ -374,3 +277,66 @@ export default function Navbar({
     </Header>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  header: {
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
+    borderBottom: `1px solid ${
+      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
+    }`,
+  },
+
+  inner: {
+    height: HEADER_HEIGHT,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  logoFull: {
+    [theme.fn.smallerThan("xs")]: {
+      display: "none",
+    },
+  },
+
+  logoSmall: {
+    [theme.fn.largerThan("xs")]: {
+      display: "none",
+    },
+  },
+
+  item: {
+    "&[data-hovered]": {
+      backgroundColor: theme.colors.cyan[0],
+      color: theme.colors.cyan[7],
+    },
+  },
+
+  user: {
+    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
+    padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+    borderRadius: theme.radius.sm,
+    transition: "background-color 100ms ease",
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[8]
+          : theme.colors.cyan[0],
+      borderRadius: theme.radius.md,
+    },
+  },
+
+  userName: {
+    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
+    [theme.fn.smallerThan("sm")]: {
+      display: "none",
+    },
+  },
+
+  userActive: {
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
+  },
+}));

@@ -7,17 +7,21 @@ import { CustomMath } from "@/server/Utils";
 import {
   ActionIcon,
   Box,
+  Button,
   Center,
-  Group,
+  Container,
+  createStyles,
   Loader,
   Modal,
+  Stack,
   Table,
   Text,
+  Title,
 } from "@mantine/core";
 import { randomId } from "@mantine/hooks";
 import { Question, QuestionDifficulty, Topic } from "@prisma/client";
-import { IconEye, IconPencil, IconPlus } from "@tabler/icons";
-import { useQueries } from "@tanstack/react-query";
+import { IconEye, IconPencil } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
 import QuestionEditor from "./QuestionEditor";
 
@@ -55,51 +59,48 @@ export type FormQuestionJsonType = {
 };
 
 export default function QuestionViewer() {
+  const { classes } = useStyles();
   const editorHtml = useRef("");
   const currentQuestion = useRef<Question>();
   const [questionAddOpened, setQuestionAddOpened] = useState(false);
   const [questionViewOpened, setQuestionViewOpened] = useState(false);
   const [questionEditOpened, setQuestionEditOpened] = useState(false);
 
-  const [{ data: topics }, { data: questions }] = useQueries({
-    queries: [
-      {
-        queryKey: ["all-topic-names"],
-        queryFn: () => axios.get("/api/forum/getAllTopicNames"),
-      },
-      {
-        queryKey: ["all-questions"],
-        queryFn: () => axios.get("/api/questions"),
-      },
-    ],
+  const { data: questions } = useQuery({
+    queryKey: ["all-questions"],
+    queryFn: () => axios.get("/api/questions"),
   });
 
-  if (!topics || !questions) {
+  if (!questions) {
     return (
-      <Center className="h-screen">
+      <Center className="h-[calc(100vh-180px)]">
         <Loader />
       </Center>
     );
   }
 
   return (
-    <>
-      <Group align="center" mb="md">
-        <Text weight={500} size="lg">
-          All Questions
-        </Text>
-        <ActionIcon
-          variant="default"
-          color="gray"
-          radius="sm"
-          onClick={() => {
-            setQuestionAddOpened(true);
-            editorHtml.current = "";
-          }}
-        >
-          <IconPlus size={16} />
-        </ActionIcon>
-      </Group>
+    <Container size="lg" py="xl">
+      <Center>
+        <Stack align="center" mb="md">
+          <Title order={2} className={classes.title} align="center">
+            All Questions
+          </Title>
+        </Stack>
+      </Center>
+      <Button
+        fullWidth
+        variant="default"
+        color="gray"
+        radius="sm"
+        mb="lg"
+        onClick={() => {
+          setQuestionAddOpened(true);
+          editorHtml.current = "";
+        }}
+      >
+        + Add New Question
+      </Button>
       {questions.data.length > 0 ? (
         <>
           <Table highlightOnHover>
@@ -114,19 +115,13 @@ export default function QuestionViewer() {
               </tr>
             </thead>
             <tbody>
-              {questions.data.map((question: Question) => (
+              {questions.data.map((question: Question & { topic: Topic }) => (
                 <tr key={question.questionId}>
                   <td>{question.questionId}</td>
                   <td>{question.variationId}</td>
                   <td>{question.questionTitle}</td>
                   <td>{question.questionDifficulty}</td>
-                  <td>
-                    {
-                      topics.data.find(
-                        (topic: Topic) => topic.topicSlug === question.topicSlug
-                      ).topicName
-                    }
-                  </td>
+                  <td>{question.topic.topicName}</td>
                   <td className="flex gap-2">
                     <ActionIcon
                       variant="default"
@@ -330,6 +325,26 @@ export default function QuestionViewer() {
       ) : (
         <Text>No questions found.</Text>
       )}
-    </>
+    </Container>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  title: {
+    fontSize: 34,
+    fontWeight: 900,
+    [theme.fn.smallerThan("sm")]: {
+      fontSize: 24,
+    },
+    "&::after": {
+      content: '""',
+      display: "block",
+      backgroundColor: theme.fn.primaryColor(),
+      width: 45,
+      height: 2,
+      marginTop: theme.spacing.sm,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
+  },
+}));

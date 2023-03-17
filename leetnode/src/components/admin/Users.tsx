@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import toast from "react-hot-toast";
 
+import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
 import {
   Accordion,
   Anchor,
@@ -32,7 +33,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { Attempt, Mastery, Role } from "@prisma/client";
+import { Mastery, Topic } from "@prisma/client";
 import {
   IconChevronsDown,
   IconChevronsRight,
@@ -57,72 +58,18 @@ ChartJS.register(
 
 ChartJS.defaults.font.size = 16;
 
-const useStyles = createStyles((theme) => ({
-  wrapper: {
-    paddingTop: theme.spacing.xl * 2,
-    paddingBottom: theme.spacing.xl * 2,
-    minHeight: 650,
-  },
-
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
-    },
-  },
-
-  item: {
-    borderRadius: theme.radius.md,
-    marginBottom: theme.spacing.lg,
-
-    border: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3]
-    }`,
-  },
-}));
-
-interface UsersWithMasteriesAndAttempts {
-  id: string;
-  nusnetId: string | null;
-  name: string;
-  email: string;
-  emailVerified: Date | null;
-  image: string;
-  lastActive: string;
-  role: Role;
-  masteries: Mastery[];
-  attempts: Attempt[];
-}
-[];
-
-interface TopicsInterface {
-  topicLevel: string;
-  topicSlug: string;
-  topicName: string;
-}
-[];
-
 const Users = ({
   users,
   topics,
 }: {
-  users: UsersWithMasteriesAndAttempts[];
-  topics: TopicsInterface[];
+  users: UsersWithMasteriesAndAttemptsType;
+  topics: Topic[];
 }) => {
   const { classes } = useStyles();
   const [active, setActive] = useState("");
-  const [userData, setUserData] = useState<UsersWithMasteriesAndAttempts[]>([]);
+  const [userData, setUserData] = useState<UsersWithMasteriesAndAttemptsType>(
+    []
+  );
   const [masteryData, setMasteryData] = useState<number[]>([]);
   const [sort, setSort] = useState<string | null>("All Students");
   const [checkedHelp, setCheckedHelp] = useState(false);
@@ -143,24 +90,16 @@ const Users = ({
 
   {
     sort === "Last Active (Newest)"
-      ? students.sort(
-          (a, b) =>
-            new Date(b.lastActive as string).getTime() -
-            new Date(a.lastActive as string).getTime()
-        )
+      ? students.sort((a, b) => b.lastActive.getTime() - a.lastActive.getTime())
       : sort === "Last Active (Oldest)"
-      ? students.sort(
-          (a, b) =>
-            new Date(a.lastActive as string).getTime() -
-            new Date(b.lastActive as string).getTime()
-        )
+      ? students.sort((a, b) => a.lastActive.getTime() - b.lastActive.getTime())
       : students;
   }
 
   console.log(sort);
   console.log(students);
 
-  let filteredStudents: UsersWithMasteriesAndAttempts[] = [];
+  let filteredStudents: UsersWithMasteriesAndAttemptsType = [];
 
   const studentsWithTopicPing = students.filter((student) => {
     return student.masteries.some(
@@ -280,14 +219,14 @@ const Users = ({
 
   return (
     <ScrollArea>
-      <Container size="xl" className={classes.wrapper}>
-        <Title align="center" className={classes.title}>
+      <Container size="xl" py="xl">
+        <Title order={2} align="center" mb="lg" className={classes.title}>
           User Details
         </Title>
         <Group position="apart" pb="md">
           <Checkbox
             mb={-50}
-            label="All student who need help!"
+            label="All students who need help!"
             checked={checkedHelp}
             onChange={(event) => setCheckedHelp(event.currentTarget.checked)}
           />
@@ -315,7 +254,7 @@ const Users = ({
             <Accordion.Item
               className={classes.item}
               value={item.name}
-              key={item.name}
+              key={item.id}
             >
               <Accordion.Control
                 onClick={() => {
@@ -568,58 +507,7 @@ const Users = ({
                       ))}
                     </tbody>
                   </Table>
-                  {/* <Checkbox
-                          // defaultValue={"Help Required"}
-                          // defaultChecked={
-                          //   userData[0]?.masteries.some((m) => m.topicPing)
-                          //     ? true
-                          //     : false
-                          // }
-                          checked={
-                            userData[0]?.masteries.some((m) => m.topicPing)
-                              ? true
-                              : false
-                          }
-                          onChange={() =>
-                            axios.post("/api/prof/updatePing",{id: userData[0]?.id, topicSlug: , newPing: })
-                          }
-                          label="Help Required"
-                        /> */}
                 </Paper>
-                {/* {topics.map(
-                  (topic: {
-                    topicSlug: string;
-                    topicName: string;
-                    topicLevel: string;
-                  }) => (
-                    <>
-                      <Text key={topic.topicSlug}>{topic.topicName}</Text>
-
-                      {userData?.[0]?.masteries.some(
-                        (data) => data.topicSlug === topic.topicSlug
-                      ) ? (
-                        <Bar   datasetIdKey='id'
-                        data={{
-                          labels: topics.map((topic: { topicName: string }) => topic.topicName),
-                          datasets: [
-                            {
-                              id: 1,
-                              label: '',
-                              data: [5, 6, 7],
-                            },
-                            {
-                              id: 2,
-                              label: '',
-                              data: [3, 2, 1],
-                            },
-                          ],
-                        }}/>
-                      ) : (
-                        <Text>Not Match</Text>
-                      )}
-                    </>
-                  )
-                )} */}
               </Accordion.Panel>
             </Accordion.Item>
           ))}
@@ -630,3 +518,32 @@ const Users = ({
 };
 
 export default Users;
+
+const useStyles = createStyles((theme) => ({
+  title: {
+    fontSize: 34,
+    fontWeight: 900,
+    [theme.fn.smallerThan("sm")]: {
+      fontSize: 24,
+    },
+    "&::after": {
+      content: '""',
+      display: "block",
+      backgroundColor: theme.fn.primaryColor(),
+      width: 45,
+      height: 2,
+      marginTop: theme.spacing.sm,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
+  },
+
+  item: {
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.lg,
+
+    border: `1px solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3]
+    }`,
+  },
+}));

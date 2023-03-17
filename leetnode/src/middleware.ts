@@ -1,4 +1,18 @@
-export { default } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+
+import { Role } from "@prisma/client";
+
+export default withAuth(function middleware(req) {
+  // Redirect if they don't have the allowed role
+  if (
+    req.nextUrl.pathname.startsWith("/admin") &&
+    req.nextauth.token?.role !== Role.SUPERUSER &&
+    req.nextauth.token?.role !== Role.ADMIN
+  ) {
+    return NextResponse.redirect(new URL("/403", req.url));
+  }
+});
 
 export const config = {
   matcher: [
@@ -11,6 +25,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - logo / bkt (Render images at index)
      */
-    '/((?!api|_next|favicon.ico|logo|bkt).*)',
+    "/((?!api|_next|favicon.ico|logo|bkt).*)",
   ],
 };

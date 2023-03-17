@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
 import { Carousel } from "@mantine/carousel";
 import {
   ActionIcon,
@@ -23,53 +24,15 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { Attempt, Frequency, Mastery, Role } from "@prisma/client";
+import { Frequency, Role, Topic } from "@prisma/client";
 import { IconClick, IconEdit, IconTrash } from "@tabler/icons";
-
-interface UsersWithMasteriesAndAttempts {
-  id: string;
-  nusnetId: string | null;
-  name: string;
-  email: string;
-  emailVerified: Date | null;
-  image: string;
-  lastActive: string;
-  emailFrequency: string;
-  role: Role;
-  masteries: Mastery[];
-  attempts: Attempt[];
-}
-[];
-
-interface TopicsInterface {
-  topicLevel: string;
-  topicSlug: string;
-  topicName: string;
-}
-[];
-
-const useStyles = createStyles((_theme, _params, getRef) => ({
-  controls: {
-    ref: getRef("controls"),
-    transition: "opacity 150ms ease",
-    opacity: 0,
-  },
-
-  root: {
-    "&:hover": {
-      [`& .${getRef("controls")}`]: {
-        opacity: 1,
-      },
-    },
-  },
-}));
 
 const Settings = ({
   users,
   topics,
 }: {
-  users: UsersWithMasteriesAndAttempts[];
-  topics: TopicsInterface[];
+  users: UsersWithMasteriesAndAttemptsType;
+  topics: Topic[];
 }) => {
   const [selectedAttemptsResetChecked, setSelectedAttemptsResetChecked] =
     useState(false);
@@ -85,8 +48,7 @@ const Settings = ({
   const [toEditName, setToEditName] = useState("");
   const [editOpened, setEditOpened] = useState(false);
   const [toEditId, setToEditId] = useState("");
-  // const [superAdmin, setSuperAdmin] = useState(false);
-  const [role, setRole] = useState("USER");
+  const [roleView, setRoleView] = useState("userView");
   const [deleteUser, setDeleteUser] = useState<string[]>([]);
   const [closeButton, setCloseButton] = useState(false);
   const [confirmPopup, setConfirmPopup] = useState(false);
@@ -106,16 +68,6 @@ const Settings = ({
     value: topicSlug,
     label: topicName,
   }));
-
-  // if (
-  //   // Change this in the future when SUPERADMIN/similar role is added
-  //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //   // @ts-ignore
-  //   users.find((user) => user.id === session?.data?.user?.id)?.role ===
-  //   "SUPERADMIN"
-  // ) {
-  //   setSuperAdmin(true);
-  // }
 
   if (selfEmailFreq === null) {
     setSelfEmailFreq(
@@ -193,8 +145,8 @@ const Settings = ({
   const totalUsersPerPage = 5;
 
   const adminSlides = users
-    .filter((user) => user.role === "ADMIN")
-    .reduce((slides: UsersWithMasteriesAndAttempts[][], user, index) => {
+    .filter((user) => user.role === Role.SUPERUSER || user.role === Role.ADMIN)
+    .reduce((slides: UsersWithMasteriesAndAttemptsType[], user, index) => {
       const slideIndex = Math.floor(index / totalUsersPerPage);
       if (!slides[slideIndex]) {
         slides[slideIndex] = [];
@@ -231,8 +183,8 @@ const Settings = ({
     ));
 
   const userSlides = users
-    .filter((user) => user.role === "USER")
-    .reduce((slides: UsersWithMasteriesAndAttempts[][], user, index) => {
+    .filter((user) => user.role === Role.USER)
+    .reduce((slides: UsersWithMasteriesAndAttemptsType[], user, index) => {
       const slideIndex = Math.floor(index / totalUsersPerPage);
       if (!slides[slideIndex]) {
         slides[slideIndex] = [];
@@ -512,16 +464,11 @@ const Settings = ({
       <Group>
         <SegmentedControl
           data={[
-            // {
-            //   value: "SUPERADMIN",
-            //   label: "Super Admin",
-            //   disabled: !superAdmin,
-            // },
-            { value: "ADMIN", label: "Admin" },
-            { value: "USER", label: "User" },
+            { value: "adminView", label: "Admins" },
+            { value: "userView", label: "Users" },
           ]}
-          value={role}
-          onChange={setRole}
+          value={roleView}
+          onChange={setRoleView}
         />
 
         <ActionIcon variant={"filled"} color={"red"}>
@@ -533,17 +480,7 @@ const Settings = ({
         </ActionIcon>
         <Text fw={500}>- To be edited</Text>
       </Group>
-      {role === "USER" ? (
-        <Carousel
-          mx="auto"
-          withIndicators
-          height={300}
-          classNames={classes}
-          mb={80}
-        >
-          {userSlides}
-        </Carousel>
-      ) : (
+      {roleView === "adminView" ? (
         <Carousel
           mx="auto"
           withIndicators
@@ -553,9 +490,35 @@ const Settings = ({
         >
           {adminSlides}
         </Carousel>
+      ) : (
+        <Carousel
+          mx="auto"
+          withIndicators
+          height={300}
+          classNames={classes}
+          mb={80}
+        >
+          {userSlides}
+        </Carousel>
       )}
     </Container>
   );
 };
 
 export default Settings;
+
+const useStyles = createStyles((_theme, _params, getRef) => ({
+  controls: {
+    ref: getRef("controls"),
+    transition: "opacity 150ms ease",
+    opacity: 0,
+  },
+
+  root: {
+    "&:hover": {
+      [`& .${getRef("controls")}`]: {
+        opacity: 1,
+      },
+    },
+  },
+}));

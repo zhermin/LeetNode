@@ -1,18 +1,26 @@
+import Image from "next/image";
+import Latex from "react-latex-next";
+
 import {
-  createStyles,
   Badge,
+  Center,
+  createStyles,
   Grid,
   Group,
   Paper,
-  Title,
   Text,
-  Center,
+  Title,
 } from "@mantine/core";
+import {
+  Answer,
+  Attempt,
+  QuestionDifficulty,
+  QuestionMedia,
+  Topic,
+} from "@prisma/client";
 import { IconCheck, IconX } from "@tabler/icons";
-import Image from "next/image";
-import Latex from "react-latex-next";
-import { QuestionDifficulty } from "@prisma/client";
-import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";
+
+import { QuestionDifficultyBadge } from "../misc/Badges";
 
 const QuestionHistory = ({
   questionHistory,
@@ -82,19 +90,10 @@ const QuestionHistory = ({
             <Grid grow align="center">
               <Grid.Col span={7}>
                 <Group>
-                  <Badge
-                    color={
-                      qns.questionDifficulty === QuestionDifficulty.Easy
-                        ? "green"
-                        : qns.questionDifficulty === QuestionDifficulty.Medium
-                        ? "yellow"
-                        : "red"
-                    }
-                    radius="lg"
-                    size="lg"
-                  >
-                    {qns.questionDifficulty} Difficulty
-                  </Badge>
+                  <QuestionDifficultyBadge
+                    questionDifficulty={qns.questionDifficulty}
+                    {...{ radius: "lg", size: "lg" }}
+                  />
                   <Badge radius="lg" size="lg">
                     {qns.topicName}
                   </Badge>

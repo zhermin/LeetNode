@@ -3,9 +3,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-import Dots from "@/components/Dots";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import Dots from "@/components/misc/Dots";
 import Navbar from "@/components/Navbar";
 import { Carousel } from "@mantine/carousel";
 import {
