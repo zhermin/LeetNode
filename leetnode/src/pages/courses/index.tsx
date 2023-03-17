@@ -156,7 +156,6 @@ export default function CoursesPage() {
   const handleInitUser = async (
     course: Course & { topics: { topicSlug: string }[] }
   ) => {
-    console.log(course.topics);
     try {
       const { data } = await axios.post(`/api/pybkt/init`, {
         id: session?.data?.user?.id,

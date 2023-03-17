@@ -27,16 +27,16 @@ const ProgressBar = ({
   useEffect(() => {
     setLoading(true);
     axios
-      .post("/api/pybkt/get", {
+      .post("/api/questions/checkMastery", {
         id: session?.data?.user?.id,
         topicSlug: topicSlug,
-        //change contents of topicSlug to topicSlug
       })
       .then((response) => {
+        console.log(response.data);
         setLoading(false);
-        setDetails(response.data);
+        setDetails(response.data?.masteryLevel);
       });
-  }, [topicSlug, session?.data?.user?.id]);
+  }, [session?.data?.user?.id, topicSlug]);
 
   console.log(session?.data?.user?.id);
   console.log(topicSlug);
@@ -58,7 +58,7 @@ const ProgressBar = ({
             {roundedResults !== 0 ? (
               <Title order={2}>{roundedResults}%</Title>
             ) : (
-              <Text fw={600}>Do a {`${topicName}`} question first!</Text>
+              <Text fw={600}>Do a question on the topic first!</Text>
             )}
           </Group>
           <Progress
