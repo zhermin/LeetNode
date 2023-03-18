@@ -12,7 +12,10 @@ export default async function handler(
     },
     include: {
       postMedia: true,
-      comment: true,
+      comment: {
+        include: { commentMedia: true },
+      },
+      postLikes: true,
     },
   });
 

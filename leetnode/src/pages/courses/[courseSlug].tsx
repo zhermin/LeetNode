@@ -223,10 +223,22 @@ export default function CourseMainPage({
           </Sidebar.Section>
 
           <Sidebar.Section className={classes.sidebarFooter}>
-            <Box className={classes.link} mb="sm">
+            <a
+              className={cx(classes.link, {
+                [classes.linkActive]: "Course Discussion" === active,
+              })}
+              onClick={(event: { preventDefault: () => void }) => {
+                event.preventDefault();
+                setActive("Course Discussion");
+              }}
+            >
               <IconMessages className={classes.linkIcon} stroke={1.5} />
               <span>Course Discussion</span>
-            </Box>
+            </a>
+            {/* <Box className={classes.link}>
+              <IconMessages className={classes.linkIcon} stroke={1.5} />
+              <span>Course Discussion</span>
+            </Box> */}
             <Link href="/courses" passHref>
               <Box className={classes.link}>
                 <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />

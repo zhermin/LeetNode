@@ -8,6 +8,7 @@ import {
   Title as ChartTitle,
   Tooltip,
 } from "chart.js/auto";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
 import Latex from "react-latex-next";
@@ -20,6 +21,7 @@ import {
 } from "@/pages/admin";
 import {
   Accordion,
+  Box,
   Button,
   Card,
   Center,
@@ -39,12 +41,16 @@ import {
   Title,
 } from "@mantine/core";
 import {
+  IconApps,
   IconCheck,
   IconPlus,
+  IconPresentation,
+  IconReportSearch,
   IconSquareNumber1,
   IconSquareNumber2,
   IconSquareNumber3,
   IconUsers,
+  IconVideo,
   IconX,
   IconZoomQuestion,
 } from "@tabler/icons";
@@ -58,6 +64,11 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
+  ssr: false,
+  loading: () => <p>Loading Editor...</p>,
+});
 
 const Courses = ({
   courses,
@@ -73,9 +84,15 @@ const Courses = ({
   const { classes } = useStyles();
 
   const [sort, setSort] = useState("All Courses");
-  const [opened, setOpened] = useState(false);
+  const [openedDetails, setOpenedDetails] = useState(false);
+  const [openedEdit, setOpenedEdit] = useState(false);
   const [details, setDetails] = useState<CoursesInfoType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
+  const [editValue, setEditValue] = useState("Overview");
+  const [overviewMessage, setOverviewMessage] = useState("");
+  const [slidesMessage, setSlidesMessage] = useState("");
+  const [videoMessage, setVideoMessage] = useState("");
+  const [additionalMessage, setAdditionalMessage] = useState("");
 
   console.log(users);
 
@@ -98,7 +115,7 @@ const Courses = ({
     multiValue.includes(topic.topicName)
   );
 
-  console.log(courses);
+  console.log(editValue);
 
   const avgMasteryLevels: {
     topicName: string;
@@ -136,8 +153,8 @@ const Courses = ({
   return (
     <>
       <Modal
-        opened={opened}
-        onClose={() => setOpened(false)}
+        opened={openedDetails}
+        onClose={() => setOpenedDetails(false)}
         title={details?.courseName}
         size="70%"
       >
@@ -435,6 +452,90 @@ const Courses = ({
           </Paper>
         ))}
       </Modal>
+
+      <Modal
+        opened={openedEdit}
+        onClose={() => setOpenedEdit(false)}
+        title={details?.courseName}
+        size="70%"
+      >
+        <Center>
+          <Text fw={500}>
+            [Note]: Please use the Questions tab for question generation
+          </Text>
+        </Center>
+        <Center>
+          <SegmentedControl
+            value={editValue}
+            onChange={setEditValue}
+            my={"xl"}
+            radius={20}
+            data={[
+              {
+                value: "Overview",
+                label: (
+                  <Center>
+                    <IconApps size={16} />
+                    <Box ml={10}>Overview</Box>
+                  </Center>
+                ),
+              },
+              {
+                value: "Lecture Slides",
+                label: (
+                  <Center>
+                    <IconPresentation size={16} />
+                    <Box ml={10}>Lecture Slides</Box>
+                  </Center>
+                ),
+              },
+              {
+                value: "Lecture Videos",
+                label: (
+                  <Center>
+                    <IconVideo size={16} />
+                    <Box ml={10}>Lecture Videos</Box>
+                  </Center>
+                ),
+              },
+              {
+                value: "Additional Resources",
+                label: (
+                  <Center>
+                    <IconReportSearch size={16} />
+                    <Box ml={10}>Additional Resources</Box>
+                  </Center>
+                ),
+              },
+            ]}
+          />
+        </Center>
+        {editValue === "Overview" ? (
+          <Editor
+            upload_preset="forum_media"
+            value={overviewMessage}
+            onChange={setOverviewMessage}
+          />
+        ) : editValue === "Lecture Slides" ? (
+          <Editor
+            upload_preset="forum_media"
+            value={slidesMessage}
+            onChange={setSlidesMessage}
+          />
+        ) : editValue === "Lecture Videos" ? (
+          <Editor
+            upload_preset="forum_media"
+            value={videoMessage}
+            onChange={setVideoMessage}
+          />
+        ) : (
+          <Editor
+            upload_preset="forum_media"
+            value={additionalMessage}
+            onChange={setAdditionalMessage}
+          />
+        )}
+      </Modal>
       <Container size="lg" py="xl">
         <Title order={2} align="center" mb="lg" className={classes.title}>
           Courses Detailed Statistics
@@ -523,17 +624,28 @@ const Courses = ({
               <Text size="sm" color="dimmed" mt="sm" mb={70}>
                 {c.courseDescription}
               </Text>
-              <Button
-                radius="xl"
-                style={{ flex: 1 }}
-                className={classes.action}
-                onClick={() => {
-                  setOpened(true);
-                  setDetails(c);
-                }}
-              >
-                Details
-              </Button>
+              <Group className={classes.action}>
+                <Button
+                  radius="xl"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setOpenedEdit(true);
+                    setDetails(c);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  radius="xl"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setOpenedDetails(true);
+                    setDetails(c);
+                  }}
+                >
+                  Details
+                </Button>
+              </Group>
             </Card>
           ))}
         </SimpleGrid>

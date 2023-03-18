@@ -16,14 +16,12 @@ import {
   Blockquote,
   Box,
   Button,
-  Center,
   createStyles,
   CSSObject,
   Divider,
   Flex,
   Group,
   keyframes,
-  Loader,
   MantineTheme,
   NavLink,
   Popover,
@@ -32,7 +30,7 @@ import {
   Title,
   TypographyStylesProvider,
 } from "@mantine/core";
-import { Comment, CommentMedia, PostMedia, PostType } from "@prisma/client";
+import { Comment } from "@prisma/client";
 import {
   IconChevronLeft,
   IconCornerDownRight,
@@ -41,10 +39,10 @@ import {
   IconThumbUp,
   IconX,
 } from "@tabler/icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { PostTypeBadge } from "../misc/Badges";
-import { useGetFetchQuery } from "./CourseDiscussion";
+import { postType, useGetFetchQuery } from "./CourseDiscussion";
 import DateDiffCalc from "./DateDiffCalc";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
@@ -98,70 +96,35 @@ const ForumPost = ({
     });
     return `${formattedDate} ${formattedTime}`;
   }
-
-  // onChange expects a function with these 4 arguments
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // function handleChange(content: any, delta: any, source: any, editor: any) {
-  //   setValue(editor.getContents());
-  //   form.values.message = value;
-  // }
-
   const data = useGetFetchQuery(["all-posts"]);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-ignore -> react query can only provide generic type of unknown, hence will throw error
+  // @ts-ignore -> react query can only provide generic type of unknown, hence will throw error
   const post: postType = data.data.find(
     (e: { postId: string }) => e.postId === postId
   );
+  console.log(post);
 
-  const {
-    data: comments,
-    isLoading: isLoadingComments,
-    isFetching: isFetchingComments,
-    isError: isErrorComments,
-  } = useQuery(["post-comments"], async () => {
-    const res = await axios.post("/api/forum/getAllComments", {
-      postId: post?.postId,
-    });
-    return res.data;
-  });
-
-  const {
-    data: likes,
-    isLoading: isLoadingLikes,
-    isFetching: isFetchingLikes,
-    isError: isErrorLikes,
-  } = useQuery(["post-likes"], async () => {
-    const res = await axios.post("/api/forum/getPostLikes", {
-      postId: post?.postId,
-      userId: session?.data?.user?.id,
-    });
-    console.log(res.data);
-    if (res.data.likes === 1) {
+  useEffect(() => {
+    if (
+      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
+        ?.likes === 1
+    ) {
       console.log("set like as 1");
       setVoted(1);
-    } else if (res.data.likes === -1) {
+    } else if (
+      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
+        ?.likes === -1
+    ) {
       console.log("set like as -1");
       setVoted(-1);
     }
-    setDisplayLikes(post?.likes as number);
-    return res.data;
-  });
+    setDisplayLikes(
+      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
+        ?.likes as number
+    );
+  }, [post?.postLikes, session.data?.user?.id]);
 
-  // Use the useQuery hook to make the API call to get all tags
-  const {
-    data: topics,
-    isLoading: isLoadingTopics,
-    isFetching: isFetchingTopics,
-    isError: isErrorTopics,
-  } = useQuery(["all-topic-names"], async () => {
-    const res = await axios.get("/api/forum/getAllTopicNames");
-    const tags: { value: string }[] = [];
-    res.data.map((e: { topicName: string }) => {
-      const jsonstr = `{"value":"${e.topicName}"}`;
-      tags.push(JSON.parse(jsonstr));
-    });
-    return tags;
-  });
+  const comments = post?.comment as Comment[];
 
   const addMutation = useMutation<
     Response,
@@ -176,7 +139,7 @@ const ForumPost = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
-      queryClient.invalidateQueries(["post-comments"]);
+      // queryClient.invalidateQueries(["post-comments"]);
       setMessage("");
       setReplying(null);
     },
@@ -194,7 +157,7 @@ const ForumPost = ({
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["post-comments"]);
+      // queryClient.invalidateQueries(["post-comments"]);
       setMessage("");
       setReplying(null);
       setEdit(null);
@@ -214,7 +177,7 @@ const ForumPost = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
-      queryClient.invalidateQueries(["post-comments"]);
+      // queryClient.invalidateQueries(["post-comments"]);
       setMessage("");
       setReplying(null);
       setEdit(null);
@@ -224,7 +187,7 @@ const ForumPost = ({
   function handleBack() {
     setRedirect(false);
     queryClient.invalidateQueries(["all-posts"]);
-    queryClient.invalidateQueries(["post-comments"]);
+    // queryClient.invalidateQueries(["post-comments"]);
   }
 
   function handleVote(vote: number): MouseEventHandler<HTMLButtonElement> {
@@ -250,27 +213,6 @@ const ForumPost = ({
     setEdit(commentId);
   }
 
-  if (
-    isLoadingComments ||
-    isFetchingComments ||
-    !comments ||
-    isLoadingTopics ||
-    isFetchingTopics ||
-    !topics ||
-    isLoadingLikes ||
-    isFetchingLikes ||
-    !likes
-  )
-    return (
-      <Center className="h-screen">
-        <Loader />
-      </Center>
-    );
-  if (isErrorComments || isErrorTopics || isErrorLikes)
-    return <div>Something went wrong!</div>;
-
-  console.log(goToComment);
-
   return (
     <Box
       sx={() => ({
@@ -292,7 +234,7 @@ const ForumPost = ({
       <Group position="apart">
         <Group>
           <Text size="xs" color="dimmed">
-            {formatIsoDateTime(post?.createdAt as string)}
+            {formatIsoDateTime(post?.createdAt.toString() as string)}
           </Text>
           <PostTypeBadge postType={post?.postType} />
         </Group>
@@ -378,7 +320,7 @@ const ForumPost = ({
             <>
               <Divider orientation="vertical" />
               <Text size={"sm"} color={"cyan.7"}>
-                Updated {DateDiffCalc(post?.updatedAt as string)}
+                Updated {DateDiffCalc(post?.updatedAt as Date)}
               </Text>
             </>
           )}
@@ -416,195 +358,170 @@ const ForumPost = ({
             ]}
             onChange={(value) => {
               setSort(value);
-              comments.reverse();
+              comments?.reverse();
             }}
           />
         </Group>
       </Group>
       {comments
-        .map(
-          (comment: {
-            commentId: string;
-            postId: string;
-            userId: string;
-            message: string;
-            likes: number;
-            createdAt: string;
-            updatedAt: string;
-            reply: string;
-            commentMedia: CommentMedia[];
-          }) => (
-            <Box key={comment.commentId} id={comment.commentId} mt={4}>
-              <Divider my="sm" />
-              <Group position="apart">
-                <Group mb="md">
-                  <Avatar
-                    src={
-                      users.find(
-                        (user: { id: string }) => user.id === comment.userId
-                      )?.image
-                    }
-                    alt={comment.userId}
-                    radius="lg"
-                    size="sm"
-                  />
-                  <Title size="sm">
-                    {
-                      users.find(
-                        (user: { id: string }) => user.id === comment.userId
-                      )?.value
-                    }
-                  </Title>
-                </Group>
-                <Popover
-                  width={100}
-                  position="bottom"
-                  withArrow
-                  shadow="md"
-                  opened={commentEdit === comment.commentId && commentOpened}
-                  onChange={setCommentOpened}
-                >
-                  <Popover.Target>
-                    <ActionIcon size={"sm"}>
-                      <IconDotsVertical
-                        onClick={() => {
-                          setCommentOpened((o) => !o);
-                          setCommentEdit(comment.commentId);
-                        }}
-                      />
-                    </ActionIcon>
-                  </Popover.Target>
-                  <Popover.Dropdown p={0}>
-                    <NavLink
-                      label="Edit"
-                      onClick={() => {
-                        handleEdit(comment?.commentId);
-                        setMessage(comment.message);
-                        setCommentOpened(false);
-                      }}
-                      disabled={comment?.userId !== session?.data?.user?.id}
-                    />
-                    <NavLink
-                      label="Reply"
-                      onClick={() => {
-                        handleReply(comment?.commentId);
-                        setCommentOpened(false);
-                      }}
-                    />
-                  </Popover.Dropdown>
-                </Popover>
+        .map((comment) => (
+          <Box key={comment.commentId} id={comment.commentId} mt={4}>
+            <Divider my="sm" />
+            <Group position="apart">
+              <Group mb="md">
+                <Avatar
+                  src={
+                    users.find(
+                      (user: { id: string }) => user.id === comment.userId
+                    )?.image
+                  }
+                  alt={comment.userId}
+                  radius="lg"
+                  size="sm"
+                />
+                <Title size="sm">
+                  {
+                    users.find(
+                      (user: { id: string }) => user.id === comment.userId
+                    )?.value
+                  }
+                </Title>
               </Group>
-              {edit === comment.commentId ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    editCommentMutation.mutate({
-                      commentId: edit as string,
-                      message: message,
-                    });
-                  }}
-                >
-                  <Editor
-                    upload_preset="forum_media"
-                    value={message}
-                    onChange={setMessage}
-                  />
-                  <Group position="center" mt="xl">
-                    <Button type="submit">Edit message</Button>
-                    <Button onClick={() => setEdit(null)}>Cancel</Button>
-                  </Group>
-                </form>
-              ) : comment.reply !== null ? (
-                <Box
-                  sx={() => ({
-                    wordWrap: "break-word",
-                  })}
-                >
-                  <Box
-                    sx={replyBoxStyles}
-                    mb="sm"
+              <Popover
+                width={100}
+                position="bottom"
+                withArrow
+                shadow="md"
+                opened={commentEdit === comment.commentId && commentOpened}
+                onChange={setCommentOpened}
+              >
+                <Popover.Target>
+                  <ActionIcon size={"sm"}>
+                    <IconDotsVertical
+                      onClick={() => {
+                        setCommentOpened((o) => !o);
+                        setCommentEdit(comment.commentId);
+                      }}
+                    />
+                  </ActionIcon>
+                </Popover.Target>
+                <Popover.Dropdown p={0}>
+                  <NavLink
+                    label="Edit"
                     onClick={() => {
-                      setGoToComment(comment.reply);
-                      document.getElementById(comment.reply)?.scrollIntoView({
+                      handleEdit(comment?.commentId);
+                      setMessage(comment.message);
+                      setCommentOpened(false);
+                    }}
+                    disabled={comment?.userId !== session?.data?.user?.id}
+                  />
+                  <NavLink
+                    label="Reply"
+                    onClick={() => {
+                      handleReply(comment?.commentId);
+                      setCommentOpened(false);
+                    }}
+                  />
+                </Popover.Dropdown>
+              </Popover>
+            </Group>
+            {edit === comment.commentId ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  editCommentMutation.mutate({
+                    commentId: edit as string,
+                    message: message,
+                  });
+                }}
+              >
+                <Editor
+                  upload_preset="forum_media"
+                  value={message}
+                  onChange={setMessage}
+                />
+                <Group position="center" mt="xl">
+                  <Button type="submit">Edit message</Button>
+                  <Button onClick={() => setEdit(null)}>Cancel</Button>
+                </Group>
+              </form>
+            ) : comment.reply !== null ? (
+              <Box
+                sx={() => ({
+                  wordWrap: "break-word",
+                })}
+              >
+                <Box
+                  sx={replyBoxStyles}
+                  mb="sm"
+                  onClick={() => {
+                    setGoToComment(comment.reply);
+                    document
+                      .getElementById(comment.reply as string)
+                      ?.scrollIntoView({
                         behavior: "smooth",
                         block: "center",
                       });
+                  }}
+                >
+                  <Text
+                    ml={"xl"}
+                    mt={"md"}
+                    sx={(theme) => ({
+                      fontWeight: "bold",
+                      fontStyle: "normal",
+                      color: theme.colors.gray[6],
+                    })}
+                  >
+                    {
+                      users.find(
+                        (user) =>
+                          user["id"] ===
+                          comments?.find(
+                            (e: { commentId: string; reply: string | null }) =>
+                              e.commentId === comment.reply
+                          )?.userId
+                      )?.value
+                    }
+                  </Text>
+                  <Blockquote
+                    icon={<IconCornerDownRight size={"lg"} />}
+                    styles={{
+                      body: {
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        lineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      },
                     }}
                   >
-                    <Text
-                      ml={"xl"}
-                      mt={"md"}
+                    <TypographyStylesProvider
+                      key={comment.commentId}
                       sx={(theme) => ({
-                        fontWeight: "bold",
-                        fontStyle: "normal",
                         color: theme.colors.gray[6],
                       })}
                     >
-                      {
-                        users.find(
-                          (user) =>
-                            user["id"] ===
-                            comments.find(
-                              (e: {
-                                commentId: string;
-                                reply: string | null;
-                              }) => e.commentId === comment.reply
-                            ).userId
-                        )?.value
-                      }
-                    </Text>
-                    <Blockquote
-                      icon={<IconCornerDownRight size={"lg"} />}
-                      styles={{
-                        body: {
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          lineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        },
-                      }}
-                    >
-                      <TypographyStylesProvider
-                        key={comment.commentId}
-                        sx={(theme) => ({
-                          color: theme.colors.gray[6],
-                        })}
-                      >
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: `${
-                              comments.find(
-                                (e: {
-                                  commentId: string;
-                                  reply: string | null;
-                                }) => e.commentId === comment.reply
-                              ).message
-                            }`,
-                          }}
-                        />
-                      </TypographyStylesProvider>
-                    </Blockquote>
-                  </Box>
-                  <Text styles={{ body: { wordWrap: "break-word" } }}>
-                    <TypographyStylesProvider
-                      key={comment.commentId}
-                      className={
-                        goToComment === comment.commentId
-                          ? classes.flash
-                          : undefined
-                      }
-                    >
                       <div
-                        dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(comment.message),
-                        }}
+                        dangerouslySetInnerHTML={
+                          comment
+                            ? {
+                                __html: `${
+                                  comments.find(
+                                    (e: {
+                                      commentId: string;
+                                      reply: string | null;
+                                    }) => e.commentId === comment.reply
+                                  )?.message
+                                }`,
+                              }
+                            : undefined
+                        }
                       />
                     </TypographyStylesProvider>
-                  </Text>
+                  </Blockquote>
                 </Box>
-              ) : (
                 <Text styles={{ body: { wordWrap: "break-word" } }}>
                   <TypographyStylesProvider
                     key={comment.commentId}
@@ -621,25 +538,40 @@ const ForumPost = ({
                     />
                   </TypographyStylesProvider>
                 </Text>
+              </Box>
+            ) : (
+              <Text styles={{ body: { wordWrap: "break-word" } }}>
+                <TypographyStylesProvider
+                  key={comment.commentId}
+                  className={
+                    goToComment === comment.commentId
+                      ? classes.flash
+                      : undefined
+                  }
+                >
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(comment.message),
+                    }}
+                  />
+                </TypographyStylesProvider>
+              </Text>
+            )}
+            <Group mt={"md"}>
+              <Text size="xs" color="dimmed">
+                {formatIsoDateTime(comment?.createdAt.toString() as string)}
+              </Text>
+              {comment?.createdAt < comment?.updatedAt && (
+                <Divider orientation="vertical" />
               )}
-              <Group mt={"md"}>
-                <Text size="xs" color="dimmed">
-                  {formatIsoDateTime(comment?.createdAt as string)}
+              {comment?.createdAt < comment?.updatedAt && (
+                <Text size={"sm"} color={"cyan.7"}>
+                  Updated {DateDiffCalc(comment?.updatedAt as Date)}
                 </Text>
-                {Date.parse(comment?.createdAt) <
-                  Date.parse(comment?.updatedAt) && (
-                  <Divider orientation="vertical" />
-                )}
-                {Date.parse(comment?.createdAt) <
-                  Date.parse(comment?.updatedAt) && (
-                  <Text size={"sm"} color={"cyan.7"}>
-                    Updated {DateDiffCalc(comment?.updatedAt as string)}
-                  </Text>
-                )}
-              </Group>
-            </Box>
-          )
-        )
+              )}
+            </Group>
+          </Box>
+        ))
         .reverse()}
 
       <Divider my="sm" />
@@ -671,9 +603,8 @@ const ForumPost = ({
                     (user) =>
                       user["id"] ===
                       (comments.find(
-                        (comment: { [x: string]: string }) =>
-                          comment["commentId"] === replying
-                      )["userId"] as string)
+                        (comment) => comment["commentId"] === replying
+                      )?.["userId"] as string)
                   )?.["value"]
                 }
               </Text>
@@ -701,19 +632,6 @@ const ForumPost = ({
 };
 
 export default ForumPost;
-
-type postType = {
-  postId: string;
-  userId: string;
-  title: string;
-  postType: PostType;
-  message: string;
-  likes: number;
-  createdAt: string;
-  updatedAt: string;
-  postMedia: PostMedia[];
-  comment: Comment[];
-} | null;
 
 const flash = keyframes({
   from: { backgroundColor: "rgb(141, 152, 166)" },

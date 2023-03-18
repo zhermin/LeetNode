@@ -69,95 +69,84 @@ const DateDiff = {
   },
 };
 
-function DateDiffCalc(comparedDate: string) {
+function DateDiffCalc(comparedDate: Date) {
   if (
     Math.round(
-      DateDiff.inMinutes(new Date(comparedDate as string), new Date())
+      DateDiff.inMinutes(new Date(comparedDate as Date), new Date())
     ) === 1 ||
     Math.round(
-      DateDiff.inMinutes(new Date(comparedDate as string), new Date())
+      DateDiff.inMinutes(new Date(comparedDate as Date), new Date())
     ) === 0
   ) {
     return (
       Math.round(
-        DateDiff.inMinutes(new Date(comparedDate as string), new Date())
+        DateDiff.inMinutes(new Date(comparedDate as Date), new Date())
       ) + " minute ago"
     );
   } else if (
-    DateDiff.inMinutes(new Date(comparedDate as string), new Date()) < 60
+    DateDiff.inMinutes(new Date(comparedDate as Date), new Date()) < 60
   ) {
     return (
       Math.round(
-        DateDiff.inMinutes(new Date(comparedDate as string), new Date())
+        DateDiff.inMinutes(new Date(comparedDate as Date), new Date())
       ) + " minutes ago"
     );
   } else if (
-    Math.round(
-      DateDiff.inHours(new Date(comparedDate as string), new Date())
-    ) === 1
+    Math.round(DateDiff.inHours(new Date(comparedDate as Date), new Date())) ===
+    1
   ) {
     return "1 hour ago";
   } else if (
-    DateDiff.inHours(new Date(comparedDate as string), new Date()) < 24
+    DateDiff.inHours(new Date(comparedDate as Date), new Date()) < 24
   ) {
     return (
-      Math.round(
-        DateDiff.inHours(new Date(comparedDate as string), new Date())
-      ) + " hours ago"
+      Math.round(DateDiff.inHours(new Date(comparedDate as Date), new Date())) +
+      " hours ago"
     );
   } else if (
-    Math.round(
-      DateDiff.inDays(new Date(comparedDate as string), new Date())
-    ) === 1
+    Math.round(DateDiff.inDays(new Date(comparedDate as Date), new Date())) ===
+    1
   ) {
     return "1 day ago";
-  } else if (
-    DateDiff.inDays(new Date(comparedDate as string), new Date()) < 7
-  ) {
+  } else if (DateDiff.inDays(new Date(comparedDate as Date), new Date()) < 7) {
     return (
-      Math.round(
-        DateDiff.inDays(new Date(comparedDate as string), new Date())
-      ) + " days ago"
+      Math.round(DateDiff.inDays(new Date(comparedDate as Date), new Date())) +
+      " days ago"
     );
   } else if (
-    Math.round(
-      DateDiff.inWeeks(new Date(comparedDate as string), new Date())
-    ) === 1
+    Math.round(DateDiff.inWeeks(new Date(comparedDate as Date), new Date())) ===
+    1
   ) {
     return "1 week ago";
-  } else if (
-    DateDiff.inWeeks(new Date(comparedDate as string), new Date()) < 4
-  ) {
+  } else if (DateDiff.inWeeks(new Date(comparedDate as Date), new Date()) < 4) {
     return (
-      Math.round(
-        DateDiff.inWeeks(new Date(comparedDate as string), new Date())
-      ) + " weeks ago"
+      Math.round(DateDiff.inWeeks(new Date(comparedDate as Date), new Date())) +
+      " weeks ago"
     );
   } else if (
     Math.round(
-      DateDiff.inMonths(new Date(comparedDate as string), new Date())
+      DateDiff.inMonths(new Date(comparedDate as Date), new Date())
     ) === 1
   ) {
     return "1 month ago";
   } else if (
-    DateDiff.inMonths(new Date(comparedDate as string), new Date()) < 12
+    DateDiff.inMonths(new Date(comparedDate as Date), new Date()) < 12
   ) {
     return (
       Math.round(
-        DateDiff.inMonths(new Date(comparedDate as string), new Date())
+        DateDiff.inMonths(new Date(comparedDate as Date), new Date())
       ) + " months ago"
     );
   } else if (
     Math.round(
-      DateDiff.inMonths(new Date(comparedDate as string), new Date())
+      DateDiff.inMonths(new Date(comparedDate as Date), new Date())
     ) === 1
   ) {
     return "1 year ago";
   } else {
     return (
-      Math.round(
-        DateDiff.inYears(new Date(comparedDate as string), new Date())
-      ) + " years ago"
+      Math.round(DateDiff.inYears(new Date(comparedDate as Date), new Date())) +
+      " years ago"
     );
   }
 }

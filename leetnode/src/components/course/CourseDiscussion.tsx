@@ -23,7 +23,13 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Comment, PostMedia, PostType } from "@prisma/client";
+import {
+  Comment,
+  CommentMedia,
+  Post,
+  PostLikes,
+  PostMedia,
+} from "@prisma/client";
 import {
   QueryKey,
   useMutation,
@@ -40,20 +46,13 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
-type postType = {
-  postId: string;
-  userId: string;
-  title: string;
-  postType: PostType;
-  message: string;
-  likes: number;
-  courseSlug: string;
-  topicSlug: string;
-  createdAt: string;
-  updatedAt: string;
-  postMedia: PostMedia[];
-  comment: Comment[];
-} | null;
+export type postType =
+  | (Post & {
+      postMedia: PostMedia[];
+      comment: (Comment & { commentMedia: CommentMedia })[];
+      postLikes: PostLikes[];
+    })
+  | null;
 
 const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const [redirect, setRedirect] = useState(false);
@@ -254,6 +253,8 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     }
   });
 
+  console.log(posts);
+
   return (
     <>
       {redirect ? (
@@ -426,11 +427,11 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                       </Anchor>
                       <Group>
                         <Text>
-                          {new Date(
-                            post?.createdAt as string
-                          ).toLocaleDateString("en-GB") +
+                          {new Date(post?.createdAt as Date).toLocaleDateString(
+                            "en-GB"
+                          ) +
                             " " +
-                            new Date(post?.createdAt as string).toLocaleString(
+                            new Date(post?.createdAt as Date).toLocaleString(
                               ["en-GB"],
                               {
                                 hour12: true,
@@ -442,7 +443,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         <Divider orientation="vertical" />
 
                         <Text size={"sm"} color={"cyan.7"}>
-                          {DateDiffCalc(post?.createdAt as string)}
+                          {DateDiffCalc(post?.createdAt as Date)}
                         </Text>
                       </Group>
                     </td>
