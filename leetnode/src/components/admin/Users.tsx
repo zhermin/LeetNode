@@ -287,7 +287,7 @@ const Users = ({
                       </Text>
                     </div>
                   </Group>
-                  {DateDiffCalc(item?.lastActive?.toLocaleString() as string)}
+                  {DateDiffCalc(item?.lastActive)}
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
