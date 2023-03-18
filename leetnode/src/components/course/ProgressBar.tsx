@@ -1,15 +1,16 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+
 import {
-  Center,
   Box,
+  Center,
   Group,
   Loader,
   Progress,
-  Title,
   Text,
+  Title,
 } from "@mantine/core";
-import axios from "axios";
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
 
 const ProgressBar = ({
   topicSlug,
@@ -18,36 +19,24 @@ const ProgressBar = ({
   topicSlug: string;
   topicName: string;
 }) => {
-  //get mastery level to be display on page
-
-  //this method displays mastery based on prisma database
-  // const masteryDisplay = [];
-  // for (let i = 0; i < masteryLevel.length; i++) {
-  //   if (masteryLevel[i]?.topicSlug == topicSlug) {
-  //     masteryDisplay.push(masteryLevel[i]);
-  //   }
-  // }
-  // console.log(masteryDisplay); //should return [{userId: ,topicSlug: , masteryLevel: ,}]
-
   const session = useSession();
 
-  //this  method displays mastery based on api calls
   const [details, setDetails] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     axios
-      .post("/api/pybkt/get", {
+      .post("/api/questions/checkMastery", {
         id: session?.data?.user?.id,
         topicSlug: topicSlug,
-        //change contents of topicSlug to topicSlug
       })
       .then((response) => {
+        console.log(response.data);
         setLoading(false);
-        setDetails(response.data);
+        setDetails(response.data?.masteryLevel);
       });
-  }, [topicSlug, session?.data?.user?.id]);
+  }, [session?.data?.user?.id, topicSlug]);
 
   console.log(session?.data?.user?.id);
   console.log(topicSlug);
@@ -69,7 +58,7 @@ const ProgressBar = ({
             {roundedResults !== 0 ? (
               <Title order={2}>{roundedResults}%</Title>
             ) : (
-              <Text fw={600}>Do a {`${topicName}`} question first!</Text>
+              <Text fw={600}>Do a question on the topic first!</Text>
             )}
           </Group>
           <Progress

@@ -1,0 +1,17 @@
+name: Update Weekly Mastery API
+
+on:
+  schedule:
+    - cron: "0 15 * * SUN" # 11PM SUN SGT
+  workflow_dispatch:
+
+jobs:
+  update_mastery:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call API
+        run: |
+          curl --request GET \
+          --url https://leetnode-git-dev-zhermin.vercel.app/api/pybkt/cronUpdate \
+          --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'

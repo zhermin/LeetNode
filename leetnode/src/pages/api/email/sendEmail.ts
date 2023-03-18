@@ -2,160 +2,158 @@ import { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 
 import { prisma } from "@/server/db/client";
-import { Mastery } from "@prisma/client";
+import { Frequency, Mastery, Role } from "@prisma/client";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-  const now = new Date().getTime();
+  if (process.env.ACTION_KEY === req.headers.authorization?.split(" ")[1]) {
+    // If authorised
+    try {
+      const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+      const now = new Date().getTime();
 
-  //checks all mastery for ppl with errorMeter value
-  const checkError = await prisma.mastery.findMany({
-    where: {
-      errorMeter: {
-        gt: 0,
-      },
-    },
-    include: {
-      topic: {
-        select: {
-          topicName: true,
+      //checks all mastery for ppl with errorMeter value
+      const checkError = await prisma.mastery.findMany({
+        where: {
+          errorMeter: {
+            gt: 4, //errorMeter > 4
+          },
+          topicPing: true
         },
-      },
-    },
-  });
-
-  // Filter the records to find those with errorMeter % 5,
-  // and 5 in a row wrong and haven't been pinged in a week
-  const usersPing = checkError.filter(
-    (record) =>
-      record.topicPing === true &&
-      record.errorMeter % 5 === 0 &&
-      (now - new Date(record.lastFlagged as Date).getTime() >= oneWeek ||
-        record.lastFlagged === null)
-  );
-
-  console.log(usersPing);
-
-  // get all users in prisma
-  const allUsers = await prisma.user.findMany();
-
-  // get all emails with ADMIN role
-  const maillist = allUsers
-    .filter((attribute: { role: string }) => {
-      return attribute.role == "ADMIN";
-    })
-    .map((admins: { email: string }) => admins.email);
-
-  // append allUsers' names to usersPing (those ppl who will be flagged)
-  const result: {
-    userId: string;
-    topicSlug: string;
-    masteryLevel: number;
-    topicPing: boolean;
-    lastFlagged: Date | null;
-    errorMeter: number;
-    topic: { topicName: string };
-    name: string | undefined;
-  }[] = usersPing.map(
-    (ping: {
-      userId: string;
-      topicSlug: string;
-      masteryLevel: number;
-      topicPing: boolean;
-      lastFlagged: Date | null;
-      errorMeter: number;
-      topic: { topicName: string };
-    }) => {
-      const user = allUsers.find((u: { id: string }) => u.id === ping.userId);
-      return { ...ping, name: user?.name };
-    }
-  );
-
-  console.log(result);
-
-  // update lastFlagged when this is called
-  result.map(async (record) => {
-    const flagUpdate: Mastery = await prisma.mastery.update({
-      where: {
-        userId_topicSlug: {
-          userId: record.userId as string,
-          topicSlug: record.topicSlug as string,
+        orderBy: {
+          topicSlug: 'asc' // Sort by topic
         },
-      },
-      data: {
-        lastFlagged: new Date(),
-      },
-    });
-    console.log(flagUpdate);
-  });
+        include: {
+          user: {
+            select: {
+              nusnetId: true,
+              name: true,
+              email: true
+            },
+          },
+          topic: {
+            select: {
+              topicName: true,
+            },
+          },
+        },
+      });
 
-  // // const usersFlagged = usersPing.map(ids => {allUsers.filter((attribute: { name: string }) => {
-  // //   attribute.name === "ADMIN";
-  // // })})
-
-  const templateString = result.reduce(
-    (
-      acc: string,
-      rec: {
-        topic: { topicName: string };
-        name: string | undefined;
-        userId: string;
-      }
-    ) => {
-      const topicName = rec.topic.topicName;
-
-      return (
-        acc + `\n${topicName}:\n  Name: ${rec.name}, userId: ${rec.userId}\n`
+      // Filter the records to find those who haven't been pinged before
+      // and those who haven't been pinged in a week
+      const usersPing = checkError.filter(
+        (record) =>
+        (record.lastFlagged === null ||
+          now - new Date(record.lastFlagged as Date).getTime() >= oneWeek)
       );
-    },
-    ""
-  );
 
-  // Create a transporter for sending the email
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    //need to put email in .env file in the future
-    auth: {
-      user: "contact.leetnode@gmail.com",
-      pass: process.env.GMAIL_PASS,
-    },
-  });
+      // get all emails with ADMIN role
+      const admins = await prisma.user.findMany({
+        where: {
+          role: Role.SUPERUSER || Role.ADMIN,
+          emailFrequency: Frequency.Daily // will add filter in the future
+        },
+        select: {
+          email: true,
+        },
+      });
 
-  // Define the email options
-  const mailOptions = {
-    from: "contact.leetnode@gmail.com",
-    //need to change this to the prof email, currently is to user's email
-    to: `${maillist}`,
-    subject: "Here are the list of students that require help",
-    text: `Here are the list of students that require help:\n${templateString}`,
-  };
-  new Promise((resolve, reject) => {
-    transporter.sendMail(
-      mailOptions,
-      (error: Error | null, info: { response: string }) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve("Email sent: " + info.response);
-        }
+      if (admins.length === 0) {
+        res.status(404).json({ error: "Mailist empty" });
       }
-    );
-  });
 
-  // // res.status(200).json(templateString);
-  try {
-    res.status(200).json(templateString);
-  } catch (err) {
-    res.status(500).json({ error: err });
+      // Convert to array of emails
+      const maillist = admins.map((admin) => {
+        return admin.email;
+      });
+
+      // For clients with plaintext support only
+      const templateString = usersPing.map(
+        (student) => `
+          Topic name: ${student.topic.topicName}\n
+          Name: ${student.user.name} 
+          Matric No.: ${student.user.nusnetId}
+          Email: ${student.user.email}\n
+          `
+      );
+
+      // HTML table rows
+      const rows = usersPing.map((student) => {
+        return `
+        <tr>
+          <td style="border: 1px solid; width: 50%">${student.topic.topicName}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.email}</td>
+        </tr>
+        `;
+      }).join('');
+
+      // Create a transporter for sending the email
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.GMAIL,
+          pass: process.env.GMAIL_PASS,
+        },
+      });
+
+      // Define the email options
+      const mailOptions = {
+        from: process.env.GMAIL,
+        //need to change this to the prof email, currently is to admins' email
+        to: `${maillist}`,
+        subject: "LeetNode students' summary",
+        text: `
+        Here are the list of students that require help:\n\n${templateString}\n
+        Click here to view more: https://leetnode.vercel.app/dashboard
+        `,
+        html: `
+        <p>Here are the list of students that require help:</p>
+        <table style="width:100%; border:1px solid; border-collapse: collapse">
+          <thead>
+            <th style="border: 1px solid; text-align: center">Topic</th>
+            <th style="border: 1px solid; text-align: center">Name</th>
+            <th style="border: 1px solid; text-align: center">Student ID</th>
+            <th style="border: 1px solid; text-align: center">Email</th>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <p>
+          Click here to view more: <a href="https://leetnode.vercel.app/dashboard">Prof's dashboard</a>
+        </p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions)
+
+      // update lastFlagged when this is called
+      usersPing.map(async (record) => {
+        const flagUpdate: Mastery = await prisma.mastery.update({
+          where: {
+            userId_topicSlug: {
+              userId: record.userId as string,
+              topicSlug: record.topicSlug as string,
+            },
+          },
+          data: {
+            lastFlagged: new Date(),
+          },
+        });
+        console.log(flagUpdate);
+      });
+
+      res.status(200).json("success");
+    } catch (err) {
+      res.status(500).json({ error: err });
+    }
+  } else {
+    res.status(401).json({ error: "Unauthorised" });
   }
-  // try {
-  //   res.status(200).json({ success: "Email sent!" });
-  // } catch (err) {
-  //   res.status(500).json({ error: err });
-  // }
 }

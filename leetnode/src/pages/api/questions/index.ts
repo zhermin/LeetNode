@@ -1,16 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { unstable_getServerSession } from "next-auth";
+
 import { prisma } from "@/server/db/client";
+
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  const session = await unstable_getServerSession(req, res, authOptions);
 
   const questions = await prisma.question.findMany({
     include: {
@@ -25,6 +24,7 @@ export default async function handler(
         },
       },
       answers: true,
+      questionsWithAddedTime: true,
     },
   });
 

@@ -1,105 +1,42 @@
-import { Dispatch, Key, SetStateAction, useState } from "react";
 import axios from "axios";
-import Image from "next/image";
-import Latex from "react-latex-next";
-import {
-  createStyles,
-  Center,
-  Loader,
-  Title,
-  Text,
-  Button,
-  Radio,
-  Paper,
-} from "@mantine/core";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { Key, useState } from "react";
+import Latex from "react-latex-next";
+
+import { UserQuestionWithAttemptsType } from "@/pages/courses/[courseSlug]";
 import {
-  Answer,
-  Attempt,
-  Question,
-  QuestionDifficulty,
-  QuestionMedia,
-  Topic,
-} from "@prisma/client";
+  Button,
+  Center,
+  createStyles,
+  Loader,
+  Paper,
+  Radio,
+  Text,
+  Title,
+} from "@mantine/core";
+import { Question } from "@prisma/client";
 
 const LoadTopic = ({
   questionDisplay,
-  selectedOptions,
-  setSelectedOptions,
-  attempt,
-  setAttempt,
-  currentQuestion,
-  setCurrentQuestion,
-  setQuestionHistory,
-  endReached,
-  setEndReached,
+  courseSlug,
 }: {
-  questionDisplay:
-    | {
-        addedTime: Date;
-        courseSlug: string;
-        question: {
-          answers: Answer[];
-          attempts: Attempt[];
-          questionContent: string;
-          questionDifficulty: string;
-          questionId: number;
-          variationId: number;
-          topicSlug: string;
-          questionMedia: QuestionMedia[];
-          topic: Topic;
-        };
-        questionId: number;
-        userId: string;
-      }[]
-    | undefined;
-  selectedOptions: {
-    answerByUser: string;
-  }[];
-  setSelectedOptions: Dispatch<
-    SetStateAction<
-      {
-        answerByUser: string;
-      }[]
-    >
-  >;
-  attempt: {
-    currentQuestion: number;
-    isCorrect: boolean;
-    question: Question;
-  }[];
-  setAttempt: Dispatch<
-    SetStateAction<
-      {
-        currentQuestion: number;
-        isCorrect: boolean;
-        question: Question;
-      }[]
-    >
-  >;
-  currentQuestion: number;
-  setCurrentQuestion: Dispatch<SetStateAction<number>>;
-  setQuestionHistory: Dispatch<
-    SetStateAction<
-      {
-        questionContent: string;
-        questionNumber: number;
-        questionMedia: string;
-        topicName: string;
-        questionDifficulty: QuestionDifficulty;
-        isCorrect: boolean;
-        answerContent: string;
-      }[]
-    >
-  >;
-  endReached: boolean;
-  setEndReached: Dispatch<SetStateAction<boolean>>;
+  questionDisplay: UserQuestionWithAttemptsType;
+  courseSlug: string;
 }) => {
   const { classes } = useStyles();
   const session = useSession();
 
   const [loading, setLoading] = useState(false);
   // const [optionNumber, setOptionNumber] = useState<number>(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<
+    { answerByUser: string }[]
+  >([]);
+  const [attempt, setAttempt] = useState<
+    { currentQuestion: number; isCorrect: boolean; question: Question }[]
+  >([]);
+  const [endReached, setEndReached] = useState(false);
 
   let optionNumber: number;
 
@@ -137,24 +74,6 @@ const LoadTopic = ({
   // };
   const handleNext = async () => {
     if (currentQuestion in selectedOptions) {
-      setQuestionHistory((current) => [
-        ...current,
-        {
-          questionContent: questionDisplay?.[currentQuestion]?.question
-            ?.questionContent as string,
-          questionNumber: currentQuestion as number,
-          questionMedia: questionDisplay?.[currentQuestion]?.question
-            ?.questionMedia?.[0]?.questionMediaURL as string,
-          topicName: questionDisplay?.[currentQuestion]?.question?.topic
-            ?.topicName as string,
-          questionDifficulty: questionDisplay?.[currentQuestion]?.question
-            ?.questionDifficulty as QuestionDifficulty,
-          isCorrect: attempt[currentQuestion]?.isCorrect as boolean,
-          answerContent: selectedOptions?.[currentQuestion]
-            ?.answerByUser as string,
-        },
-      ]);
-
       // logic for updating mastery for user
 
       // Store question option number to optionNumber variable
@@ -179,10 +98,14 @@ const LoadTopic = ({
         correct: boolean;
         optionNumber: number;
         questionId: number;
+        courseSlug: string;
       }) => {
         try {
           //update mastery of student
-          const res = await axios.post("/api/question/updateAttempts", request); //use data destructuring to get data from the promise object
+          const res = await axios.post(
+            "/api/questions///updateAttempts",
+            request
+          ); //use data destructuring to get data from the promise object
           return res.data;
         } catch (error) {
           console.log("attempt error");
@@ -196,6 +119,7 @@ const LoadTopic = ({
         optionNumber: optionNumber,
         questionId: questionDisplay?.[currentQuestion]?.question
           ?.questionId as number,
+        courseSlug: courseSlug,
       });
       console.log(updatedAttempts);
 
@@ -206,7 +130,7 @@ const LoadTopic = ({
       }) => {
         try {
           //update mastery of student
-          const res = await axios.post("/api/question/checkAttempts", request); //use data destructuring to get data from the promise object
+          const res = await axios.post("/api/questions/checkAttempts", request); //use data destructuring to get data from the promise object
           return res.data;
         } catch (error) {
           console.log("attempt error");
@@ -219,7 +143,7 @@ const LoadTopic = ({
           ?.topicSlug as string,
       });
       console.log(checkAttempts);
-      console.log(checkAttempts.length);
+      console.log(checkAttempts);
 
       //check condition
       //correctness count last 5 to check if all wrong (need to refine)
@@ -300,7 +224,7 @@ const LoadTopic = ({
       // }) => {
       //   try {
       //     //update mastery of student
-      //     const res = await axios.post("/api/question/checkMastery", request); //use data destructuring to get data from the promise object
+      //     const res = await axios.post("/api/questions/checkMastery", request); //use data destructuring to get data from the promise object
       //     return res.data;
       //   } catch (error) {
       //     console.log("attempt error");
@@ -308,70 +232,6 @@ const LoadTopic = ({
       //     // console.log(error);
       //   }
       // };
-
-      // const masteryCheck = await checkMastery({
-      //   id: session?.data?.user?.id as string,
-      //   topicSlug: questionDisplay?.[currentQuestion]?.question
-      //     ?.topicSlug as string,
-      // });
-      // console.log(masteryCheck);
-
-      //checks if email condition met
-      // const emailCheck = async (request: {
-      //   id: string;
-      //   topicName: string;
-      //   name: string;
-      //   email: string[];
-      // }) => {
-      //   try {
-      //     //activate email api
-      //     const res = await axios.post("/api/question/sendEmail", request); //use data destructuring to get data from the promise object
-      //     return res.data;
-      //   } catch (error) {
-      //     console.log("attempt error");
-      //     // console.log(request);
-      //     // console.log(error);
-      //   }
-      // };
-
-      // //check if total errorMeter modulo 20
-      // const errorCheck = async (request: {
-      //   id: string;
-      //   courseSlug: string;
-      // }) => {
-      //   try {
-      //     //update mastery of student
-      //     const res = await axios.post("/api/question/checkError", request); //use data destructuring to get data from the promise object
-      //     return res.data;
-      //   } catch (error) {
-      //     console.log("attempt error");
-      //   }
-      // };
-
-      // console.log(questionDisplay?.[currentQuestion]?.courseSlug);
-
-      // const checkErrorAmt = await errorCheck({
-      //   id: session?.data?.user?.id as string,
-      //   courseSlug: questionDisplay?.[currentQuestion]?.courseSlug as string,
-      // });
-
-      // //check condition
-      // if (
-      //   masteryConditionFlag === true &&
-      //   checkErrorAmt.errorMeter % 20 === 0 &&
-      //   checkErrorAmt.errorMeter !== 0
-      // ) {
-      // }
-
-      // const email = await emailCheck({
-      //   id: session?.data?.user?.id as string,
-      //   topicName: questionDisplay?.[currentQuestion]?.question?.topic
-      //     ?.topicName as string,
-      //   name: checkAttempts[0].user.name,
-      //   //compile all email of ADMIN status
-      //   email: maillist,
-      // });
-      // console.log(email);
 
       if (currentQuestion + 1 === questionDisplay?.length) {
         console.log("reached the end");

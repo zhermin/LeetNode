@@ -1,84 +1,86 @@
+import axios from "axios";
+import { GetStaticProps } from "next";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { Document, Page } from "react-pdf";
+
+import CourseDiscussion from "@/components/course/CourseDiscussion";
+import PracticeQuestion from "@/components/course/PracticeQuestion";
+import QuestionHistory from "@/components/course/QuestionHistory";
+import ResultsPage from "@/components/course/ResultsPage";
+import LeetNodeFooter from "@/components/Footer";
+import LeetNodeHeader from "@/components/Header";
+import MarkdownLatex from "@/components/MarkdownLatex";
+import LeetNodeNavbar from "@/components/Navbar";
+import { prisma } from "@/server/db/client";
 import {
-  Course,
+  AppShell,
+  Box,
+  Burger,
+  Button,
+  Center,
+  Container,
+  createStyles,
+  Group,
+  Header,
+  Loader,
+  MediaQuery,
+  Navbar as Sidebar,
+  ScrollArea,
+  SegmentedControl,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+} from "@mantine/core";
+import {
   Answer,
   Attempt,
+  Course,
+  Mastery,
   Question,
   QuestionMedia,
   QuestionWithAddedTime,
   Topic,
   UserCourseQuestion,
-  Mastery,
-  QuestionDifficulty,
 } from "@prisma/client";
-import { prisma } from "@/server/db/client";
-
-import axios from "axios";
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { getCourseDetails } from "../api/courses/[courseSlug]";
-import { useQuery } from "@tanstack/react-query";
-
-import LeetNodeHeader from "@/components/Header";
-import LeetNodeNavbar from "@/components/Navbar";
-import LeetNodeFooter from "@/components/Footer";
-import PracticeQuestion from "@/components/course/PracticeQuestion";
-import ResultsPage from "@/components/course/ResultsPage";
-import CourseDiscussion from "@/components/course/CourseDiscussion";
-import QuestionHistory from "@/components/course/QuestionHistory";
-import MarkdownLatex from "@/components/MarkdownLatex";
-import { Document, Page } from "react-pdf";
-
-import {
-  createStyles,
-  AppShell,
-  Header,
-  Navbar as Sidebar,
-  SegmentedControl,
-  ScrollArea,
-  Box,
-  Container,
-  Burger,
-  MediaQuery,
-  Text,
-  Center,
-  Loader,
-  Button,
-  Tooltip,
-  Group,
-  Stack,
-  Title,
-} from "@mantine/core";
 import {
   IconApps,
-  IconPresentation,
-  IconVideo,
-  IconReportSearch,
-  IconMessages,
-  IconZoomQuestion,
-  IconTarget,
   IconArrowBarLeft,
   IconArrowLeft,
   IconArrowRight,
   IconChartLine,
+  IconMessages,
+  IconPresentation,
+  IconReportSearch,
+  IconTarget,
+  IconVideo,
+  IconZoomQuestion,
 } from "@tabler/icons";
-import { GetStaticProps } from "next";
+import { useQuery } from "@tanstack/react-query";
 
-type CourseInfoType = {
+import { getCourseDetails } from "../api/courses/[courseSlug]";
+
+export type CourseInfoType = {
   topics: (Topic & {
     mastery: Mastery[];
   })[];
   userCourseQuestions: (UserCourseQuestion & {
-    questionsWithAddedTime: (QuestionWithAddedTime & {
+    questionsWithAddedTime: UserQuestionWithAttemptsType;
+  })[];
+} | null;
+
+export type UserQuestionWithAttemptsType =
+  | (QuestionWithAddedTime & {
       question: Question & {
         answers: Answer[];
         attempts: Attempt[];
         topic: Topic;
         questionMedia: QuestionMedia[];
       };
-    })[];
-  })[];
-} | null;
+    })[]
+  | undefined;
 
 export default function CourseMainPage({
   courseDetails,
@@ -92,31 +94,12 @@ export default function CourseMainPage({
   const [opened, setOpened] = useState(false);
   const [section, setSection] = useState<"learn" | "practice">("learn");
   const [active, setActive] = useState("Overview");
-  const [endReached, setEndReached] = useState(false);
+
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
   }
-
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState<
-    { answerByUser: string }[]
-  >([]);
-  const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: boolean; question: Question }[]
-  >([]);
-  const [questionHistory, setQuestionHistory] = useState<
-    {
-      questionContent: string;
-      questionNumber: number;
-      questionMedia: string;
-      topicName: string;
-      questionDifficulty: QuestionDifficulty;
-      isCorrect: boolean;
-      answerContent: string;
-    }[]
-  >([]);
 
   // Data Fetched using Axios, Queried by React Query
   const router = useRouter();
@@ -156,13 +139,12 @@ export default function CourseMainPage({
         : null,
       courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
       { label: "Additional Resources", icon: IconReportSearch },
-      { label: "Course Discussion", icon: IconMessages },
+      // { label: "Course Discussion", icon: IconMessages },
     ],
     practice: [
       { label: "Question", icon: IconZoomQuestion },
       { label: "Attempts", icon: IconChartLine },
       { label: "Mastery", icon: IconTarget },
-      { label: "Discussion", icon: IconMessages },
     ],
   };
 
@@ -241,6 +223,10 @@ export default function CourseMainPage({
           </Sidebar.Section>
 
           <Sidebar.Section className={classes.sidebarFooter}>
+            <Box className={classes.link} mb="sm">
+              <IconMessages className={classes.linkIcon} stroke={1.5} />
+              <span>Course Discussion</span>
+            </Box>
             <Link href="/courses" passHref>
               <Box className={classes.link}>
                 <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
@@ -316,30 +302,12 @@ export default function CourseMainPage({
             questionDisplay={
               course.userCourseQuestions[0]?.questionsWithAddedTime
             }
-            selectedOptions={selectedOptions}
-            setSelectedOptions={setSelectedOptions}
-            attempt={attempt}
-            setAttempt={setAttempt}
-            currentQuestion={currentQuestion}
-            setCurrentQuestion={setCurrentQuestion}
-            setQuestionHistory={setQuestionHistory}
-            endReached={endReached}
-            setEndReached={setEndReached}
+            courseSlug={courseDetails.courseSlug}
           />
         ) : active === "Attempts" ? (
-          <QuestionHistory
-            questionHistory={questionHistory}
-            questionDisplay={
-              course.userCourseQuestions[0]?.questionsWithAddedTime
-            }
-          />
+          <QuestionHistory courseSlug={courseDetails.courseSlug} />
         ) : active === "Mastery" ? (
-          <ResultsPage
-            questionDisplay={
-              course.userCourseQuestions[0]?.questionsWithAddedTime
-            }
-            attempt={attempt ?? undefined}
-          />
+          <ResultsPage course={course} />
         ) : active === "Discussion" ? (
           <div>Discussion (WIP)</div>
         ) : (

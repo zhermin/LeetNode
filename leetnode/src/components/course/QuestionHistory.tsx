@@ -1,55 +1,71 @@
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import Latex from "react-latex-next";
+
 import {
-  createStyles,
   Badge,
+  Center,
+  createStyles,
   Grid,
   Group,
+  Loader,
   Paper,
-  Title,
   Text,
-  Center,
+  Title,
 } from "@mantine/core";
+import {
+  Answer,
+  Attempt,
+  Course,
+  Question,
+  QuestionMedia,
+  Topic,
+  User,
+} from "@prisma/client";
 import { IconCheck, IconX } from "@tabler/icons";
-import Image from "next/image";
-import Latex from "react-latex-next";
-import { QuestionDifficulty } from "@prisma/client";
-import { Answer, Attempt, QuestionMedia, Topic } from "@prisma/client";
 
-const QuestionHistory = ({
-  questionHistory,
-  questionDisplay,
-}: {
-  questionHistory: {
-    questionContent: string;
-    questionNumber: number;
-    questionMedia: string;
-    topicName: string;
-    questionDifficulty: QuestionDifficulty;
-    isCorrect: boolean;
-    answerContent: string;
-  }[];
-  questionDisplay:
-    | {
-        addedTime: Date;
-        courseSlug: string;
-        question: {
-          answers: Answer[];
-          attempts: Attempt[];
-          questionContent: string;
-          questionDifficulty: string;
-          questionId: number;
-          variationId: number;
-          topicSlug: string;
-          questionMedia: QuestionMedia[];
-          topic: Topic;
-        };
-        questionId: number;
-        userId: string;
-      }[]
-    | undefined;
-}) => {
+import { QuestionDifficultyBadge } from "../misc/Badges";
+
+type AttemptsInterface = Attempt & {
+  user: User;
+  question: Question & {
+    answers: Answer[];
+    attempts: Attempt[];
+    topic: Topic;
+    questionMedia: QuestionMedia[];
+  };
+  answer: Answer;
+  course: Course;
+};
+
+const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
   const { classes } = useStyles();
+  const session = useSession();
+  const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState<AttemptsInterface[]>();
 
-  if (questionHistory.length === 0) {
+  useEffect(() => {
+    setLoading(true);
+    axios.get("/api/prof/getAllAttempts").then((response) => {
+      const dt = response.data as AttemptsInterface[];
+      console.log(dt);
+      setLoading(false);
+      setDetails(
+        dt?.filter(
+          (data) =>
+            data.courseSlug === courseSlug &&
+            data.userId === session.data?.user?.id
+        )
+      );
+    });
+  }, [courseSlug, session.data?.user?.id]);
+
+  console.log(session.data?.user?.id);
+  console.log(courseSlug);
+  console.log(details);
+  if (details?.length === 0) {
     return (
       <Center className="h-[calc(100vh-180px)]">
         <Text>You have not attempted any questions yet.</Text>
@@ -59,74 +75,65 @@ const QuestionHistory = ({
 
   return (
     <>
-      {questionHistory.map(
-        (qns: {
-          questionContent: string;
-          questionNumber: number;
-          questionMedia: string;
-          topicName: string;
-          questionDifficulty: QuestionDifficulty;
-          isCorrect: boolean;
-          answerContent: string;
-        }) => (
+      {loading === true ? (
+        <Center style={{ height: 500 }}>
+          <Loader />
+        </Center>
+      ) : (
+        details?.map((attempt) => (
           <Paper
             radius="lg"
             withBorder
             className={`${classes.card} ${
-              qns.isCorrect ? classes.correct : classes.wrong
+              attempt.isCorrect ? classes.correct : classes.wrong
             }`}
             mr="lg"
             mb="xl"
-            key={qns.questionNumber}
+            key={attempt.attemptId}
           >
             <Grid grow align="center">
               <Grid.Col span={7}>
                 <Group>
-                  <Badge
-                    color={
-                      qns.questionDifficulty === QuestionDifficulty.Easy
-                        ? "green"
-                        : qns.questionDifficulty === QuestionDifficulty.Medium
-                        ? "yellow"
-                        : "red"
-                    }
-                    radius="lg"
-                    size="lg"
-                  >
-                    {qns.questionDifficulty} Difficulty
-                  </Badge>
+                  <QuestionDifficultyBadge
+                    questionDifficulty={attempt.question.questionDifficulty}
+                    {...{ radius: "lg", size: "lg" }}
+                  />
                   <Badge radius="lg" size="lg">
-                    {qns.topicName}
+                    {attempt.question.topic.topicName}
                   </Badge>
                 </Group>
                 <Title order={3} className={classes.title} my="lg">
-                  Question {qns.questionNumber + 1}:{" "}
-                  <Latex>{qns.questionContent}</Latex>
+                  {/* Question {attempt.questionNumber + 1}:{" "} */}
+                  <Latex>{attempt.question.questionContent}</Latex>
                 </Title>
-                {questionDisplay?.[qns.questionNumber]?.question?.answers?.map(
-                  (ans: { isCorrect: boolean; answerContent: string }) => (
-                    <Group
-                      key={ans.answerContent}
-                      className={`${classes.options} ${
-                        qns.answerContent === ans.answerContent
-                          ? classes.selected
-                          : ""
-                      }`}
-                    >
-                      {ans.isCorrect === true ? (
-                        <IconCheck color="green" size={30} stroke={3} />
-                      ) : (
-                        <IconX color="red" size={30} stroke={3} />
-                      )}
-                      <Latex>{ans.answerContent}</Latex>
-                    </Group>
-                  )
-                )}
+                {attempt.question.answers.map((ans) => (
+                  <Group
+                    key={ans.answerContent}
+                    className={`${classes.options} ${
+                      attempt.answer.answerContent === ans.answerContent
+                        ? classes.selected
+                        : ""
+                    }`}
+                  >
+                    {ans.isCorrect === true ? (
+                      <IconCheck color="green" size={30} stroke={3} />
+                    ) : (
+                      <IconX color="red" size={30} stroke={3} />
+                    )}
+                    <Latex>{ans.answerContent}</Latex>
+                  </Group>
+                ))}
               </Grid.Col>
               <Grid.Col span={1}>
                 <Image
-                  src={qns.questionMedia}
-                  alt={qns.questionMedia}
+                  src={
+                    attempt.question.questionMedia[0]
+                      ?.questionMediaURL as string
+                  }
+                  alt={
+                    attempt.question.questionMedia[0]
+                      ?.questionMediaURL as string
+                  }
                   width="0"
                   height="0"
                   sizes="100vw"
@@ -135,7 +142,7 @@ const QuestionHistory = ({
               </Grid.Col>
             </Grid>
           </Paper>
-        )
+        ))
       )}
     </>
   );
