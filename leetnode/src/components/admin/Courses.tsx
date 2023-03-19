@@ -1,3 +1,4 @@
+import axios, { AxiosError } from "axios";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -10,13 +11,14 @@ import {
 } from "chart.js/auto";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Latex from "react-latex-next";
 
 import {
   AttemptsInfoType,
   CoursesInfoType,
   QuestionsInfoType,
+  useGetFetchQuery,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
 import {
@@ -54,6 +56,7 @@ import {
   IconX,
   IconZoomQuestion,
 } from "@tabler/icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 ChartJS.register(
   CategoryScale,
@@ -70,46 +73,80 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
+interface FetchData {
+  data: CoursesInfoType[];
+}
+
 const Courses = ({
-  courses,
+  // courses,
   users,
   attempts,
   questions,
 }: {
-  courses: CoursesInfoType[];
+  // courses: CoursesInfoType[];
   users: UsersWithMasteriesAndAttemptsType;
   attempts: AttemptsInfoType;
   questions: QuestionsInfoType;
 }) => {
   const { classes } = useStyles();
+  const queryClient = useQueryClient();
+
+  const getCourses = useGetFetchQuery(["all-courses"]) as FetchData;
+  const courses: CoursesInfoType[] = getCourses?.data;
 
   const [sort, setSort] = useState("All Courses");
   const [openedDetails, setOpenedDetails] = useState(false);
   const [openedEdit, setOpenedEdit] = useState(false);
   const [details, setDetails] = useState<CoursesInfoType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
-  const [editValue, setEditValue] = useState("Overview");
-  const [overviewMessage, setOverviewMessage] = useState("");
-  const [slidesMessage, setSlidesMessage] = useState("");
-  const [videoMessage, setVideoMessage] = useState("");
-  const [additionalMessage, setAdditionalMessage] = useState("");
+  const [editValue, setEditValue] = useState("overview");
+  const [message, setMessage] = useState<{
+    overview: string;
+    slides: string;
+    video: string;
+    additional: string;
+  }>({ overview: "", slides: "", video: "", additional: "" });
+  // const [overviewMessage, setOverviewMessage] = useState("");
+  // const [slidesMessage, setSlidesMessage] = useState("");
+  // const [videoMessage, setVideoMessage] = useState("");
+  // const [additionalMessage, setAdditionalMessage] = useState("");
 
-  console.log(users);
-
+  console.log(message);
+  // console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
   let filteredCourses;
   {
     sort === "All Courses"
       ? (filteredCourses = courses)
       : (filteredCourses = courses.filter((c) => c.courseLevel === sort));
   }
-
-  console.log(questions);
-
+  console.log(filteredCourses);
   const data: string[] = [];
 
   details?.topics.map((topic) => {
     data.push(topic.topicName);
   });
+
+  useEffect(() => {
+    if (details !== undefined && details !== null) {
+      setMessage({
+        overview: JSON.parse(JSON.stringify(details?.learnTabJson)).overview,
+        slides: JSON.parse(JSON.stringify(details?.learnTabJson)).slides,
+        video: JSON.parse(JSON.stringify(details?.learnTabJson)).video,
+        additional: JSON.parse(JSON.stringify(details?.learnTabJson))
+          .additional,
+      });
+      // setOverviewMessage(
+      //   JSON.parse(JSON.stringify(details?.learnTabJson)).overview
+      // );
+      // setSlidesMessage(
+      //   JSON.parse(JSON.stringify(details?.learnTabJson)).slides
+      // );
+      // setVideoMessage(JSON.parse(JSON.stringify(details?.learnTabJson)).video);
+      // setAdditionalMessage(
+      //   JSON.parse(JSON.stringify(details?.learnTabJson)).additional
+      // );
+    }
+  }, [details]);
 
   const filteredTopics = details?.topics.filter((topic) =>
     multiValue.includes(topic.topicName)
@@ -149,6 +186,32 @@ const Courses = ({
 
     console.log(avgMasteryLevels);
   }
+
+  const editMutation = useMutation<
+    Response,
+    AxiosError,
+    {
+      courseSlug: string;
+      content: {
+        overview: string;
+        slides: string;
+        video: string;
+        additional: string;
+      };
+    },
+    () => void
+  >({
+    mutationFn: async (editCourse) => {
+      console.log(editCourse);
+      const res = await axios.post("/api/courses/editCourse", editCourse);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-courses"]);
+      // queryClient.invalidateQueries(["post-comments"]);
+      // setMessage("");
+    },
+  });
 
   return (
     <>
@@ -455,7 +518,17 @@ const Courses = ({
 
       <Modal
         opened={openedEdit}
-        onClose={() => setOpenedEdit(false)}
+        onClose={() => {
+          setOpenedEdit(false);
+          setMessage({
+            overview: JSON.parse(JSON.stringify(details?.learnTabJson))
+              .overview,
+            slides: JSON.parse(JSON.stringify(details?.learnTabJson)).slides,
+            video: JSON.parse(JSON.stringify(details?.learnTabJson)).video,
+            additional: JSON.parse(JSON.stringify(details?.learnTabJson))
+              .additional,
+          });
+        }}
         title={details?.courseName}
         size="70%"
       >
@@ -472,7 +545,7 @@ const Courses = ({
             radius={20}
             data={[
               {
-                value: "Overview",
+                value: "overview",
                 label: (
                   <Center>
                     <IconApps size={16} />
@@ -481,7 +554,7 @@ const Courses = ({
                 ),
               },
               {
-                value: "Lecture Slides",
+                value: "slides",
                 label: (
                   <Center>
                     <IconPresentation size={16} />
@@ -490,7 +563,7 @@ const Courses = ({
                 ),
               },
               {
-                value: "Lecture Videos",
+                value: "videos",
                 label: (
                   <Center>
                     <IconVideo size={16} />
@@ -499,7 +572,7 @@ const Courses = ({
                 ),
               },
               {
-                value: "Additional Resources",
+                value: "additional",
                 label: (
                   <Center>
                     <IconReportSearch size={16} />
@@ -510,35 +583,87 @@ const Courses = ({
             ]}
           />
         </Center>
-        {editValue === "Overview" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={overviewMessage}
-            onChange={setOverviewMessage}
-          />
-        ) : editValue === "Lecture Slides" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={slidesMessage}
-            onChange={setSlidesMessage}
-          />
-        ) : editValue === "Lecture Videos" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={videoMessage}
-            onChange={setVideoMessage}
-          />
-        ) : (
-          <Editor
-            upload_preset="forum_media"
-            value={additionalMessage}
-            onChange={setAdditionalMessage}
-          />
-        )}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            editMutation.mutate({
+              courseSlug: details?.courseSlug as string,
+              content: message,
+            });
+            setOpenedEdit(false);
+          }}
+        >
+          {editValue === "overview" ? (
+            <Editor
+              upload_preset="forum_media"
+              value={message.overview}
+              onChange={(newValue) =>
+                setMessage((prevState) => ({
+                  ...prevState,
+                  overview: newValue,
+                }))
+              }
+            />
+          ) : editValue === "slides" ? (
+            <Editor
+              upload_preset="forum_media"
+              value={message.slides}
+              onChange={(newValue) =>
+                setMessage((prevState) => ({
+                  ...prevState,
+                  slides: newValue,
+                }))
+              }
+            />
+          ) : editValue === "videos" ? (
+            <Editor
+              upload_preset="forum_media"
+              value={message.video}
+              onChange={(newValue) =>
+                setMessage((prevState) => ({
+                  ...prevState,
+                  video: newValue,
+                }))
+              }
+            />
+          ) : (
+            <Editor
+              upload_preset="forum_media"
+              value={message.additional}
+              onChange={(newValue) =>
+                setMessage((prevState) => ({
+                  ...prevState,
+                  additional: newValue,
+                }))
+              }
+            />
+          )}
+
+          <Group position="center" mt="xl">
+            <Button type="submit">Confirm Changes</Button>
+            <Button
+              onClick={() => {
+                setOpenedEdit(false);
+                setMessage({
+                  overview: JSON.parse(JSON.stringify(details?.learnTabJson))
+                    .overview,
+                  slides: JSON.parse(JSON.stringify(details?.learnTabJson))
+                    .slides,
+                  video: JSON.parse(JSON.stringify(details?.learnTabJson))
+                    .video,
+                  additional: JSON.parse(JSON.stringify(details?.learnTabJson))
+                    .additional,
+                });
+              }}
+            >
+              Cancel
+            </Button>
+          </Group>
+        </form>
       </Modal>
       <Container size="lg" py="xl">
         <Title order={2} align="center" mb="lg" className={classes.title}>
-          Courses Detailed Statistics
+          Courses Details
         </Title>
         <Center>
           <SegmentedControl

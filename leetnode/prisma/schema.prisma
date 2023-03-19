@@ -122,6 +122,7 @@ model Course {
   slide               String?              @db.VarChar(500)
   video               String?              @db.VarChar(500)
   markdown            String?              @db.VarChar(10000)
+  learnTabJson        Json                 @default("{\"video\":\"\",\"slides\":\"\",\"overview\":\"\",\"additional\":\"\"}")
   topics              Topic[]
   userCourseQuestions UserCourseQuestion[]
   posts               Post[]

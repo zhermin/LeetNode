@@ -44,7 +44,7 @@ import {
   IconPuzzle,
   IconUsers,
 } from "@tabler/icons";
-import { useQueries } from "@tanstack/react-query";
+import { QueryKey, useQueries, useQueryClient } from "@tanstack/react-query";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
   attempts: Attempt[];
@@ -228,7 +228,6 @@ export default function AdminPage() {
             <QuestionViewer />
           ) : active === "Courses" ? (
             <Courses
-              courses={courses.data}
               users={usersData.data}
               attempts={attempts.data}
               questions={questions.data}
@@ -245,6 +244,12 @@ export default function AdminPage() {
     </>
   );
 }
+
+export const useGetFetchQuery = (key: QueryKey) => {
+  const queryClient = useQueryClient();
+
+  return queryClient.getQueryData(key);
+};
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
