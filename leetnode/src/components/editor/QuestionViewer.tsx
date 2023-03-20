@@ -38,14 +38,16 @@ export type FormQuestionType = {
 export type FormQuestionJsonType = {
   variables: {
     key: string;
+    encoded: string;
     name: string;
     randomize: boolean;
     isFinalAnswer: boolean;
     unit?: string;
-    default?: number;
+    default?: string;
     min?: number;
     max?: number;
     decimalPlaces?: number;
+    step?: number;
   }[];
   methods: {
     key: string;
@@ -171,77 +173,132 @@ export default function QuestionViewer() {
                 variables: [
                   {
                     key: randomId(),
+                    encoded: CustomMath.randomString(),
                     name: "R_1",
                     randomize: false,
                     isFinalAnswer: false,
                     unit: "\\Omega",
-                    default: 4,
+                    default: "10",
                   },
                   {
                     key: randomId(),
+                    encoded: CustomMath.randomString(),
                     name: "R_2",
                     randomize: false,
                     isFinalAnswer: false,
                     unit: "\\Omega",
-                    default: 10,
+                    default: "10",
                   },
                   {
                     key: randomId(),
-                    name: "R_3",
+                    encoded: CustomMath.randomString(),
+                    name: "L",
                     randomize: false,
-                    unit: "\\Omega",
                     isFinalAnswer: false,
-                    default: 8,
+                    unit: "\\text{H}",
+                    default: "1",
                   },
                   {
                     key: randomId(),
-                    name: "V_{\\alpha}",
-                    randomize: true,
+                    encoded: CustomMath.randomString(),
+                    name: "t",
+                    randomize: false,
                     isFinalAnswer: false,
+                    unit: "\\text{s}",
+                    default: "0.2",
+                  },
+                  {
+                    key: randomId(),
+                    encoded: CustomMath.randomString(),
+                    name: "V_{L}(t)",
+                    randomize: false,
+                    isFinalAnswer: true,
                     unit: "\\text{V}",
-                    default: 12,
-                    min: 1,
-                    max: 30,
-                    decimalPlaces: 0,
+                    decimalPlaces: 3,
+                    min: -90,
+                    max: -10,
+                    step: 7.5,
                   },
-                  {
-                    key: randomId(),
-                    name: "I_3",
-                    randomize: false,
-                    isFinalAnswer: true,
-                    unit: "\\text{A}",
-                    decimalPlaces: 2,
-                  },
-                  {
-                    key: randomId(),
-                    name: "I_{\\text{final}}",
-                    randomize: false,
-                    isFinalAnswer: true,
-                    unit: "\\text{A}",
-                    decimalPlaces: 1,
-                  },
+                  // {
+                  //   key: randomId(),
+                  //   name: "R_2",
+                  //   randomize: false,
+                  //   isFinalAnswer: false,
+                  //   unit: "\\Omega",
+                  //   default: 10,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   name: "R_3",
+                  //   randomize: false,
+                  //   unit: "\\Omega",
+                  //   isFinalAnswer: false,
+                  //   default: 8,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   name: "V_{\\alpha}",
+                  //   randomize: true,
+                  //   isFinalAnswer: false,
+                  //   unit: "\\text{V}",
+                  //   default: 12,
+                  //   min: 1,
+                  //   max: 30,
+                  //   decimalPlaces: 0,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   name: "I_3",
+                  //   randomize: false,
+                  //   isFinalAnswer: true,
+                  //   unit: "\\text{A}",
+                  //   decimalPlaces: 2,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   name: "I_{\\text{final}}",
+                  //   randomize: false,
+                  //   isFinalAnswer: true,
+                  //   unit: "\\text{A}",
+                  //   decimalPlaces: 1,
+                  // },
                 ],
                 methods: [
                   {
                     key: randomId(),
-                    expr: "I_1 = V_{\\alpha} / R_1",
+                    expr: "R_{eq} = (R_1 * R_2) / (R_1 + R_2)",
                     explanation: undefined,
                   },
                   {
                     key: randomId(),
-                    expr: "I_3 = V_{\\alpha} / R_3",
+                    expr: "\\tau = L / R_{eq}",
                     explanation: undefined,
                   },
                   {
                     key: randomId(),
-                    expr: "I_2 = V_{\\alpha} / R_2",
+                    expr: "V_{L}(t) = L * 1/\\tau * e^{- t / \\tau}",
                     explanation: undefined,
                   },
-                  {
-                    key: randomId(),
-                    expr: "I_{\\text{final}} = (I_1 + I_2 + I_3)",
-                    explanation: undefined,
-                  },
+                  // {
+                  //   key: randomId(),
+                  //   expr: "I_1 = V_{\\alpha} / R_1",
+                  //   explanation: undefined,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   expr: "I_3 = V_{\\alpha} / R_3",
+                  //   explanation: undefined,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   expr: "I_2 = V_{\\alpha} / R_2",
+                  //   explanation: undefined,
+                  // },
+                  // {
+                  //   key: randomId(),
+                  //   expr: "I_{\\text{final}} = (I_1 + I_2 + I_3)",
+                  //   explanation: undefined,
+                  // },
                 ],
                 hints: [
                   {
@@ -283,8 +340,7 @@ export default function QuestionViewer() {
                         item.unit ? "~(" + item.unit + ")" : ""
                       } &= ${CustomMath.round(
                         Number(item.default),
-                        item?.decimalPlaces ??
-                          CustomMath.getDecimalPlaces(item.default ?? 0)
+                        item?.decimalPlaces ?? 3
                       )}`;
                     })
                     .join("\\\\")} \\end{aligned} $$`}</Latex>

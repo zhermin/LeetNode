@@ -27,6 +27,7 @@ import {
   Loader,
   Modal,
   NumberInput,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -51,6 +52,7 @@ import {
   IconDice3,
   IconGripVertical,
   IconHelp,
+  IconMountain,
   IconPlus,
   IconRefresh,
   IconTrash,
@@ -79,6 +81,9 @@ export default function QuestionEditor({
   questionId?: number;
   initialValues: FormQuestionType;
 }) {
+  const [questionType, setQuestionType] = useState(
+    initialValues.variationId === 0 ? "dynamic" : "static"
+  );
   const [rawDataOpened, setRawDataOpened] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
@@ -103,18 +108,23 @@ export default function QuestionEditor({
               name: z
                 .string()
                 .trim()
-                .regex(
-                  /^(?!mod$|to$|in$|and$|xor$|or$|not$|end$)[a-zA-Z\\][a-zA-Z\d\\{}_,]*$/,
-                  { message: "Invalid name" }
-                )
+                .regex(/^(?![^=$]*[=$]).*$/, {
+                  message: "Equal and dollar signs not allowed",
+                })
                 .min(1, { message: "Cannot be empty" }),
               randomize: z.boolean(),
               isFinalAnswer: z.boolean(),
               unit: z.string().optional(),
-              default: z.number().optional(),
+              default: z
+                .string()
+                .regex(/^(?![^=$]*[=$]).*$/, {
+                  message: "Equal and dollar signs not allowed",
+                })
+                .optional(),
               min: z.number().optional(),
               max: z.number().optional(),
               decimalPlaces: z.number().int().min(0).max(10).optional(),
+              step: z.number().optional(),
             })
           )
           .nonempty({ message: "Please add at least 1 variable" }),
@@ -143,20 +153,25 @@ export default function QuestionEditor({
 
   const [preview, setPreview] = useState("\\text{Refresh to View Variables}");
   const [finalAnsPreview, setFinalAnsPreview] = useState(
-    "\\text{Refresh to View Final Answer}"
+    "\\text{Refresh to View Final Answers}"
   );
   const handlePreviewChange = (toRandomize: boolean) => {
     form.clearErrors();
+    // TODO: Handle static questions
 
-    // TODO: Use regex to replace entire variable names with alphabets
-    // TODO: Means all variable names are valid, hopefully
-    // TODO: Retain replacement of square brackets in expr
-    const cleaned = (str: string) =>
+    // Replace all curly and square brackets with parentheses and remove all backslashes
+    const clean = (str: string) =>
       str
-        .replace(/[\[]/g, "(")
-        .replace(/[\]]/g, ")")
-        .replace(/[\\{},]/g, "");
+        .replace(/[\[\{]/g, "(")
+        .replace(/[\]\}]/g, ")")
+        .replace(/[\\]/g, "");
 
+    // Trim whitespace from the variable names
+    form.values.variables.map((variable) => {
+      variable.name = variable.name.trim();
+    });
+
+    // Sort and randomize variables and evalutate default values
     const rawVariables: {
       [key: string]: number;
     } = form.values.variables
@@ -167,7 +182,7 @@ export default function QuestionEditor({
         return a.name.localeCompare(b.name);
       })
       .reduce((obj, item) => {
-        const itemName = cleaned(item.name);
+        const itemName = item.encoded;
         if (toRandomize && item.randomize) {
           return {
             ...obj,
@@ -180,14 +195,36 @@ export default function QuestionEditor({
         }
         return {
           ...obj,
-          [itemName]: item.default,
+          [itemName]: item.default ? evaluate(clean(item.default)) : undefined,
         };
       }, {});
+    evaluate("ln(x) = log(x)", rawVariables);
 
+    // Copy all variables and encode them to ensure the expression is valid
+    const formVars = [...form.values.variables];
+    const encode = (str: string) => {
+      formVars.sort((a, b) => b.name.length - a.name.length);
+      for (const variable of formVars) {
+        str = str.replaceAll(variable.name, variable.encoded);
+      }
+      return str;
+    };
+
+    // Evaluate all methods after encoding and cleaning them
     const invalidMessage = "\\text{Invalid Variables or Methods}";
-    for (const method of form.values.methods) {
+    for (const [index, method] of form.values.methods.entries()) {
       try {
-        evaluate(cleaned(method.expr), rawVariables);
+        const [lhs, rhs] = method.expr.split("=").map((s) => s.trim());
+        if (!lhs || !rhs) throw new Error("Invalid Expression");
+        formVars.push({
+          key: randomId(),
+          name: lhs,
+          encoded: CustomMath.randomString(),
+          randomize: false,
+          isFinalAnswer: false,
+        });
+        console.log(`${index + 1})`, clean(encode(method.expr)));
+        evaluate(clean(encode(method.expr)), rawVariables);
       } catch (e) {
         toast.error(
           (t) => (
@@ -203,12 +240,12 @@ export default function QuestionEditor({
               <Text fz="sm">Check or reorder variables & methods in:</Text>
               <Text fz="sm">
                 <Text mr="xs" span>
-                  #{form.values.methods.indexOf(method) + 1}
+                  #{index + 1}
                 </Text>
                 <Code>{method.expr}</Code>
               </Text>
               <Text fz="sm">Sanitized:</Text>
-              <Code>{cleaned(method.expr)}</Code>
+              <Code>{clean(method.expr)}</Code>
             </Stack>
           ),
           {
@@ -222,10 +259,33 @@ export default function QuestionEditor({
       }
     }
 
-    const finalAnswers = form.values.variables.filter(
-      (item) => item.isFinalAnswer
-    );
-    if (finalAnswers.length > 0) {
+    // Display the variables and final answers in LaTeX
+    try {
+      if (form.values.variables.length == 0) {
+        setPreview(invalidMessage);
+        throw new Error("No variables specified");
+      }
+      setPreview(
+        form.values.variables
+          .filter((item) => !item.isFinalAnswer)
+          .map((item) => {
+            return `${item.name} ${
+              item.unit ? "~(" + item.unit + ")" : ""
+            } &= ${CustomMath.round(
+              Number(rawVariables[item.encoded]),
+              item?.decimalPlaces ?? 3
+            )}`;
+          })
+          .join("\\\\")
+      );
+
+      const finalAnswers = form.values.variables.filter(
+        (item) => item.isFinalAnswer
+      );
+      if (finalAnswers.length == 0) {
+        setFinalAnsPreview(invalidMessage);
+        throw new Error("No final answers specified");
+      }
       setFinalAnsPreview(
         finalAnswers
           .map((finalAnswer) => {
@@ -233,17 +293,26 @@ export default function QuestionEditor({
               return "\\text{Invalid Variable}";
 
             const finalValue = CustomMath.round(
-              Number(rawVariables[cleaned(finalAnswer.name)]),
+              Number(rawVariables[finalAnswer.encoded]),
               finalAnswer.decimalPlaces
             );
 
-            // TODO: Allow user to specify range of incorrect answers
-            // randomly generate 3 incorrect answers +/- 30% to 90% (can add controls later)
+            // Randomly generate incorrect answers
+            if (finalAnswer.step === 0) {
+              throw new Error(`Step can't be 0 for ${finalAnswer.name}`);
+            }
+            const incorrectRange = CustomMath.generateRange(
+              (finalAnswer.min ?? -90) / 100,
+              (finalAnswer.max ?? 90) / 100,
+              (finalAnswer.step ?? 20) / 100
+            );
+            if (incorrectRange.length < 3) {
+              throw new Error(
+                `Not enough incorrect answers for ${finalAnswer.name}\n\nYour settings generated: [${incorrectRange}]`
+              );
+            }
             const incorrectAnswers = (
-              CustomMath.nRandomItems(
-                3,
-                CustomMath.generateRange(0.3, 0.9, 0.2)
-              ) as number[]
+              CustomMath.nRandomItems(3, incorrectRange) as number[]
             ).map((val) =>
               CustomMath.round(
                 finalValue * (1 + val),
@@ -258,27 +327,13 @@ export default function QuestionEditor({
           })
           .join("\\\\")
       );
-    } else {
+    } catch (e) {
       setFinalAnsPreview(invalidMessage);
-    }
-
-    if (form.values.variables.length > 0) {
-      setPreview(
-        form.values.variables
-          .filter((item) => !item.isFinalAnswer)
-          .map((item) => {
-            return `${item.name} ${
-              item.unit ? "~(" + item.unit + ")" : ""
-            } &= ${CustomMath.round(
-              Number(rawVariables[cleaned(item.name)]),
-              item?.decimalPlaces ??
-                CustomMath.getDecimalPlaces(item.default ?? 0)
-            )}`;
-          })
-          .join("\\\\")
-      );
-    } else {
-      setPreview(invalidMessage);
+      toast.error(e instanceof Error ? e.message : "Unknown Error", {
+        duration: 5000,
+        className: "border border-solid border-red-500",
+      });
+      return;
     }
 
     if (toRandomize) {
@@ -310,7 +365,7 @@ export default function QuestionEditor({
               label="Name"
               required
               sx={{ flex: 1 }}
-              {...form.getInputProps(`variables.${index}.name`)} // TODO: trim whitespace
+              {...form.getInputProps(`variables.${index}.name`)}
             />
             <TextInput
               label="Unit"
@@ -325,14 +380,10 @@ export default function QuestionEditor({
                 {...form.getInputProps(`variables.${index}.decimalPlaces`)}
               />
             ) : (
-              <NumberInput // TODO: change to string to allow for scientific notation
+              <TextInput
                 label="Default"
                 sx={{ flex: 1 }}
                 required={!form.values.variables[index]?.isFinalAnswer}
-                precision={CustomMath.getDecimalPlaces(
-                  form.values.variables[index]?.default ?? 0
-                )}
-                hideControls
                 {...form.getInputProps(`variables.${index}.default`)}
               />
             )}
@@ -358,6 +409,18 @@ export default function QuestionEditor({
                   onClick={() => {
                     form.setFieldValue(`variables.${index}.randomize`, false);
                     form.setFieldValue(`variables.${index}.default`, undefined);
+                    form.setFieldValue(
+                      `variables.${index}.min`,
+                      item.isFinalAnswer ? undefined : -90
+                    );
+                    form.setFieldValue(
+                      `variables.${index}.max`,
+                      item.isFinalAnswer ? undefined : 90
+                    );
+                    form.setFieldValue(
+                      `variables.${index}.step`,
+                      item.isFinalAnswer ? undefined : 20
+                    );
                     form.setFieldValue(
                       `variables.${index}.isFinalAnswer`,
                       !item.isFinalAnswer
@@ -429,6 +492,47 @@ export default function QuestionEditor({
               />
             </Flex>
           )}
+          {item.isFinalAnswer && (
+            // TODO: 3 input fields if static question
+            <Flex gap="md" align="center">
+              <Text fw={500} fz="sm">
+                Min % <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.min ?? 0
+                )}
+                hideControls
+                {...form.getInputProps(`variables.${index}.min`)}
+              />
+              <Text fw={500} fz="sm">
+                Max % <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.max ?? 0
+                )}
+                hideControls
+                {...form.getInputProps(`variables.${index}.max`)}
+              />
+              <Text fw={500} fz="sm">
+                % Step Size <span className="text-red-500">*</span>
+              </Text>
+              <NumberInput
+                sx={{ flex: 1 }}
+                required={item.randomize}
+                precision={CustomMath.getDecimalPlaces(
+                  form.values.variables[index]?.step ?? 0
+                )}
+                hideControls
+                {...form.getInputProps(`variables.${index}.step`)}
+              />
+            </Flex>
+          )}
         </Stack>
       )}
     </Draggable>
@@ -437,6 +541,7 @@ export default function QuestionEditor({
   const newVar = () => {
     form.insertListItem("variables", {
       key: randomId(),
+      encoded: CustomMath.randomString(),
       randomize: false,
       isFinalAnswer: false,
       name: "",
@@ -660,6 +765,7 @@ export default function QuestionEditor({
     }
   );
 
+  // TODO: Able to tag question to an existing static question
   return (
     <form
       className="pr-5"
@@ -704,6 +810,48 @@ export default function QuestionEditor({
         }
       )}
     >
+      <SegmentedControl
+        fullWidth
+        mb="lg"
+        value={questionType}
+        onChange={setQuestionType}
+        data={[
+          {
+            label: (
+              <Tooltip.Floating
+                multiline
+                width={290}
+                label="
+                Dynamic questions are questions that can generate multiple variations of the same question using valid random variables and math expressions.
+              "
+              >
+                <Center>
+                  <IconDice3 size={18} />
+                  <Box ml={10}>Dynamic Question</Box>
+                </Center>
+              </Tooltip.Floating>
+            ),
+            value: "dynamic",
+          },
+          {
+            label: (
+              <Tooltip.Floating
+                multiline
+                width={320}
+                label="
+                Static questions are questions that require everything to be user-defined. There are no variable and expression checks nor evaluations. The question is displayed as is and correctness must be ensured by the user.
+              "
+              >
+                <Center>
+                  <IconMountain size={18} />
+                  <Box ml={10}>Static Question</Box>
+                </Center>
+              </Tooltip.Floating>
+            ),
+            value: "static",
+          },
+        ]}
+      />
       <TextInput
         label="Title"
         placeholder="Short Description"
@@ -783,8 +931,7 @@ export default function QuestionEditor({
           multiline
           width={350}
           withArrow
-          label="Variable names must start with an alphabet and can only contain
-                alphabets, numbers, underscores, commas and backslashes and cannot be any of the following: mod, to, in, and, xor, or, not, end. Dollar signs ($) are disabled as they clash with LaTeX."
+          label="Complex numbers and phasors are currently not supported. Set a variable as a final answer on the right to make it part of the question's options."
         >
           <ActionIcon
             variant="transparent"
@@ -940,16 +1087,18 @@ export default function QuestionEditor({
             <IconRefresh size={16} />
           </ActionIcon>
         </Tooltip>
-        <Tooltip label="Randomize" withArrow>
-          <ActionIcon
-            variant="default"
-            radius="xl"
-            ml="sm"
-            onClick={() => handlePreviewChange(true)}
-          >
-            <IconDice3 size={16} />
-          </ActionIcon>
-        </Tooltip>
+        {questionType === "dynamic" && (
+          <Tooltip label="Randomize" withArrow>
+            <ActionIcon
+              variant="default"
+              radius="xl"
+              ml="sm"
+              onClick={() => handlePreviewChange(true)}
+            >
+              <IconDice3 size={16} />
+            </ActionIcon>
+          </Tooltip>
+        )}
         <Tooltip label="Raw Data" withArrow>
           <ActionIcon
             variant="default"
