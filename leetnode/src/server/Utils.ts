@@ -70,9 +70,7 @@ export const CustomMath = (function () {
         return allowed_chars[Math.floor(Math.random() * allowed_chars.length)];
       }
 
-      return Array.apply(null, Array(len ?? 8))
-        .map(pickRandom)
-        .join("");
+      return [...Array(len ?? 8)].map(pickRandom).join("");
     },
   };
 })();
