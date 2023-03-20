@@ -61,7 +61,6 @@ const LeetNode: AppType<{
                 id: toastId.current,
               });
             }
-            toast.dismiss();
           },
           onError: (error) => {
             let errorMessage = "Unknown Error";

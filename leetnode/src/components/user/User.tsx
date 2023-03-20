@@ -51,7 +51,7 @@ export default function User() {
       });
       return res?.data;
     },
-    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+    { enabled: !!session?.data?.user?.id }
   );
 
   const links = tabs.map((item) => (

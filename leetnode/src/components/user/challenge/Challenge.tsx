@@ -17,14 +17,10 @@ export default function Challenge() {
     data: allUsers,
     isLoading,
     isError,
-  } = useQuery(
-    ["challenge"],
-    async () => {
-      const res = await axios.get("/api/user/getAllUsersPoints");
-      return res.data;
-    },
-    { keepPreviousData: true }
-  );
+  } = useQuery<User[]>(["challenge"], async () => {
+    const res = await axios.get("/api/user/getAllUsersPoints");
+    return res.data;
+  });
 
   if (!allUsers || isLoading || isError) {
     return (
@@ -43,12 +39,12 @@ export default function Challenge() {
     ?.map((user: User) => {
       return user?.id;
     })
-    .indexOf(session?.data?.user?.id);
+    .indexOf(session?.data?.user?.id ?? "");
 
   return (
     <ScrollArea>
       <h1 className="text-center">Challenge</h1>
-      <hr className="h-px my-4 bg-gray-200 border-0" />
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <SegmentedControl
         color="cyan"
         value={view}
@@ -59,11 +55,7 @@ export default function Challenge() {
         ]}
         fullWidth
       />
-      {view === "personal" ? (
-        <Personal index={index} />
-      ) : (
-        <Overall allUsers={allUsers} />
-      )}
+      {view === "personal" ? <Personal index={index} /> : <Overall />}
     </ScrollArea>
   );
 }

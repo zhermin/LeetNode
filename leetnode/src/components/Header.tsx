@@ -4,6 +4,7 @@ import Head from "next/head";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
+import { User } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Header = ({ title = "Personalized Path Mastery" }) => {
@@ -15,7 +16,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery(
+  } = useQuery<User>(
     ["userInfo", session?.data?.user?.id],
     async () => {
       const res = await axios.post("/api/user/get", {
@@ -83,20 +84,36 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           lastActive.setDate(lastActive.getDate() + 1);
           if (currentDatetime.toDateString() === lastActive.toDateString()) {
             // Consecutive days
-            updateActive({
-              currentDatetime: currentDatetime,
-              loginStreak: userInfo.loginStreak + 1,
-              points:
-                userInfo.loginStreak + 1 < 5
-                  ? userInfo.points + userInfo.loginStreak + 1
-                  : userInfo.points + 5, // Cumulative addition of points based on streak (caps at 5)
-            });
+            if (currentDatetime.getMonth() !== lastActive.getMonth()) {
+              // Different month (Resets data)
+              updateActive({
+                currentDatetime: currentDatetime,
+                loginStreak: userInfo.loginStreak + 1,
+                points:
+                  userInfo.loginStreak + 1 < 5
+                    ? 0 + userInfo.loginStreak + 1
+                    : 0 + 5, // Cumulative addition of points based on streak (caps at 5)
+              });
+            } else {
+              // Same month
+              updateActive({
+                currentDatetime: currentDatetime,
+                loginStreak: userInfo.loginStreak + 1,
+                points:
+                  userInfo.loginStreak + 1 < 5
+                    ? userInfo.points + userInfo.loginStreak + 1
+                    : userInfo.points + 5, // Cumulative addition of points based on streak (caps at 5)
+              });
+            }
           } else {
             // Not consecutive days
             updateActive({
               currentDatetime: currentDatetime,
               loginStreak: 1,
-              points: userInfo.points + 1,
+              points:
+                currentDatetime.getMonth() === lastActive.getMonth()
+                  ? userInfo.points + 1 // Same month
+                  : 1, // Reset if different month
             });
           }
         } else {
@@ -124,7 +141,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     };
 
     checkActive(); // Run immediately once user logs in
-  }, [userInfo, isLoading, isError, updateActive]);
+  }, [userInfo, isLoading, isError, updateActive, session?.data?.user?.role]);
 
   // Periodically updates last active datetime if user is logged in
   const intervalRef = useRef<NodeJS.Timeout>();

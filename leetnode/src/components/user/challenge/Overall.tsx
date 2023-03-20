@@ -1,12 +1,36 @@
-import { Avatar, Center, Group, ScrollArea, Table, Text } from "@mantine/core";
+import axios from "axios";
+
+import {
+  Avatar,
+  Center,
+  Group,
+  Loader,
+  ScrollArea,
+  Table,
+  Text,
+} from "@mantine/core";
 import { User } from "@prisma/client";
 import { IconCrown } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
-interface OverallProps {
-  allUsers: User[];
-}
+export default function Overall() {
+  const {
+    data: allUsers,
+    isLoading,
+    isError,
+  } = useQuery<User[]>(["challenge"], async () => {
+    const res = await axios.get("/api/user/getAllUsersPoints");
+    return res.data;
+  });
 
-export default function Overall({ allUsers }: OverallProps) {
+  if (!allUsers || isLoading || isError) {
+    return (
+      <Center style={{ height: 500 }}>
+        <Loader />
+      </Center>
+    );
+  }
+
   const rows = allUsers?.map((user: User, index: number) => {
     return (
       <tr

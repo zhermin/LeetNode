@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@/server/db/client";
+import { Role } from "@prisma/client";
 
 export default async function handler(
     req: NextApiRequest,
@@ -10,10 +11,24 @@ export default async function handler(
         return res.status(405).json({ message: "Method not allowed" });
     } else {
         try {
+            const currentDatetime = new Date();
+            currentDatetime.setDate(1);
             const info = await prisma.user.findMany({
                 where: {
-                    role: {
-                        equals: "USER"
+                    OR: [
+                        {
+                            role: {
+                                equals: Role.USER
+                            }
+                        },
+                        {
+                            role: {
+                                equals: Role.SUPERUSER
+                            }
+                        }
+                    ],
+                    lastActive: {
+                        gt: new Date(currentDatetime.toISOString().substring(0, 10)) // Current month data
                     }
                 },
                 select: {
