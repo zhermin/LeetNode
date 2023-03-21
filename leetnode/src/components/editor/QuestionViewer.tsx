@@ -33,6 +33,7 @@ export type FormQuestionType = {
   variables: FormQuestionJsonType["variables"];
   methods: FormQuestionJsonType["methods"];
   hints: FormQuestionJsonType["hints"];
+  answers?: FormQuestionJsonType["answers"];
 };
 
 export type FormQuestionJsonType = {
@@ -57,6 +58,12 @@ export type FormQuestionJsonType = {
   hints: {
     key: string;
     hint: string;
+  }[];
+  answers?: {
+    key: string;
+    optionNumber: number;
+    answerContent: string;
+    isCorrect: boolean;
   }[];
 };
 

@@ -147,6 +147,14 @@ export default function QuestionEditor({
             })
           )
           .nonempty({ message: "Please add at least 1 method" }),
+        answers: z
+          .array(
+            z.object({
+              answerContent: z.string().min(1, { message: "Cannot be empty" }),
+              isCorrect: z.boolean(),
+            })
+          )
+          .optional(),
       })
     ),
   });
@@ -372,20 +380,22 @@ export default function QuestionEditor({
               sx={{ flex: 1 }}
               {...form.getInputProps(`variables.${index}.unit`)}
             />
-            {form.values.variables[index]?.isFinalAnswer ? (
-              <NumberInput
-                label="Decimal Places"
-                sx={{ flex: 1 }}
-                required={form.values.variables[index]?.isFinalAnswer}
-                {...form.getInputProps(`variables.${index}.decimalPlaces`)}
-              />
-            ) : (
+            {!form.values.variables[index]?.isFinalAnswer ? (
               <TextInput
                 label="Default"
                 sx={{ flex: 1 }}
                 required={!form.values.variables[index]?.isFinalAnswer}
                 {...form.getInputProps(`variables.${index}.default`)}
               />
+            ) : (
+              questionType === "dynamic" && (
+                <NumberInput
+                  label="Decimal Places"
+                  sx={{ flex: 1 }}
+                  required={form.values.variables[index]?.isFinalAnswer}
+                  {...form.getInputProps(`variables.${index}.decimalPlaces`)}
+                />
+              )
             )}
             <Box
               sx={{ flex: 2, alignSelf: "stretch" }}
@@ -492,15 +502,14 @@ export default function QuestionEditor({
               />
             </Flex>
           )}
-          {item.isFinalAnswer && (
-            // TODO: 3 input fields if static question
+          {item.isFinalAnswer && questionType === "dynamic" && (
             <Flex gap="md" align="center">
               <Text fw={500} fz="sm">
                 Min % <span className="text-red-500">*</span>
               </Text>
               <NumberInput
                 sx={{ flex: 1 }}
-                required={item.randomize}
+                required={item.isFinalAnswer}
                 precision={CustomMath.getDecimalPlaces(
                   form.values.variables[index]?.min ?? 0
                 )}
@@ -512,7 +521,7 @@ export default function QuestionEditor({
               </Text>
               <NumberInput
                 sx={{ flex: 1 }}
-                required={item.randomize}
+                required={item.isFinalAnswer}
                 precision={CustomMath.getDecimalPlaces(
                   form.values.variables[index]?.max ?? 0
                 )}
@@ -524,7 +533,7 @@ export default function QuestionEditor({
               </Text>
               <NumberInput
                 sx={{ flex: 1 }}
-                required={item.randomize}
+                required={item.isFinalAnswer}
                 precision={CustomMath.getDecimalPlaces(
                   form.values.variables[index]?.step ?? 0
                 )}
@@ -659,6 +668,58 @@ export default function QuestionEditor({
     form.insertListItem("hints", {
       key: randomId(),
       hint: "",
+    });
+  };
+
+  const answerFields = form.values.answers?.map((item, index) => (
+    <Draggable key={item.key} index={index} draggableId={item.key}>
+      {(provided) => (
+        <Flex
+          gap="md"
+          align="center"
+          p="md"
+          my="md"
+          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+        >
+          <ActionIcon variant="transparent" {...provided.dragHandleProps}>
+            <IconGripVertical size={18} />
+          </ActionIcon>
+          <Text color="dimmed">#{index + 1}</Text>
+          <Textarea
+            sx={{ flex: 1 }}
+            required
+            {...form.getInputProps(`answers.${index}.answerContent`)}
+          />
+          <Box
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+          >
+            <Latex>{`$$ ${item.answerContent} $$`}</Latex>
+          </Box>
+          <ActionIcon
+            variant="transparent"
+            onClick={() => form.removeListItem("answers", index)}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Flex>
+      )}
+    </Draggable>
+  ));
+
+  const newAnswer = () => {
+    if (!form.values.answers) {
+      form.setValues({
+        answers: [],
+      });
+    }
+    console.log(form.values.answers);
+    form.insertListItem("answers", {
+      key: randomId(),
+      answerContent: "",
+      isCorrect: false,
     });
   };
 
@@ -814,7 +875,21 @@ export default function QuestionEditor({
         fullWidth
         mb="lg"
         value={questionType}
-        onChange={setQuestionType}
+        onChange={(value) => {
+          setQuestionType(value);
+          if (value === "dynamic") {
+            form.values.variationId = 0;
+          } else {
+            form.values.variationId = 1;
+            form.values.variables.map((item, index) => {
+              form.setFieldValue(`variables.${index}.randomize`, false);
+              form.setFieldValue(`variables.${index}.min`, undefined);
+              form.setFieldValue(`variables.${index}.max`, undefined);
+              form.setFieldValue(`variables.${index}.step`, undefined);
+              form.setFieldValue(`variables.${index}.decimalPlaces`, undefined);
+            });
+          }
+        }}
         data={[
           {
             label: (
@@ -1072,6 +1147,59 @@ export default function QuestionEditor({
       >
         <IconPlus size={16} />
       </Button>
+
+      {questionType === "static" && (
+        <>
+          <Flex mt="xl" align="center">
+            <Text weight={500} size="sm">
+              Answers
+            </Text>
+            <Tooltip
+              multiline
+              width={350}
+              withArrow
+              label="Hints are optional and can be seen when attempting the question."
+            >
+              <ActionIcon
+                variant="transparent"
+                radius="xl"
+                ml="lg"
+                className="cursor-help"
+              >
+                <IconHelp size={20} color="black" />
+              </ActionIcon>
+            </Tooltip>
+          </Flex>
+          <DragDropContext
+            onDragEnd={({ destination, source }) =>
+              form.reorderListItem("answers", {
+                from: source.index,
+                to: destination?.index ?? source.index,
+              })
+            }
+          >
+            <Droppable droppableId="answers-dnd" direction="vertical">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {answerFields}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+          <Button
+            fullWidth
+            variant="light"
+            color="gray"
+            className="bg-gray-100"
+            radius="sm"
+            mt="md"
+            onClick={() => newAnswer()}
+          >
+            <IconPlus size={16} />
+          </Button>
+        </>
+      )}
 
       <Flex mt="xl" mb="md" align="center">
         <Text weight={500} size="sm">
