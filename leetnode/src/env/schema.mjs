@@ -9,11 +9,17 @@ export const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "production"]),
   DATABASE_URL: z.string(),
   SHADOW_DATABASE_URL: z.string(),
+  CLOUDINARY_URL: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_SECRET: z.string(),
   NEXTAUTH_SECRET: z.string(),
   NEXTAUTH_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  HEROKU_API_KEY: z.string(),
+  GMAIL: z.string(),
+  GMAIL_PASS: z.string(),
+  ACTION_KEY: z.string(),
 });
 
 /**

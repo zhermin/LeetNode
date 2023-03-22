@@ -2,7 +2,6 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Key, useState } from "react";
-import Latex from "react-latex-next";
 
 import { UserQuestionWithAttemptsType } from "@/pages/courses/[courseSlug]";
 import {
@@ -16,6 +15,8 @@ import {
   Title,
 } from "@mantine/core";
 import { Question } from "@prisma/client";
+
+import Latex from "../Latex";
 
 const LoadTopic = ({
   questionDisplay,
@@ -262,7 +263,7 @@ const LoadTopic = ({
                 <Latex>
                   {
                     questionDisplay?.[currentQuestion]?.question
-                      ?.questionContent
+                      ?.questionContent ?? ""
                   }
                 </Latex>
               </Text>

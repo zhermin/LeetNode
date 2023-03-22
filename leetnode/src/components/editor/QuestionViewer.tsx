@@ -1,8 +1,8 @@
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { useRef, useState } from "react";
-import Latex from "react-latex-next";
 
+import { QuestionsInfoType } from "@/pages/admin";
 import { CustomMath } from "@/server/Utils";
 import {
   ActionIcon,
@@ -23,6 +23,7 @@ import { Question, QuestionDifficulty, Topic } from "@prisma/client";
 import { IconEye, IconPencil } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
+import Latex from "../Latex";
 import QuestionEditor from "./QuestionEditor";
 
 export type FormQuestionType = {
@@ -30,9 +31,10 @@ export type FormQuestionType = {
   title: string;
   difficulty: QuestionDifficulty;
   topic: string;
-  variables: FormQuestionJsonType["variables"];
-  methods: FormQuestionJsonType["methods"];
-  hints: FormQuestionJsonType["hints"];
+  variables?: FormQuestionJsonType["variables"];
+  methods?: FormQuestionJsonType["methods"];
+  hints?: FormQuestionJsonType["hints"];
+  baseQuestionId?: number;
   answers?: FormQuestionJsonType["answers"];
 };
 
@@ -55,29 +57,30 @@ export type FormQuestionJsonType = {
     expr: string;
     explanation?: string;
   }[];
-  hints: {
+  hints?: {
     key: string;
     hint: string;
   }[];
   answers?: {
-    key: string;
+    questionId: number;
     optionNumber: number;
     answerContent: string;
     isCorrect: boolean;
+    isLatex: boolean;
   }[];
 };
 
 export default function QuestionViewer() {
   const { classes } = useStyles();
   const editorHtml = useRef("");
-  const currentQuestion = useRef<Question>();
+  const currentQuestion = useRef<QuestionsInfoType[number]>();
   const [questionAddOpened, setQuestionAddOpened] = useState(false);
   const [questionViewOpened, setQuestionViewOpened] = useState(false);
   const [questionEditOpened, setQuestionEditOpened] = useState(false);
 
   const { data: questions } = useQuery({
     queryKey: ["all-questions"],
-    queryFn: () => axios.get("/api/questions"),
+    queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
   });
 
   if (!questions) {
@@ -124,7 +127,7 @@ export default function QuestionViewer() {
               </tr>
             </thead>
             <tbody>
-              {questions.data.map((question: Question & { topic: Topic }) => (
+              {questions.data.map((question: QuestionsInfoType[number]) => (
                 <tr key={question.questionId}>
                   <td>{question.questionId}</td>
                   <td>{question.variationId}</td>
@@ -307,12 +310,6 @@ export default function QuestionViewer() {
                   //   explanation: undefined,
                   // },
                 ],
-                hints: [
-                  {
-                    key: randomId(),
-                    hint: "Recall that the current through a resistor can be found using Ohm's Law.",
-                  },
-                ],
               }}
             />
           </Modal>
@@ -374,12 +371,9 @@ export default function QuestionViewer() {
                   title: currentQuestion.current.questionTitle ?? "",
                   difficulty: currentQuestion.current.questionDifficulty,
                   topic: currentQuestion.current.topicSlug,
-                  ...((currentQuestion.current
-                    .questionData as FormQuestionJsonType) ?? {
-                    variables: [],
-                    methods: [],
-                    hints: [],
-                  }),
+                  answers: currentQuestion.current.answers,
+                  ...(currentQuestion.current
+                    .questionData as FormQuestionJsonType),
                 }}
               />
             </Modal>

@@ -11,7 +11,6 @@ import {
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
-import Latex from "react-latex-next";
 
 import {
   AttemptsInfoType,
@@ -54,6 +53,8 @@ import {
   IconX,
   IconZoomQuestion,
 } from "@tabler/icons";
+
+import Latex from "../Latex";
 
 ChartJS.register(
   CategoryScale,

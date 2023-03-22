@@ -11,7 +11,7 @@ import QuestionHistory from "@/components/course/QuestionHistory";
 import ResultsPage from "@/components/course/ResultsPage";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
-import MarkdownLatex from "@/components/MarkdownLatex";
+import MarkdownLatex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
 import { prisma } from "@/server/db/client";
 import {

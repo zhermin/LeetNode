@@ -5,7 +5,7 @@ import { Document, Page } from "react-pdf";
 import QuestionViewer from "@/components/editor/QuestionViewer";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
-import MarkdownLatex from "@/components/MarkdownLatex";
+import MarkdownLatex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
 import {
   AppShell,

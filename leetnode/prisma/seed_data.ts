@@ -364,7 +364,10 @@ export const Courses: CourseWithTopics = [
   },
 ];
 
-export const Questions: Omit<Question, "questionTitle" | "questionData" | "lastModified">[] = [
+export const Questions: Omit<
+  Question,
+  "questionTitle" | "questionData" | "lastModified"
+>[] = [
   {
     questionId: 1,
     variationId: 1,
@@ -463,7 +466,7 @@ export const Questions: Omit<Question, "questionTitle" | "questionData" | "lastM
   },
 ];
 
-export const Answers: Answer[] = [
+export const Answers: Omit<Answer, "isLatex">[] = [
   {
     questionId: 1,
     optionNumber: 1,

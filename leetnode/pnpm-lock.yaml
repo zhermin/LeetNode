@@ -52,7 +52,6 @@ specifiers:
   react-chartjs-2: ^5.2.0
   react-dom: 18.2.0
   react-hot-toast: ^2.4.0
-  react-latex-next: ^2.2.0
   react-markdown: ^8.0.4
   react-pdf: ^5.7.2
   react-quill: ^2.0.0
@@ -100,7 +99,6 @@ dependencies:
   react-chartjs-2: 5.2.0_t5yjg6ab35jnsudnh2qdighszm
   react-dom: 18.2.0_react@18.2.0
   react-hot-toast: 2.4.0_owo25xnefcwdq3zjgtohz6dbju
-  react-latex-next: 2.2.0_v2m5e27vhdewzwhryxwfaorcca
   react-markdown: 8.0.4_kzbn2opkn2327fwg5yzwzya5o4
   react-pdf: 5.7.2_3oqdcq6yqotxvvkr4prlr3uqsu
   react-quill: 2.0.0_biqbaboplfbrettd7655fr4n2y
@@ -3739,7 +3737,7 @@ packages:
   /jsonfile/4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: false
     optional: true
 
@@ -4971,20 +4969,6 @@ packages:
 
   /react-is/18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
-    dev: false
-
-  /react-latex-next/2.2.0_v2m5e27vhdewzwhryxwfaorcca:
-    resolution: {integrity: sha512-tQqIuC+OQBgiEYQObDZeHugVy+gtiWdLnAb3hWbo4jlchLF8FR0tIAErtJz7t4VA2VO03rRr8LwSZVTGu0cCxg==}
-    engines: {node: '>=8', npm: '>=5'}
-    peerDependencies:
-      prop-types: ^15.5.4
-      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      katex: 0.13.24
-      prop-types: 15.8.1
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
     dev: false
 
   /react-markdown/8.0.4_kzbn2opkn2327fwg5yzwzya5o4:

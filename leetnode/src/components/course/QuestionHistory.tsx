@@ -2,7 +2,6 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import Latex from "react-latex-next";
 
 import {
   Badge,
@@ -26,6 +25,7 @@ import {
 } from "@prisma/client";
 import { IconCheck, IconX } from "@tabler/icons";
 
+import Latex from "../Latex";
 import { QuestionDifficultyBadge } from "../misc/Badges";
 
 type AttemptsInterface = Attempt & {

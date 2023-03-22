@@ -222,6 +222,7 @@ model Answer {
   optionNumber  Int
   answerContent String    @db.VarChar(500)
   isCorrect     Boolean
+  isLatex       Boolean   @default(false)
   question      Question  @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
   attempts      Attempt[]
 

@@ -9,9 +9,9 @@ import {
   useState,
 } from "react";
 import toast from "react-hot-toast";
-import Latex from "react-latex-next";
 import { z } from "zod";
 
+import { QuestionsInfoType } from "@/pages/admin";
 import { CustomMath } from "@/server/Utils";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
@@ -44,14 +44,18 @@ import {
   Level,
   Question,
   QuestionDifficulty,
+  Topic,
 } from "@prisma/client";
 import {
+  IconAlertTriangle,
   IconBulb,
+  IconCheck,
   IconChecks,
   IconCode,
   IconDice3,
   IconGripVertical,
   IconHelp,
+  IconMathFunction,
   IconMountain,
   IconPlus,
   IconRefresh,
@@ -60,6 +64,7 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
+import Latex from "../Latex";
 import { CourseTypeBadge } from "../misc/Badges";
 import { FormQuestionType } from "./QuestionViewer";
 
@@ -67,6 +72,13 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,
   loading: () => <p>Loading Editor...</p>,
 });
+
+type CourseNamesType = {
+  type: CourseType;
+  topics: Topic[];
+  courseName: string;
+  courseLevel: Level;
+}[];
 
 export default function QuestionEditor({
   setQuestionAddOpened,
@@ -81,11 +93,11 @@ export default function QuestionEditor({
   questionId?: number;
   initialValues: FormQuestionType;
 }) {
-  const [questionType, setQuestionType] = useState(
+  const [questionType, setQuestionType] = useState<"dynamic" | "static">(
     initialValues.variationId === 0 ? "dynamic" : "static"
   );
   const [rawDataOpened, setRawDataOpened] = useState(false);
-  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseNamesType>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const form = useForm({
@@ -127,7 +139,8 @@ export default function QuestionEditor({
               step: z.number().optional(),
             })
           )
-          .nonempty({ message: "Please add at least 1 variable" }),
+          .nonempty({ message: "Please add at least 1 variable" })
+          .or(z.literal(undefined)),
         methods: z
           .array(
             z.object({
@@ -146,15 +159,32 @@ export default function QuestionEditor({
                 .or(z.literal(undefined)),
             })
           )
-          .nonempty({ message: "Please add at least 1 method" }),
+          .nonempty({ message: "Please add at least 1 method" })
+          .or(z.literal(undefined)),
         answers: z
           .array(
             z.object({
-              answerContent: z.string().min(1, { message: "Cannot be empty" }),
+              answerContent: z
+                .string()
+                .min(1, { message: "Cannot be empty" })
+                .max(500, { message: "Answer is too long" }),
               isCorrect: z.boolean(),
             })
           )
-          .optional(),
+          .length(2, {
+            message:
+              "Please add at least 2 possible options for static questions",
+          })
+          .refine(
+            (answers) => {
+              const correctAnswers = answers.filter(
+                (answer) => answer.isCorrect
+              );
+              return correctAnswers.length >= 1;
+            },
+            { message: "Please have at least 1 correct answer" }
+          )
+          .or(z.literal(undefined)),
       })
     ),
   });
@@ -163,49 +193,112 @@ export default function QuestionEditor({
   const [finalAnsPreview, setFinalAnsPreview] = useState(
     "\\text{Refresh to View Final Answers}"
   );
+  const invalidMessage = "\\text{Invalid Variables or Methods}";
   const handlePreviewChange = (toRandomize: boolean) => {
     form.clearErrors();
-    // TODO: Handle static questions
+    form.validate();
 
-    // Replace all curly and square brackets with parentheses and remove all backslashes
+    // Trim whitespaces from start/end of variable names
+    form.values.variables?.map((variable) => {
+      variable.name = variable.name.trim();
+    });
+
+    // If static question, skip evaluation and return early
+    if (questionType === "static") {
+      if (!form.values.variables || form.values.variables.length == 0) {
+        setPreview("\\text{No variables specified}");
+        toast(
+          "No variables specified. Just make sure they are part of the question content when you are building static questions.",
+          {
+            duration: 5000,
+            className: "border border-solid border-amber-500",
+            icon: "⚠️",
+          }
+        );
+      } else {
+        setPreview(
+          form.values.variables
+            .filter((item) => !item.isFinalAnswer)
+            .map((item) => {
+              return `${item.name} ${
+                item.unit ? "~(" + item.unit + ")" : ""
+              } &= ${item.default}`;
+            })
+            .join("\\\\")
+        );
+        toast.success("Preview Updated!");
+      }
+      return;
+    }
+
+    // For dynamic questions, ensure variables and methods are defined
+    if (
+      !form.values.variables ||
+      !form.values.methods ||
+      form.values.variables.length === 0 ||
+      form.values.methods.length === 0
+    ) {
+      setPreview(invalidMessage);
+      setFinalAnsPreview(invalidMessage);
+      toast.error(
+        "Please add at least 1 variable and 1 method for dynamic questions",
+        {
+          duration: 5000,
+          className: "border border-solid border-red-500",
+        }
+      );
+      return;
+    }
+
+    // Replace curly and square brackets with parentheses and remove backslashes
     const clean = (str: string) =>
       str
         .replace(/[\[\{]/g, "(")
         .replace(/[\]\}]/g, ")")
         .replace(/[\\]/g, "");
 
-    // Trim whitespace from the variable names
-    form.values.variables.map((variable) => {
-      variable.name = variable.name.trim();
-    });
-
     // Sort and randomize variables and evalutate default values
-    const rawVariables: {
-      [key: string]: number;
-    } = form.values.variables
-      .sort((a, b) => {
-        if (!a.name || !b.name) return 0;
-        if (a.isFinalAnswer) return 1;
-        if (b.isFinalAnswer) return -1;
-        return a.name.localeCompare(b.name);
-      })
-      .reduce((obj, item) => {
-        const itemName = item.encoded;
-        if (toRandomize && item.randomize) {
+    let rawVariables: { [key: string]: number };
+    try {
+      rawVariables = form.values.variables
+        .sort((a, b) => {
+          if (!a.name || !b.name) return 0;
+          if (a.isFinalAnswer) return 1;
+          if (b.isFinalAnswer) return -1;
+          return a.name.localeCompare(b.name);
+        })
+        .reduce((obj, item) => {
+          const itemName = item.encoded;
+          if (toRandomize && item.randomize) {
+            return {
+              ...obj,
+              [itemName]: CustomMath.random(
+                Number(item.min),
+                Number(item.max),
+                Number(item.decimalPlaces)
+              ),
+            };
+          }
           return {
             ...obj,
-            [itemName]: CustomMath.random(
-              Number(item.min),
-              Number(item.max),
-              Number(item.decimalPlaces)
-            ),
+            [itemName]: item.default
+              ? evaluate(clean(item.default))
+              : undefined,
           };
+        }, {});
+    } catch (e) {
+      console.log(e);
+      setPreview(invalidMessage);
+      setFinalAnsPreview(invalidMessage);
+      toast.error(
+        "Ensure that Default values are either numbers or valid math expressions for dynamic questions",
+        {
+          duration: 5000,
+          className: "border border-solid border-red-500",
         }
-        return {
-          ...obj,
-          [itemName]: item.default ? evaluate(clean(item.default)) : undefined,
-        };
-      }, {});
+      );
+      return;
+    }
     evaluate("ln(x) = log(x)", rawVariables);
 
     // Copy all variables and encode them to ensure the expression is valid
@@ -219,7 +312,7 @@ export default function QuestionEditor({
     };
 
     // Evaluate all methods after encoding and cleaning them
-    const invalidMessage = "\\text{Invalid Variables or Methods}";
+    console.log("[Encoded Math Expressions]");
     for (const [index, method] of form.values.methods.entries()) {
       try {
         const [lhs, rhs] = method.expr.split("=").map((s) => s.trim());
@@ -270,7 +363,7 @@ export default function QuestionEditor({
     // Display the variables and final answers in LaTeX
     try {
       if (form.values.variables.length == 0) {
-        setPreview(invalidMessage);
+        setPreview("\\text{No variables specified}");
         throw new Error("No variables specified");
       }
       setPreview(
@@ -287,7 +380,7 @@ export default function QuestionEditor({
           .join("\\\\")
       );
 
-      const finalAnswers = form.values.variables.filter(
+      const finalAnswers = form.values.variables?.filter(
         (item) => item.isFinalAnswer
       );
       if (finalAnswers.length == 0) {
@@ -298,7 +391,7 @@ export default function QuestionEditor({
         finalAnswers
           .map((finalAnswer) => {
             if (!finalAnswer.name || finalAnswer.decimalPlaces === undefined)
-              return "\\text{Invalid Variable}";
+              return "\\text{Invalid Final Answers}";
 
             const finalValue = CustomMath.round(
               Number(rawVariables[finalAnswer.encoded]),
@@ -352,10 +445,9 @@ export default function QuestionEditor({
     } else {
       toast.success("Preview Updated!");
     }
-    form.validate();
   };
 
-  const varFields = form.values.variables.map((item, index) => (
+  const varFields = form.values.variables?.map((item, index) => (
     <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Stack
@@ -369,45 +461,7 @@ export default function QuestionEditor({
             <ActionIcon variant="transparent" {...provided.dragHandleProps}>
               <IconGripVertical size={18} />
             </ActionIcon>
-            <TextInput
-              label="Name"
-              required
-              sx={{ flex: 1 }}
-              {...form.getInputProps(`variables.${index}.name`)}
-            />
-            <TextInput
-              label="Unit"
-              sx={{ flex: 1 }}
-              {...form.getInputProps(`variables.${index}.unit`)}
-            />
-            {!form.values.variables[index]?.isFinalAnswer ? (
-              <TextInput
-                label="Default"
-                sx={{ flex: 1 }}
-                required={!form.values.variables[index]?.isFinalAnswer}
-                {...form.getInputProps(`variables.${index}.default`)}
-              />
-            ) : (
-              questionType === "dynamic" && (
-                <NumberInput
-                  label="Decimal Places"
-                  sx={{ flex: 1 }}
-                  required={form.values.variables[index]?.isFinalAnswer}
-                  {...form.getInputProps(`variables.${index}.decimalPlaces`)}
-                />
-              )
-            )}
-            <Box
-              sx={{ flex: 2, alignSelf: "stretch" }}
-              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-            >
-              <Latex>{`$$ ${item.name ?? ""}${
-                item.unit ? "~(" + item.unit + ")" : ""
-              }${
-                item.default !== undefined ? "=" + item.default : ""
-              }$$`}</Latex>
-            </Box>
-            <Stack align="center" spacing="xs">
+            <Stack align="center" spacing="xs" ml={-10}>
               <Tooltip label="Set Final Answer" withArrow>
                 <ActionIcon
                   variant="default"
@@ -437,28 +491,77 @@ export default function QuestionEditor({
                     );
                   }}
                 >
-                  <IconChecks size={16} />
+                  <IconChecks
+                    size={16}
+                    className={item.isFinalAnswer ? "stroke-red-600" : ""}
+                  />
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label="Randomize" withArrow>
-                <ActionIcon
-                  variant="default"
-                  radius="xl"
-                  disabled={item.isFinalAnswer}
-                  className={
-                    item.randomize ? "border border-green-600 bg-green-50" : ""
-                  }
-                  onClick={() => {
-                    form.setFieldValue(
-                      `variables.${index}.randomize`,
-                      !item.randomize
-                    );
-                  }}
-                >
-                  <IconDice3 size={16} />
-                </ActionIcon>
-              </Tooltip>
+              {questionType === "dynamic" && (
+                <Tooltip label="Randomize" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    disabled={item.isFinalAnswer}
+                    className={
+                      item.randomize
+                        ? "border border-fuchsia-600 bg-fuchsia-50"
+                        : ""
+                    }
+                    onClick={() => {
+                      form.setFieldValue(
+                        `variables.${index}.randomize`,
+                        !item.randomize
+                      );
+                    }}
+                  >
+                    <IconDice3
+                      size={16}
+                      className={item.randomize ? "stroke-fuchsia-600" : ""}
+                    />
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Stack>
+            <TextInput
+              label="Name"
+              required
+              sx={{ flex: 1 }}
+              {...form.getInputProps(`variables.${index}.name`)}
+            />
+            <TextInput
+              label="Unit"
+              sx={{ flex: 1 }}
+              {...form.getInputProps(`variables.${index}.unit`)}
+            />
+            {form.values.variables &&
+              (!form.values.variables[index]?.isFinalAnswer ? (
+                <TextInput
+                  label="Default"
+                  sx={{ flex: 1 }}
+                  required={!form.values.variables[index]?.isFinalAnswer}
+                  {...form.getInputProps(`variables.${index}.default`)}
+                />
+              ) : (
+                questionType === "dynamic" && (
+                  <NumberInput
+                    label="Decimal Places"
+                    sx={{ flex: 1 }}
+                    required={form.values.variables[index]?.isFinalAnswer}
+                    {...form.getInputProps(`variables.${index}.decimalPlaces`)}
+                  />
+                )
+              ))}
+            <Box
+              sx={{ flex: 2, alignSelf: "stretch" }}
+              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+            >
+              <Latex>{`$$ ${item.name ?? ""}${
+                item.unit ? "~(" + item.unit + ")" : ""
+              }${
+                item.default !== undefined ? "=" + item.default : ""
+              }$$`}</Latex>
+            </Box>
             <ActionIcon
               variant="transparent"
               onClick={() => form.removeListItem("variables", index)}
@@ -466,7 +569,7 @@ export default function QuestionEditor({
               <IconTrash size={16} />
             </ActionIcon>
           </Flex>
-          {item.randomize && !item.isFinalAnswer && (
+          {form.values.variables && item.randomize && !item.isFinalAnswer && (
             <Flex gap="md" align="center">
               <Text fw={500} fz="sm">
                 Min <span className="text-red-500">*</span>
@@ -502,46 +605,51 @@ export default function QuestionEditor({
               />
             </Flex>
           )}
-          {item.isFinalAnswer && questionType === "dynamic" && (
-            <Flex gap="md" align="center">
-              <Text fw={500} fz="sm">
-                Min % <span className="text-red-500">*</span>
-              </Text>
-              <NumberInput
-                sx={{ flex: 1 }}
-                required={item.isFinalAnswer}
-                precision={CustomMath.getDecimalPlaces(
-                  form.values.variables[index]?.min ?? 0
-                )}
-                hideControls
-                {...form.getInputProps(`variables.${index}.min`)}
-              />
-              <Text fw={500} fz="sm">
-                Max % <span className="text-red-500">*</span>
-              </Text>
-              <NumberInput
-                sx={{ flex: 1 }}
-                required={item.isFinalAnswer}
-                precision={CustomMath.getDecimalPlaces(
-                  form.values.variables[index]?.max ?? 0
-                )}
-                hideControls
-                {...form.getInputProps(`variables.${index}.max`)}
-              />
-              <Text fw={500} fz="sm">
-                % Step Size <span className="text-red-500">*</span>
-              </Text>
-              <NumberInput
-                sx={{ flex: 1 }}
-                required={item.isFinalAnswer}
-                precision={CustomMath.getDecimalPlaces(
-                  form.values.variables[index]?.step ?? 0
-                )}
-                hideControls
-                {...form.getInputProps(`variables.${index}.step`)}
-              />
-            </Flex>
-          )}
+          {form.values.variables &&
+            item.isFinalAnswer &&
+            questionType === "dynamic" && (
+              <Flex gap="md" align="center">
+                <Text fw={500} fz="sm">
+                  Min % <span className="text-red-500">*</span>
+                </Text>
+                <NumberInput
+                  sx={{ flex: 1 }}
+                  required={item.isFinalAnswer}
+                  precision={CustomMath.getDecimalPlaces(
+                    form.values.variables[index]?.min ?? 0
+                  )}
+                  hideControls
+                  placeholder="-90"
+                  {...form.getInputProps(`variables.${index}.min`)}
+                />
+                <Text fw={500} fz="sm">
+                  Max % <span className="text-red-500">*</span>
+                </Text>
+                <NumberInput
+                  sx={{ flex: 1 }}
+                  required={item.isFinalAnswer}
+                  precision={CustomMath.getDecimalPlaces(
+                    form.values.variables[index]?.max ?? 0
+                  )}
+                  hideControls
+                  placeholder="90"
+                  {...form.getInputProps(`variables.${index}.max`)}
+                />
+                <Text fw={500} fz="sm">
+                  % Step Size <span className="text-red-500">*</span>
+                </Text>
+                <NumberInput
+                  sx={{ flex: 1 }}
+                  required={item.isFinalAnswer}
+                  precision={CustomMath.getDecimalPlaces(
+                    form.values.variables[index]?.step ?? 0
+                  )}
+                  hideControls
+                  placeholder="20"
+                  {...form.getInputProps(`variables.${index}.step`)}
+                />
+              </Flex>
+            )}
         </Stack>
       )}
     </Draggable>
@@ -557,7 +665,7 @@ export default function QuestionEditor({
     });
   };
 
-  const methodFields = form.values.methods.map((item, index) => (
+  const methodFields = form.values.methods?.map((item, index) => (
     <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Stack
@@ -588,7 +696,7 @@ export default function QuestionEditor({
                 radius="xl"
                 className={
                   item.explanation !== undefined
-                    ? "border border-green-600 bg-green-50"
+                    ? "border border-amber-600 bg-amber-50"
                     : ""
                 }
                 onClick={() => {
@@ -598,7 +706,12 @@ export default function QuestionEditor({
                   );
                 }}
               >
-                <IconBulb size={16} />
+                <IconBulb
+                  size={16}
+                  className={
+                    item.explanation !== undefined ? "stroke-yellow-600" : ""
+                  }
+                />
               </ActionIcon>
             </Tooltip>
             <ActionIcon
@@ -632,7 +745,7 @@ export default function QuestionEditor({
     });
   };
 
-  const hintFields = form.values.hints.map((item, index) => (
+  const hintFields = form.values.hints?.map((item, index) => (
     <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Flex
@@ -665,6 +778,7 @@ export default function QuestionEditor({
   ));
 
   const newHint = () => {
+    form.values.hints = form.values.hints ?? [];
     form.insertListItem("hints", {
       key: randomId(),
       hint: "",
@@ -672,7 +786,11 @@ export default function QuestionEditor({
   };
 
   const answerFields = form.values.answers?.map((item, index) => (
-    <Draggable key={item.key} index={index} draggableId={item.key}>
+    <Draggable
+      key={[item.questionId, item.optionNumber].toString()}
+      index={index}
+      draggableId={[item.questionId, item.optionNumber].toString()}
+    >
       {(provided) => (
         <Flex
           gap="md"
@@ -686,6 +804,48 @@ export default function QuestionEditor({
           <ActionIcon variant="transparent" {...provided.dragHandleProps}>
             <IconGripVertical size={18} />
           </ActionIcon>
+          <Stack align="center" spacing="xs" ml={-10}>
+            <Tooltip label="Set Correct Answer" withArrow>
+              <ActionIcon
+                variant="default"
+                radius="xl"
+                className={
+                  item.isCorrect
+                    ? "border border-green-600 bg-green-50"
+                    : "border border-red-600 bg-red-50"
+                }
+                onClick={() => {
+                  form.setFieldValue(
+                    `answers.${index}.isCorrect`,
+                    !item.isCorrect
+                  );
+                }}
+              >
+                {item.isCorrect ? (
+                  <IconCheck size={16} className="stroke-green-600" />
+                ) : (
+                  <IconX size={16} className="stroke-red-600" />
+                )}
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Display as LaTeX" withArrow>
+              <ActionIcon
+                variant="default"
+                radius="xl"
+                className={
+                  item.isLatex ? "border border-sky-600 bg-sky-50" : ""
+                }
+                onClick={() => {
+                  form.setFieldValue(`answers.${index}.isLatex`, !item.isLatex);
+                }}
+              >
+                <IconMathFunction
+                  size={16}
+                  className={item.isLatex ? "stroke-sky-600" : ""}
+                />
+              </ActionIcon>
+            </Tooltip>
+          </Stack>
           <Text color="dimmed">#{index + 1}</Text>
           <Textarea
             sx={{ flex: 1 }}
@@ -694,9 +854,13 @@ export default function QuestionEditor({
           />
           <Box
             sx={{ flex: 1, alignSelf: "stretch" }}
-            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 p-2"
           >
-            <Latex>{`$$ ${item.answerContent} $$`}</Latex>
+            {item.isLatex ? (
+              <Latex>{`$$ ${item.answerContent} $$`}</Latex>
+            ) : (
+              <Text>{item.answerContent}</Text>
+            )}
           </Box>
           <ActionIcon
             variant="transparent"
@@ -710,31 +874,33 @@ export default function QuestionEditor({
   ));
 
   const newAnswer = () => {
-    if (!form.values.answers) {
-      form.setValues({
-        answers: [],
-      });
-    }
-    console.log(form.values.answers);
+    form.values.answers = form.values.answers ?? [];
     form.insertListItem("answers", {
-      key: randomId(),
       answerContent: "",
       isCorrect: false,
+      isLatex: false,
     });
   };
 
-  const [{ data: courses }, { data: topics }] = useQueries({
-    queries: [
-      {
-        queryKey: ["all-course-names"],
-        queryFn: () => axios.get("/api/forum/getAllCourseNames"),
-      },
-      {
-        queryKey: ["all-topic-names"],
-        queryFn: () => axios.get("/api/forum/getAllTopicNames"),
-      },
-    ],
-  });
+  const [{ data: questions }, { data: courses }, { data: topics }] = useQueries(
+    {
+      queries: [
+        {
+          queryKey: ["all-questions"],
+          queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
+        },
+        {
+          queryKey: ["all-course-names"],
+          queryFn: () =>
+            axios.get<CourseNamesType>("/api/forum/getAllCourseNames"),
+        },
+        {
+          queryKey: ["all-topic-names"],
+          queryFn: () => axios.get<Topic[]>("/api/forum/getAllTopicNames"),
+        },
+      ],
+    }
+  );
 
   const useCRUDQuestion = () => {
     const queryClient = useQueryClient();
@@ -791,6 +957,7 @@ export default function QuestionEditor({
   } = useCRUDQuestion();
 
   const handleCoursesBadges = (value: string | null) => {
+    if (!courses) return;
     setFilteredCourses(
       courses?.data.filter(
         (course: {
@@ -808,7 +975,7 @@ export default function QuestionEditor({
     }
   }, [courses]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!courses || !topics) {
+  if (!questions || !courses || !topics) {
     return (
       <Center className="h-screen">
         <Loader />
@@ -875,13 +1042,14 @@ export default function QuestionEditor({
         fullWidth
         mb="lg"
         value={questionType}
-        onChange={(value) => {
+        onChange={(value: "dynamic" | "static") => {
           setQuestionType(value);
           if (value === "dynamic") {
             form.values.variationId = 0;
+            form.values.baseQuestionId = undefined;
           } else {
             form.values.variationId = 1;
-            form.values.variables.map((item, index) => {
+            form.values.variables?.map((_item, index) => {
               form.setFieldValue(`variables.${index}.randomize`, false);
               form.setFieldValue(`variables.${index}.min`, undefined);
               form.setFieldValue(`variables.${index}.max`, undefined);
@@ -927,15 +1095,44 @@ export default function QuestionEditor({
           },
         ]}
       />
+
+      {questionType === "static" && (
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            clearable
+            searchable
+            placeholder="Leave Empty If New Question Variation"
+            label="Base Question"
+            mb="lg"
+            data={questions?.data
+              .filter((question) => question.variationId === 1)
+              .map((question) => {
+                return {
+                  label: question.questionTitle ?? `#${question.questionId}`,
+                  value: question.questionId as unknown as string,
+                };
+              })}
+            {...form.getInputProps("baseQuestionId")}
+          />
+          <NumberInput
+            label="Variation ID"
+            disabled
+            mb="lg"
+            {...form.getInputProps("variationId")}
+          />
+        </SimpleGrid>
+      )}
+
       <TextInput
         label="Title"
         placeholder="Short Description"
         name="title"
+        mb="lg"
         required
         {...form.getInputProps("title")}
       />
 
-      <SimpleGrid cols={2} mt="lg" breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         <Select
           data={[
             {
@@ -963,7 +1160,7 @@ export default function QuestionEditor({
           label="Key Topic"
           required
           onChange={(value) => {
-            form.setFieldValue("topic", value ?? "");
+            form.values.topic = value ?? "";
             handleCoursesBadges(value);
           }}
           error={form.errors.topic}
@@ -973,7 +1170,7 @@ export default function QuestionEditor({
       <Text weight={500} size="sm" mb="xs" mt="lg">
         Topics in Courses
       </Text>
-      <Flex gap="sm" wrap="wrap">
+      <Flex gap="sm" wrap="wrap" mb="lg">
         {filteredCourses && filteredCourses.length > 0 ? (
           filteredCourses.map(
             (course: {
@@ -987,7 +1184,7 @@ export default function QuestionEditor({
         )}
       </Flex>
 
-      <Text weight={500} size="sm" mb="xs" mt="lg">
+      <Text weight={500} size="sm" mb="xs">
         Question <span className="text-red-500">*</span>
       </Text>
       <Editor
@@ -1056,7 +1253,7 @@ export default function QuestionEditor({
         </Text>
         <Tooltip
           multiline
-          width={350}
+          width={360}
           withArrow
           label="Expressions must have 1 and only 1 equal sign in the middle. The result from the left side will be assigned to the variable on the right side. Explanations will only be shown after attempting the question."
         >
@@ -1105,7 +1302,7 @@ export default function QuestionEditor({
         </Text>
         <Tooltip
           multiline
-          width={350}
+          width={240}
           withArrow
           label="Hints are optional and can be seen when attempting the question."
         >
@@ -1148,17 +1345,68 @@ export default function QuestionEditor({
         <IconPlus size={16} />
       </Button>
 
+      <Flex mt="xl" mb="md" align="center">
+        <Text weight={500} size="sm">
+          Preview
+        </Text>
+        <Tooltip label="Refresh" withArrow>
+          <ActionIcon
+            variant="default"
+            radius="xl"
+            ml="lg"
+            onClick={() => handlePreviewChange(false)}
+          >
+            <IconRefresh size={16} />
+          </ActionIcon>
+        </Tooltip>
+        {questionType === "dynamic" && (
+          <Tooltip label="Randomize" withArrow>
+            <ActionIcon
+              variant="default"
+              radius="xl"
+              ml="sm"
+              onClick={() => handlePreviewChange(true)}
+            >
+              <IconDice3 size={16} />
+            </ActionIcon>
+          </Tooltip>
+        )}
+        <Tooltip label="Raw Data" withArrow>
+          <ActionIcon
+            variant="default"
+            radius="xl"
+            ml="sm"
+            onClick={() => setRawDataOpened(true)}
+          >
+            <IconCode size={16} />
+          </ActionIcon>
+        </Tooltip>
+      </Flex>
+      <Box
+        sx={{ flex: 1, alignSelf: "stretch" }}
+        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+      >
+        <Latex className="pt-4 pb-1">{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
+      </Box>
+      {questionType === "dynamic" && (
+        <Box
+          mt="md"
+          sx={{ flex: 1, alignSelf: "stretch" }}
+          className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+        >
+          <Latex className="pt-4 pb-1">{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
+        </Box>
+      )}
+
       {questionType === "static" && (
         <>
           <Flex mt="xl" align="center">
             <Text weight={500} size="sm">
-              Answers
+              Answers <span className="text-red-500">*</span>
             </Text>
             <Tooltip
-              multiline
-              width={350}
               withArrow
-              label="Hints are optional and can be seen when attempting the question."
+              label="At least 2 options are necessary (eg. True / False). The order doesn't matter."
             >
               <ActionIcon
                 variant="transparent"
@@ -1201,57 +1449,6 @@ export default function QuestionEditor({
         </>
       )}
 
-      <Flex mt="xl" mb="md" align="center">
-        <Text weight={500} size="sm">
-          Preview
-        </Text>
-        <Tooltip label="Refresh" withArrow>
-          <ActionIcon
-            variant="default"
-            radius="xl"
-            ml="lg"
-            onClick={() => handlePreviewChange(false)}
-          >
-            <IconRefresh size={16} />
-          </ActionIcon>
-        </Tooltip>
-        {questionType === "dynamic" && (
-          <Tooltip label="Randomize" withArrow>
-            <ActionIcon
-              variant="default"
-              radius="xl"
-              ml="sm"
-              onClick={() => handlePreviewChange(true)}
-            >
-              <IconDice3 size={16} />
-            </ActionIcon>
-          </Tooltip>
-        )}
-        <Tooltip label="Raw Data" withArrow>
-          <ActionIcon
-            variant="default"
-            radius="xl"
-            ml="sm"
-            onClick={() => setRawDataOpened(true)}
-          >
-            <IconCode size={16} />
-          </ActionIcon>
-        </Tooltip>
-      </Flex>
-      <Box
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-      >
-        <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
-      </Box>
-      <Box
-        mt="md"
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-      >
-        <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
-      </Box>
-
       <Divider mt="xl" variant="dashed" />
       <Button
         fullWidth
@@ -1265,6 +1462,27 @@ export default function QuestionEditor({
             ? addQuestionStatus === "loading"
             : editQuestionStatus === "loading"
         }
+        onClick={() => {
+          if (questionType === "static") {
+            if (!form.values.answers) {
+              form.setFieldValue("answers", []);
+            }
+            if (form.values.variables && form.values.variables.length === 0) {
+              form.setFieldValue("variables", undefined);
+            }
+            if (form.values.methods && form.values.methods.length === 0) {
+              form.setFieldValue("methods", undefined);
+            }
+          } else {
+            form.setFieldValue("answers", undefined);
+            if (!form.values.variables) {
+              form.setFieldValue("variables", []);
+            }
+            if (!form.values.methods) {
+              form.setFieldValue("methods", []);
+            }
+          }
+        }}
       >
         {!questionId ? "Create Question" : "Save Question"}
       </Button>

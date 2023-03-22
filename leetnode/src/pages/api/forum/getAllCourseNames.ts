@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const posts = await prisma.course.findMany({
+  const courseNames = await prisma.course.findMany({
     select: {
       courseName: true,
       courseLevel: true,
@@ -15,5 +15,5 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(posts);
+  res.status(200).json(courseNames);
 }
