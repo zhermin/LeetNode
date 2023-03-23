@@ -44,19 +44,20 @@ export default async function handler(
       },
     });
 
-    // Get all topics
-    const topics = await prisma.topic.findMany();
+    // // Get all topics
+    // const topics = await prisma.topic.findMany();
 
-    // Initialize the default mastery for all topics for the user
-    const defaultMasteries = topics.map((topic) => {
-      return {
-        userId: session?.user?.id as string,
-        topicSlug: topic.topicSlug,
-      };
-    });
-    await prisma.mastery.createMany({
-      data: defaultMasteries,
-    });
+    // // Initialize the default mastery for all topics for the user
+    // const defaultMasteries = topics.map((topic) => {
+    //   return {
+    //     userId: session?.user?.id as string,
+    //     topicSlug: topic.topicSlug,
+    //   };
+    // });
+    // console.log(defaultMasteries);
+    // await prisma.mastery.createMany({
+    //   data: defaultMasteries,
+    // });
 
     // Initialize the userCourseQuestions for all courses for the user
     const courses = (await prisma.course.findMany()).filter(

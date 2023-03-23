@@ -10,6 +10,9 @@ export default async function handler(
     include: {
       topics: true,
       userCourseQuestions: true,
+      posts: true,
+      attempts: true,
+      courseMedia: true,
     },
   });
 

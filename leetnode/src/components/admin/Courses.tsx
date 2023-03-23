@@ -12,6 +12,7 @@ import {
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Latex from "react-latex-next";
 
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/pages/admin";
 import {
   Accordion,
+  ActionIcon,
   Box,
   Button,
   Card,
@@ -41,16 +43,22 @@ import {
   Text,
   ThemeIcon,
   Title,
+  TypographyStylesProvider,
+  useMantineTheme,
 } from "@mantine/core";
+import { Dropzone } from "@mantine/dropzone";
+import { CourseMedia } from "@prisma/client";
 import {
   IconApps,
   IconCheck,
+  IconPhoto,
   IconPlus,
   IconPresentation,
   IconReportSearch,
   IconSquareNumber1,
   IconSquareNumber2,
   IconSquareNumber3,
+  IconUpload,
   IconUsers,
   IconVideo,
   IconX,
@@ -90,6 +98,8 @@ const Courses = ({
 }) => {
   const { classes } = useStyles();
   const queryClient = useQueryClient();
+  const theme = useMantineTheme();
+  const data: string[] = [];
 
   const getCourses = useGetFetchQuery(["all-courses"]) as FetchData;
   const courses: CoursesInfoType[] = getCourses?.data;
@@ -99,20 +109,40 @@ const Courses = ({
   const [openedEdit, setOpenedEdit] = useState(false);
   const [details, setDetails] = useState<CoursesInfoType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
-  const [editValue, setEditValue] = useState("overview");
-  const [message, setMessage] = useState<{
-    overview: string;
-    slides: string;
-    video: string;
-    additional: string;
-  }>({ overview: "", slides: "", video: "", additional: "" });
-  // const [overviewMessage, setOverviewMessage] = useState("");
-  // const [slidesMessage, setSlidesMessage] = useState("");
-  // const [videoMessage, setVideoMessage] = useState("");
-  // const [additionalMessage, setAdditionalMessage] = useState("");
+  details?.topics.map((topic) => {
+    data.push(topic.topicName);
+  });
+  console.log(details);
 
-  console.log(message);
-  // console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
+  const thisCourse: CoursesInfoType | undefined = courses.find(
+    (course) => course.courseSlug === details?.courseSlug
+  );
+
+  const [overviewMessage, setOverviewMessage] = useState(
+    thisCourse?.courseDescription as string
+  );
+  const [slidesMessage, setSlidesMessage] = useState(
+    (thisCourse?.courseMedia as CourseMedia[]) ?? []
+  );
+  const [videoMessage, setVideoMessage] = useState(thisCourse?.video as string);
+  const [additionalMessage, setAdditionalMessage] = useState(
+    thisCourse?.markdown as string
+  );
+
+  useEffect(() => {
+    setOverviewMessage(details?.courseDescription as string);
+    setSlidesMessage((details?.courseMedia as CourseMedia[]) ?? []);
+    setVideoMessage(details?.video as string);
+    setAdditionalMessage(details?.markdown as string);
+  }, [
+    details?.courseDescription,
+    details?.markdown,
+    details?.courseMedia,
+    details?.video,
+  ]);
+
+  // console.log(message);
+  console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
   let filteredCourses;
   {
     sort === "All Courses"
@@ -120,39 +150,10 @@ const Courses = ({
       : (filteredCourses = courses.filter((c) => c.courseLevel === sort));
   }
   console.log(filteredCourses);
-  const data: string[] = [];
-
-  details?.topics.map((topic) => {
-    data.push(topic.topicName);
-  });
-
-  useEffect(() => {
-    if (details !== undefined && details !== null) {
-      setMessage({
-        overview: JSON.parse(JSON.stringify(details?.learnTabJson)).overview,
-        slides: JSON.parse(JSON.stringify(details?.learnTabJson)).slides,
-        video: JSON.parse(JSON.stringify(details?.learnTabJson)).video,
-        additional: JSON.parse(JSON.stringify(details?.learnTabJson))
-          .additional,
-      });
-      // setOverviewMessage(
-      //   JSON.parse(JSON.stringify(details?.learnTabJson)).overview
-      // );
-      // setSlidesMessage(
-      //   JSON.parse(JSON.stringify(details?.learnTabJson)).slides
-      // );
-      // setVideoMessage(JSON.parse(JSON.stringify(details?.learnTabJson)).video);
-      // setAdditionalMessage(
-      //   JSON.parse(JSON.stringify(details?.learnTabJson)).additional
-      // );
-    }
-  }, [details]);
 
   const filteredTopics = details?.topics.filter((topic) =>
     multiValue.includes(topic.topicName)
   );
-
-  console.log(editValue);
 
   const avgMasteryLevels: {
     topicName: string;
@@ -194,7 +195,7 @@ const Courses = ({
       courseSlug: string;
       content: {
         overview: string;
-        slides: string;
+        slides: CourseMedia[];
         video: string;
         additional: string;
       };
@@ -212,6 +213,61 @@ const Courses = ({
       // setMessage("");
     },
   });
+
+  const handleFileUpload = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "course_slides_media");
+      try {
+        const res = await axios.post(
+          "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
+          formData
+        );
+        const updatedSlidesMessage = [...slidesMessage];
+        updatedSlidesMessage.push({
+          publicId: res.data.public_id,
+          courseSlug: details?.courseSlug as string,
+          courseMediaURL: res.data.secure_url,
+          mediaName: res.data.original_filename,
+        });
+        setSlidesMessage(updatedSlidesMessage);
+        toast.success("Successfully Added!");
+        return res.data.secure_url;
+      } catch (error) {
+        console.log(error);
+        toast.error(error instanceof Error ? error.message : "Unknown Error");
+        throw error;
+      }
+    });
+    const uploadedUrls = await Promise.all(uploadPromises);
+    return uploadedUrls;
+  };
+
+  const handleDeleteFile = async (media: CourseMedia) => {
+    // Delete the record from slidesMessage state
+    const updatedSlidesMessage = slidesMessage.filter(
+      (slide) => slide.publicId !== media.publicId
+    );
+    setSlidesMessage(updatedSlidesMessage);
+    // Unsigned presets does not allow delete after 10 mins
+    // try {
+    //   const response = await axios.post(
+    //     `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_NAME}/delete_by_token`,
+    //     {
+    //       public_ids: [media.publicId],
+    //       api_key: process.env.CLOUDINARY_API_KEY,
+    //       api_secret: process.env.CLOUDINARY_SECRET,
+    //     }
+    //   );
+    //   console.log(response.data);
+    //   toast.success("Successfully Deleted!");
+    // } catch (error) {
+    //   console.log(error);
+    //   toast.error(error instanceof Error ? error.message : "Unknown Error");
+    //   // throw error;
+    // }
+  };
 
   return (
     <>
@@ -520,14 +576,10 @@ const Courses = ({
         opened={openedEdit}
         onClose={() => {
           setOpenedEdit(false);
-          setMessage({
-            overview: JSON.parse(JSON.stringify(details?.learnTabJson))
-              .overview,
-            slides: JSON.parse(JSON.stringify(details?.learnTabJson)).slides,
-            video: JSON.parse(JSON.stringify(details?.learnTabJson)).video,
-            additional: JSON.parse(JSON.stringify(details?.learnTabJson))
-              .additional,
-          });
+          setOverviewMessage(thisCourse?.courseDescription as string);
+          setSlidesMessage(thisCourse?.courseMedia as CourseMedia[]);
+          setVideoMessage(thisCourse?.video as string);
+          setAdditionalMessage(thisCourse?.markdown as string);
         }}
         title={details?.courseName}
         size="70%"
@@ -537,7 +589,7 @@ const Courses = ({
             [Note]: Please use the Questions tab for question generation
           </Text>
         </Center>
-        <Center>
+        {/* <Center>
           <SegmentedControl
             value={editValue}
             onChange={setEditValue}
@@ -563,7 +615,7 @@ const Courses = ({
                 ),
               },
               {
-                value: "videos",
+                value: "video",
                 label: (
                   <Center>
                     <IconVideo size={16} />
@@ -582,83 +634,222 @@ const Courses = ({
               },
             ]}
           />
-        </Center>
+        </Center> */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             editMutation.mutate({
               courseSlug: details?.courseSlug as string,
-              content: message,
+              content: {
+                overview: overviewMessage,
+                slides: slidesMessage,
+                video: videoMessage,
+                additional: additionalMessage,
+              },
             });
             setOpenedEdit(false);
           }}
         >
-          {editValue === "overview" ? (
+          <>
+            <Group m={10} pt={"md"}>
+              <IconApps size={19} />
+              <Title order={4}>Edit Overview</Title>
+            </Group>
             <Editor
-              upload_preset="forum_media"
-              value={message.overview}
-              onChange={(newValue) =>
-                setMessage((prevState) => ({
-                  ...prevState,
-                  overview: newValue,
-                }))
-              }
+              upload_preset="course_overview_media"
+              value={overviewMessage}
+              onChange={setOverviewMessage}
             />
-          ) : editValue === "slides" ? (
-            <Editor
-              upload_preset="forum_media"
-              value={message.slides}
-              onChange={(newValue) =>
-                setMessage((prevState) => ({
-                  ...prevState,
-                  slides: newValue,
-                }))
-              }
-            />
-          ) : editValue === "videos" ? (
-            <Editor
-              upload_preset="forum_media"
-              value={message.video}
-              onChange={(newValue) =>
-                setMessage((prevState) => ({
-                  ...prevState,
-                  video: newValue,
-                }))
-              }
-            />
-          ) : (
-            <Editor
-              upload_preset="forum_media"
-              value={message.additional}
-              onChange={(newValue) =>
-                setMessage((prevState) => ({
-                  ...prevState,
-                  additional: newValue,
-                }))
-              }
-            />
-          )}
-
-          <Group position="center" mt="xl">
-            <Button type="submit">Confirm Changes</Button>
-            <Button
-              onClick={() => {
-                setOpenedEdit(false);
-                setMessage({
-                  overview: JSON.parse(JSON.stringify(details?.learnTabJson))
-                    .overview,
-                  slides: JSON.parse(JSON.stringify(details?.learnTabJson))
-                    .slides,
-                  video: JSON.parse(JSON.stringify(details?.learnTabJson))
-                    .video,
-                  additional: JSON.parse(JSON.stringify(details?.learnTabJson))
-                    .additional,
-                });
+            <Box>
+              <Group m={10} pt={"md"}>
+                <IconPresentation size={19} />
+                <Title order={4}>Edit Lecture Slides</Title>
+              </Group>
+            </Box>
+            {/* <Editor
+            upload_preset="course_slides_media"
+            value={slidesMessage}
+            onChange={setSlidesMessage}
+          /> */}
+            <Box>
+              <>
+                {slidesMessage.map((media) => {
+                  return (
+                    <Group key={media.courseMediaURL}>
+                      <Text>{media.mediaName}</Text>
+                      <ActionIcon onClick={() => handleDeleteFile(media)}>
+                        <IconX size={18} />
+                      </ActionIcon>
+                    </Group>
+                  );
+                })}
+              </>
+            </Box>
+            <Dropzone
+              onDrop={(files) => {
+                handleFileUpload(files);
               }}
+              onReject={(files) => console.log("rejected files", files)}
+              maxSize={10000000}
+              accept={{ "application/pdf": [".pdf"] }}
             >
-              Cancel
-            </Button>
-          </Group>
+              <Group
+                position="center"
+                spacing="xl"
+                style={{ minHeight: 220, pointerEvents: "none" }}
+              >
+                <Dropzone.Accept>
+                  <IconUpload
+                    size={50}
+                    stroke={1.5}
+                    color={
+                      theme.colors[theme.primaryColor]?.[
+                        theme.colorScheme === "dark" ? 4 : 6
+                      ]
+                    }
+                  />
+                </Dropzone.Accept>
+                <Dropzone.Reject>
+                  <IconX
+                    size={50}
+                    stroke={1.5}
+                    color={
+                      theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+                    }
+                  />
+                </Dropzone.Reject>
+                <Dropzone.Idle>
+                  <IconPhoto size={50} stroke={1.5} />
+                </Dropzone.Idle>
+
+                <div>
+                  <Text size="xl" inline>
+                    Drag images here or click to select files
+                  </Text>
+                  <Text size="sm" color="dimmed" inline mt={7}>
+                    Attach as many files as you like, each file should not
+                    exceed 5mb
+                  </Text>
+                </div>
+              </Group>
+            </Dropzone>
+            <Group m={10} pt={"md"}>
+              <IconVideo size={19} />
+              <Title order={4}>Edit Lecture Video</Title>
+            </Group>
+            <Editor
+              upload_preset="course_video_media"
+              value={videoMessage}
+              onChange={setVideoMessage}
+            />
+            <Group m={10} pt={"md"}>
+              <IconReportSearch size={19} />
+              <Title order={4}>Edit Additional Resources</Title>
+            </Group>
+            <Editor
+              upload_preset="course_additional_media"
+              value={additionalMessage}
+              onChange={setAdditionalMessage}
+            />
+            {/* {editValue === "overview" ? (
+            
+              <Editor
+                upload_preset="forum_media"
+                value={message.overview}
+                onChange={(value) =>
+                  setMessage({ ...message, overview: value })
+                }
+              />
+            
+          ) : editValue === "slides" ? (
+            <>
+              <Editor
+                upload_preset="forum_media"
+                value={message.slides}
+                onChange={(value) => setMessage({ ...message, slides: value })}
+              />
+              <Dropzone
+                onDrop={(files) => console.log("accepted files", files)}
+                onReject={(files) => console.log("rejected files", files)}
+                maxSize={3 * 1024 ** 2}
+                accept={{ "application/pdf": [".pdf"] }}
+              >
+                <Group
+                  position="center"
+                  spacing="xl"
+                  style={{ minHeight: 220, pointerEvents: "none" }}
+                >
+                  <Dropzone.Accept>
+                    <IconUpload
+                      size={50}
+                      stroke={1.5}
+                      color={
+                        theme.colors[theme.primaryColor]?.[
+                          theme.colorScheme === "dark" ? 4 : 6
+                        ]
+                      }
+                    />
+                  </Dropzone.Accept>
+                  <Dropzone.Reject>
+                    <IconX
+                      size={50}
+                      stroke={1.5}
+                      color={
+                        theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+                      }
+                    />
+                  </Dropzone.Reject>
+                  <Dropzone.Idle>
+                    <IconPhoto size={50} stroke={1.5} />
+                  </Dropzone.Idle>
+
+                  <div>
+                    <Text size="xl" inline>
+                      Drag images here or click to select files
+                    </Text>
+                    <Text size="sm" color="dimmed" inline mt={7}>
+                      Attach as many files as you like, each file should not
+                      exceed 5mb
+                    </Text>
+                  </div>
+                </Group>
+              </Dropzone>
+            </>
+          ) : editValue === "video" ? (
+            <>
+              <Editor
+                upload_preset="forum_media"
+                value={message.video}
+                onChange={(value) => setMessage({ ...message, video: value })}
+              />
+            </>
+          ) : (
+            <>
+              <Editor
+                upload_preset="forum_media"
+                value={message.additional}
+                onChange={(value) =>
+                  setMessage({ ...message, additional: value })
+                }
+              />
+            </>
+          )} */}
+
+            <Group position="center" mt="xl">
+              <Button type="submit">Confirm Changes</Button>
+              <Button
+                onClick={() => {
+                  setOpenedEdit(false);
+                  setOverviewMessage(details?.courseDescription as string);
+                  setSlidesMessage(details?.courseMedia as CourseMedia[]);
+                  setVideoMessage(details?.video as string);
+                  setAdditionalMessage(details?.markdown as string);
+                }}
+              >
+                Cancel
+              </Button>
+            </Group>
+          </>
         </form>
       </Modal>
       <Container size="lg" py="xl">
@@ -746,9 +937,20 @@ const Courses = ({
               >
                 {c.courseName}
               </Text>
-              <Text size="sm" color="dimmed" mt="sm" mb={70}>
-                {c.courseDescription}
-              </Text>
+              <TypographyStylesProvider
+                sx={(theme) => ({
+                  color: theme.colors.gray[6],
+                  fontSize: theme.fontSizes.sm,
+                })}
+                mt="sm"
+                mb={70}
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: c.courseDescription,
+                  }}
+                />
+              </TypographyStylesProvider>
               <Group className={classes.action}>
                 <Button
                   radius="xl"

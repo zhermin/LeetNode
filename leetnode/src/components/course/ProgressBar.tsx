@@ -2,15 +2,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-import {
-  Box,
-  Center,
-  Group,
-  Loader,
-  Progress,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Box, Center, Group, Loader, Progress, Title } from "@mantine/core";
 
 const ProgressBar = ({
   topicSlug,
@@ -55,11 +47,8 @@ const ProgressBar = ({
         <Box pt="xl">
           <Group position="apart">
             <Title order={3}>{topicName}</Title>
-            {roundedResults !== 0 ? (
-              <Title order={2}>{roundedResults}%</Title>
-            ) : (
-              <Text fw={600}>Do a question on the topic first!</Text>
-            )}
+
+            <Title order={2}>{roundedResults}%</Title>
           </Group>
           <Progress
             mt="md"

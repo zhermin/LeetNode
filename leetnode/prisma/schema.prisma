@@ -111,7 +111,7 @@ enum CourseType {
 model Course {
   courseSlug          String               @id
   courseName          String               @unique
-  courseDescription   String
+  courseDescription   String               @db.Text
   courseImage         String
   courseLevel         Level
   type                CourseType
@@ -119,14 +119,24 @@ model Course {
   moduleTitle         String
   week                Int?
   studio              Int?
-  slide               String?              @db.VarChar(500)
-  video               String?              @db.VarChar(500)
-  markdown            String?              @db.VarChar(10000)
-  learnTabJson        Json                 @default("{\"video\":\"\",\"slides\":\"\",\"overview\":\"\",\"additional\":\"\"}")
+  video               String?              @db.Text
+  markdown            String?              @db.Text
   topics              Topic[]
   userCourseQuestions UserCourseQuestion[]
   posts               Post[]
   attempts            Attempt[]
+  courseMedia         CourseMedia[]
+}
+
+model CourseMedia {
+  publicId       String
+  courseSlug     String
+  courseMediaURL String   @db.VarChar(500)
+  mediaName      String
+  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+
+  @@id([publicId])
+  @@index([courseSlug])
 }
 
 model UserCourseQuestion {
