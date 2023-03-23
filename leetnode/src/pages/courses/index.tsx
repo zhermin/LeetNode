@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -129,7 +128,6 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 
 export default function CoursesPage() {
   const { classes } = useStyles();
-  const session = useSession();
 
   const { data: courses } = useQuery<allCoursesType>(
     ["all-courses"],
@@ -156,9 +154,9 @@ export default function CoursesPage() {
   const handleInitUser = async (
     course: Course & { topics: { topicSlug: string }[] }
   ) => {
+    console.log(course.topics);
     try {
       const { data } = await axios.post(`/api/pybkt/init`, {
-        id: session?.data?.user?.id,
         topics: course.topics,
       });
       console.log(data);
@@ -211,7 +209,10 @@ export default function CoursesPage() {
                     image: course.courseImage,
                     title: course.courseName,
                     category: `QUIZ`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -247,7 +248,10 @@ export default function CoursesPage() {
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -282,7 +286,10 @@ export default function CoursesPage() {
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -318,7 +325,10 @@ export default function CoursesPage() {
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />

@@ -6,25 +6,53 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const json: {
-    overview: string;
-    slides: string;
-    video: string;
-    additional: string;
-  } = {
-    overview: req.body.content.overview,
-    slides: req.body.content.slides,
-    video: req.body.content.video,
-    additional: req.body.content.additional,
-  };
-  const comments = await prisma.course.update({
+  const courseMediaUpdate = await prisma.course.update({
     where: {
       courseSlug: req.body.courseSlug,
     },
     data: {
-      learnTabJson: json,
+      courseDescription: req.body.content.overview,
+      video: req.body.content.video,
+      markdown: req.body.content.additional,
     },
   });
 
-  res.status(200).json(comments);
+  const existingMedia = await prisma.courseMedia.findMany({
+    where: {
+      courseSlug: req.body.courseSlug,
+    },
+  });
+
+  // Find media that need to be created
+  const mediaToCreate = req.body.content.slides.filter(
+    (slide: { publicId: string }) =>
+      !existingMedia.some((media) => media.publicId === slide.publicId)
+  );
+  for (const media of mediaToCreate) {
+    await prisma.courseMedia.create({
+      data: {
+        publicId: media.publicId,
+        courseSlug: media.courseSlug,
+        courseMediaURL: media.courseMediaURL,
+        mediaName: media.mediaName,
+      },
+    });
+  }
+
+  // Find media that need to be deleted
+  const mediaToDelete = existingMedia.filter(
+    (media) =>
+      !req.body.content.slides.some(
+        (slide: { publicId: string }) => slide.publicId === media.publicId
+      )
+  );
+  for (const media of mediaToDelete) {
+    await prisma.courseMedia.delete({
+      where: {
+        publicId: media.publicId,
+      },
+    });
+  }
+
+  res.status(200).json(courseMediaUpdate);
 }

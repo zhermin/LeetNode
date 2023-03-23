@@ -1,12 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { authOptions } from "../auth/[...nextauth]";
 import { unstable_getServerSession } from "next-auth";
+
 import { prisma } from "@/server/db/client";
+
+import { authOptions } from "../auth/[...nextauth]";
 
 export async function getCourseDetails(courseSlug: string) {
   return await prisma.course.findFirst({
     where: {
       courseSlug: courseSlug,
+    },
+    include: {
+      courseMedia: true,
     },
   });
 }

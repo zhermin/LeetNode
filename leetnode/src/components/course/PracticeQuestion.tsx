@@ -103,7 +103,7 @@ const LoadTopic = ({
         try {
           //update mastery of student
           const res = await axios.post(
-            "/api/questions///updateAttempts",
+            "/api/questions/updateAttempts",
             request
           ); //use data destructuring to get data from the promise object
           return res.data;
@@ -143,7 +143,6 @@ const LoadTopic = ({
           ?.topicSlug as string,
       });
       console.log(checkAttempts);
-      console.log(checkAttempts);
 
       //check condition
       //correctness count last 5 to check if all wrong (need to refine)
@@ -162,7 +161,6 @@ const LoadTopic = ({
       }
 
       const updateMastery = async (request: {
-        id: string;
         topicSlug: string;
         correct: boolean;
         optionNumber: number;
@@ -186,7 +184,6 @@ const LoadTopic = ({
 
       //should output mastery skill
       const updated = await updateMastery({
-        id: session?.data?.user?.id as string,
         topicSlug: questionDisplay?.[currentQuestion]?.question
           ?.topicSlug as string,
         correct: attempt[currentQuestion]?.isCorrect as boolean,

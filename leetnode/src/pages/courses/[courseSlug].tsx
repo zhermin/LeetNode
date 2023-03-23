@@ -33,11 +33,13 @@ import {
   Text,
   Title,
   Tooltip,
+  TypographyStylesProvider,
 } from "@mantine/core";
 import {
   Answer,
   Attempt,
   Course,
+  CourseMedia,
   Mastery,
   Question,
   QuestionMedia,
@@ -51,6 +53,8 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconChartLine,
+  IconChevronsLeft,
+  IconChevronsRight,
   IconMessages,
   IconPresentation,
   IconReportSearch,
@@ -85,7 +89,7 @@ export type UserQuestionWithAttemptsType =
 export default function CourseMainPage({
   courseDetails,
 }: {
-  courseDetails: Course;
+  courseDetails: Course & { courseMedia: CourseMedia[] };
 }) {
   // Mantine
   const { theme, classes, cx } = useStyles();
@@ -134,7 +138,7 @@ export default function CourseMainPage({
   const tabs = {
     learn: [
       { label: "Overview", icon: IconApps },
-      courseDetails.slide
+      courseDetails.courseMedia.length > 0
         ? { label: "Lecture Slides", icon: IconPresentation }
         : null,
       courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
@@ -253,57 +257,101 @@ export default function CourseMainPage({
         {active === "Overview" ? (
           <Container>
             <Title>{courseDetails.courseName}</Title>
-            <Text size="xl">{courseDetails.courseDescription}</Text>
+            <TypographyStylesProvider
+              sx={(theme) => ({
+                fontSize: theme.fontSizes.xl,
+              })}
+            >
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: courseDetails.courseDescription,
+                }}
+              />
+            </TypographyStylesProvider>
           </Container>
         ) : active === "Lecture Slides" ? (
-          <Stack align="center">
-            <Document
-              file={courseDetails.slide}
-              onLoadSuccess={onDocumentLoadSuccess}
-            >
-              <Page pageNumber={pageNumber} />
-            </Document>
-            <Group>
-              <Button
-                onClick={() => {
-                  if (pageNumber > 1) {
-                    setPageNumber(pageNumber - 1);
-                  }
-                }}
-                variant="light"
+          courseDetails.courseMedia.map((media) => (
+            <Stack align="center" key={media.publicId}>
+              <Title>{media.mediaName}</Title>
+              <Document
+                file={media.courseMediaURL}
+                onLoadSuccess={onDocumentLoadSuccess}
               >
-                <IconArrowLeft stroke={1.5} />
-              </Button>
-              <Tooltip label="Jump to Page 1" withArrow position="bottom">
-                <Button variant="light" onClick={() => setPageNumber(1)}>
-                  Page {pageNumber} of {numPages}
+                <Page pageNumber={pageNumber} />
+              </Document>
+              <Group>
+                <Button
+                  onClick={() => {
+                    if (pageNumber > 1) {
+                      setPageNumber(pageNumber - 1);
+                    }
+                    setPageNumber(1);
+                  }}
+                  variant="light"
+                >
+                  <IconChevronsLeft stroke={1.5} />
                 </Button>
-              </Tooltip>
-              <Button
-                onClick={() => {
-                  if (pageNumber < numPages) {
-                    setPageNumber(pageNumber + 1);
-                  }
-                }}
-                variant="light"
-              >
-                <IconArrowRight stroke={1.5} />
-              </Button>
-            </Group>
-          </Stack>
+                <Button
+                  onClick={() => {
+                    if (pageNumber > 1) {
+                      setPageNumber(pageNumber - 1);
+                    }
+                  }}
+                  variant="light"
+                >
+                  <IconArrowLeft stroke={1.5} />
+                </Button>
+                <Tooltip label="Jump to Page 1" withArrow position="bottom">
+                  <Button variant="light" onClick={() => setPageNumber(1)}>
+                    Page {pageNumber} of {numPages}
+                  </Button>
+                </Tooltip>
+                <Button
+                  onClick={() => {
+                    if (pageNumber < numPages) {
+                      setPageNumber(pageNumber + 1);
+                    }
+                  }}
+                  variant="light"
+                >
+                  <IconArrowRight stroke={1.5} />
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (pageNumber < numPages) {
+                      setPageNumber(pageNumber + 1);
+                    }
+                    setPageNumber(numPages);
+                  }}
+                  variant="light"
+                >
+                  <IconChevronsRight stroke={1.5} />
+                </Button>
+              </Group>
+            </Stack>
+          ))
         ) : active === "Lecture Videos" ? (
-          <Group className="h-[calc(100vh-180px)]">
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${courseDetails.video}?rel=0`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+            <TypographyStylesProvider>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: courseDetails.video as string,
+                }}
+              />
+            </TypographyStylesProvider>
           </Group>
-        ) : active === "Additional Resources" ? (
+        ) : //
+        //  <iframe
+        //   width="100%"
+        //   height="100%"
+        //   src={`https://www.youtube.com/embed/${courseDetails.video}?rel=0`}
+        //   title="YouTube video player"
+        //   frameBorder="0"
+        //   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        //   allowFullScreen
+        // ></iframe>
+
+        active === "Additional Resources" ? (
           <MarkdownLatex>
             {courseDetails.markdown ?? defaultMarkdown}
           </MarkdownLatex>

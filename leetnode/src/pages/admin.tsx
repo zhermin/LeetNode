@@ -28,7 +28,9 @@ import {
   Answer,
   Attempt,
   Course,
+  CourseMedia,
   Mastery,
+  Post,
   Question,
   QuestionMedia,
   QuestionWithAddedTime,
@@ -54,6 +56,9 @@ export type UsersWithMasteriesAndAttemptsType = (User & {
 export type CoursesInfoType = Course & {
   topics: Topic[];
   userCourseQuestions: UserCourseQuestion[];
+  posts: Post[];
+  attempts: Attempt;
+  courseMedia: CourseMedia[];
 };
 
 export type AttemptsInfoType = (Attempt & {
@@ -142,6 +147,8 @@ export default function AdminPage() {
       </Center>
     );
   }
+
+  console.log(usersData);
 
   return (
     <>
