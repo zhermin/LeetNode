@@ -86,12 +86,10 @@ interface FetchData {
 }
 
 const Courses = ({
-  // courses,
   users,
   attempts,
   questions,
 }: {
-  // courses: CoursesInfoType[];
   users: UsersWithMasteriesAndAttemptsType;
   attempts: AttemptsInfoType;
   questions: QuestionsInfoType;
@@ -209,8 +207,7 @@ const Courses = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["all-courses"]);
-      // queryClient.invalidateQueries(["post-comments"]);
-      // setMessage("");
+      toast.success("Updated Successfully!")
     },
   });
 
@@ -589,52 +586,6 @@ const Courses = ({
             [Note]: Please use the Questions tab for question generation
           </Text>
         </Center>
-        {/* <Center>
-          <SegmentedControl
-            value={editValue}
-            onChange={setEditValue}
-            my={"xl"}
-            radius={20}
-            data={[
-              {
-                value: "overview",
-                label: (
-                  <Center>
-                    <IconApps size={16} />
-                    <Box ml={10}>Overview</Box>
-                  </Center>
-                ),
-              },
-              {
-                value: "slides",
-                label: (
-                  <Center>
-                    <IconPresentation size={16} />
-                    <Box ml={10}>Lecture Slides</Box>
-                  </Center>
-                ),
-              },
-              {
-                value: "video",
-                label: (
-                  <Center>
-                    <IconVideo size={16} />
-                    <Box ml={10}>Lecture Videos</Box>
-                  </Center>
-                ),
-              },
-              {
-                value: "additional",
-                label: (
-                  <Center>
-                    <IconReportSearch size={16} />
-                    <Box ml={10}>Additional Resources</Box>
-                  </Center>
-                ),
-              },
-            ]}
-          />
-        </Center> */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -666,12 +617,7 @@ const Courses = ({
                 <Title order={4}>Edit Lecture Slides</Title>
               </Group>
             </Box>
-            {/* <Editor
-            upload_preset="course_slides_media"
-            value={slidesMessage}
-            onChange={setSlidesMessage}
-          /> */}
-            <Box>
+                        <Box>
               <>
                 {slidesMessage.map((media) => {
                   return (
@@ -751,90 +697,6 @@ const Courses = ({
               value={additionalMessage}
               onChange={setAdditionalMessage}
             />
-            {/* {editValue === "overview" ? (
-            
-              <Editor
-                upload_preset="forum_media"
-                value={message.overview}
-                onChange={(value) =>
-                  setMessage({ ...message, overview: value })
-                }
-              />
-            
-          ) : editValue === "slides" ? (
-            <>
-              <Editor
-                upload_preset="forum_media"
-                value={message.slides}
-                onChange={(value) => setMessage({ ...message, slides: value })}
-              />
-              <Dropzone
-                onDrop={(files) => console.log("accepted files", files)}
-                onReject={(files) => console.log("rejected files", files)}
-                maxSize={3 * 1024 ** 2}
-                accept={{ "application/pdf": [".pdf"] }}
-              >
-                <Group
-                  position="center"
-                  spacing="xl"
-                  style={{ minHeight: 220, pointerEvents: "none" }}
-                >
-                  <Dropzone.Accept>
-                    <IconUpload
-                      size={50}
-                      stroke={1.5}
-                      color={
-                        theme.colors[theme.primaryColor]?.[
-                          theme.colorScheme === "dark" ? 4 : 6
-                        ]
-                      }
-                    />
-                  </Dropzone.Accept>
-                  <Dropzone.Reject>
-                    <IconX
-                      size={50}
-                      stroke={1.5}
-                      color={
-                        theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-                      }
-                    />
-                  </Dropzone.Reject>
-                  <Dropzone.Idle>
-                    <IconPhoto size={50} stroke={1.5} />
-                  </Dropzone.Idle>
-
-                  <div>
-                    <Text size="xl" inline>
-                      Drag images here or click to select files
-                    </Text>
-                    <Text size="sm" color="dimmed" inline mt={7}>
-                      Attach as many files as you like, each file should not
-                      exceed 5mb
-                    </Text>
-                  </div>
-                </Group>
-              </Dropzone>
-            </>
-          ) : editValue === "video" ? (
-            <>
-              <Editor
-                upload_preset="forum_media"
-                value={message.video}
-                onChange={(value) => setMessage({ ...message, video: value })}
-              />
-            </>
-          ) : (
-            <>
-              <Editor
-                upload_preset="forum_media"
-                value={message.additional}
-                onChange={(value) =>
-                  setMessage({ ...message, additional: value })
-                }
-              />
-            </>
-          )} */}
-
             <Group position="center" mt="xl">
               <Button type="submit">Confirm Changes</Button>
               <Button
