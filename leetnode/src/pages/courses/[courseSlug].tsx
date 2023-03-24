@@ -143,7 +143,6 @@ export default function CourseMainPage({
         : null,
       courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
       { label: "Additional Resources", icon: IconReportSearch },
-      // { label: "Course Discussion", icon: IconMessages },
     ],
     practice: [
       { label: "Question", icon: IconZoomQuestion },
@@ -170,6 +169,37 @@ export default function CourseMainPage({
         </a>
       )
   );
+
+  // Check if courseDetails.video/courseDetails.markdown contains an iframe tag
+  const hasIframeVideo = /<iframe.*?>/.test(courseDetails.video as string);
+
+  // If it does, add the width and height attributes to the iframe tag
+  const modifiedVideo = hasIframeVideo
+    ? courseDetails.video?.replace(
+        /<iframe(.*?)>/g,
+        '<iframe$1 width="100%" height="100%">'
+      )
+    : courseDetails.video;
+
+  console.log(modifiedVideo);
+
+  const parts = courseDetails.markdown?.split(/(<iframe.*?>.*?<\/iframe>)/g);
+
+  console.log(parts);
+  const output = parts?.map((part) => {
+    console.log(part);
+    if (part.match(/<iframe.*?>.*?<\/iframe>/)) {
+      const iframe = part
+        .replace(/(width=".*?")|(height=".*?")/g, "")
+        .replace(/<iframe/, '<iframe width="100%" height="100%"');
+      console.log(iframe);
+      return { type: "video", string: iframe };
+    } else {
+      return { type: "markdown", string: part };
+    }
+  });
+
+  console.log(output);
 
   return (
     <AppShell
@@ -239,10 +269,6 @@ export default function CourseMainPage({
               <IconMessages className={classes.linkIcon} stroke={1.5} />
               <span>Course Discussion</span>
             </a>
-            {/* <Box className={classes.link}>
-              <IconMessages className={classes.linkIcon} stroke={1.5} />
-              <span>Course Discussion</span>
-            </Box> */}
             <Link href="/courses" passHref>
               <Box className={classes.link}>
                 <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
@@ -263,6 +289,7 @@ export default function CourseMainPage({
               })}
             >
               <div
+                style={{ width: "100%", height: "100%" }}
                 dangerouslySetInnerHTML={{
                   __html: courseDetails.courseDescription,
                 }}
@@ -272,7 +299,7 @@ export default function CourseMainPage({
         ) : active === "Lecture Slides" ? (
           courseDetails.courseMedia.map((media) => (
             <Stack align="center" key={media.publicId}>
-              <Title>{media.mediaName}</Title>
+              <Title my={"md"}>{media.mediaName}</Title>
               <Document
                 file={media.courseMediaURL}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -332,29 +359,25 @@ export default function CourseMainPage({
           ))
         ) : active === "Lecture Videos" ? (
           <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
-            <TypographyStylesProvider>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: courseDetails.video as string,
-                }}
-              />
-            </TypographyStylesProvider>
+            <div
+              style={{ width: "100%", height: "100%" }}
+              dangerouslySetInnerHTML={{ __html: modifiedVideo as string }}
+            />
           </Group>
-        ) : //
-        //  <iframe
-        //   width="100%"
-        //   height="100%"
-        //   src={`https://www.youtube.com/embed/${courseDetails.video}?rel=0`}
-        //   title="YouTube video player"
-        //   frameBorder="0"
-        //   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        //   allowFullScreen
-        // ></iframe>
-
-        active === "Additional Resources" ? (
-          <MarkdownLatex>
-            {courseDetails.markdown ?? defaultMarkdown}
-          </MarkdownLatex>
+        ) : active === "Additional Resources" ? (
+          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+            {output?.map((x) =>
+              x.type === "video" ? (
+                <div
+                  key={x.string}
+                  style={{ width: "100%", height: "100%" }}
+                  dangerouslySetInnerHTML={{ __html: x.string as string }}
+                />
+              ) : (
+                <MarkdownLatex key={x.string}>{x.string}</MarkdownLatex>
+              )
+            )}
+          </Group>
         ) : active === "Course Discussion" ? (
           <CourseDiscussion courseName={courseDetails.courseName} />
         ) : active === "Question" ? (
@@ -488,7 +511,3 @@ const useStyles = createStyles((theme, _params, getRef) => {
     },
   };
 });
-
-const defaultMarkdown = `# Additional Learning Resources by [Khan Academy](https://www.khanacademy.org/)
-
-<div className="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;

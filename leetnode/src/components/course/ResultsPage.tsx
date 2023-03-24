@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 
 import ProgressBar from "@/components/course/ProgressBar";
 import { CourseInfoType } from "@/pages/courses/[courseSlug]";
-import { Center, Loader, Paper, Text, Title } from "@mantine/core";
+import { Center, Group, Loader, Paper, Text, Title } from "@mantine/core";
 import { Attempt, Question, User } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -13,11 +13,7 @@ type AttemptsInterface = Attempt & {
   answer: Question;
 };
 
-const ShowResults = ({
-  course,
-}: {
-  course: CourseInfoType;
-}) => {
+const ShowResults = ({ course }: { course: CourseInfoType }) => {
   const session = useSession();
 
   const { data: attempts } = useQuery<AttemptsInterface[]>(
@@ -47,12 +43,18 @@ const ShowResults = ({
     (user) => user.userId === session?.data?.user?.id && user.isCorrect
   );
   const score = arrScore.length;
-  
+
   return (
     <Paper p="xl" radius="md" withBorder>
       <Title order={1} mt="md" align="center">
-        Score: {score}/{attempts.length}
+        Your Mastery Levels for this Course
       </Title>
+      <Center>
+        <Group>
+          <Text size="xl">Total Correct Attempt: {score}</Text>
+          <Text size="xl">Total Attempts: {attempts.length}</Text>
+        </Group>
+      </Center>
       <Text size="xl" mb="xl" align="center">
         Keep practicing to achieve mastery in all topics!
       </Text>
