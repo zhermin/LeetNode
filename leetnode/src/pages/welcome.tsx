@@ -111,7 +111,12 @@ export default function WelcomePage() {
                   "Invalid NUSNET ID"
                 }
               />
-              <Button fullWidth mt="xl" type="submit">
+              <Button
+                fullWidth
+                mt="xl"
+                type="submit"
+                className={classes.control}
+              >
                 Submit
               </Button>
             </Paper>
@@ -134,5 +139,24 @@ const useStyles = createStyles((theme) => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 }));

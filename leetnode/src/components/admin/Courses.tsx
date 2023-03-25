@@ -110,7 +110,6 @@ const Courses = ({
   details?.topics.map((topic) => {
     data.push(topic.topicName);
   });
-  console.log(details);
 
   const thisCourse: CoursesInfoType | undefined = courses.find(
     (course) => course.courseSlug === details?.courseSlug
@@ -207,7 +206,7 @@ const Courses = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["all-courses"]);
-      toast.success("Updated Successfully!")
+      toast.success("Updated Successfully!");
     },
   });
 
@@ -377,7 +376,16 @@ const Courses = ({
                   className={classes.item}
                   value="display-questions"
                 >
-                  <Accordion.Control>Display Questions</Accordion.Control>
+                  <Accordion.Control
+                    sx={(theme) => ({
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[7]
+                          : theme.white,
+                    })}
+                  >
+                    Display Questions
+                  </Accordion.Control>
                   <Accordion.Panel>
                     <Accordion>
                       {questions
@@ -617,7 +625,7 @@ const Courses = ({
                 <Title order={4}>Edit Lecture Slides</Title>
               </Group>
             </Box>
-                        <Box>
+            <Box>
               <>
                 {slidesMessage.map((media) => {
                   return (
@@ -698,8 +706,11 @@ const Courses = ({
               onChange={setAdditionalMessage}
             />
             <Group position="center" mt="xl">
-              <Button type="submit">Confirm Changes</Button>
+              <Button type="submit" className={classes.controlModal}>
+                Confirm Changes
+              </Button>
               <Button
+                className={classes.controlModal}
                 onClick={() => {
                   setOpenedEdit(false);
                   setOverviewMessage(details?.courseDescription as string);
@@ -785,9 +796,25 @@ const Courses = ({
               p="xl"
             >
               {c.courseLevel === "Advanced" ? (
-                <IconSquareNumber3 color="red" />
+                theme.colorScheme === "dark" ? (
+                  <Box sx={(theme) => ({ color: theme.colors.red[8] })}>
+                    <IconSquareNumber3 />
+                  </Box>
+                ) : (
+                  <IconSquareNumber3 color="red" />
+                )
               ) : c.courseLevel === "Foundational" ? (
-                <IconSquareNumber1 color="green" />
+                theme.colorScheme === "dark" ? (
+                  <Box sx={(theme) => ({ color: theme.colors.green[8] })}>
+                    <IconSquareNumber1 />
+                  </Box>
+                ) : (
+                  <IconSquareNumber1 color="green" />
+                )
+              ) : theme.colorScheme === "dark" ? (
+                <Box sx={(theme) => ({ color: theme.colors.orange[8] })}>
+                  <IconSquareNumber2 />
+                </Box>
               ) : (
                 <IconSquareNumber2 color="orange" />
               )}
@@ -821,6 +848,7 @@ const Courses = ({
                     setOpenedEdit(true);
                     setDetails(c);
                   }}
+                  className={classes.controlModal}
                 >
                   Edit
                 </Button>
@@ -831,6 +859,7 @@ const Courses = ({
                     setOpenedDetails(true);
                     setDetails(c);
                   }}
+                  className={classes.controlModal}
                 >
                   Details
                 </Button>
@@ -905,6 +934,25 @@ const useStyles = createStyles((theme) => ({
     "&:hover": {
       backgroundColor: "transparent",
     },
+  },
+
+  controlModal: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 
   image: {

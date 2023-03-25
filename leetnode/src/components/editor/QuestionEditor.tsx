@@ -21,6 +21,7 @@ import {
   Button,
   Center,
   Code,
+  createStyles,
   Divider,
   Flex,
   Group,
@@ -79,6 +80,8 @@ export default function QuestionEditor({
   questionId?: number;
   initialValues: FormQuestionType;
 }) {
+  const { theme } = useStyles();
+
   const [rawDataOpened, setRawDataOpened] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
@@ -795,7 +798,10 @@ export default function QuestionEditor({
             href="https://mathjs.org/docs/expressions/syntax.html#constants-and-variables"
             target="_blank"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -820,12 +826,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newVar()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -844,7 +853,10 @@ export default function QuestionEditor({
             ml="lg"
             className="cursor-help"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -869,12 +881,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newMethod()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -893,7 +908,10 @@ export default function QuestionEditor({
             ml="lg"
             className="cursor-help"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -918,12 +936,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newHint()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" mb="md" align="center">
@@ -961,20 +982,39 @@ export default function QuestionEditor({
           </ActionIcon>
         </Tooltip>
       </Flex>
-      <Box
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-      >
-        <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
-      </Box>
-      <Box
-        mt="md"
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-      >
-        <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
-      </Box>
-
+      {theme.colorScheme === "dark" ? (
+        <>
+          <Box
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="flex items-center justify-center rounded-md border border-solid border-zinc-900 bg-zinc-800"
+          >
+            <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
+          </Box>
+          <Box
+            mt="md"
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="flex items-center justify-center rounded-md border border-solid border-zinc-900 bg-zinc-800"
+          >
+            <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
+          </Box>
+        </>
+      ) : (
+        <>
+          <Box
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+          >
+            <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
+          </Box>
+          <Box
+            mt="md"
+            sx={{ flex: 1, alignSelf: "stretch" }}
+            className="${} flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+          >
+            <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
+          </Box>
+        </>
+      )}
       <Divider mt="xl" variant="dashed" />
       <Button
         fullWidth
@@ -1059,3 +1099,50 @@ export default function QuestionEditor({
     </form>
   );
 }
+
+// const useStyles = createStyles((theme) => ({
+//   box: {
+//     backgroundColor:
+//       theme.colorScheme === "dark"
+//         ? theme.fn.variant({
+//             variant: "light",
+//             color: theme.primaryColor,
+//           }).background
+//         : theme.fn.variant({
+//             variant: "filled",
+//             color: theme.primaryColor,
+//           }).background,
+//     color:
+//       theme.colorScheme === "dark"
+//         ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+//             .color
+//         : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+//             .color,
+//   },
+// }));
+
+const useStyles = createStyles((theme) => ({
+  box: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "border-slate-300",
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: "bg-slate-200",
+          }).background
+        : "lightgrey",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : "bg-slate-200",
+    flex: 1,
+    alignSelf: "stretch",
+  },
+}));

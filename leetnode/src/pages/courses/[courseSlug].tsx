@@ -266,8 +266,10 @@ export default function CourseMainPage({
                 setActive("Course Discussion");
               }}
             >
-              <IconMessages className={classes.linkIcon} stroke={1.5} />
-              <span>Course Discussion</span>
+              <Box className={classes.link} p={0}>
+                <IconMessages className={classes.linkIcon} stroke={1.5} />
+                <span>Course Discussion</span>
+              </Box>
             </a>
             <Link href="/courses" passHref>
               <Box className={classes.link}>
@@ -391,8 +393,6 @@ export default function CourseMainPage({
           <QuestionHistory courseSlug={courseDetails.courseSlug} />
         ) : active === "Mastery" ? (
           <ResultsPage course={course} />
-        ) : active === "Discussion" ? (
-          <div>Discussion (WIP)</div>
         ) : (
           <Text>Error</Text>
         )}
@@ -507,7 +507,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
           ? theme.colors.dark[4]
           : theme.colors.gray[3]
       }`,
-      paddingTop: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
     },
   };
 });
