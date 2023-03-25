@@ -7,6 +7,7 @@ import {
   Avatar,
   Button,
   Center,
+  createStyles,
   FileInput,
   Group,
   TextInput,
@@ -20,6 +21,7 @@ interface AccountProps {
 
 export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
+  const { classes } = useStyles();
 
   const [userName, setUserName] = useState(
     userInfo.nickname ?? (userInfo.name || "")
@@ -122,9 +124,9 @@ export default function Account({ userInfo }: AccountProps) {
   return (
     <>
       <h1 className="text-center">My Account</h1>
-      <hr className="h-px my-4 bg-gray-200 border-0" />
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 mb-6 grid-cols-3">
+        <div className="mb-6 grid grid-cols-3 gap-6">
           <div className="col-span-2">
             <TextInput
               className="mt-4"
@@ -137,7 +139,7 @@ export default function Account({ userInfo }: AccountProps) {
               required
             />
             {/^(\s*\w+\s*){5,}$/.test(userName) ? null : (
-              <p className="text-red-500 text-xs italic">
+              <p className="text-xs italic text-red-500">
                 Nickname must contain at least 5 letters and CANNOT contain
                 symbols
               </p>
@@ -153,12 +155,12 @@ export default function Account({ userInfo }: AccountProps) {
               required
             />
             {/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ? null : (
-              <p className="text-red-500 text-xs italic">
+              <p className="text-xs italic text-red-500">
                 Invalid NUSNETID format (e.g. A0123456X)
               </p>
             )}
           </div>
-          <div className="col-span-1 flex-auto justify-center items-center">
+          <div className="col-span-1 flex-auto items-center justify-center">
             <Center className="mt-3">
               <Avatar
                 size={90}
@@ -177,7 +179,7 @@ export default function Account({ userInfo }: AccountProps) {
               onChange={setFile}
             />
             <p
-              className="mt-1 text-gray-500 text-xs italic"
+              className="mt-1 text-xs italic text-gray-500"
               id="file_input_help"
             >
               * PNG / JPG ONLY
@@ -193,10 +195,17 @@ export default function Account({ userInfo }: AccountProps) {
               !/^(\s*\w+\s*){5,}$/.test(userName)
             }
             loading={updateUserLoading || uploadImageLoading}
+            className={classes.control}
           >
             Confirm
           </Button>
-          <Button variant="white" type="button" size="md" onClick={handleReset}>
+          <Button
+            variant="white"
+            type="button"
+            size="md"
+            onClick={handleReset}
+            className={classes.cancel}
+          >
             Cancel
           </Button>
         </Group>
@@ -204,3 +213,38 @@ export default function Account({ userInfo }: AccountProps) {
     </>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
+  },
+  cancel: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+          }).background
+        : theme.fn.variant({
+            variant: "white",
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light" }).color
+        : theme.fn.variant({ variant: "white" }).color,
+  },
+}));
