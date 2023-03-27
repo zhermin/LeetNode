@@ -1,9 +1,6 @@
 name: Daily Email API
 
 on:
-  push:
-    branches:
-      - dashboard
   schedule:
     - cron: "0 9 * * *" # 5PM SGT
   workflow_dispatch:
@@ -16,5 +13,5 @@ jobs:
       - name: Call API
         run: |
           curl --request GET \
-          --url 'https://leetnode-git-dashboard-zhermin.vercel.app/api/email/sendEmail' \
+          --url 'https://leetnode.vercel.app/api/email/sendEmail' \
           --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'

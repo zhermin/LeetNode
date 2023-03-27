@@ -13,5 +13,5 @@ jobs:
       - name: Call API
         run: |
           curl --request GET \
-          --url https://leetnode-git-dev-zhermin.vercel.app/api/pybkt/cronUpdate \
+          --url 'https://leetnode.vercel.app/api/pybkt/cronUpdate' \
           --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'
