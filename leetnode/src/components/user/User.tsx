@@ -51,12 +51,12 @@ export default function User() {
   } = useQuery(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+    { enabled: !!session?.data?.user?.id }
   );
 
   const links = tabs.map((item) => (

@@ -1,5 +1,6 @@
 import axios from "axios";
 import DOMPurify from "dompurify";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -22,13 +23,17 @@ import {
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-import { Question, QuestionWithAddedTime } from "@prisma/client";
+import { Question, QuestionWithAddedTime, User } from "@prisma/client";
 import { IconBulb } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import VariablesBox from "../editor/VariablesBox";
 import Latex from "../Latex";
 import { QuestionDifficultyBadge } from "../misc/Badges";
+
+interface UserData extends User {
+  attempts: { [timestamp: string]: number };
+}
 
 export type UCQATAnswersType = {
   key: string;
@@ -38,6 +43,7 @@ export type UCQATAnswersType = {
 }[];
 
 export default function PracticeQuestion() {
+  const session = useSession();
   const theme = useMantineTheme();
   const router = useRouter();
   const currentCourseSlug = router.query.courseSlug as string;
@@ -114,6 +120,63 @@ export default function PracticeQuestion() {
   };
 
   const { submitAnswer, submitAnswerStatus } = useSubmitAnswer();
+
+  // For checking if first question attempted
+  const { data: userInfo } = useQuery<UserData>(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { enabled: !!session?.data?.user?.id }
+  );
+
+  const queryClient = useQueryClient();
+
+  // Award points for attempting a question
+  const { mutate: updatePoints } = useMutation(
+    async () => {
+      if (!!userInfo) {
+        const lastActive = new Date(userInfo.lastActive); // get last active
+        console.log(lastActive);
+        const res = await axios.post("/api/user/updatePoints", {
+          id: session?.data?.user?.id,
+          points:
+            (userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+              ? userInfo.points + 5 // First question attempted today
+              : userInfo.points + 1, // > 1 question attempted today
+        });
+        return {
+          ...res,
+          data: {
+            ...res.data,
+            customIcon: "🎯",
+            message: (
+              <>
+                Question(s) attempted:{" "}
+                {(userInfo.attempts[lastActive.toDateString()] ?? 0) + 1} ⚡
+                <span className="text-yellow-600">
+                  +
+                  {(userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+                    ? 5
+                    : 1}
+                </span>
+              </>
+            ),
+          },
+        };
+      }
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["userInfo", session?.data?.user?.id]); // Get latest number of attempts
+      },
+    }
+  );
+
+  updatePoints();
 
   if (!UCQAT) {
     return (

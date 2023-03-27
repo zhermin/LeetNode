@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useCallback, useState } from "react";
-import { toast } from "react-hot-toast";
 
 import {
   Avatar,
@@ -24,7 +23,7 @@ export default function Account({ userInfo }: AccountProps) {
   const { classes } = useStyles();
 
   const [userName, setUserName] = useState(
-    userInfo.nickname ?? (userInfo.name || "")
+    userInfo.nickname ?? userInfo.name ?? ""
   );
   const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId ?? "");
 
@@ -34,13 +33,53 @@ export default function Account({ userInfo }: AccountProps) {
 
   // Update the user in the DB
   const { mutate: updateUser, isLoading: updateUserLoading } = useMutation(
-    async (image: string) => {
-      return await axios.post("/api/user/update", {
-        id: session?.data?.user?.id,
-        nusnetId: userNusnetId,
-        nickname: userName,
-        image: image,
-      });
+    async () => {
+      // If user inputs a file
+      if (file) {
+        // Generate signature
+        const timestamp = Math.round(new Date().getTime() / 1000);
+        const res = await axios.post("/api/signature", {
+          id: session?.data?.user?.id,
+          timestamp: timestamp,
+        });
+
+        const [signature, key] = [res.data.signature, res.data.key];
+
+        // Upload profile picture into server
+        const formData = new FormData();
+        if (
+          // Ensure only jpeg or png
+          !file ||
+          !(file.type === "image/jpeg" || file.type === "image/png") ||
+          !session?.data?.user?.id
+        ) {
+          throw new Error("Please upload a JPEG or PNG file");
+        }
+        formData.append("file", file);
+        formData.append("api_key", key);
+        formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
+        formData.append("folder", "LeetNode/profile_media");
+        formData.append("public_id", session?.data?.user?.id);
+        formData.append("timestamp", `${timestamp}`);
+        formData.append("signature", signature);
+        const imageRes = await axios.post(
+          "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
+          formData
+        );
+        return await axios.post("/api/user/update", {
+          id: session?.data?.user?.id,
+          nusnetId: userNusnetId,
+          nickname: userName,
+          image: imageRes?.data?.eager?.[0]?.secure_url, // new image link
+        });
+      } else {
+        return await axios.post("/api/user/update", {
+          id: session?.data?.user?.id,
+          nusnetId: userNusnetId,
+          nickname: userName,
+          image: userInfo.image, // current image link
+        });
+      }
     },
     {
       onSuccess: (res) => {
@@ -50,53 +89,9 @@ export default function Account({ userInfo }: AccountProps) {
           nickname: res.data.nickname,
           image: res.data.image,
         });
-        toast.success("Updated!", { id: "updateUserInfo" }); // Notification for successful update
-      },
-      onError: () => {
-        toast.error("Failed", { id: "updateUserInfo" }); // Notification for failed update
-      },
-    }
-  );
-
-  const { mutate: uploadImage, isLoading: uploadImageLoading } = useMutation(
-    async () => {
-      // Generate signature
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const res = await axios.post("/api/signature", {
-        id: session?.data?.user?.id,
-        timestamp: timestamp,
-      });
-      const [signature, key] = [res.data.signature, res.data.key];
-
-      // Upload profile picture into server
-      const formData = new FormData();
-      if (
-        !file ||
-        !(file.type === "image/jpeg" || file.type === "image/png") ||
-        !session?.data?.user?.id
-      ) {
-        throw new Error("Please upload a JPEG or PNG file");
-      }
-      formData.append("file", file);
-      formData.append("api_key", key);
-      formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
-      formData.append("folder", "LeetNode/profile_media");
-      formData.append("public_id", session?.data?.user?.id);
-      formData.append("timestamp", `${timestamp}`);
-      formData.append("signature", signature);
-      return await axios.post(
-        "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
-        formData
-      );
-    },
-    {
-      onSuccess: (res) => {
-        updateUser(res?.data?.eager?.[0]?.url);
       },
       onError: (e) => {
-        toast.error(e instanceof Error ? e.message : "Unknown error", {
-          id: "updateUserInfo",
-        }); // Notification for failed update
+        console.log(e instanceof Error ? e.message : "Unknown error");
       },
     }
   );
@@ -105,19 +100,12 @@ export default function Account({ userInfo }: AccountProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUserNusnetId(userNusnetId.toUpperCase());
-
-    toast.loading("Updating...", { id: "updateUserInfo" }); // Notification for updating user
-    // If user inputs a file
-    if (file) {
-      uploadImage(); // Generate signature, upload file into server and update DB
-    } else {
-      updateUser(userInfo.image); // Update DB
-    }
+    updateUser();
   };
 
   // Reset form
   const handleReset = useCallback(() => {
-    setUserName(userInfo.nickname ?? userInfo.name);
+    setUserName(userInfo.nickname ?? userInfo.name ?? "");
     setUserNusnetId(userInfo.nusnetId ?? "");
   }, [userInfo.nickname, userInfo.name, userInfo.nusnetId]);
 
@@ -194,8 +182,7 @@ export default function Account({ userInfo }: AccountProps) {
               !/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ||
               !/^(\s*\w+\s*){5,}$/.test(userName)
             }
-            loading={updateUserLoading || uploadImageLoading}
-            className={classes.control}
+            loading={updateUserLoading}
           >
             Confirm
           </Button>

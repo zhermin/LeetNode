@@ -39,6 +39,7 @@ specifiers:
   eslint-config-next: 13.1.1
   highlight.js: ^11.7.0
   katex: ^0.16.4
+  mantine-datatable: ^1.8.8
   mathjs: ^11.7.0
   next: 13.1.1
   next-auth: ~4.18.10
@@ -91,6 +92,7 @@ dependencies:
   embla-carousel-react: 7.1.0_react@18.2.0
   highlight.js: 11.7.0
   katex: 0.16.4
+  mantine-datatable: 1.8.8_6uguzvy4iidch4ozvytdicn22m
   mathjs: 11.7.0
   next: 13.1.1_biqbaboplfbrettd7655fr4n2y
   next-auth: 4.18.10_kcrisbppuh4uplzrocihcy7jcu
@@ -239,7 +241,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@emotion/babel-plugin': 11.10.6
       '@emotion/cache': 11.10.5
       '@emotion/serialize': 1.1.1
@@ -3693,6 +3695,18 @@ packages:
     resolution: {integrity: sha512-oWiDZMcVB1/A487251hEWza1xzgCzl6MXxe9aF24l5Bt9N9UEbqTqKumEfuuLhmlhRZYnc+suVvW4vUs8bwO7Q==}
     dev: false
 
+  /mantine-datatable/1.8.8_6uguzvy4iidch4ozvytdicn22m:
+    resolution: {integrity: sha512-qy5zY0pwPreIXpam95HoJRfNqVx1FRU4/RlXT+l4k1u1s0CP3o7XB2qY4tYMG1MozuYxzo53QwOW4UM1S6a4iA==}
+    peerDependencies:
+      '@mantine/core': ^5.10.4
+      '@mantine/hooks': ^5.10.4
+      react: ^18.2.0
+    dependencies:
+      '@mantine/core': 5.10.5_63mspeouacpkyd6rtnsb5tmso4
+      '@mantine/hooks': 5.10.5_react@18.2.0
+      react: 18.2.0
+    dev: false
+
   /mathjs/11.7.0:
     resolution: {integrity: sha512-RCXtrP5xGIbl9PUc5+7QL81rBCUjzoIZ0ugNqKsarOUxg+x7deY0BzfNai+bGfUL/T+1uYq1xs5w2xVdL3lp0g==}
     engines: {node: '>= 14'}
@@ -4092,7 +4106,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      '@babel/runtime': 7.20.7
+      '@babel/runtime': 7.21.0
       '@panva/hkdf': 1.0.2
       cookie: 0.5.0
       jose: 4.11.2

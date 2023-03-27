@@ -23,11 +23,8 @@ import { useQuery } from "@tanstack/react-query";
 interface UserData extends User {
   attempts: { [timestamp: string]: number };
 }
-interface PersonalProps {
-  index: number;
-}
 
-export default function Personal({ index }: PersonalProps) {
+export default function Personal() {
   const session = useSession();
 
   const {
@@ -37,7 +34,7 @@ export default function Personal({ index }: PersonalProps) {
   } = useQuery<UserData>(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
@@ -45,7 +42,23 @@ export default function Personal({ index }: PersonalProps) {
     { enabled: !!session?.data?.user?.id }
   );
 
-  if (!userInfo || isLoading || isError) {
+  const {
+    data: allUsers,
+    isLoading: allUsersIsLoading,
+    isError: allUsersIsError,
+  } = useQuery<User[]>(["challenge"], async () => {
+    const res = await axios.get("/api/user/getAllUsersPoints");
+    return res.data;
+  });
+
+  if (
+    !userInfo ||
+    isLoading ||
+    isError ||
+    !allUsers ||
+    allUsersIsLoading ||
+    allUsersIsError
+  ) {
     return (
       <Center style={{ height: 500 }}>
         <Loader />
@@ -68,9 +81,9 @@ export default function Personal({ index }: PersonalProps) {
         radius="md"
         p="xs"
         key="userInfo"
-        className="m-3 grid grid-cols-3 items-center justify-center"
+        className="m-3 grid grid-cols-1 items-center justify-center md:grid-cols-3"
       >
-        <div className="text-center flex flex-row items-center justify-center">
+        <div className="flex flex-row items-center justify-center text-center">
           <RingProgress
             size={80}
             roundCaps
@@ -82,7 +95,7 @@ export default function Personal({ index }: PersonalProps) {
                   (userInfo.loginStreak /
                     new Date(
                       lastActive.getFullYear(),
-                      lastActive.getMonth(),
+                      lastActive.getMonth() + 1,
                       0
                     ).getDate()) *
                   100,
@@ -92,7 +105,7 @@ export default function Personal({ index }: PersonalProps) {
             label={
               <Center>
                 <IconFlame
-                  className="animate-bounce text-orange-500 fill-amber-500"
+                  className="animate-bounce fill-amber-500 text-orange-500"
                   size="2rem"
                 />
               </Center>
@@ -111,9 +124,23 @@ export default function Personal({ index }: PersonalProps) {
           <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
             Position
           </Text>
+          <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
+            (
+            {new Date(
+              lastActive.getFullYear(),
+              lastActive.getMonth() + 1,
+              0
+            ).getDate() - lastActive.getDate()}{" "}
+            days till reset)
+          </Text>
           <Center>
             <Text weight={700} size="lg" className="mr-1">
-              #{index + 1}
+              #
+              {allUsers
+                ?.map((user: User) => {
+                  return user?.id;
+                })
+                .indexOf(session?.data?.user?.id ?? "") + 1}
             </Text>
             <Text weight={700} size="sm" color="grey">
               ({userInfo.points}⚡)

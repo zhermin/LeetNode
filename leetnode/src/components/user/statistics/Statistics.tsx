@@ -27,7 +27,7 @@ export default function Statistics() {
   } = useQuery(
     ["stats", period],
     async () => {
-      const res = await axios.post("/api/pybkt/getAll", {
+      const res = await axios.post("/api/user/getMastery", {
         id: session?.data?.user?.id,
         period: period,
       });
@@ -47,7 +47,7 @@ export default function Statistics() {
   return (
     <ScrollArea>
       <h1 className="text-center">Statistics</h1>
-      <hr className="h-px my-4 bg-gray-200 border-0" />
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <Overview data={masteryData} />
       <Group position="apart">
         <SegmentedControl
