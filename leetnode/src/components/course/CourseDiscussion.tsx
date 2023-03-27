@@ -10,6 +10,7 @@ import {
   Button,
   Center,
   Container,
+  createStyles,
   Divider,
   Group,
   Loader,
@@ -78,6 +79,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const [message, setMessage] = useState("");
 
   const session = useSession();
+  const { classes, theme } = useStyles();
   const queryClient = useQueryClient();
 
   const [posts, courses, topics] = useQueries({
@@ -338,7 +340,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   onChange={setMessage}
                 />
                 <Group position="center" mt="xl">
-                  <Button type="submit" size="md">
+                  <Button type="submit" size="md" className={classes.control}>
                     Send message
                   </Button>
                 </Group>
@@ -385,17 +387,32 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 />
               </Group>
               <Group position="apart" mt={"xl"}>
-                <Button variant="outline" onClick={() => handleCloseModal()}>
+                <Button
+                  variant={theme.colorScheme === "dark" ? "filled" : "outline"}
+                  onClick={() => handleCloseModal()}
+                  className={classes.control}
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => handleCloseSubmitModal()}>Ok</Button>
+                <Button
+                  onClick={() => handleCloseSubmitModal()}
+                  className={classes.control}
+                >
+                  Ok
+                </Button>
               </Group>
             </Modal>
             <Group position="apart" mb={"md"}>
-              <Button onClick={() => setOpenedPosting(true)}>
+              <Button
+                onClick={() => setOpenedPosting(true)}
+                className={classes.control}
+              >
                 Post a Thread
               </Button>
-              <Button onClick={() => setOpenedFilter(true)}>
+              <Button
+                onClick={() => setOpenedFilter(true)}
+                className={classes.control}
+              >
                 Filter Options
               </Button>
             </Group>
@@ -481,6 +498,38 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 onChange={setCurrentPage}
                 total={nPages}
                 size="md"
+                styles={(theme) => ({
+                  item: {
+                    "&[data-active]": {
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.fn.variant({
+                              variant: "light",
+                              color: theme.primaryColor,
+                            }).background
+                          : theme.fn.variant({
+                              variant: "filled",
+                              color: theme.primaryColor,
+                            }).background,
+                    },
+                  },
+                })}
+                // styles={(theme) => ({
+                //   item: {
+                //     "&[data-active]": {
+                //       backgroundImage:
+                //         theme.colorScheme === "dark"
+                //           ? theme.fn.variant({
+                //               variant: "light",
+                //               color: theme.primaryColor,
+                //             }).background
+                //           : theme.fn.variant({
+                //               variant: "filled",
+                //               color: theme.primaryColor,
+                //             }).background,
+                //     },
+                //   },
+                // })}
               />
               <Select
                 value={postsPerPage}
@@ -500,6 +549,27 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     </>
   );
 };
+
+const useStyles = createStyles((theme) => ({
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
+  },
+}));
 
 export const useGetFetchQuery = (key: QueryKey) => {
   const queryClient = useQueryClient();
