@@ -42,9 +42,9 @@ export default function Overall() {
     if (!!allUsers && debouncedQuery !== "") {
       // Filtering
       setRecords(
-        allUsers.filter(({ name, points }) => {
+        allUsers.filter(({ name, nickname, points }) => {
           if (
-            !`${name} ${points}`
+            !`${nickname ?? name} ${points}` // Search by nickname (if exist, else by name) and points
               .toLowerCase()
               .includes(debouncedQuery.trim().toLowerCase())
           ) {

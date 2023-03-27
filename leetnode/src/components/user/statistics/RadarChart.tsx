@@ -58,6 +58,16 @@ export default function RadarChart({ data }: MasteryProps) {
                 font: {
                   size: 11,
                 },
+                color: "#868E96",
+              },
+              angleLines: {
+                color: "#CED4DA",
+              },
+              grid: {
+                color: "#CED4DA",
+              },
+              ticks: {
+                backdropColor: "#FFFFFF",
               },
             },
           },

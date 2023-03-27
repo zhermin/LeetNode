@@ -71,7 +71,7 @@ export default function Account({ userInfo }: AccountProps) {
           image: imageRes?.data?.eager?.[0]?.secure_url, // new image link
         });
       } else {
-        return await axios.post("/api/user/updat", {
+        return await axios.post("/api/user/update", {
           id: session?.data?.user?.id,
           nusnetId: userNusnetId,
           nickname: userName,
@@ -89,7 +89,7 @@ export default function Account({ userInfo }: AccountProps) {
         });
       },
       onError: (e) => {
-        console.log(e instanceof Error ? e.message : "Unknown error"); // Not working
+        console.log(e instanceof Error ? e.message : "Unknown error");
       },
     }
   );

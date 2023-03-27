@@ -23,7 +23,7 @@ export default function Overview({ data }: OverviewProps) {
     );
 
     return (
-      <div className="mb-6 grid grid-cols-2 gap-3">
+      <div className="m-3 grid grid-cols-1 gap-3 md:grid-cols-2 ">
         <Paper
           withBorder
           shadow="lg"

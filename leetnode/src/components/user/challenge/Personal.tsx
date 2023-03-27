@@ -34,7 +34,7 @@ export default function Personal() {
   } = useQuery<UserData>(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
@@ -81,7 +81,7 @@ export default function Personal() {
         radius="md"
         p="xs"
         key="userInfo"
-        className="m-3 grid grid-cols-3 items-center justify-center"
+        className="m-3 grid grid-cols-1 items-center justify-center md:grid-cols-3"
       >
         <div className="flex flex-row items-center justify-center text-center">
           <RingProgress
@@ -115,16 +115,6 @@ export default function Personal() {
             <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
               Current Streak
             </Text>
-            <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
-              (
-              {new Date(
-                lastActive.getFullYear(),
-                lastActive.getMonth() + 1,
-                0
-              ).getDate() - lastActive.getDate()}{" "}
-              days till reset)
-            </Text>
-
             <Text weight={700} size="lg">
               {userInfo.loginStreak}
             </Text>
@@ -133,6 +123,15 @@ export default function Personal() {
         <div className="text-center">
           <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
             Position
+          </Text>
+          <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
+            (
+            {new Date(
+              lastActive.getFullYear(),
+              lastActive.getMonth() + 1,
+              0
+            ).getDate() - lastActive.getDate()}{" "}
+            days till reset)
           </Text>
           <Center>
             <Text weight={700} size="lg" className="mr-1">

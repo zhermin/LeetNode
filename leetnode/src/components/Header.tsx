@@ -2,10 +2,13 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useRef } from "react";
-import { toast } from "react-hot-toast";
 
 import { User } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface UserData extends User {
+  attempts: { [timestamp: string]: number };
+}
 
 const Header = ({ title = "Personalized Path Mastery" }) => {
   const fullTitle = `LeetNode — ${title}`;
@@ -16,10 +19,10 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery<User>(
+  } = useQuery<UserData>(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
@@ -33,12 +36,27 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
       loginStreak: number;
       points: number;
     }) => {
-      return await axios.post("/api/user/updatePoints", {
+      const res = await axios.post("/api/user/updatePoints", {
         id: session?.data?.user?.id,
         lastActive: variables.currentDatetime,
         loginStreak: variables.loginStreak,
         points: variables.points,
       });
+      return {
+        ...res,
+        data: {
+          ...res.data,
+          customIcon: "📅",
+          message: (
+            <>
+              Login Streak: {res?.data?.loginStreak} ⚡
+              <span className="text-yellow-600">
+                +{res?.data?.loginStreak < 5 ? res?.data?.loginStreak : 5}
+              </span>
+            </>
+          ),
+        },
+      };
     },
     {
       onSuccess: (res) => {
@@ -49,25 +67,6 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           points: res.data.points,
         });
         queryClient.invalidateQueries(["challenge"]); // Sync the points in both tabs of the challenge page
-        toast(
-          () => (
-            <span>
-              Login Streak: {res?.data?.loginStreak} ⚡
-              <span className="text-yellow-600">
-                +{res?.data?.loginStreak < 5 ? res?.data?.loginStreak : 5}
-              </span>
-            </span>
-          ),
-          {
-            icon: "📅",
-            id: "updateActive",
-          }
-        ); // Notification for successful update
-      },
-      onError: () => {
-        toast.error("Error updating points system", {
-          id: "updateActive",
-        }); // Notification for failed update
       },
     }
   );

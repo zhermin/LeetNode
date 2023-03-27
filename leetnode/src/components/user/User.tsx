@@ -46,7 +46,7 @@ export default function User() {
   } = useQuery(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;

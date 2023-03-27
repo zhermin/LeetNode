@@ -15,7 +15,12 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { Question } from "@prisma/client";
+import { Question, User } from "@prisma/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface UserData extends User {
+  attempts: { [timestamp: string]: number };
+}
 
 const LoadTopic = ({
   questionDisplay,
@@ -37,6 +42,65 @@ const LoadTopic = ({
     { currentQuestion: number; isCorrect: boolean; question: Question }[]
   >([]);
   const [endReached, setEndReached] = useState(false);
+
+  // For checking if first question attempted
+  const {
+    data: userInfo,
+    isLoading,
+    isError,
+  } = useQuery<UserData>(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user", {
+        id: session?.data?.user?.id,
+      });
+      return res?.data;
+    },
+    { enabled: !!session?.data?.user?.id }
+  );
+
+  const queryClient = useQueryClient();
+
+  // Award points for attempting a question
+  const { mutate: updatePoints } = useMutation(
+    async () => {
+      if (!!userInfo) {
+        const lastActive = new Date(userInfo.lastActive); // get last active
+        console.log(lastActive);
+        const res = await axios.post("/api/user/updatePoints", {
+          id: session?.data?.user?.id,
+          points:
+            (userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+              ? userInfo.points + 5 // First question attempted today
+              : userInfo.points + 1, // > 1 question attempted today
+        });
+        return {
+          ...res,
+          data: {
+            ...res.data,
+            customIcon: "🎯",
+            message: (
+              <>
+                Question(s) attempted:{" "}
+                {(userInfo.attempts[lastActive.toDateString()] ?? 0) + 1} ⚡
+                <span className="text-yellow-600">
+                  +
+                  {(userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+                    ? 5
+                    : 1}
+                </span>
+              </>
+            ),
+          },
+        };
+      }
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["userInfo", session?.data?.user?.id]); // Get latest number of attempts
+      },
+    }
+  );
 
   let optionNumber: number;
 
@@ -233,6 +297,9 @@ const LoadTopic = ({
       //   }
       // };
 
+      // Award points for completing a question
+      updatePoints();
+
       if (currentQuestion + 1 === questionDisplay?.length) {
         console.log("reached the end");
         setEndReached(true);
@@ -251,7 +318,7 @@ const LoadTopic = ({
     <>
       {endReached === false ? (
         <>
-          {loading === true ? (
+          {loading === true || isLoading || isError ? (
             <Center className="h-[calc(100vh-180px)]">
               <Loader />
             </Center>
