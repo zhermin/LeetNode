@@ -1,6 +1,6 @@
 import axios from "axios";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import Courses from "@/components/admin/Courses";
 import Overview from "@/components/admin/Overview";
@@ -11,6 +11,7 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import { RoleBadge } from "@/components/misc/Badges";
 import LeetNodeNavbar from "@/components/Navbar";
+import { AllQuestionsType } from "@/types/question-types";
 import {
   AppShell,
   Box,
@@ -24,13 +25,14 @@ import {
   ThemeIcon,
   UnstyledButton,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
-  Answer,
   Attempt,
   Course,
+  CourseMedia,
   Mastery,
+  Post,
   Question,
-  QuestionMedia,
   QuestionWithAddedTime,
   Topic,
   User,
@@ -44,7 +46,7 @@ import {
   IconPuzzle,
   IconUsers,
 } from "@tabler/icons";
-import { useQueries } from "@tanstack/react-query";
+import { QueryKey, useQueries, useQueryClient } from "@tanstack/react-query";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
   attempts: Attempt[];
@@ -54,20 +56,20 @@ export type UsersWithMasteriesAndAttemptsType = (User & {
 export type CoursesInfoType = Course & {
   topics: Topic[];
   userCourseQuestions: UserCourseQuestion[];
+  posts: Post[];
+  attempts: Attempt;
+  courseMedia: CourseMedia[];
 };
 
 export type AttemptsInfoType = (Attempt & {
   user: User;
-  question: Question;
-  answer: Answer;
-})[];
-
-export type QuestionsInfoType = (Question & {
-  attempts: Attempt[];
-  topic: Topic;
-  questionMedia: QuestionMedia[];
-  answers: Answer[];
-  questionsWithAddedTime: QuestionWithAddedTime[];
+  course: Course;
+  questionWithAddedTime: QuestionWithAddedTime & {
+    question: Question & {
+      topic: Topic;
+    };
+    attempts: Attempt[];
+  };
 })[];
 
 // Sidebar Tabs based on Fetched Data
@@ -80,10 +82,12 @@ const tabs = [
 ];
 
 export default function AdminPage() {
-  const { classes, cx } = useStyles();
+  const { theme, classes, cx } = useStyles();
 
   const [active, setActive] = useState("Overview");
-  const [sidebarOpened, setSidebarOpened] = useState(true);
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
 
   // Use useQueries to fetch all data
   const [
@@ -115,7 +119,7 @@ export default function AdminPage() {
       },
       {
         queryKey: ["all-questions"],
-        queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
+        queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
       },
     ],
   });
@@ -142,6 +146,8 @@ export default function AdminPage() {
       </Center>
     );
   }
+
+  console.log(usersData);
 
   return (
     <>
@@ -228,7 +234,6 @@ export default function AdminPage() {
             <QuestionViewer />
           ) : active === "Courses" ? (
             <Courses
-              courses={courses.data}
               users={usersData.data}
               attempts={attempts.data}
               questions={questions.data}
@@ -246,13 +251,19 @@ export default function AdminPage() {
   );
 }
 
+export const useGetFetchQuery = (key: QueryKey) => {
+  const queryClient = useQueryClient();
+
+  return queryClient.getQueryData(key);
+};
+
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
 
   return {
     navbar: {
       backgroundColor:
-        theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
+        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
       paddingBottom: 0,
     },
 

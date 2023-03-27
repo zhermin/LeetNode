@@ -1,40 +1,38 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
-import ProgressBar from "@/components/course/ProgressBar";
 import { CourseInfoType } from "@/pages/courses/[courseSlug]";
-import { Center, Loader, Paper, Text, Title } from "@mantine/core";
-import { Attempt, Question, User } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
+import { CustomMath } from "@/utils/CustomMath";
+import {
+  Box,
+  Center,
+  Group,
+  Loader,
+  Paper,
+  Progress,
+  Skeleton,
+  Text,
+  Title,
+} from "@mantine/core";
+import { useQueries } from "@tanstack/react-query";
 
-type AttemptsInterface = Attempt & {
-  user: User;
-  question: Question;
-  answer: Question;
-};
+export default function ShowResults() {
+  const router = useRouter();
+  const [{ data: mastery }, { data: course }] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-mastery"],
+        queryFn: () => axios.get<Record<string, number>>("/api/mastery"),
+      },
+      {
+        queryKey: ["course", router.query.courseSlug],
+        queryFn: () =>
+          axios.get<CourseInfoType>(`/api/courses/${router.query.courseSlug}`),
+      },
+    ],
+  });
 
-const ShowResults = ({
-  course,
-}: {
-  course: CourseInfoType;
-}) => {
-  const session = useSession();
-
-  const { data: attempts } = useQuery<AttemptsInterface[]>(
-    ["all-attempts"],
-    async () => {
-      try {
-        const { data } = await axios.get(`/api/prof/getAllAttempts`);
-        return data;
-      } catch (error) {
-        console.log(error);
-        throw new Error("Failed to refetch all attempts from API");
-      }
-    },
-    { useErrorBoundary: true }
-  );
-
-  if (!attempts) {
+  if (!course) {
     return (
       <Center className="h-screen">
         <Loader />
@@ -42,29 +40,44 @@ const ShowResults = ({
     );
   }
 
-  // return <Text>test</Text>;
-  const arrScore = attempts.filter(
-    (user) => user.userId === session?.data?.user?.id && user.isCorrect
-  );
-  const score = arrScore.length;
-  
   return (
     <Paper p="xl" radius="md" withBorder>
-      <Title order={1} mt="md" align="center">
-        Score: {score}/{attempts.length}
-      </Title>
-      <Text size="xl" mb="xl" align="center">
-        Keep practicing to achieve mastery in all topics!
-      </Text>
-      {course?.topics?.map((eachProgress) => (
-        <ProgressBar
-          topicSlug={eachProgress.topicSlug as string}
-          topicName={eachProgress.topicName as string}
-          key={eachProgress.topicSlug}
-        />
-      ))}
+      {course.data?.topics.map((topic) =>
+        !mastery ? (
+          <Box py="xs" key={topic.topicSlug}>
+            <Group position="apart">
+              <Skeleton height={24} width={300} />
+              <Skeleton height={26} width={50} />
+            </Group>
+            <Skeleton mt="md" radius="xl" height={12} width="100%" />
+          </Box>
+        ) : (
+          <Box py="xs" key={topic.topicSlug}>
+            <Group position="apart">
+              <Text>{topic.topicName}</Text>
+              <Title order={4}>
+                {CustomMath.round(
+                  (mastery.data[topic.topicSlug] ?? 0) * 100,
+                  1
+                )}
+                %
+              </Title>
+            </Group>
+            <Progress
+              mt="md"
+              color="cyan"
+              radius="xl"
+              size="lg"
+              value={CustomMath.round(
+                (mastery.data[topic.topicSlug] ?? 0) * 100,
+                1
+              )}
+              striped
+              animate
+            />
+          </Box>
+        )
+      )}
     </Paper>
   );
-};
-
-export default ShowResults;
+}

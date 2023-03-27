@@ -1,31 +1,16 @@
+import { QuestionDataType } from "@/types/question-types";
 import { PrismaClient, QuestionDifficulty } from "@prisma/client";
-import {
-  Topics,
-  Courses,
-  Questions,
-  Answers,
-  QuestionMedias,
-} from "./seed_data";
+
+import { CustomEval } from "../src/utils/CustomEval";
+import { CustomMath } from "../src/utils/CustomMath";
+import { Courses, Questions, Topics } from "./seed_data";
 
 const prisma = new PrismaClient();
-
-// shuffle the question ids
-function shuffleArray(array: { questionId: number }[]): number[] {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]] as [
-      typeof array[0],
-      typeof array[0]
-    ];
-  }
-  return array.map((q) => q.questionId);
-}
 
 async function main() {
   // Delete all existing data (local development only)
   await prisma.question.deleteMany();
-  await prisma.answer.deleteMany();
-  await prisma.questionMedia.deleteMany();
+  await prisma.questionWithAddedTime.deleteMany();
   await prisma.topic.deleteMany();
   await prisma.course.deleteMany();
 
@@ -38,18 +23,9 @@ async function main() {
     data: Questions,
   });
   console.log("Questions created");
-  await prisma.answer.createMany({
-    data: Answers,
-  });
-  console.log("Answers created");
-  await prisma.questionMedia.createMany({
-    data: QuestionMedias,
-  });
-  console.log("Question Media created");
 
   // Extract the courses without topics from Courses
   const coursesWithoutTopics = Courses.map((course) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { topics, ...courseWithoutTopics } = course;
     return courseWithoutTopics;
   });
@@ -83,29 +59,21 @@ async function main() {
   // These random question generation for quizzes will be moved to its own functions later
   const user = await prisma.user.findFirst();
 
-  // Clear user's nusnetId for /welcome page testing
-  await prisma.user.update({
-    where: {
-      id: user?.id,
-    },
-    data: {
-      nusnetId: null,
-    },
-  });
-
   const welcomeQuiz = await prisma.course.findFirst({
     where: { courseSlug: "welcome-quiz" },
   });
 
-  // Shuffle the question ids
-  const mediumQuestionIds = shuffleArray(
-    await prisma.question.findMany({
-      select: { questionId: true },
-      where: { questionDifficulty: QuestionDifficulty.Medium },
-    })
-  );
-
   if (user && welcomeQuiz) {
+    // Clear user's nusnetId for /welcome page testing
+    await prisma.user.update({
+      where: {
+        id: user?.id,
+      },
+      data: {
+        nusnetId: null,
+      },
+    });
+
     // Add the user's userCourseQuestion
     await prisma.userCourseQuestion.createMany({
       data: {
@@ -114,27 +82,50 @@ async function main() {
       },
     });
 
-    const randomMediumQuestionIds: number[] = [];
-    for (let i = 0; i < 5; i++) {
-      randomMediumQuestionIds.push(mediumQuestionIds[i] as number);
-    }
+    const mediumQuestions = await prisma.question.findMany({
+      select: { questionId: true, variationId: true, questionData: true },
+      where: { questionDifficulty: QuestionDifficulty.Medium },
+    });
+
+    const randomMediumQuestions = CustomMath.nRandomItems(
+      1,
+      mediumQuestions
+    ) as typeof mediumQuestions;
+    console.log("Random Medium Questions: ", randomMediumQuestions);
 
     // Populate and preserve the order of the shuffled question ids using time
-    const questionsWithAddedTime = randomMediumQuestionIds.map(
-      (questionId, index) => {
+    const questionsWithAddedTime = randomMediumQuestions.map(
+      (question, index) => {
+        const questionData = question.questionData as QuestionDataType;
+
+        let evaluatedQuestionData;
+        if (question.variationId === 0) {
+          evaluatedQuestionData = CustomEval(
+            questionData.variables,
+            questionData.methods
+          );
+        }
+
         return {
-          questionId,
+          questionId: question.questionId,
+          variationId: question.variationId,
           userId: user.id,
           courseSlug: welcomeQuiz.courseSlug,
           addedTime: new Date(Date.now() + index * 1000),
+          variables:
+            evaluatedQuestionData?.questionVariables ?? questionData.variables,
+          answers: CustomMath.shuffleArray(
+            questionData.answers ?? evaluatedQuestionData?.questionAnswers
+          ) as QuestionDataType["answers"],
         };
       }
     );
+
     await prisma.questionWithAddedTime.createMany({
       data: questionsWithAddedTime,
     });
 
-    console.log("Generated Welcome Quiz Questions: ", randomMediumQuestionIds);
+    console.log("Generated Welcome Quiz Questions: ", randomMediumQuestions);
 
     // Check against the database if we can sort by addedTime
     const questions = await prisma.userCourseQuestion.findFirst({

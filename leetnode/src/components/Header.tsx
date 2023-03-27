@@ -165,7 +165,6 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
 
     // Clean up interval when component unmounts
     return () => {
-      console.log("Component unmounted");
       clearInterval(intervalRef.current);
       intervalRef.current = undefined;
     };

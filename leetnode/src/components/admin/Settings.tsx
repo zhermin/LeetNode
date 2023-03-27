@@ -252,9 +252,6 @@ const Settings = ({
     ));
 
   return (
-    // editUser.some((user) => user.id === userId)
-    // ? setEditUser(editUser.filter((user) => user.id !== userId))
-    // : setEditUser([...editUser, { id: userId, changeName, resetAttempt }]);
     <Container>
       <Modal
         opened={confirmPopup}
@@ -283,18 +280,6 @@ const Settings = ({
       <Modal
         opened={editOpened}
         onClose={() => {
-          // for (let i = 0; i < editField.length; i++) {
-          //   if (editField[i] && editField[i]?.id === toEditID) {
-          //     (editField[i] as { name: string }).name =
-          //       textEditValue ?? (editField[i] as { name: string }).name;
-          //   }
-          // }
-          // editField.push({
-          //   id: toEditId,
-          //   name: toEditName,
-          //   resetAllAttempts: allUserAttemptsReset,
-          //   resetTopicAttempts: userTopicReset,
-          // });
           if (closeButton === false) {
             const existingIndex = editField.findIndex((u) => u.id === toEditId);
             if (existingIndex !== -1) {
@@ -354,7 +339,6 @@ const Settings = ({
         <MultiSelect
           my="sm"
           disabled={!selectedUserAttemptsResetChecked}
-          // label="Edit Your Email Alert Frequency"
           placeholder="Scroll to see all options"
           data={transformedTopics}
           value={userTopicReset}
@@ -377,20 +361,10 @@ const Settings = ({
         </Button>
       </Modal>
       <Affix position={{ bottom: 75, right: 40 }}>
-        {/* <Transition transition="slide-up" mounted={scroll.y > 0}>
-          {(transitionStyles) => (
-            <Button
-              leftIcon={<IconArrowUp size="1rem" />}
-              style={transitionStyles}
-              onClick={() => scrollTo({ y: 0 })}
-            >
-              Scroll to top
-            </Button>
-          )}
-        </Transition> */}
         <Button
           leftIcon={<IconClick size={20} />}
           onClick={() => setConfirmPopup(true)}
+          className={classes.control}
         >
           Confirm Changes
         </Button>
@@ -404,7 +378,6 @@ const Settings = ({
           </Text>
         }
       />
-      <Text size={"sm"}>Email Frequency</Text>
       <Select
         my="sm"
         label="Edit Your Email Alert Frequency"
@@ -520,5 +493,24 @@ const useStyles = createStyles((_theme, _params, getRef) => ({
         opacity: 1,
       },
     },
+  },
+
+  control: {
+    backgroundColor:
+      _theme.colorScheme === "dark"
+        ? _theme.fn.variant({
+            variant: "light",
+            color: _theme.primaryColor,
+          }).background
+        : _theme.fn.variant({
+            variant: "filled",
+            color: _theme.primaryColor,
+          }).background,
+    color:
+      _theme.colorScheme === "dark"
+        ? _theme.fn.variant({ variant: "light", color: _theme.primaryColor })
+            .color
+        : _theme.fn.variant({ variant: "filled", color: _theme.primaryColor })
+            .color,
   },
 }));

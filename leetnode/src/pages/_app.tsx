@@ -69,28 +69,26 @@ const LeetNode: AppType<{
                 id: toastId.current,
               });
             }
+
+            // Fallback to dismiss all toasts after 10 seconds
+            setTimeout(() => {
+              toast.dismiss();
+            }, 10000);
           },
           onError: (error) => {
+            console.error("[GLOBAL ERROR]", error);
+
             let errorMessage = "Unknown Error";
 
-            // TEMP: If error is from Prisma (database), ugly-extract the error message
-            if (
-              error instanceof AxiosError &&
-              error.response &&
-              error.response.data
-            ) {
-              const jsonStr = error.response.data.match(
-                /<script id="__NEXT_DATA__".*?>(.*?)<\/script>/s
-              )[1];
-              const data = JSON.parse(jsonStr);
-              errorMessage = data.err.message;
-            }
-
-            if (error instanceof Error || error instanceof AxiosError) {
+            if (error instanceof AxiosError) {
+              errorMessage = error.response
+                ? error.response.data.message
+                : error.message;
+            } else if (error instanceof Error) {
               errorMessage = error.message;
             }
 
-            toast.error(`Please contact support\n\n${errorMessage}`, {
+            toast.error(`Error: ${errorMessage}\n\nPlease contact support`, {
               id: toastId.current,
             });
           },

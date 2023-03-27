@@ -75,12 +75,16 @@ const Overview = ({
   );
 
   const topicSlugCounts = attemptsWithinPastWeek.reduce(
-    (counts: { [key: string]: number }, attempt) => {
-      const topicSlug = attempt.question.topicSlug;
-      counts[topicSlug] = (counts[topicSlug] || 0) + 1;
+    (counts, attempt) => {
+      const topicSlug = attempt.questionWithAddedTime.question.topicSlug;
+      if (topicSlug in counts) {
+        counts[topicSlug]++;
+      } else {
+        counts[topicSlug] = 1;
+      }
       return counts;
     },
-    {}
+    {} as Record<string, number>
   );
 
   const mostCommonTopicSlug = Object.entries(topicSlugCounts).reduce(
@@ -135,9 +139,9 @@ const Overview = ({
 
   // Step 2: Iterate over the attempts array, and for each attempt, check if it is correct and belongs to a topic in a course. If it does, increment the count for that course in the map.
   attempts.forEach((attempt) => {
-    const { isCorrect, question } = attempt;
+    const { isCorrect, questionWithAddedTime } = attempt;
     if (isCorrect) {
-      const topic = question.topicSlug;
+      const topic = questionWithAddedTime.question.topicSlug;
       const course = courses.find((c) =>
         c.topics.some((t) => t.topicSlug === topic)
       );
@@ -149,7 +153,7 @@ const Overview = ({
         });
       }
     } else {
-      const topic = question.topicSlug;
+      const topic = questionWithAddedTime.question.topicSlug;
       const course = courses.find((c) =>
         c.topics.some((t) => t.topicSlug === topic)
       );

@@ -77,23 +77,22 @@ enum Frequency {
 }
 
 model Attempt {
-  attemptId      String   @id @default(cuid())
-  userId         String
-  questionId     Int
-  attemptOption  Int
-  attemptValue   Float? // TODO: Directly check against dynamic answer options
-  courseSlug     String
-  isCorrect      Boolean
-  submittedAt    DateTime @default(now())
-  attemptSeconds Int? // KIV
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question       Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
-  answer         Answer   @relation(fields: [questionId, attemptOption], references: [questionId, optionNumber], onDelete: Cascade)
-  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+  attemptId             String                @id @default(cuid())
+  qatId                 String
+  userId                String
+  courseSlug            String
+  attemptedKeys         Json // {key}[N]
+  isCorrect             Boolean
+  submittedAt           DateTime              @default(now())
+  attemptSeconds        Int? // KIV
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionWithAddedTime QuestionWithAddedTime @relation(fields: [qatId], references: [qatId], onDelete: Cascade)
+  course                Course                @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
 
-  @@unique([userId, questionId, submittedAt])
-  @@index([questionId, attemptOption])
+  @@unique([userId, qatId, submittedAt])
+  @@index([userId])
   @@index([courseSlug])
+  @@index([qatId])
 }
 
 // QUESTION BANK
@@ -111,7 +110,7 @@ enum CourseType {
 model Course {
   courseSlug          String               @id
   courseName          String               @unique
-  courseDescription   String
+  courseDescription   String               @db.Text
   courseImage         String
   courseLevel         Level
   type                CourseType
@@ -119,19 +118,30 @@ model Course {
   moduleTitle         String
   week                Int?
   studio              Int?
-  slide               String?              @db.VarChar(500)
-  video               String?              @db.VarChar(500)
-  markdown            String?              @db.VarChar(10000)
+  video               String?              @db.Text
+  markdown            String?              @db.Text
   topics              Topic[]
   userCourseQuestions UserCourseQuestion[]
   posts               Post[]
   attempts            Attempt[]
+  courseMedia         CourseMedia[]
+}
+
+model CourseMedia {
+  publicId       String
+  courseSlug     String
+  courseMediaURL String   @db.VarChar(500)
+  mediaName      String
+  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+
+  @@id([publicId])
+  @@index([courseSlug])
 }
 
 model UserCourseQuestion {
   userId                 String
   courseSlug             String
-  courseCompletion       Int                     @default(0)
+  courseCompletion       Int                     @default(0) // KIV
   user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   course                 Course                  @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
   questionsWithAddedTime QuestionWithAddedTime[]
@@ -170,34 +180,20 @@ model Topic {
   @@index([topicLevel])
 }
 
-model QuestionWithAddedTime {
-  questionId Int
-  userId     String
-  courseSlug String
-  addedTime  DateTime           @default(now())
-  question   Question           @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
-  userCourse UserCourseQuestion @relation(fields: [userId, courseSlug], references: [userId, courseSlug], onDelete: Cascade)
-
-  @@id([questionId, userId, courseSlug])
-  @@index([userId, courseSlug])
-  @@index([questionId])
-}
-
 model Question {
-  questionId             Int                     @id @default(autoincrement())
-  variationId            Int                     @default(0)
+  // Generic question, either dynamic or static, no user-specific information //
+  questionId             Int                     @default(autoincrement())
+  variationId            Int                     @default(1)
   topicSlug              String
-  questionTitle          String?
+  questionTitle          String
   questionDifficulty     QuestionDifficulty
   questionContent        String                  @db.Text
   questionData           Json?
-  lastModified           DateTime                @default(now())
+  lastModified           DateTime                @updatedAt
   topic                  Topic                   @relation(fields: [topicSlug], references: [topicSlug])
-  attempts               Attempt[]
-  questionMedia          QuestionMedia[]
-  answers                Answer[]
   questionsWithAddedTime QuestionWithAddedTime[]
 
+  @@id([questionId, variationId])
   @@index([questionDifficulty])
   @@index([topicSlug])
 }
@@ -208,25 +204,23 @@ enum QuestionDifficulty {
   Hard
 }
 
-model QuestionMedia {
-  questionId       Int
-  questionMediaURL String   @db.VarChar(500)
-  question         Question @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
+model QuestionWithAddedTime {
+  // Question tagged to a user, and if dynamic, with options generated at runtime //
+  qatId       String             @id @default(cuid())
+  questionId  Int
+  variationId Int
+  userId      String
+  courseSlug  String
+  variables   Json? // QuestionDataType["variables"]
+  answers     Json // QuestionDataType["answers"]
+  addedTime   DateTime           @default(now())
+  question    Question           @relation(fields: [questionId, variationId], references: [questionId, variationId], onDelete: Cascade)
+  userCourse  UserCourseQuestion @relation(fields: [userId, courseSlug], references: [userId, courseSlug], onDelete: Cascade)
+  attempts    Attempt[]
 
-  @@id([questionId, questionMediaURL])
-  @@index([questionId])
-}
-
-model Answer {
-  questionId    Int
-  optionNumber  Int
-  answerContent String    @db.VarChar(500)
-  isCorrect     Boolean
-  question      Question  @relation(fields: [questionId], references: [questionId], onDelete: Cascade)
-  attempts      Attempt[]
-
-  @@id([questionId, optionNumber])
-  @@index([questionId])
+  @@unique([questionId, variationId, userId, courseSlug, addedTime])
+  @@index([userId, courseSlug])
+  @@index([questionId, variationId])
 }
 
 // DISCUSSION POSTS
@@ -237,13 +231,12 @@ model Post {
   message    String      @db.Text
   likes      Int         @default(0)
   courseName String
-  topicName  String? //kiv until dynamic loading implemented
+  topicName  String? // KIV: Requires dynamic loading to be implemented
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   user       User        @relation(fields: [userId], references: [id])
   course     Course      @relation(fields: [courseName], references: [courseName], onDelete: Cascade)
   topic      Topic?      @relation(fields: [topicName], references: [topicName])
-  postMedia  PostMedia[]
   comment    Comment[]
   postLikes  PostLikes[]
   postType   PostType
@@ -259,15 +252,6 @@ enum PostType {
   Misc
 }
 
-model PostMedia {
-  postId       String
-  postMediaURL String @db.VarChar(500)
-  post         Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
-
-  @@id([postId, postMediaURL])
-  @@index([postId])
-}
-
 model PostLikes {
   postId String
   userId String
@@ -281,27 +265,17 @@ model PostLikes {
 }
 
 model Comment {
-  commentId    String         @id @default(cuid())
-  postId       String
-  userId       String
-  message      String         @db.Text
-  likes        Int            @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  reply        String?
-  post         Post           @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  user         User           @relation(fields: [userId], references: [id])
-  commentMedia CommentMedia[]
+  commentId String   @id @default(cuid())
+  postId    String
+  userId    String
+  message   String   @db.Text
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reply     String?
+  post      Post     @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([postId])
   @@index([userId])
-}
-
-model CommentMedia {
-  commentId       String
-  commentMediaURL String  @db.VarChar(500)
-  comment         Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
-
-  @@id([commentId, commentMediaURL])
-  @@index([commentId])
 }

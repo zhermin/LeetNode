@@ -69,7 +69,7 @@ export default function Home() {
       </Container>
       <Container size={1000} pt="xl" mb={100}>
         <Grid grow gutter="xl">
-          <Grid.Col sm={3} pb="lg">
+          <Grid.Col sm={3} pb="lg" className={classes.image}>
             <Image
               src="/bkt-diagram.png"
               alt="Bayesian Knowledge Tracing Diagram"
@@ -104,6 +104,10 @@ export default function Home() {
 }
 
 const useStyles = createStyles((theme) => ({
+  image: {
+    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
+  },
+
   wrapper: {
     position: "relative",
     paddingTop: 80,
@@ -180,5 +184,21 @@ const useStyles = createStyles((theme) => ({
         marginLeft: 0,
       },
     },
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 }));

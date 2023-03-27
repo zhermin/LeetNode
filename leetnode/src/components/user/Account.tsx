@@ -6,6 +6,7 @@ import {
   Avatar,
   Button,
   Center,
+  createStyles,
   FileInput,
   Group,
   TextInput,
@@ -19,6 +20,7 @@ interface AccountProps {
 
 export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
+  const { classes } = useStyles();
 
   const [userName, setUserName] = useState(
     userInfo.nickname ?? userInfo.name ?? ""
@@ -184,7 +186,13 @@ export default function Account({ userInfo }: AccountProps) {
           >
             Confirm
           </Button>
-          <Button variant="white" type="button" size="md" onClick={handleReset}>
+          <Button
+            variant="white"
+            type="button"
+            size="md"
+            onClick={handleReset}
+            className={classes.cancel}
+          >
             Cancel
           </Button>
         </Group>
@@ -192,3 +200,38 @@ export default function Account({ userInfo }: AccountProps) {
     </>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
+  },
+  cancel: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+          }).background
+        : theme.fn.variant({
+            variant: "white",
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light" }).color
+        : theme.fn.variant({ variant: "white" }).color,
+  },
+}));

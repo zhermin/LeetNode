@@ -1,13 +1,18 @@
+import { DetailedHTMLProps, HTMLAttributes, PropsWithChildren } from "react";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
 
-import { Stack } from "@mantine/core";
-
-export default function MarkdownLatex({ children }: { children: string }) {
+export default function Latex({
+  children,
+  ...props
+}: PropsWithChildren<{
+  children: string;
+}> &
+  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
   return (
-    <Stack>
+    <div {...props}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
@@ -15,6 +20,6 @@ export default function MarkdownLatex({ children }: { children: string }) {
       >
         {children}
       </ReactMarkdown>
-    </Stack>
+    </div>
   );
 }
