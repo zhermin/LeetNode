@@ -185,10 +185,20 @@ const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
   return {
     navbar: {
-      backgroundColor: theme.fn.variant({
-        variant: "filled",
-        color: theme.primaryColor,
-      }).background,
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[7]
+          : theme.fn.variant({
+              variant: "filled",
+              color: theme.primaryColor,
+            }).background,
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[7]
+          : theme.fn.variant({
+              variant: "filled",
+              color: theme.primaryColor,
+            }).background,
     },
 
     header: {
@@ -217,35 +227,67 @@ const useStyles = createStyles((theme, _params, getRef) => {
       alignItems: "center",
       textDecoration: "none",
       fontSize: theme.fontSizes.sm,
-      color: theme.white,
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[1]
+          : theme.colors.gray[9],
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
 
       "&:hover": {
-        backgroundColor: theme.fn.lighten(
-          theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background ?? theme.primaryColor,
-          0.1
-        ),
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.fn.lighten(
+                theme.fn.variant({
+                  variant: "filled",
+                  color: theme.primaryColor,
+                }).background ?? theme.primaryColor,
+                0.1
+              ),
       },
     },
 
     linkIcon: {
       ref: icon,
-      color: theme.white,
-      opacity: 0.75,
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[2]
+          : theme.colors.gray[8],
       marginRight: theme.spacing.sm,
     },
 
     linkActive: {
       "&, &:hover": {
-        backgroundColor: theme.fn.lighten(
-          theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background ?? theme.primaryColor,
-          0.15
-        ),
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.fn.variant({
+                variant: "light",
+                color: theme.primaryColor,
+              }).background
+            : theme.fn.lighten(
+                theme.fn.variant({
+                  variant: "filled",
+                  color: theme.primaryColor,
+                }).background ?? theme.primaryColor,
+                0.15
+              ),
+        color:
+          theme.colorScheme === "dark"
+            ? theme.fn.variant({
+                variant: "light",
+                color: theme.primaryColor,
+              }).color
+            : theme.colors.dark[8],
         [`& .${icon}`]: {
+          color:
+            theme.colorScheme === "dark"
+              ? theme.fn.variant({
+                  variant: "light",
+                  color: theme.primaryColor,
+                }).color
+              : theme.colors.dark[8],
           opacity: 0.9,
         },
       },

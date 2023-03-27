@@ -22,17 +22,23 @@ export const RecommendQuestion = async (
   });
 
   if (!relevantTopics) {
-    throw new Error("Course has no relevant topics");
+    throw new Error("Invalid course slug or course has no relevant topics");
   }
 
-  const recommendedTopicSlug = (
-    CustomMath.nRandomItems(1, relevantTopics.topics)[0] as Topic
-  ).topicSlug;
+  const recommendedTopic = CustomMath.nRandomItems(
+    1,
+    relevantTopics.topics
+  )[0] as Topic;
 
-  console.log(`[${courseSlug}] RECOMMENDED TOPIC: `, recommendedTopicSlug);
+  console.log(
+    `[${courseSlug}] RECOMMENDED TOPIC: `,
+    recommendedTopic.topicSlug
+  );
 
   let recommendedDifficulty: QuestionDifficulty;
-  if (masteryLevel <= 0.4) {
+  if (masteryLevel === 0) {
+    recommendedDifficulty = QuestionDifficulty.Easy;
+  } else if (masteryLevel <= 0.4) {
     recommendedDifficulty =
       Math.random() < 0.75
         ? QuestionDifficulty.Easy
@@ -58,7 +64,7 @@ export const RecommendQuestion = async (
 
   let relevantQuestions = await prisma.question.findMany({
     where: {
-      topicSlug: recommendedTopicSlug,
+      topicSlug: recommendedTopic.topicSlug,
       questionDifficulty: recommendedDifficulty,
     },
   });
@@ -66,11 +72,11 @@ export const RecommendQuestion = async (
   // TODO: Change this fallback
   if (relevantQuestions.length === 0) {
     console.warn(
-      `[${recommendedTopicSlug}] No questions with difficulty ${recommendedDifficulty}, falling back to random`
+      `[${recommendedTopic.topicSlug}] No questions with difficulty ${recommendedDifficulty}, falling back to random`
     );
     relevantQuestions = await prisma.question.findMany({
       where: {
-        topicSlug: recommendedTopicSlug,
+        topicSlug: recommendedTopic.topicSlug,
       },
     });
   }
@@ -85,7 +91,8 @@ export const RecommendQuestion = async (
   }
 
   return {
-    recommendedTopicSlug,
+    recommendedTopicSlug: recommendedTopic.topicSlug,
+    recommendedTopicName: recommendedTopic.topicName,
     recommendedQuestion,
   };
 };

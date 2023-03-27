@@ -2,9 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 
 import { prisma } from "@/server/db/client";
-import { QuestionDataType } from "@/types/question-types";
-import { CustomEval } from "@/utils/CustomEval";
-import { CustomMath } from "@/utils/CustomMath";
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,6 +13,7 @@ export default async function handler(
     return;
   }
 
+  // TODO: NUSNET ID must be unique, also allow add nickname
   // GET request to check if the user has already been initialized
   if (req.method === "GET") {
     const nusnetId = await prisma.user.findFirst({
@@ -47,20 +45,7 @@ export default async function handler(
       },
     });
 
-    // Get all topics
-    const topics = await prisma.topic.findMany();
-
-    // Initialize the default mastery for all topics for the user
-    const defaultMasteries = topics.map((topic) => {
-      return {
-        userId: session?.user?.id as string,
-        topicSlug: topic.topicSlug,
-      };
-    });
-    await prisma.mastery.createMany({
-      data: defaultMasteries,
-    });
-
+    // TODO: Remove userCourseQuestion
     // Initialize the userCourseQuestions for all courses for the user
     const courses = await prisma.course.findMany();
     const userCourseQuestions = courses.map((course) => {
@@ -71,45 +56,6 @@ export default async function handler(
     });
     await prisma.userCourseQuestion.createMany({
       data: userCourseQuestions,
-    });
-
-    // For now, initialize a random question for each course in userCourseQuestions
-    const allQuestions = await prisma.question.findMany({
-      select: {
-        questionId: true,
-        variationId: true,
-        questionData: true,
-      },
-    });
-
-    await prisma.questionWithAddedTime.createMany({
-      data: userCourseQuestions.map((userCourseQuestion) => {
-        const randomIdx = Math.floor(Math.random() * allQuestions.length);
-        const randomQuestion = allQuestions[randomIdx];
-        const randomQuestionData =
-          randomQuestion?.questionData as QuestionDataType;
-
-        let evaluatedQuestionData;
-        if (randomQuestion?.variationId === 0) {
-          evaluatedQuestionData = CustomEval(
-            randomQuestionData.variables,
-            randomQuestionData.methods
-          );
-        }
-
-        return {
-          questionId: randomQuestion?.questionId as number,
-          variationId: randomQuestion?.variationId as number,
-          userId: session?.user?.id as string,
-          courseSlug: userCourseQuestion.courseSlug,
-          variables:
-            evaluatedQuestionData?.questionVariables ??
-            randomQuestionData.variables,
-          answers: CustomMath.shuffleArray(
-            randomQuestionData.answers ?? evaluatedQuestionData?.questionAnswers
-          ) as QuestionDataType["answers"],
-        };
-      }),
     });
 
     res.status(200).json({ message: "Welcome to LeetNode!" });

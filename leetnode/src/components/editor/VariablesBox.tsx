@@ -1,6 +1,6 @@
 import { QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
-import { Box } from "@mantine/core";
+import { Box, useMantineTheme } from "@mantine/core";
 
 import Latex from "../Latex";
 
@@ -9,8 +9,15 @@ export default function VariablesBox({
 }: {
   variables: QuestionDataType["variables"] | null;
 }) {
+  const theme = useMantineTheme();
   return variables && variables.length > 0 ? (
-    <Box className="my-5 flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 pt-4 pb-2">
+    <Box
+      className={`my-5 flex items-center justify-center rounded-md border border-solid ${
+        theme.colorScheme === "dark"
+          ? "border-slate-800 bg-slate-800"
+          : "border-slate-300 bg-slate-200"
+      } pt-4 pb-2`}
+    >
       <Latex>{`$$ \\begin{aligned} ${variables
         .filter((item) => !item.isFinalAnswer)
         .map((item) => {

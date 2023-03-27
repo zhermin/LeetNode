@@ -1,3 +1,4 @@
+import axios, { AxiosError } from "axios";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -10,16 +11,19 @@ import {
 } from "chart.js/auto";
 import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import {
   AttemptsInfoType,
   CoursesInfoType,
+  useGetFetchQuery,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import {
   Accordion,
+  ActionIcon,
   Box,
   Button,
   Card,
@@ -38,21 +42,28 @@ import {
   Text,
   ThemeIcon,
   Title,
+  TypographyStylesProvider,
+  useMantineTheme,
 } from "@mantine/core";
+import { Dropzone } from "@mantine/dropzone";
+import { CourseMedia } from "@prisma/client";
 import {
   IconApps,
   IconCheck,
+  IconPhoto,
   IconPlus,
   IconPresentation,
   IconReportSearch,
   IconSquareNumber1,
   IconSquareNumber2,
   IconSquareNumber3,
+  IconUpload,
   IconUsers,
   IconVideo,
   IconX,
   IconZoomQuestion,
 } from "@tabler/icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import VariablesBox from "../editor/VariablesBox";
 import Latex from "../Latex";
@@ -72,52 +83,76 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
+interface FetchData {
+  data: CoursesInfoType[];
+}
+
 const Courses = ({
-  courses,
   users,
   attempts,
   questions,
 }: {
-  courses: CoursesInfoType[];
   users: UsersWithMasteriesAndAttemptsType;
   attempts: AttemptsInfoType;
   questions: AllQuestionsType;
 }) => {
   const { classes } = useStyles();
+  const queryClient = useQueryClient();
+  const theme = useMantineTheme();
+  const data: string[] = [];
+
+  const getCourses = useGetFetchQuery(["all-courses"]) as FetchData;
+  const courses: CoursesInfoType[] = getCourses?.data;
 
   const [sort, setSort] = useState("All Courses");
   const [openedDetails, setOpenedDetails] = useState(false);
   const [openedEdit, setOpenedEdit] = useState(false);
   const [details, setDetails] = useState<CoursesInfoType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
-  const [editValue, setEditValue] = useState("Overview");
-  const [overviewMessage, setOverviewMessage] = useState("");
-  const [slidesMessage, setSlidesMessage] = useState("");
-  const [videoMessage, setVideoMessage] = useState("");
-  const [additionalMessage, setAdditionalMessage] = useState("");
+  details?.topics.map((topic) => {
+    data.push(topic.topicName);
+  });
 
-  console.log(users);
+  const thisCourse: CoursesInfoType | undefined = courses.find(
+    (course) => course.courseSlug === details?.courseSlug
+  );
 
+  const [overviewMessage, setOverviewMessage] = useState(
+    thisCourse?.courseDescription as string
+  );
+  const [slidesMessage, setSlidesMessage] = useState(
+    (thisCourse?.courseMedia as CourseMedia[]) ?? []
+  );
+  const [videoMessage, setVideoMessage] = useState(thisCourse?.video as string);
+  const [additionalMessage, setAdditionalMessage] = useState(
+    thisCourse?.markdown as string
+  );
+
+  useEffect(() => {
+    setOverviewMessage(details?.courseDescription as string);
+    setSlidesMessage((details?.courseMedia as CourseMedia[]) ?? []);
+    setVideoMessage(details?.video as string);
+    setAdditionalMessage(details?.markdown as string);
+  }, [
+    details?.courseDescription,
+    details?.markdown,
+    details?.courseMedia,
+    details?.video,
+  ]);
+
+  // console.log(message);
+  console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
   let filteredCourses;
   {
     sort === "All Courses"
       ? (filteredCourses = courses)
       : (filteredCourses = courses.filter((c) => c.courseLevel === sort));
   }
-
-  console.log(questions);
-
-  const data: string[] = [];
-
-  details?.topics.map((topic) => {
-    data.push(topic.topicName);
-  });
+  console.log(filteredCourses);
 
   const filteredTopics = details?.topics.filter((topic) =>
     multiValue.includes(topic.topicName)
   );
-
-  console.log(editValue);
 
   const avgMasteryLevels: {
     topicName: string;
@@ -151,6 +186,86 @@ const Courses = ({
 
     console.log(avgMasteryLevels);
   }
+
+  const editMutation = useMutation<
+    Response,
+    AxiosError,
+    {
+      courseSlug: string;
+      content: {
+        overview: string;
+        slides: CourseMedia[];
+        video: string;
+        additional: string;
+      };
+    },
+    () => void
+  >({
+    mutationFn: async (editCourse) => {
+      console.log(editCourse);
+      const res = await axios.post("/api/courses/editCourse", editCourse);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-courses"]);
+      toast.success("Updated Successfully!");
+    },
+  });
+
+  const handleFileUpload = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "course_slides_media");
+      try {
+        const res = await axios.post(
+          "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
+          formData
+        );
+        const updatedSlidesMessage = [...slidesMessage];
+        updatedSlidesMessage.push({
+          publicId: res.data.public_id,
+          courseSlug: details?.courseSlug as string,
+          courseMediaURL: res.data.secure_url,
+          mediaName: res.data.original_filename,
+        });
+        setSlidesMessage(updatedSlidesMessage);
+        toast.success("Successfully Added!");
+        return res.data.secure_url;
+      } catch (error) {
+        console.log(error);
+        toast.error(error instanceof Error ? error.message : "Unknown Error");
+        throw error;
+      }
+    });
+    const uploadedUrls = await Promise.all(uploadPromises);
+    return uploadedUrls;
+  };
+
+  const handleDeleteFile = async (media: CourseMedia) => {
+    // Delete the record from slidesMessage state
+    const updatedSlidesMessage = slidesMessage.filter(
+      (slide) => slide.publicId !== media.publicId
+    );
+    setSlidesMessage(updatedSlidesMessage);
+    // Unsigned presets does not allow delete after 10 mins
+    // try {
+    //   const response = await axios.post(
+    //     `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_NAME}/delete_by_token`,
+    //     {
+    //       public_ids: [media.publicId],
+    //       api_key: process.env.CLOUDINARY_API_KEY,
+    //       api_secret: process.env.CLOUDINARY_SECRET,
+    //     }
+    //   );
+    //   console.log(response.data);
+    //   toast.success("Successfully Deleted!");
+    // } catch (error) {
+    //   console.log(error);
+    //   toast.error(error instanceof Error ? error.message : "Unknown Error");
+    //   // throw error;
+    // }
+  };
 
   return (
     <>
@@ -264,7 +379,16 @@ const Courses = ({
                   className={classes.item}
                   value="display-questions"
                 >
-                  <Accordion.Control>Display Questions</Accordion.Control>
+                  <Accordion.Control
+                    sx={(theme) => ({
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[7]
+                          : theme.white,
+                    })}
+                  >
+                    Display Questions
+                  </Accordion.Control>
                   <Accordion.Panel>
                     <Accordion>
                       {questions
@@ -460,7 +584,13 @@ const Courses = ({
 
       <Modal
         opened={openedEdit}
-        onClose={() => setOpenedEdit(false)}
+        onClose={() => {
+          setOpenedEdit(false);
+          setOverviewMessage(thisCourse?.courseDescription as string);
+          setSlidesMessage(thisCourse?.courseMedia as CourseMedia[]);
+          setVideoMessage(thisCourse?.video as string);
+          setAdditionalMessage(thisCourse?.markdown as string);
+        }}
         title={details?.courseName}
         size="70%"
       >
@@ -469,81 +599,140 @@ const Courses = ({
             [Note]: Please use the Questions tab for question generation
           </Text>
         </Center>
-        <Center>
-          <SegmentedControl
-            value={editValue}
-            onChange={setEditValue}
-            my={"xl"}
-            radius={20}
-            data={[
-              {
-                value: "Overview",
-                label: (
-                  <Center>
-                    <IconApps size={16} />
-                    <Box ml={10}>Overview</Box>
-                  </Center>
-                ),
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            editMutation.mutate({
+              courseSlug: details?.courseSlug as string,
+              content: {
+                overview: overviewMessage,
+                slides: slidesMessage,
+                video: videoMessage,
+                additional: additionalMessage,
               },
-              {
-                value: "Lecture Slides",
-                label: (
-                  <Center>
-                    <IconPresentation size={16} />
-                    <Box ml={10}>Lecture Slides</Box>
-                  </Center>
-                ),
-              },
-              {
-                value: "Lecture Videos",
-                label: (
-                  <Center>
-                    <IconVideo size={16} />
-                    <Box ml={10}>Lecture Videos</Box>
-                  </Center>
-                ),
-              },
-              {
-                value: "Additional Resources",
-                label: (
-                  <Center>
-                    <IconReportSearch size={16} />
-                    <Box ml={10}>Additional Resources</Box>
-                  </Center>
-                ),
-              },
-            ]}
-          />
-        </Center>
-        {editValue === "Overview" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={overviewMessage}
-            onChange={setOverviewMessage}
-          />
-        ) : editValue === "Lecture Slides" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={slidesMessage}
-            onChange={setSlidesMessage}
-          />
-        ) : editValue === "Lecture Videos" ? (
-          <Editor
-            upload_preset="forum_media"
-            value={videoMessage}
-            onChange={setVideoMessage}
-          />
-        ) : (
-          <Editor
-            upload_preset="forum_media"
-            value={additionalMessage}
-            onChange={setAdditionalMessage}
-          />
-        )}
+            });
+            setOpenedEdit(false);
+          }}
+        >
+          <>
+            <Group m={10} pt={"md"}>
+              <IconApps size={19} />
+              <Title order={4}>Edit Overview</Title>
+            </Group>
+            <Editor
+              upload_preset="course_overview_media"
+              value={overviewMessage}
+              onChange={setOverviewMessage}
+            />
+            <Box>
+              <Group m={10} pt={"md"}>
+                <IconPresentation size={19} />
+                <Title order={4}>Edit Lecture Slides</Title>
+              </Group>
+            </Box>
+            <Box>
+              <>
+                {slidesMessage.map((media) => {
+                  return (
+                    <Group key={media.courseMediaURL}>
+                      <Text>{media.mediaName}</Text>
+                      <ActionIcon onClick={() => handleDeleteFile(media)}>
+                        <IconX size={18} />
+                      </ActionIcon>
+                    </Group>
+                  );
+                })}
+              </>
+            </Box>
+            <Dropzone
+              onDrop={(files) => {
+                handleFileUpload(files);
+              }}
+              onReject={(files) => console.log("rejected files", files)}
+              maxSize={10000000}
+              accept={{ "application/pdf": [".pdf"] }}
+            >
+              <Group
+                position="center"
+                spacing="xl"
+                style={{ minHeight: 220, pointerEvents: "none" }}
+              >
+                <Dropzone.Accept>
+                  <IconUpload
+                    size={50}
+                    stroke={1.5}
+                    color={
+                      theme.colors[theme.primaryColor]?.[
+                        theme.colorScheme === "dark" ? 4 : 6
+                      ]
+                    }
+                  />
+                </Dropzone.Accept>
+                <Dropzone.Reject>
+                  <IconX
+                    size={50}
+                    stroke={1.5}
+                    color={
+                      theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+                    }
+                  />
+                </Dropzone.Reject>
+                <Dropzone.Idle>
+                  <IconPhoto size={50} stroke={1.5} />
+                </Dropzone.Idle>
+
+                <div>
+                  <Text size="xl" inline>
+                    Drag images here or click to select files
+                  </Text>
+                  <Text size="sm" color="dimmed" inline mt={7}>
+                    Attach as many files as you like, each file should not
+                    exceed 5mb
+                  </Text>
+                </div>
+              </Group>
+            </Dropzone>
+            <Group m={10} pt={"md"}>
+              <IconVideo size={19} />
+              <Title order={4}>Edit Lecture Video</Title>
+            </Group>
+            <Editor
+              upload_preset="course_video_media"
+              value={videoMessage}
+              onChange={setVideoMessage}
+            />
+            <Group m={10} pt={"md"}>
+              <IconReportSearch size={19} />
+              <Title order={4}>Edit Additional Resources</Title>
+            </Group>
+            <Editor
+              upload_preset="course_additional_media"
+              value={additionalMessage}
+              onChange={setAdditionalMessage}
+            />
+            <Group position="center" mt="xl">
+              <Button type="submit" className={classes.controlModal}>
+                Confirm Changes
+              </Button>
+              <Button
+                className={classes.controlModal}
+                onClick={() => {
+                  setOpenedEdit(false);
+                  setOverviewMessage(details?.courseDescription as string);
+                  setSlidesMessage(details?.courseMedia as CourseMedia[]);
+                  setVideoMessage(details?.video as string);
+                  setAdditionalMessage(details?.markdown as string);
+                }}
+              >
+                Cancel
+              </Button>
+            </Group>
+          </>
+        </form>
       </Modal>
       <Container size="lg" py="xl">
         <Title order={2} align="center" mb="lg" className={classes.title}>
-          Courses Detailed Statistics
+          Courses Details
         </Title>
         <Center>
           <SegmentedControl
@@ -612,11 +801,11 @@ const Courses = ({
               p="xl"
             >
               {c.courseLevel === "Advanced" ? (
-                <IconSquareNumber3 color="red" />
+                <IconSquareNumber3 className="stroke-red-500 dark:stroke-red-700" />
               ) : c.courseLevel === "Foundational" ? (
-                <IconSquareNumber1 color="green" />
+                <IconSquareNumber1 className="stroke-green-500 dark:stroke-green-700" />
               ) : (
-                <IconSquareNumber2 color="orange" />
+                <IconSquareNumber2 className="stroke-yellow-500 dark:stroke-yellow-700" />
               )}
               <Text
                 size="lg"
@@ -626,9 +815,20 @@ const Courses = ({
               >
                 {c.courseName}
               </Text>
-              <Text size="sm" color="dimmed" mt="sm" mb={70}>
-                {c.courseDescription}
-              </Text>
+              <TypographyStylesProvider
+                sx={(theme) => ({
+                  color: theme.colors.gray[6],
+                  fontSize: theme.fontSizes.sm,
+                })}
+                mt="sm"
+                mb={70}
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(c.courseDescription),
+                  }}
+                />
+              </TypographyStylesProvider>
               <Group className={classes.action}>
                 <Button
                   radius="xl"
@@ -637,6 +837,7 @@ const Courses = ({
                     setOpenedEdit(true);
                     setDetails(c);
                   }}
+                  className={classes.controlModal}
                 >
                   Edit
                 </Button>
@@ -647,6 +848,7 @@ const Courses = ({
                     setOpenedDetails(true);
                     setDetails(c);
                   }}
+                  className={classes.controlModal}
                 >
                   Details
                 </Button>
@@ -721,6 +923,25 @@ const useStyles = createStyles((theme) => ({
     "&:hover": {
       backgroundColor: "transparent",
     },
+  },
+
+  controlModal: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 
   image: {

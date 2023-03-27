@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -53,7 +52,7 @@ function BadgeCard({
   category,
   badges,
 }: BadgeCardProps) {
-  const { classes } = useStyles();
+  const { theme, classes } = useStyles();
 
   const features = badges.map((badge) => (
     <Badge color="gray" key={badge} leftSection="#" size="sm" variant="filled">
@@ -63,7 +62,13 @@ function BadgeCard({
 
   return (
     <Card withBorder radius="md" m="md" p={0} className={classes.card}>
-      <Link href={`/courses/${slug}`} passHref>
+      <Link
+        href={`/courses/${slug}`}
+        passHref
+        className={`${
+          theme.colorScheme === "dark" ? "text-white" : "text-black"
+        }`}
+      >
         <Card.Section>
           <Box
             sx={{
@@ -129,7 +134,6 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 
 export default function CoursesPage() {
   const { classes } = useStyles();
-  const session = useSession();
 
   const { data: courses } = useQuery<allCoursesType>(
     ["all-courses"],
@@ -152,22 +156,6 @@ export default function CoursesPage() {
       </Center>
     );
   }
-
-  const handleInitUser = async (
-    course: Course & { topics: { topicSlug: string }[] }
-  ) => {
-    try {
-      const { data } = await axios.post(`/api/pybkt/init`, {
-        id: session?.data?.user?.id,
-        topics: course.topics,
-      });
-      console.log(data);
-      return data;
-    } catch (error) {
-      console.error(error);
-      throw new Error("Failed to initialise");
-    }
-  };
 
   return (
     <>
@@ -199,19 +187,17 @@ export default function CoursesPage() {
           {courses
             .filter((course) => course.type === CourseType.Quiz)
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
                     image: course.courseImage,
                     title: course.courseName,
                     category: `QUIZ`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -235,19 +221,17 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -270,19 +254,17 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />
@@ -306,19 +288,17 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
                     image: course.courseImage,
                     title: course.courseName,
                     category: `W${course.week}S${course.studio}`,
-                    description: course.courseDescription,
+                    description: course.courseDescription.replace(
+                      /<\/?[^>]+(>|$)/g,
+                      ""
+                    ),
                     badges: course.topics.map((topic) => topic.topicSlug),
                   }}
                 />

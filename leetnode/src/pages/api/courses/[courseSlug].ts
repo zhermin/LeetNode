@@ -10,6 +10,9 @@ export async function getCourseDetails(courseSlug: string) {
     where: {
       courseSlug: courseSlug,
     },
+    include: {
+      courseMedia: true,
+    },
   });
 }
 
@@ -18,10 +21,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
 
   const courseDetails = await getCourseDetails(req.query.courseSlug as string);
 
@@ -34,7 +33,7 @@ export default async function handler(
         include: {
           mastery: {
             where: {
-              userId: session?.user?.id,
+              userId: session?.user?.id as string,
             },
           },
         },

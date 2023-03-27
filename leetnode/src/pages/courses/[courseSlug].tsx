@@ -1,4 +1,5 @@
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -31,15 +32,18 @@ import {
   Text,
   Title,
   Tooltip,
+  TypographyStylesProvider,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { Course, Mastery, Topic } from "@prisma/client";
+import { Course, CourseMedia, Mastery, Topic } from "@prisma/client";
 import {
   IconApps,
   IconArrowBarLeft,
   IconArrowLeft,
   IconArrowRight,
   IconChartLine,
+  IconChevronsLeft,
+  IconChevronsRight,
   IconMessages,
   IconPresentation,
   IconReportSearch,
@@ -66,7 +70,7 @@ export type UserQuestionWithAttemptsType = {
 export default function CourseMainPage({
   courseDetails,
 }: {
-  courseDetails: Course;
+  courseDetails: Course & { courseMedia: CourseMedia[] };
 }) {
   // Mantine
   const { theme, classes, cx } = useStyles();
@@ -107,7 +111,7 @@ export default function CourseMainPage({
   const tabs = {
     learn: [
       { label: "Overview", icon: IconApps },
-      courseDetails.slide
+      courseDetails.courseMedia.length > 0
         ? { label: "Lecture Slides", icon: IconPresentation }
         : null,
       courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
@@ -138,6 +142,37 @@ export default function CourseMainPage({
         </a>
       )
   );
+
+  // Check if courseDetails.video/courseDetails.markdown contains an iframe tag
+  const hasIframeVideo = /<iframe.*?>/.test(courseDetails.video as string);
+
+  // If it does, add the width and height attributes to the iframe tag
+  const modifiedVideo = hasIframeVideo
+    ? courseDetails.video?.replace(
+        /<iframe(.*?)>/g,
+        '<iframe$1 width="100%" height="100%">'
+      )
+    : courseDetails.video;
+
+  console.log(modifiedVideo);
+
+  const parts = courseDetails.markdown?.split(/(<iframe.*?>.*?<\/iframe>)/g);
+
+  console.log(parts);
+  const output = parts?.map((part) => {
+    console.log(part);
+    if (part.match(/<iframe.*?>.*?<\/iframe>/)) {
+      const iframe = part
+        .replace(/(width=".*?")|(height=".*?")/g, "")
+        .replace(/<iframe/, '<iframe width="100%" height="100%"');
+      console.log(iframe);
+      return { type: "video", string: iframe };
+    } else {
+      return { type: "markdown", string: part };
+    }
+  });
+
+  console.log(output);
 
   return (
     <AppShell
@@ -217,57 +252,105 @@ export default function CourseMainPage({
         {active === "Overview" ? (
           <Container>
             <Title>{courseDetails.courseName}</Title>
-            <Text size="xl">{courseDetails.courseDescription}</Text>
+            <TypographyStylesProvider
+              sx={(theme) => ({
+                fontSize: theme.fontSizes.xl,
+              })}
+            >
+              <div
+                style={{ width: "100%", height: "100%" }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(courseDetails.courseDescription),
+                }}
+              />
+            </TypographyStylesProvider>
           </Container>
         ) : active === "Lecture Slides" ? (
-          <Stack align="center">
-            <Document
-              file={courseDetails.slide}
-              onLoadSuccess={onDocumentLoadSuccess}
-            >
-              <Page pageNumber={pageNumber} />
-            </Document>
-            <Group>
-              <Button
-                onClick={() => {
-                  if (pageNumber > 1) {
-                    setPageNumber(pageNumber - 1);
-                  }
-                }}
-                variant="light"
+          courseDetails.courseMedia.map((media) => (
+            <Stack align="center" key={media.publicId}>
+              <Title my={"md"}>{media.mediaName}</Title>
+              <Document
+                file={media.courseMediaURL}
+                onLoadSuccess={onDocumentLoadSuccess}
               >
-                <IconArrowLeft stroke={1.5} />
-              </Button>
-              <Tooltip label="Jump to Page 1" withArrow position="bottom">
-                <Button variant="light" onClick={() => setPageNumber(1)}>
-                  Page {pageNumber} of {numPages}
+                <Page pageNumber={pageNumber} />
+              </Document>
+              <Group>
+                <Button
+                  onClick={() => {
+                    if (pageNumber > 1) {
+                      setPageNumber(pageNumber - 1);
+                    }
+                    setPageNumber(1);
+                  }}
+                  variant="light"
+                >
+                  <IconChevronsLeft stroke={1.5} />
                 </Button>
-              </Tooltip>
-              <Button
-                onClick={() => {
-                  if (pageNumber < numPages) {
-                    setPageNumber(pageNumber + 1);
-                  }
-                }}
-                variant="light"
-              >
-                <IconArrowRight stroke={1.5} />
-              </Button>
-            </Group>
-          </Stack>
+                <Button
+                  onClick={() => {
+                    if (pageNumber > 1) {
+                      setPageNumber(pageNumber - 1);
+                    }
+                  }}
+                  variant="light"
+                >
+                  <IconArrowLeft stroke={1.5} />
+                </Button>
+                <Tooltip label="Jump to Page 1" withArrow position="bottom">
+                  <Button variant="light" onClick={() => setPageNumber(1)}>
+                    Page {pageNumber} of {numPages}
+                  </Button>
+                </Tooltip>
+                <Button
+                  onClick={() => {
+                    if (pageNumber < numPages) {
+                      setPageNumber(pageNumber + 1);
+                    }
+                  }}
+                  variant="light"
+                >
+                  <IconArrowRight stroke={1.5} />
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (pageNumber < numPages) {
+                      setPageNumber(pageNumber + 1);
+                    }
+                    setPageNumber(numPages);
+                  }}
+                  variant="light"
+                >
+                  <IconChevronsRight stroke={1.5} />
+                </Button>
+              </Group>
+            </Stack>
+          ))
         ) : active === "Lecture Videos" ? (
-          <Group className="h-[calc(100vh-180px)]">
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${courseDetails.video}?rel=0`}
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+            <div
+              style={{ width: "100%", height: "100%" }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(modifiedVideo as string),
+              }}
+            />
           </Group>
         ) : active === "Additional Resources" ? (
-          <Latex>{courseDetails.markdown ?? defaultMarkdown}</Latex>
+          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+            {output?.map((resource) =>
+              resource.type === "video" ? (
+                <div
+                  key={resource.string}
+                  style={{ width: "100%", height: "100%" }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(resource.string as string),
+                  }}
+                />
+              ) : (
+                <Latex key={resource.string}>{resource.string}</Latex>
+              )
+            )}
+          </Group>
         ) : active === "Course Discussion" ? (
           <CourseDiscussion courseName={courseDetails.courseName} />
         ) : active === "Question" ? (
@@ -390,11 +473,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
           ? theme.colors.dark[4]
           : theme.colors.gray[3]
       }`,
-      paddingTop: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
     },
   };
 });
-
-const defaultMarkdown = `# Additional Learning Resources by [Khan Academy](https://www.khanacademy.org/)
-
-<div className="flex h-[calc(100vh-260px)]"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/videoseries?list=PLSQl0a2vh4HCLqA-rhMi_Z_WnBkD3wUka" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;

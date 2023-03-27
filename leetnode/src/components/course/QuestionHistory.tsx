@@ -10,11 +10,15 @@ import {
   Group,
   Loader,
   Paper,
+  RingProgress,
+  Stack,
   Text,
+  Title,
 } from "@mantine/core";
 import {
   Attempt,
   Question,
+  QuestionDifficulty,
   QuestionWithAddedTime,
   Topic,
 } from "@prisma/client";
@@ -27,7 +31,7 @@ import { QuestionDifficultyBadge } from "../misc/Badges";
 import { UCQATAnswersType } from "./PracticeQuestion";
 
 const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
-  const { classes } = useStyles();
+  const { theme, classes } = useStyles();
 
   const { data: attempts } = useQuery({
     queryKey: ["get-attempts", courseSlug],
@@ -59,12 +63,94 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
     );
   }
 
+  const numCorrectAttempts = attempts.data
+    .map((attempt) => attempt.isCorrect)
+    .filter(Boolean).length;
+
+  // Count number of Easy, Medium, Hard questions
+  const questionDifficulties = attempts.data.map(
+    (attempt) => attempt.questionWithAddedTime.question.questionDifficulty
+  );
+
+  const [numEasy, numMedium, numHard] = [
+    questionDifficulties.filter(
+      (difficulty) => difficulty === QuestionDifficulty.Easy
+    ).length,
+    questionDifficulties.filter(
+      (difficulty) => difficulty === QuestionDifficulty.Medium
+    ).length,
+    questionDifficulties.filter(
+      (difficulty) => difficulty === QuestionDifficulty.Hard
+    ).length,
+  ];
+
   return (
     <>
+      <Paper withBorder radius="lg" mr="lg" mb="lg">
+        <Stack align="center" mt="sm">
+          <Title order={1}>Attempt History</Title>
+          <Text size="lg" color="dimmed">
+            Keep practising to achieve mastery in all topics!
+          </Text>
+          <RingProgress
+            size={220}
+            thickness={15}
+            roundCaps
+            sections={[
+              {
+                value: (numEasy / attempts.data.length) * 100,
+                color: theme.colors.teal[5],
+                tooltip: `${numEasy} Easy`,
+              },
+              {
+                value: (numMedium / attempts.data.length) * 100,
+                color: theme.colors.yellow[5],
+                tooltip: `${numMedium} Medium`,
+              },
+              {
+                value: (numHard / attempts.data.length) * 100,
+                color: theme.colors.red[5],
+                tooltip: `${numHard} Hard`,
+              },
+            ]}
+            label={
+              <Center>
+                <RingProgress
+                  size={150}
+                  thickness={15}
+                  sections={[
+                    {
+                      value: (numCorrectAttempts / attempts.data.length) * 100,
+                      color: theme.colors.green[7],
+                      tooltip: `${numCorrectAttempts} Correct`,
+                    },
+                    {
+                      value:
+                        100 - (numCorrectAttempts / attempts.data.length) * 100,
+                      color: theme.colors.red[7],
+                      tooltip: `${
+                        attempts.data.length - numCorrectAttempts
+                      } Incorrect`,
+                    },
+                  ]}
+                  label={
+                    <Text weight={700} size="xl" align="center">
+                      {numCorrectAttempts}{" "}
+                      <Text span color="dimmed">
+                        / {attempts.data.length}
+                      </Text>
+                    </Text>
+                  }
+                />
+              </Center>
+            }
+          />
+        </Stack>
+      </Paper>
       {attempts.data.map((attempt) => (
         <Paper
-          radius="lg"
           withBorder
+          radius="lg"
           className={`${classes.card} ${
             attempt.isCorrect ? classes.correct : classes.wrong
           }`}

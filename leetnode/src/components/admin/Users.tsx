@@ -90,9 +90,21 @@ const Users = ({
 
   {
     sort === "Last Active (Newest)"
-      ? students.sort((a, b) => b.lastActive.getTime() - a.lastActive.getTime())
+      ? students.sort((a, b) => {
+          if (a.lastActive && b.lastActive) {
+            return b.lastActive.getTime() - a.lastActive.getTime();
+          }
+          // Handle null values, for example, by placing them at the end of the sorted array
+          return a.lastActive ? -1 : b.lastActive ? 1 : 0;
+        })
       : sort === "Last Active (Oldest)"
-      ? students.sort((a, b) => a.lastActive.getTime() - b.lastActive.getTime())
+      ? students.sort((a, b) => {
+          if (a.lastActive && b.lastActive) {
+            return a.lastActive.getTime() - b.lastActive.getTime();
+          }
+          // Handle null values, for example, by placing them at the end of the sorted array
+          return a.lastActive ? 1 : b.lastActive ? -1 : 0;
+        })
       : students;
   }
 
@@ -287,7 +299,7 @@ const Users = ({
                       </Text>
                     </div>
                   </Group>
-                  {DateDiffCalc(item?.lastActive)}
+                  {DateDiffCalc(item?.lastActive as Date)}
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>

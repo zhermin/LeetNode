@@ -21,6 +21,7 @@ import {
   Button,
   Center,
   Code,
+  createStyles,
   Divider,
   Flex,
   Group,
@@ -97,6 +98,8 @@ export default function QuestionEditor({
   const [questionType, setQuestionType] = useState<"dynamic" | "static">(
     initialValues.variationId === 0 ? "dynamic" : "static"
   );
+  const { theme } = useStyles();
+
   const [rawDataOpened, setRawDataOpened] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState<CourseNamesType>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
@@ -332,7 +335,11 @@ export default function QuestionEditor({
         <Stack
           p="md"
           my="md"
-          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          className={
+            theme.colorScheme === "dark"
+              ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
+              : "rounded-md odd:bg-gray-100 even:bg-gray-200"
+          }
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
@@ -437,7 +444,11 @@ export default function QuestionEditor({
               ))}
             <Box
               sx={{ flex: 2, alignSelf: "stretch" }}
-              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+              className={`flex items-center justify-center rounded-md border border-solid ${
+                theme.colorScheme === "dark"
+                  ? "border-slate-800 bg-slate-800"
+                  : "border-slate-300 bg-slate-200"
+              }`}
             >
               <Latex>{`$$ ${item.name ?? ""}${
                 item.unit ? "~(" + item.unit + ")" : ""
@@ -555,7 +566,11 @@ export default function QuestionEditor({
         <Stack
           p="md"
           my="md"
-          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          className={
+            theme.colorScheme === "dark"
+              ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
+              : "rounded-md odd:bg-gray-100 even:bg-gray-200"
+          }
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
@@ -570,7 +585,11 @@ export default function QuestionEditor({
             />
             <Box
               sx={{ flex: 2, alignSelf: "stretch" }}
-              className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+              className={`flex items-center justify-center rounded-md border border-solid ${
+                theme.colorScheme === "dark"
+                  ? "border-slate-800 bg-slate-800"
+                  : "border-slate-300 bg-slate-200"
+              }`}
             >
               <Latex>{`$$ ${item.expr} $$`}</Latex>
             </Box>
@@ -623,6 +642,7 @@ export default function QuestionEditor({
   ));
 
   const newMethod = () => {
+    form.values.methods = form.values.methods ?? [];
     form.insertListItem("methods", {
       key: randomId(),
       expr: "",
@@ -637,7 +657,11 @@ export default function QuestionEditor({
           align="center"
           p="md"
           my="md"
-          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          className={
+            theme.colorScheme === "dark"
+              ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
+              : "rounded-md odd:bg-gray-100 even:bg-gray-200"
+          }
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
@@ -677,7 +701,11 @@ export default function QuestionEditor({
           align="center"
           p="md"
           my="md"
-          className="rounded-md odd:bg-gray-100 even:bg-gray-200"
+          className={
+            theme.colorScheme === "dark"
+              ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
+              : "rounded-md odd:bg-gray-100 even:bg-gray-200"
+          }
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
@@ -734,7 +762,11 @@ export default function QuestionEditor({
           />
           <Box
             sx={{ flex: 1, alignSelf: "stretch" }}
-            className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 p-2"
+            className={`flex items-center justify-center rounded-md border border-solid ${
+              theme.colorScheme === "dark"
+                ? "border-slate-800 bg-slate-800"
+                : "border-slate-300 bg-slate-200"
+            } pt-4 pb-2`}
           >
             {item.isLatex ? (
               <Latex>{`$$ ${item.answerContent} $$`}</Latex>
@@ -1141,7 +1173,10 @@ export default function QuestionEditor({
             href="https://mathjs.org/docs/expressions/syntax.html#constants-and-variables"
             target="_blank"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -1166,12 +1201,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newVar()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -1190,7 +1228,10 @@ export default function QuestionEditor({
             ml="lg"
             className="cursor-help"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -1215,12 +1256,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newMethod()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -1239,7 +1283,10 @@ export default function QuestionEditor({
             ml="lg"
             className="cursor-help"
           >
-            <IconHelp size={20} color="black" />
+            <IconHelp
+              size={20}
+              color={theme.colorScheme === "dark" ? "white" : "black"}
+            />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -1264,12 +1311,15 @@ export default function QuestionEditor({
         fullWidth
         variant="light"
         color="gray"
-        className="bg-gray-100"
+        className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
         onClick={() => newHint()}
       >
-        <IconPlus size={16} />
+        <IconPlus
+          size={16}
+          color={theme.colorScheme === "dark" ? "gray" : ""}
+        />
       </Button>
 
       <Flex mt="xl" mb="md" align="center">
@@ -1309,13 +1359,23 @@ export default function QuestionEditor({
           </ActionIcon>
         </Tooltip>
       </Flex>
-      <Box className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 pt-4 pb-2">
+      <Box
+        className={`flex items-center justify-center rounded-md border border-solid ${
+          theme.colorScheme === "dark"
+            ? "border-slate-800 bg-slate-800"
+            : "border-slate-300 bg-slate-200"
+        } pt-4 pb-2`}
+      >
         <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
       </Box>
       {questionType === "dynamic" && (
         <Box
           mt="md"
-          className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 pt-4 pb-1"
+          className={`flex items-center justify-center rounded-md border border-solid ${
+            theme.colorScheme === "dark"
+              ? "border-slate-800 bg-slate-800"
+              : "border-slate-300 bg-slate-200"
+          } pt-4 pb-2`}
         >
           <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
         </Box>
@@ -1337,7 +1397,10 @@ export default function QuestionEditor({
                 ml="lg"
                 className="cursor-help"
               >
-                <IconHelp size={20} color="black" />
+                <IconHelp
+                  size={20}
+                  color={theme.colorScheme === "dark" ? "white" : "black"}
+                />
               </ActionIcon>
             </Tooltip>
           </Flex>
@@ -1362,7 +1425,9 @@ export default function QuestionEditor({
             fullWidth
             variant="light"
             color="gray"
-            className="bg-gray-100"
+            className={
+              theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"
+            }
             radius="sm"
             mt="md"
             onClick={() => newAnswer()}
@@ -1482,3 +1547,29 @@ export default function QuestionEditor({
     </form>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  box: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "border-slate-300",
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: "bg-slate-200",
+          }).background
+        : "lightgrey",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : "bg-slate-200",
+    flex: 1,
+    alignSelf: "stretch",
+  },
+}));

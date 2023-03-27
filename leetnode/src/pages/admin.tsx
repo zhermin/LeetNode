@@ -29,7 +29,9 @@ import { useMediaQuery } from "@mantine/hooks";
 import {
   Attempt,
   Course,
+  CourseMedia,
   Mastery,
+  Post,
   Question,
   QuestionWithAddedTime,
   Topic,
@@ -44,7 +46,7 @@ import {
   IconPuzzle,
   IconUsers,
 } from "@tabler/icons";
-import { useQueries } from "@tanstack/react-query";
+import { QueryKey, useQueries, useQueryClient } from "@tanstack/react-query";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
   attempts: Attempt[];
@@ -54,6 +56,9 @@ export type UsersWithMasteriesAndAttemptsType = (User & {
 export type CoursesInfoType = Course & {
   topics: Topic[];
   userCourseQuestions: UserCourseQuestion[];
+  posts: Post[];
+  attempts: Attempt;
+  courseMedia: CourseMedia[];
 };
 
 export type AttemptsInfoType = (Attempt & {
@@ -142,6 +147,8 @@ export default function AdminPage() {
     );
   }
 
+  console.log(usersData);
+
   return (
     <>
       <AppShell
@@ -227,7 +234,6 @@ export default function AdminPage() {
             <QuestionViewer />
           ) : active === "Courses" ? (
             <Courses
-              courses={courses.data}
               users={usersData.data}
               attempts={attempts.data}
               questions={questions.data}
@@ -245,13 +251,19 @@ export default function AdminPage() {
   );
 }
 
+export const useGetFetchQuery = (key: QueryKey) => {
+  const queryClient = useQueryClient();
+
+  return queryClient.getQueryData(key);
+};
+
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
 
   return {
     navbar: {
       backgroundColor:
-        theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
+        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
       paddingBottom: 0,
     },
 

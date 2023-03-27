@@ -20,6 +20,7 @@ import {
   Stack,
   Text,
   Tooltip,
+  useMantineTheme,
 } from "@mantine/core";
 import { Question, QuestionWithAddedTime } from "@prisma/client";
 import { IconBulb } from "@tabler/icons";
@@ -37,6 +38,7 @@ export type UCQATAnswersType = {
 }[];
 
 export default function PracticeQuestion() {
+  const theme = useMantineTheme();
   const router = useRouter();
   const currentCourseSlug = router.query.courseSlug as string;
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -199,7 +201,11 @@ export default function PracticeQuestion() {
                     <Text>{item.answerContent}</Text>
                   )
                 }
-                className="flex items-center justify-start rounded-md border border-solid border-gray-200 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-800"
+                className={`flex items-center justify-start rounded-md border border-solid ${
+                  theme.colorScheme === "dark"
+                    ? "border-zinc-600 bg-zinc-700"
+                    : "border-gray-200 bg-gray-100"
+                } p-2`}
               />
             ))}
           </Radio.Group>
@@ -229,7 +235,11 @@ export default function PracticeQuestion() {
                     <Text>{item.answerContent}</Text>
                   )
                 }
-                className="flex items-center justify-start rounded-md border border-solid border-gray-200 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-800"
+                className={`flex items-center justify-start rounded-md border border-solid ${
+                  theme.colorScheme === "dark"
+                    ? "border-zinc-600 bg-zinc-700"
+                    : "border-gray-200 bg-gray-100"
+                } p-2`}
               />
             ))}
           </Checkbox.Group>
