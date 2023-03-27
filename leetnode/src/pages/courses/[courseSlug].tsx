@@ -1,8 +1,9 @@
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Document, Page } from "react-pdf";
 
 import CourseDiscussion from "@/components/course/CourseDiscussion";
@@ -11,13 +12,12 @@ import QuestionHistory from "@/components/course/QuestionHistory";
 import ResultsPage from "@/components/course/ResultsPage";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
-import MarkdownLatex from "@/components/MarkdownLatex";
+import Latex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
 import { prisma } from "@/server/db/client";
 import {
   AppShell,
   Box,
-  Burger,
   Button,
   Center,
   Container,
@@ -25,7 +25,6 @@ import {
   Group,
   Header,
   Loader,
-  MediaQuery,
   Navbar as Sidebar,
   ScrollArea,
   SegmentedControl,
@@ -35,18 +34,8 @@ import {
   Tooltip,
   TypographyStylesProvider,
 } from "@mantine/core";
-import {
-  Answer,
-  Attempt,
-  Course,
-  CourseMedia,
-  Mastery,
-  Question,
-  QuestionMedia,
-  QuestionWithAddedTime,
-  Topic,
-  UserCourseQuestion,
-} from "@prisma/client";
+import { useMediaQuery } from "@mantine/hooks";
+import { Course, CourseMedia, Mastery, Topic } from "@prisma/client";
 import {
   IconApps,
   IconArrowBarLeft,
@@ -70,21 +59,13 @@ export type CourseInfoType = {
   topics: (Topic & {
     mastery: Mastery[];
   })[];
-  userCourseQuestions: (UserCourseQuestion & {
-    questionsWithAddedTime: UserQuestionWithAttemptsType;
-  })[];
 } | null;
 
-export type UserQuestionWithAttemptsType =
-  | (QuestionWithAddedTime & {
-      question: Question & {
-        answers: Answer[];
-        attempts: Attempt[];
-        topic: Topic;
-        questionMedia: QuestionMedia[];
-      };
-    })[]
-  | undefined;
+export type UserQuestionWithAttemptsType = {
+  topics: (Topic & {
+    mastery: Mastery[];
+  })[];
+} | null;
 
 export default function CourseMainPage({
   courseDetails,
@@ -95,7 +76,10 @@ export default function CourseMainPage({
   const { theme, classes, cx } = useStyles();
 
   // States
-  const [opened, setOpened] = useState(false);
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+
   const [section, setSection] = useState<"learn" | "practice">("learn");
   const [active, setActive] = useState("Overview");
 
@@ -107,22 +91,13 @@ export default function CourseMainPage({
 
   // Data Fetched using Axios, Queried by React Query
   const router = useRouter();
+  const currentCourseSlug = router.query.courseSlug;
 
-  const { data: course } = useQuery<CourseInfoType>(
-    ["course", router.query.courseSlug],
-    async () => {
-      try {
-        const { data } = await axios.get(
-          `/api/courses/${router.query.courseSlug}`
-        );
-        return data;
-      } catch (error) {
-        console.log(error);
-        throw new Error("Failed to fetch user course info from API");
-      }
-    },
-    { useErrorBoundary: true }
-  );
+  const { data: course } = useQuery({
+    queryKey: ["course", currentCourseSlug],
+    queryFn: () =>
+      axios.get<CourseInfoType>(`/api/courses/${currentCourseSlug}`),
+  });
 
   if (!course) {
     return (
@@ -131,8 +106,6 @@ export default function CourseMainPage({
       </Center>
     );
   }
-
-  console.log(course);
 
   // Sidebar Tabs based on Fetched Data
   const tabs = {
@@ -212,73 +185,67 @@ export default function CourseMainPage({
             <Container
               style={{ display: "flex", alignItems: "center", height: "100%" }}
             >
-              <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                <Burger
-                  opened={opened}
-                  onClick={() => setOpened((opened) => !opened)}
-                  size="sm"
-                  color={theme.colors.gray[6]}
-                  mr="xl"
-                />
-              </MediaQuery>
-              <LeetNodeNavbar />
+              <LeetNodeNavbar
+                sidebarOpened={sidebarOpened}
+                setSidebarOpened={setSidebarOpened}
+              />
             </Container>
           </Header>
         </>
       }
       footer={<LeetNodeFooter />}
       navbar={
-        <Sidebar
-          p="md"
-          hiddenBreakpoint="sm"
-          hidden={!opened}
-          width={{ sm: 200, lg: 300 }}
-          className={classes.navbar}
-        >
-          <Sidebar.Section>
-            <Text weight={600} size="lg" align="center" mb="lg">
-              {courseDetails.courseName}
-            </Text>
+        sidebarOpened ? (
+          <Sidebar
+            p="md"
+            width={{ sm: 200, lg: 300 }}
+            className={classes.navbar}
+          >
+            <Sidebar.Section>
+              <Text weight={600} size="lg" align="center" mb="lg">
+                {courseDetails.courseName}
+              </Text>
 
-            <SegmentedControl
-              value={section}
-              onChange={(value: "learn" | "practice") => setSection(value)}
-              transitionTimingFunction="ease"
-              fullWidth
-              data={[
-                { label: "Learn", value: "learn" },
-                { label: "Practice", value: "practice" },
-              ]}
-            />
-          </Sidebar.Section>
+              <SegmentedControl
+                value={section}
+                onChange={(value: "learn" | "practice") => setSection(value)}
+                transitionTimingFunction="ease"
+                fullWidth
+                data={[
+                  { label: "Learn", value: "learn" },
+                  { label: "Practice", value: "practice" },
+                ]}
+              />
+            </Sidebar.Section>
 
-          <Sidebar.Section mt="xl" grow>
-            {links}
-          </Sidebar.Section>
+            <Sidebar.Section mt="xl" grow>
+              {links}
+            </Sidebar.Section>
 
-          <Sidebar.Section className={classes.sidebarFooter}>
-            <a
-              className={cx(classes.link, {
-                [classes.linkActive]: "Course Discussion" === active,
-              })}
-              onClick={(event: { preventDefault: () => void }) => {
-                event.preventDefault();
-                setActive("Course Discussion");
-              }}
-            >
-              <Box className={classes.link} p={0}>
+            <Sidebar.Section className={classes.sidebarFooter}>
+              <a
+                className={cx(classes.link, {
+                  [classes.linkActive]: "Course Discussion" === active,
+                })}
+                onClick={(event: { preventDefault: () => void }) => {
+                  event.preventDefault();
+                  setActive("Course Discussion");
+                }}
+              >
                 <IconMessages className={classes.linkIcon} stroke={1.5} />
-                <span>Course Discussion</span>
-              </Box>
-            </a>
-            <Link href="/courses" passHref>
-              <Box className={classes.link}>
-                <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
-                <span>Back to Courses</span>
-              </Box>
-            </Link>
-          </Sidebar.Section>
-        </Sidebar>
+                <span>Discussion</span>
+              </a>
+              <Link href="/courses" passHref>
+                <Box className={classes.link}>
+                  <IconArrowBarLeft className={classes.linkIcon} stroke={1.5} />
+                  <span>Back to Courses</span>
+                </Box>
+              </Link>
+            </Sidebar.Section>
+          </Sidebar>
+        ) : (
+          <></>
+        )
       }
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
@@ -293,7 +260,7 @@ export default function CourseMainPage({
               <div
                 style={{ width: "100%", height: "100%" }}
                 dangerouslySetInnerHTML={{
-                  __html: courseDetails.courseDescription,
+                  __html: DOMPurify.sanitize(courseDetails.courseDescription),
                 }}
               />
             </TypographyStylesProvider>
@@ -363,36 +330,35 @@ export default function CourseMainPage({
           <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
             <div
               style={{ width: "100%", height: "100%" }}
-              dangerouslySetInnerHTML={{ __html: modifiedVideo as string }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(modifiedVideo as string),
+              }}
             />
           </Group>
         ) : active === "Additional Resources" ? (
           <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
-            {output?.map((x) =>
-              x.type === "video" ? (
+            {output?.map((resource) =>
+              resource.type === "video" ? (
                 <div
-                  key={x.string}
+                  key={resource.string}
                   style={{ width: "100%", height: "100%" }}
-                  dangerouslySetInnerHTML={{ __html: x.string as string }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(resource.string as string),
+                  }}
                 />
               ) : (
-                <MarkdownLatex key={x.string}>{x.string}</MarkdownLatex>
+                <Latex key={resource.string}>{resource.string}</Latex>
               )
             )}
           </Group>
         ) : active === "Course Discussion" ? (
           <CourseDiscussion courseName={courseDetails.courseName} />
         ) : active === "Question" ? (
-          <PracticeQuestion
-            questionDisplay={
-              course.userCourseQuestions[0]?.questionsWithAddedTime
-            }
-            courseSlug={courseDetails.courseSlug}
-          />
+          <PracticeQuestion />
         ) : active === "Attempts" ? (
           <QuestionHistory courseSlug={courseDetails.courseSlug} />
         ) : active === "Mastery" ? (
-          <ResultsPage course={course} />
+          <ResultsPage />
         ) : (
           <Text>Error</Text>
         )}

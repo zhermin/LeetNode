@@ -11,10 +11,7 @@ export default async function handler(
       postId: "desc",
     },
     include: {
-      postMedia: true,
-      comment: {
-        include: { commentMedia: true },
-      },
+      comment: true,
       postLikes: true,
     },
   });

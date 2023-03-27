@@ -297,7 +297,7 @@ const ForumPost = ({
         <TypographyStylesProvider key={post?.postId}>
           <div
             dangerouslySetInnerHTML={{
-              __html: `${post?.message}`,
+              __html: DOMPurify.sanitize(`${post?.message}`),
             }}
           />
         </TypographyStylesProvider>
@@ -508,14 +508,16 @@ const ForumPost = ({
                         dangerouslySetInnerHTML={
                           comment
                             ? {
-                                __html: `${
-                                  comments.find(
-                                    (e: {
-                                      commentId: string;
-                                      reply: string | null;
-                                    }) => e.commentId === comment.reply
-                                  )?.message
-                                }`,
+                                __html: DOMPurify.sanitize(
+                                  `${
+                                    comments.find(
+                                      (e: {
+                                        commentId: string;
+                                        reply: string | null;
+                                      }) => e.commentId === comment.reply
+                                    )?.message
+                                  }`
+                                ),
                               }
                             : undefined
                         }

@@ -48,19 +48,29 @@ export const CustomMath = (function () {
     },
     /** Generates an array of numbers between min and max with step **/
     generateRange: function (min: number, max: number, step: number) {
+      if (step === 0) throw new Error("Step cannot be 0");
       const result = [];
-      for (let i = -max; i <= max; i += step) {
+      for (let i = min; i <= max; i += step) {
         if (i === 0) continue;
-        if (Math.abs(i) >= min && Math.abs(i) <= max) {
-          result.push(i);
-        }
+        result.push(i);
       }
       return result;
     },
     /** Get number of decimal places from an integer or float **/
     getDecimalPlaces: function (num: number) {
-      const decimalIndex = num.toString().indexOf('.');
+      const decimalIndex = num.toString().indexOf(".");
       return decimalIndex === -1 ? 0 : num.toString().length - decimalIndex - 1;
-    }
+    },
+    /** Generate random n-length string. NOT FOR SECURE USAGES! **/
+    randomString: function (len?: number, chars?: string) {
+      const allowed_chars =
+        chars ?? "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö";
+
+      function pickRandom() {
+        return allowed_chars[Math.floor(Math.random() * allowed_chars.length)];
+      }
+
+      return [...Array(len ?? 8)].map(pickRandom).join("");
+    },
   };
 })();

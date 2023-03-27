@@ -9,19 +9,18 @@ import {
   Title as ChartTitle,
   Tooltip,
 } from "chart.js/auto";
+import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Latex from "react-latex-next";
 
 import {
   AttemptsInfoType,
   CoursesInfoType,
-  QuestionsInfoType,
   useGetFetchQuery,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
+import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import {
   Accordion,
   ActionIcon,
@@ -66,6 +65,9 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import VariablesBox from "../editor/VariablesBox";
+import Latex from "../Latex";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -92,7 +94,7 @@ const Courses = ({
 }: {
   users: UsersWithMasteriesAndAttemptsType;
   attempts: AttemptsInfoType;
-  questions: QuestionsInfoType;
+  questions: AllQuestionsType;
 }) => {
   const { classes } = useStyles();
   const queryClient = useQueryClient();
@@ -295,7 +297,8 @@ const Courses = ({
                           .filter((user) =>
                             details?.topics.some(
                               (topic) =>
-                                topic.topicSlug === user.question.topicSlug
+                                topic.topicSlug ===
+                                user.questionWithAddedTime.question.topicSlug
                             )
                           )
                           .map((user) => user.userId)
@@ -395,8 +398,8 @@ const Courses = ({
                               (q) => q.courseSlug === details?.courseSlug
                             ) && question.topicSlug === topic.topicSlug
                         )
-                        .map((question) =>
-                          question.variationId === 1 ? (
+                        .map((question, index) =>
+                          question.variationId !== 0 ? (
                             <Accordion.Item
                               value={String(question.questionId)}
                               key={question.questionId}
@@ -413,24 +416,22 @@ const Courses = ({
                                 </Group>
                               </Accordion.Control>
                               <Accordion.Panel>
-                                <Text>
-                                  <Latex>{question.questionContent}</Latex>
-                                </Text>
-                                <Image
-                                  src={
-                                    question.questionMedia[0]
-                                      ?.questionMediaURL ?? ""
+                                <div
+                                  className="rawhtml rawhtml-lg-img"
+                                  dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(
+                                      question.questionContent
+                                    ),
+                                  }}
+                                />
+                                <VariablesBox
+                                  variables={
+                                    (question.questionData as QuestionDataType)
+                                      .variables
                                   }
-                                  alt={question.questionContent ?? ""}
-                                  width="0"
-                                  height="0"
-                                  sizes="100vw"
-                                  className={`my-8 h-auto w-1/3 rounded-lg ${classes.image}`}
                                 />
                                 <Tabs
-                                  defaultValue={String(
-                                    question.answers[0]?.optionNumber
-                                  )}
+                                  defaultValue={String(index)}
                                   orientation="vertical"
                                   unstyled
                                   styles={(theme) => ({
@@ -494,10 +495,12 @@ const Courses = ({
                                   })}
                                 >
                                   <Tabs.List mb={"xl"}>
-                                    {question.answers.map((answer) => (
+                                    {(
+                                      question.questionData as QuestionDataType
+                                    ).answers?.map((answer, index) => (
                                       <Tabs.Tab
-                                        key={answer.optionNumber}
-                                        value={String(answer.optionNumber)}
+                                        key={answer.key}
+                                        value={index.toString()}
                                         icon={
                                           answer.isCorrect ? (
                                             <ThemeIcon
@@ -522,14 +525,16 @@ const Courses = ({
                                           )
                                         }
                                       >
-                                        Option {String(answer.optionNumber)}
+                                        Option {index}
                                       </Tabs.Tab>
                                     ))}
                                   </Tabs.List>
-                                  {question.answers.map((answer) => (
+                                  {(
+                                    question.questionData as QuestionDataType
+                                  ).answers?.map((answer, index) => (
                                     <Tabs.Panel
-                                      key={String(answer.optionNumber)}
-                                      value={String(answer.optionNumber)}
+                                      key={index}
+                                      value={index.toString()}
                                       pl={"xs"}
                                     >
                                       <>
@@ -542,11 +547,11 @@ const Courses = ({
                                         <Text>
                                           Number of Attempts:{" "}
                                           {
-                                            question.attempts.filter(
-                                              (attempt) =>
-                                                attempt.attemptOption ===
-                                                answer.optionNumber
-                                            ).length
+                                            // question.attempts.filter(
+                                            //   (attempt) =>
+                                            //     attempt.attemptOption ===
+                                            //     answer.key
+                                            // ).length
                                           }
                                         </Text>
                                       </>
@@ -796,27 +801,11 @@ const Courses = ({
               p="xl"
             >
               {c.courseLevel === "Advanced" ? (
-                theme.colorScheme === "dark" ? (
-                  <Box sx={(theme) => ({ color: theme.colors.red[8] })}>
-                    <IconSquareNumber3 />
-                  </Box>
-                ) : (
-                  <IconSquareNumber3 color="red" />
-                )
+                <IconSquareNumber3 className="stroke-red-500 dark:stroke-red-700" />
               ) : c.courseLevel === "Foundational" ? (
-                theme.colorScheme === "dark" ? (
-                  <Box sx={(theme) => ({ color: theme.colors.green[8] })}>
-                    <IconSquareNumber1 />
-                  </Box>
-                ) : (
-                  <IconSquareNumber1 color="green" />
-                )
-              ) : theme.colorScheme === "dark" ? (
-                <Box sx={(theme) => ({ color: theme.colors.orange[8] })}>
-                  <IconSquareNumber2 />
-                </Box>
+                <IconSquareNumber1 className="stroke-green-500 dark:stroke-green-700" />
               ) : (
-                <IconSquareNumber2 color="orange" />
+                <IconSquareNumber2 className="stroke-yellow-500 dark:stroke-yellow-700" />
               )}
               <Text
                 size="lg"
@@ -836,7 +825,7 @@ const Courses = ({
               >
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: c.courseDescription,
+                    __html: DOMPurify.sanitize(c.courseDescription),
                   }}
                 />
               </TypographyStylesProvider>

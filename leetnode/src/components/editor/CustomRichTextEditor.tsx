@@ -7,7 +7,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
 import RichTextEditor, {
-	RichTextEditorProps
+  RichTextEditorProps,
 } from "@/packages/mantine-rte/src";
 
 window.katex = katex;
@@ -43,7 +43,7 @@ export default function Editor(
           );
           resolve(res.data.secure_url);
         } catch (error) {
-          console.log(error);
+          console.error(error);
           toast.error(error instanceof Error ? error.message : "Unknown Error");
           reject(error);
         }
@@ -56,7 +56,7 @@ export default function Editor(
       const { data } = await axios.get("/api/forum/getAllUsers");
       return data.map((user: { name: string }) => ({ value: user.name }));
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error instanceof Error ? error.message : "Unknown Error");
       return [];
     }
@@ -69,7 +69,7 @@ export default function Editor(
         value: topic.topicName,
       }));
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error instanceof Error ? error.message : "Unknown Error");
       return [];
     }

@@ -24,13 +24,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import {
-  Comment,
-  CommentMedia,
-  Post,
-  PostLikes,
-  PostMedia,
-} from "@prisma/client";
+import { Comment, Post, PostLikes } from "@prisma/client";
 import {
   QueryKey,
   useMutation,
@@ -49,8 +43,7 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
 
 export type postType =
   | (Post & {
-      postMedia: PostMedia[];
-      comment: (Comment & { commentMedia: CommentMedia })[];
+      comment: Comment[];
       postLikes: PostLikes[];
     })
   | null;
@@ -514,22 +507,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                     },
                   },
                 })}
-                // styles={(theme) => ({
-                //   item: {
-                //     "&[data-active]": {
-                //       backgroundImage:
-                //         theme.colorScheme === "dark"
-                //           ? theme.fn.variant({
-                //               variant: "light",
-                //               color: theme.primaryColor,
-                //             }).background
-                //           : theme.fn.variant({
-                //               variant: "filled",
-                //               color: theme.primaryColor,
-                //             }).background,
-                //     },
-                //   },
-                // })}
               />
               <Select
                 value={postsPerPage}

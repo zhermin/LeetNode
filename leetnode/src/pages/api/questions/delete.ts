@@ -6,16 +6,17 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
-  const { id } = req.query;
-  const question = await prisma.question.delete({
+  const deletedQuestion = await prisma.question.delete({
     where: {
-      questionId: Number(id),
-    }
+      questionId_variationId: {
+        questionId: Number(req.query.questionId as string),
+        variationId: Number(req.query.variationId as string),
+      },
+    },
   });
 
   res.status(200).json({
     message: `Question deleted successfully`,
-    data: question,
+    data: deletedQuestion,
   });
 }

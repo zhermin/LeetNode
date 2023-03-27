@@ -52,7 +52,7 @@ function BadgeCard({
   category,
   badges,
 }: BadgeCardProps) {
-  const { classes } = useStyles();
+  const { theme, classes } = useStyles();
 
   const features = badges.map((badge) => (
     <Badge color="gray" key={badge} leftSection="#" size="sm" variant="filled">
@@ -62,7 +62,13 @@ function BadgeCard({
 
   return (
     <Card withBorder radius="md" m="md" p={0} className={classes.card}>
-      <Link href={`/courses/${slug}`} passHref>
+      <Link
+        href={`/courses/${slug}`}
+        passHref
+        className={`${
+          theme.colorScheme === "dark" ? "text-white" : "text-black"
+        }`}
+      >
         <Card.Section>
           <Box
             sx={{
@@ -136,7 +142,7 @@ export default function CoursesPage() {
         const { data } = await axios.get(`/api/courses`);
         return data;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         throw new Error("Failed to refetch all courses from API");
       }
     },
@@ -150,22 +156,6 @@ export default function CoursesPage() {
       </Center>
     );
   }
-
-  const handleInitUser = async (
-    course: Course & { topics: { topicSlug: string }[] }
-  ) => {
-    console.log(course.topics);
-    try {
-      const { data } = await axios.post(`/api/pybkt/init`, {
-        topics: course.topics,
-      });
-      console.log(data);
-      return data;
-    } catch (error) {
-      console.log(error);
-      throw new Error("Failed to initialise");
-    }
-  };
 
   return (
     <>
@@ -197,12 +187,7 @@ export default function CoursesPage() {
           {courses
             .filter((course) => course.type === CourseType.Quiz)
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -236,12 +221,7 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -274,12 +254,7 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -313,12 +288,7 @@ export default function CoursesPage() {
                 course.type === CourseType.Content
             )
             .map((course) => (
-              <Carousel.Slide
-                key={course.courseSlug}
-                onClick={() => {
-                  handleInitUser(course);
-                }}
-              >
+              <Carousel.Slide key={course.courseSlug}>
                 <BadgeCard
                   {...{
                     slug: course.courseSlug,
@@ -357,7 +327,7 @@ export async function getStaticProps() {
       const data = await getAllCoursesData();
       return data;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw new Error("Failed to fetch all courses directly from the database");
     }
   });

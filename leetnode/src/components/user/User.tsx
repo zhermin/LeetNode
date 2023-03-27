@@ -1,6 +1,6 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
@@ -15,6 +15,7 @@ import {
   ScrollArea,
   Text,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconLogout,
   IconReportAnalytics,
@@ -38,6 +39,10 @@ export default function User() {
 
   const { classes, theme, cx } = useStyles();
   const [active, setActive] = useState("Account");
+
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
 
   const {
     data: userInfo,
@@ -93,65 +98,71 @@ export default function User() {
       header={
         <>
           <LeetNodeHeader />
-          <LeetNodeNavbar />
+          <LeetNodeNavbar
+            sidebarOpened={sidebarOpened}
+            setSidebarOpened={setSidebarOpened}
+          />
         </>
       }
       navbar={
-        <Navbar
-          height="100%"
-          width={{ sm: 200, lg: 300, base: 100 }}
-          p="md"
-          hiddenBreakpoint="sm"
-          className={classes.navbar}
-        >
-          <Navbar.Section>
-            <div className={classes.header}>
-              <Center>
-                <Avatar
-                  size={100}
-                  src={userInfo?.image}
-                  radius={100}
-                  className="mb-3"
-                  imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
-                />
-              </Center>
-              <Center>
-                <Text
-                  className={classes.userName}
-                  sx={{ lineHeight: 1, fontSize: "20px" }}
-                  weight={500}
-                  color={theme.colors.gray[9]}
-                >
-                  {userInfo?.name}
-                </Text>
-              </Center>
-              <Center>
-                {userInfo?.nickname && (
+        sidebarOpened ? (
+          <Navbar
+            height="100%"
+            width={{ sm: 300 }}
+            p="md"
+            className={classes.navbar}
+          >
+            <Navbar.Section>
+              <div className={classes.header}>
+                <Center>
+                  <Avatar
+                    size={100}
+                    src={userInfo?.image}
+                    radius={100}
+                    className="mb-3"
+                    imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
+                  />
+                </Center>
+                <Center>
                   <Text
                     className={classes.userName}
-                    sx={{ lineHeight: 1, fontSize: "16px" }}
-                    weight={400}
+                    sx={{ lineHeight: 1, fontSize: "20px" }}
+                    weight={500}
                     color={theme.colors.gray[9]}
                   >
-                    ({userInfo?.nickname})
+                    {userInfo?.name}
                   </Text>
-                )}
-              </Center>
-            </div>
-            {links}
-          </Navbar.Section>
+                </Center>
+                <Center>
+                  {userInfo?.nickname && (
+                    <Text
+                      className={classes.userName}
+                      sx={{ lineHeight: 1, fontSize: "16px" }}
+                      weight={400}
+                      color={theme.colors.gray[9]}
+                    >
+                      ({userInfo?.nickname})
+                    </Text>
+                  )}
+                </Center>
+              </div>
+              {links}
+            </Navbar.Section>
 
-          <Navbar.Section className={classes.footer}>
-            <a
-              href="#"
-              className={classes.link}
-              onClick={() => signOut({ callbackUrl: "/" })}
-            >
-              <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Logout</span>
-            </a>
-          </Navbar.Section>
-        </Navbar>
+            <Navbar.Section className={classes.footer}>
+              <a
+                href="#"
+                className={classes.link}
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                <IconLogout className={classes.linkIcon} stroke={1.5} />
+                <span>Logout</span>
+              </a>
+            </Navbar.Section>
+          </Navbar>
+        ) : (
+          <></>
+        )
       }
       footer={<LeetNodeFooter />}
     >

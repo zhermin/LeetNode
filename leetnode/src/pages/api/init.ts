@@ -13,6 +13,7 @@ export default async function handler(
     return;
   }
 
+  // TODO: NUSNET ID must be unique, also allow add nickname
   // GET request to check if the user has already been initialized
   if (req.method === "GET") {
     const nusnetId = await prisma.user.findFirst({
@@ -44,25 +45,9 @@ export default async function handler(
       },
     });
 
-    // // Get all topics
-    // const topics = await prisma.topic.findMany();
-
-    // // Initialize the default mastery for all topics for the user
-    // const defaultMasteries = topics.map((topic) => {
-    //   return {
-    //     userId: session?.user?.id as string,
-    //     topicSlug: topic.topicSlug,
-    //   };
-    // });
-    // console.log(defaultMasteries);
-    // await prisma.mastery.createMany({
-    //   data: defaultMasteries,
-    // });
-
+    // TODO: Remove userCourseQuestion
     // Initialize the userCourseQuestions for all courses for the user
-    const courses = (await prisma.course.findMany()).filter(
-      (course) => course.courseSlug !== "welcome-quiz"
-    );
+    const courses = await prisma.course.findMany();
     const userCourseQuestions = courses.map((course) => {
       return {
         userId: session?.user?.id as string,
@@ -71,22 +56,6 @@ export default async function handler(
     });
     await prisma.userCourseQuestion.createMany({
       data: userCourseQuestions,
-    });
-
-    // For now, initialize a random question for each course in userCourseQuestions
-    const questionIds = await prisma.question.findMany({
-      select: { questionId: true },
-    });
-    await prisma.questionWithAddedTime.createMany({
-      data: userCourseQuestions.map((userCourseQuestion) => {
-        return {
-          questionId:
-            questionIds[Math.floor(Math.random() * questionIds.length)]
-              ?.questionId ?? 1,
-          userId: session?.user?.id as string,
-          courseSlug: userCourseQuestion.courseSlug,
-        };
-      }),
     });
 
     res.status(200).json({ message: "Welcome to LeetNode!" });
