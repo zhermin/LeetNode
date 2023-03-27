@@ -224,7 +224,8 @@ const ForumPost = ({
         <Button
           onClick={handleBack}
           leftIcon={<IconChevronLeft size={14} />}
-          size="xs"
+          size="sm"
+          className={classes.control}
         >
           Back
         </Button>
@@ -620,7 +621,7 @@ const ForumPost = ({
               onChange={setMessage}
             />
             <Group position="center" mt="xl">
-              <Button type="submit" size="md">
+              <Button type="submit" size="md" className={classes.control}>
                 Send message
               </Button>
             </Group>
@@ -638,11 +639,29 @@ const flash = keyframes({
   to: { backgroundColor: "none" },
 });
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   flash: {
     animationName: `${flash}`,
     animationDuration: "1.5s",
     animationIterationCount: "initial",
+  },
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 }));
 
