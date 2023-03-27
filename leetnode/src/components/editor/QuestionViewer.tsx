@@ -2,11 +2,10 @@ import axios from "axios";
 import DOMPurify from "dompurify";
 import { useRef, useState } from "react";
 
-import { QuestionsInfoType } from "@/pages/admin";
-import { CustomMath } from "@/server/Utils";
+import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
+import { CustomMath } from "@/utils/CustomMath";
 import {
   ActionIcon,
-  Box,
   Button,
   Center,
   Container,
@@ -19,68 +18,24 @@ import {
   Title,
 } from "@mantine/core";
 import { randomId } from "@mantine/hooks";
-import { Question, QuestionDifficulty, Topic } from "@prisma/client";
+import { QuestionDifficulty } from "@prisma/client";
 import { IconEye, IconPencil } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
-import Latex from "../Latex";
 import QuestionEditor from "./QuestionEditor";
-
-export type FormQuestionType = {
-  variationId: number;
-  title: string;
-  difficulty: QuestionDifficulty;
-  topic: string;
-  variables?: FormQuestionJsonType["variables"];
-  methods?: FormQuestionJsonType["methods"];
-  hints?: FormQuestionJsonType["hints"];
-  baseQuestionId?: number;
-  answers?: FormQuestionJsonType["answers"];
-};
-
-export type FormQuestionJsonType = {
-  variables: {
-    key: string;
-    encoded: string;
-    name: string;
-    randomize: boolean;
-    isFinalAnswer: boolean;
-    unit?: string;
-    default?: string;
-    min?: number;
-    max?: number;
-    decimalPlaces?: number;
-    step?: number;
-  }[];
-  methods: {
-    key: string;
-    expr: string;
-    explanation?: string;
-  }[];
-  hints?: {
-    key: string;
-    hint: string;
-  }[];
-  answers?: {
-    questionId: number;
-    optionNumber: number;
-    answerContent: string;
-    isCorrect: boolean;
-    isLatex: boolean;
-  }[];
-};
+import VariablesBox from "./VariablesBox";
 
 export default function QuestionViewer() {
   const { classes } = useStyles();
   const editorHtml = useRef("");
-  const currentQuestion = useRef<QuestionsInfoType[number]>();
+  const currentQuestion = useRef<AllQuestionsType[number]>();
   const [questionAddOpened, setQuestionAddOpened] = useState(false);
   const [questionViewOpened, setQuestionViewOpened] = useState(false);
   const [questionEditOpened, setQuestionEditOpened] = useState(false);
 
   const { data: questions } = useQuery({
     queryKey: ["all-questions"],
-    queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
+    queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
   });
 
   if (!questions) {
@@ -127,8 +82,10 @@ export default function QuestionViewer() {
               </tr>
             </thead>
             <tbody>
-              {questions.data.map((question: QuestionsInfoType[number]) => (
-                <tr key={question.questionId}>
+              {questions.data.map((question: AllQuestionsType[number]) => (
+                <tr
+                  key={[question.questionId, question.variationId].toString()}
+                >
                   <td>{question.questionId}</td>
                   <td>{question.variationId}</td>
                   <td>{question.questionTitle}</td>
@@ -324,31 +281,21 @@ export default function QuestionViewer() {
               onClose={() => setQuestionViewOpened(false)}
             >
               <div
+                className="rawhtml rawhtml-lg-img"
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
                     currentQuestion.current.questionContent
                   ),
                 }}
               />
-              {currentQuestion.current.variationId === 0 && (
-                <Box
-                  sx={{ flex: 1, alignSelf: "stretch" }}
-                  className="mt-5 flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-                >
-                  <Latex>{`$$ \\begin{aligned} ${(
-                    currentQuestion.current.questionData as FormQuestionJsonType
-                  ).variables
-                    .filter((item) => !item.isFinalAnswer)
-                    .map((item) => {
-                      return `${item.name} ${
-                        item.unit ? "~(" + item.unit + ")" : ""
-                      } &= ${CustomMath.round(
-                        Number(item.default),
-                        item?.decimalPlaces ?? 3
-                      )}`;
-                    })
-                    .join("\\\\")} \\end{aligned} $$`}</Latex>
-                </Box>
+              {(currentQuestion.current.questionData as QuestionDataType)
+                .variables && (
+                <VariablesBox
+                  variables={
+                    (currentQuestion.current.questionData as QuestionDataType)
+                      .variables
+                  }
+                />
               )}
             </Modal>
           )}
@@ -365,15 +312,18 @@ export default function QuestionViewer() {
                 setQuestionAddOpened={setQuestionAddOpened}
                 setQuestionEditOpened={setQuestionEditOpened}
                 editorHtml={editorHtml}
-                questionId={currentQuestion.current.questionId}
+                currQuestionId={currentQuestion.current.questionId}
+                currVariationId={currentQuestion.current.variationId}
                 initialValues={{
+                  baseQuestionId:
+                    currentQuestion.current.variationId > 0
+                      ? currentQuestion.current.questionId.toString()
+                      : undefined,
                   variationId: currentQuestion.current.variationId,
                   title: currentQuestion.current.questionTitle ?? "",
                   difficulty: currentQuestion.current.questionDifficulty,
                   topic: currentQuestion.current.topicSlug,
-                  answers: currentQuestion.current.answers,
-                  ...(currentQuestion.current
-                    .questionData as FormQuestionJsonType),
+                  ...(currentQuestion.current.questionData as QuestionDataType),
                 }}
               />
             </Modal>

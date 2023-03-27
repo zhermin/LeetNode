@@ -8,16 +8,16 @@ import {
   Title as ChartTitle,
   Tooltip,
 } from "chart.js/auto";
+import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useState } from "react";
 
 import {
   AttemptsInfoType,
   CoursesInfoType,
-  QuestionsInfoType,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
+import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import {
   Accordion,
   Box,
@@ -54,6 +54,7 @@ import {
   IconZoomQuestion,
 } from "@tabler/icons";
 
+import VariablesBox from "../editor/VariablesBox";
 import Latex from "../Latex";
 
 ChartJS.register(
@@ -80,7 +81,7 @@ const Courses = ({
   courses: CoursesInfoType[];
   users: UsersWithMasteriesAndAttemptsType;
   attempts: AttemptsInfoType;
-  questions: QuestionsInfoType;
+  questions: AllQuestionsType;
 }) => {
   const { classes } = useStyles();
 
@@ -181,7 +182,8 @@ const Courses = ({
                           .filter((user) =>
                             details?.topics.some(
                               (topic) =>
-                                topic.topicSlug === user.question.topicSlug
+                                topic.topicSlug ===
+                                user.questionWithAddedTime.question.topicSlug
                             )
                           )
                           .map((user) => user.userId)
@@ -272,8 +274,8 @@ const Courses = ({
                               (q) => q.courseSlug === details?.courseSlug
                             ) && question.topicSlug === topic.topicSlug
                         )
-                        .map((question) =>
-                          question.variationId === 1 ? (
+                        .map((question, index) =>
+                          question.variationId !== 0 ? (
                             <Accordion.Item
                               value={String(question.questionId)}
                               key={question.questionId}
@@ -290,24 +292,22 @@ const Courses = ({
                                 </Group>
                               </Accordion.Control>
                               <Accordion.Panel>
-                                <Text>
-                                  <Latex>{question.questionContent}</Latex>
-                                </Text>
-                                <Image
-                                  src={
-                                    question.questionMedia[0]
-                                      ?.questionMediaURL ?? ""
+                                <div
+                                  className="rawhtml rawhtml-lg-img"
+                                  dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(
+                                      question.questionContent
+                                    ),
+                                  }}
+                                />
+                                <VariablesBox
+                                  variables={
+                                    (question.questionData as QuestionDataType)
+                                      .variables
                                   }
-                                  alt={question.questionContent ?? ""}
-                                  width="0"
-                                  height="0"
-                                  sizes="100vw"
-                                  className={`my-8 h-auto w-1/3 rounded-lg ${classes.image}`}
                                 />
                                 <Tabs
-                                  defaultValue={String(
-                                    question.answers[0]?.optionNumber
-                                  )}
+                                  defaultValue={String(index)}
                                   orientation="vertical"
                                   unstyled
                                   styles={(theme) => ({
@@ -371,10 +371,12 @@ const Courses = ({
                                   })}
                                 >
                                   <Tabs.List mb={"xl"}>
-                                    {question.answers.map((answer) => (
+                                    {(
+                                      question.questionData as QuestionDataType
+                                    ).answers?.map((answer, index) => (
                                       <Tabs.Tab
-                                        key={answer.optionNumber}
-                                        value={String(answer.optionNumber)}
+                                        key={answer.key}
+                                        value={index.toString()}
                                         icon={
                                           answer.isCorrect ? (
                                             <ThemeIcon
@@ -399,14 +401,16 @@ const Courses = ({
                                           )
                                         }
                                       >
-                                        Option {String(answer.optionNumber)}
+                                        Option {index}
                                       </Tabs.Tab>
                                     ))}
                                   </Tabs.List>
-                                  {question.answers.map((answer) => (
+                                  {(
+                                    question.questionData as QuestionDataType
+                                  ).answers?.map((answer, index) => (
                                     <Tabs.Panel
-                                      key={String(answer.optionNumber)}
-                                      value={String(answer.optionNumber)}
+                                      key={index}
+                                      value={index.toString()}
                                       pl={"xs"}
                                     >
                                       <>
@@ -419,11 +423,11 @@ const Courses = ({
                                         <Text>
                                           Number of Attempts:{" "}
                                           {
-                                            question.attempts.filter(
-                                              (attempt) =>
-                                                attempt.attemptOption ===
-                                                answer.optionNumber
-                                            ).length
+                                            // question.attempts.filter(
+                                            //   (attempt) =>
+                                            //     attempt.attemptOption ===
+                                            //     answer.key
+                                            // ).length
                                           }
                                         </Text>
                                       </>

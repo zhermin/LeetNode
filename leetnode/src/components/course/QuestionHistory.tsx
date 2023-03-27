@@ -1,149 +1,137 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
 
+import { QuestionDataType } from "@/types/question-types";
 import {
   Badge,
   Center,
   createStyles,
-  Grid,
+  Flex,
   Group,
   Loader,
   Paper,
   Text,
-  Title,
 } from "@mantine/core";
 import {
-  Answer,
   Attempt,
-  Course,
   Question,
-  QuestionMedia,
+  QuestionWithAddedTime,
   Topic,
-  User,
 } from "@prisma/client";
 import { IconCheck, IconX } from "@tabler/icons";
+import { useQuery } from "@tanstack/react-query";
 
+import VariablesBox from "../editor/VariablesBox";
 import Latex from "../Latex";
 import { QuestionDifficultyBadge } from "../misc/Badges";
-
-type AttemptsInterface = Attempt & {
-  user: User;
-  question: Question & {
-    answers: Answer[];
-    attempts: Attempt[];
-    topic: Topic;
-    questionMedia: QuestionMedia[];
-  };
-  answer: Answer;
-  course: Course;
-};
+import { UCQATAnswersType } from "./PracticeQuestion";
 
 const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
   const { classes } = useStyles();
-  const session = useSession();
-  const [loading, setLoading] = useState(false);
-  const [details, setDetails] = useState<AttemptsInterface[]>();
 
-  useEffect(() => {
-    setLoading(true);
-    axios.get("/api/prof/getAllAttempts").then((response) => {
-      const dt = response.data as AttemptsInterface[];
-      console.log(dt);
-      setLoading(false);
-      setDetails(
-        dt?.filter(
-          (data) =>
-            data.courseSlug === courseSlug &&
-            data.userId === session.data?.user?.id
-        )
-      );
-    });
-  }, [courseSlug, session.data?.user?.id]);
+  const { data: attempts } = useQuery({
+    queryKey: ["get-attempts", courseSlug],
+    queryFn: () =>
+      axios.get<
+        (Attempt & {
+          questionWithAddedTime: QuestionWithAddedTime & {
+            question: Question & {
+              topic: Topic;
+            };
+          };
+        })[]
+      >(`/api/attempts?course=${courseSlug}`),
+  });
 
-  console.log(session.data?.user?.id);
-  console.log(courseSlug);
-  console.log(details);
-  if (details?.length === 0) {
+  if (!attempts) {
     return (
       <Center className="h-[calc(100vh-180px)]">
-        <Text>You have not attempted any questions yet.</Text>
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (attempts.data.length === 0) {
+    return (
+      <Center className="h-[calc(100vh-180px)]">
+        <Text>You have not attempted any questions from this course yet.</Text>
       </Center>
     );
   }
 
   return (
     <>
-      {loading === true ? (
-        <Center style={{ height: 500 }}>
-          <Loader />
-        </Center>
-      ) : (
-        details?.map((attempt) => (
-          <Paper
-            radius="lg"
-            withBorder
-            className={`${classes.card} ${
-              attempt.isCorrect ? classes.correct : classes.wrong
-            }`}
-            mr="lg"
-            mb="xl"
-            key={attempt.attemptId}
-          >
-            <Grid grow align="center">
-              <Grid.Col span={7}>
-                <Group>
-                  <QuestionDifficultyBadge
-                    questionDifficulty={attempt.question.questionDifficulty}
-                    {...{ radius: "lg", size: "lg" }}
-                  />
-                  <Badge radius="lg" size="lg">
-                    {attempt.question.topic.topicName}
-                  </Badge>
-                </Group>
-                <Title order={3} className={classes.title} my="lg">
-                  {/* Question {attempt.questionNumber + 1}:{" "} */}
-                  <Latex>{attempt.question.questionContent}</Latex>
-                </Title>
-                {attempt.question.answers.map((ans) => (
-                  <Group
-                    key={ans.answerContent}
-                    className={`${classes.options} ${
-                      attempt.answer.answerContent === ans.answerContent
-                        ? classes.selected
-                        : ""
-                    }`}
-                  >
-                    {ans.isCorrect === true ? (
-                      <IconCheck color="green" size={30} stroke={3} />
-                    ) : (
-                      <IconX color="red" size={30} stroke={3} />
-                    )}
-                    <Latex>{ans.answerContent}</Latex>
-                  </Group>
-                ))}
-              </Grid.Col>
-              <Grid.Col span={1}>
-                <Image
-                  src={
-                    attempt.question.questionMedia[0]
-                      ?.questionMediaURL as string
-                  }
-                  alt={
-                    attempt.question.questionMedia[0]
-                      ?.questionMediaURL as string
-                  }
-                  width="0"
-                  height="0"
-                  sizes="100vw"
-                  className={`h-auto w-full rounded-lg ${classes.image}`}
-                />
-              </Grid.Col>
-            </Grid>
-          </Paper>
-        ))
-      )}
+      {attempts.data.map((attempt) => (
+        <Paper
+          radius="lg"
+          withBorder
+          className={`${classes.card} ${
+            attempt.isCorrect ? classes.correct : classes.wrong
+          }`}
+          mr="lg"
+          mb="xl"
+          key={attempt.attemptId}
+        >
+          <Group>
+            <QuestionDifficultyBadge
+              questionDifficulty={
+                attempt.questionWithAddedTime.question.questionDifficulty
+              }
+              {...{ radius: "lg", size: "md" }}
+            />
+            <Badge radius="lg" size="md">
+              {attempt.questionWithAddedTime.question.topic.topicName}
+            </Badge>
+          </Group>
+          <Text className={classes.title} size="sm" mt="lg" c="dimmed">
+            {new Date(attempt.submittedAt).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+            })}
+          </Text>
+          <div
+            className="rawhtml rawhtml-sm-img py-4"
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(
+                attempt.questionWithAddedTime.question.questionContent
+              ),
+            }}
+          />
+          <VariablesBox
+            variables={
+              attempt.questionWithAddedTime
+                .variables as QuestionDataType["variables"]
+            }
+          />
+          {(attempt.questionWithAddedTime.answers as UCQATAnswersType).map(
+            (ans) => (
+              <Flex
+                gap="sm"
+                key={ans.answerContent}
+                className={`my-2 ${classes.options} ${
+                  (attempt.attemptedKeys as string[]).includes(ans.key)
+                    ? classes.selected
+                    : ""
+                }`}
+              >
+                {ans.isCorrect === true ? (
+                  <IconCheck color="green" size={30} stroke={3} />
+                ) : (
+                  <IconX color="red" size={30} stroke={3} />
+                )}
+                {ans.isLatex ? (
+                  <Latex>{`$$ ${ans.answerContent} $$`}</Latex>
+                ) : (
+                  <Text>{ans.answerContent}</Text>
+                )}
+              </Flex>
+            )
+          )}
+        </Paper>
+      ))}
     </>
   );
 };
@@ -181,7 +169,6 @@ const useStyles = createStyles((theme) => ({
 
   options: {
     padding: theme.spacing.xs,
-    margin: theme.spacing.xs,
     borderRadius: theme.radius.md,
     backgroundColor:
       theme.colorScheme === "dark"

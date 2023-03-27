@@ -2,6 +2,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 
 import { prisma } from "@/server/db/client";
+import { QuestionDataType } from "@/types/question-types";
+import { CustomEval } from "@/utils/CustomEval";
+import { CustomMath } from "@/utils/CustomMath";
 
 export default async function handler(
   req: NextApiRequest,
@@ -59,9 +62,7 @@ export default async function handler(
     });
 
     // Initialize the userCourseQuestions for all courses for the user
-    const courses = (await prisma.course.findMany()).filter(
-      (course) => course.courseSlug !== "welcome-quiz"
-    );
+    const courses = await prisma.course.findMany();
     const userCourseQuestions = courses.map((course) => {
       return {
         userId: session?.user?.id as string,
@@ -73,17 +74,40 @@ export default async function handler(
     });
 
     // For now, initialize a random question for each course in userCourseQuestions
-    const questionIds = await prisma.question.findMany({
-      select: { questionId: true },
+    const allQuestions = await prisma.question.findMany({
+      select: {
+        questionId: true,
+        variationId: true,
+        questionData: true,
+      },
     });
+
     await prisma.questionWithAddedTime.createMany({
       data: userCourseQuestions.map((userCourseQuestion) => {
+        const randomIdx = Math.floor(Math.random() * allQuestions.length);
+        const randomQuestion = allQuestions[randomIdx];
+        const randomQuestionData =
+          randomQuestion?.questionData as QuestionDataType;
+
+        let evaluatedQuestionData;
+        if (randomQuestion?.variationId === 0) {
+          evaluatedQuestionData = CustomEval(
+            randomQuestionData.variables,
+            randomQuestionData.methods
+          );
+        }
+
         return {
-          questionId:
-            questionIds[Math.floor(Math.random() * questionIds.length)]
-              ?.questionId ?? 1,
+          questionId: randomQuestion?.questionId as number,
+          variationId: randomQuestion?.variationId as number,
           userId: session?.user?.id as string,
           courseSlug: userCourseQuestion.courseSlug,
+          variables:
+            evaluatedQuestionData?.questionVariables ??
+            randomQuestionData.variables,
+          answers: CustomMath.shuffleArray(
+            randomQuestionData.answers ?? evaluatedQuestionData?.questionAnswers
+          ) as QuestionDataType["answers"],
         };
       }),
     });

@@ -39,9 +39,11 @@ export default async function handler(
           const resetTopicAttempts = await prisma.attempt.deleteMany({
             where: {
               userId: userDetail.id,
-              question: {
-                topic: {
-                  topicSlug: topic,
+              questionWithAddedTime: {
+                question: {
+                  topic: {
+                    topicSlug: topic,
+                  },
                 },
               },
             },

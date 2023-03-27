@@ -17,17 +17,19 @@ export default async function handler(
       questionId: Number(id),
     },
     include: {
-      questionMedia: true,
       topic: true,
-      attempts: {
-        where: {
-          userId: session?.user?.id,
-        },
-        orderBy: {
-          submittedAt: "desc",
+      questionsWithAddedTime: {
+        include: {
+          attempts: {
+            where: {
+              userId: session?.user?.id,
+            },
+            orderBy: {
+              submittedAt: "desc",
+            },
+          },
         },
       },
-      answers: true,
     },
   });
 

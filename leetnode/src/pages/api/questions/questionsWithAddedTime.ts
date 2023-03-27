@@ -10,44 +10,29 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await unstable_getServerSession(req, res, authOptions);
-  const reqvar = req.body["courseSlug"];
 
-  //should only have one return nested json result
-  const courseContent = await prisma.userCourseQuestion.findMany({
-    where: {
-      courseSlug: reqvar,
-    },
-    include: {
-      questionsWithAddedTime: {
-        include: {
-          question: {
-            include: {
-              questionMedia: true,
-              topic: true,
-              attempts: {
-                where: {
-                  userId: session?.user?.id,
-                },
-                orderBy: {
-                  submittedAt: "desc",
-                },
+  // Questions specific to user and course, newest first
+  const userCourseQuestionsWithAddedTime =
+    await prisma.questionWithAddedTime.findFirst({
+      where: {
+        userId: session?.user?.id,
+        courseSlug: req.query.courseSlug as string,
+      },
+      include: {
+        question: {
+          include: {
+            topic: {
+              select: {
+                topicName: true,
               },
-              answers: true,
             },
           },
         },
       },
-    },
-  });
-  console.log(courseContent);
+      orderBy: {
+        addedTime: "desc",
+      },
+    });
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
-  try {
-    res.status(200).json(courseContent);
-  } catch (err) {
-    res.status(400).json({ message: "Something went wrong" });
-  }
+  res.status(200).json(userCourseQuestionsWithAddedTime);
 }

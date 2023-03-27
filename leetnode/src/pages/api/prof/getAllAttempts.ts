@@ -14,10 +14,13 @@ export default async function handler(
   const getAllAttempts = await prisma.attempt.findMany({
     include: {
       user: true,
-      question: {
+      questionWithAddedTime: {
         include: {
-          questionMedia: true,
-          topic: true,
+          question: {
+            include: {
+              topic: true,
+            },
+          },
           attempts: {
             where: {
               userId: session?.user?.id,
@@ -26,10 +29,8 @@ export default async function handler(
               submittedAt: "desc",
             },
           },
-          answers: true,
         },
       },
-      answer: true,
       course: true,
     },
   });

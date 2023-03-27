@@ -1,6 +1,6 @@
 import axios from "axios";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import Courses from "@/components/admin/Courses";
 import Overview from "@/components/admin/Overview";
@@ -11,6 +11,7 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import { RoleBadge } from "@/components/misc/Badges";
 import LeetNodeNavbar from "@/components/Navbar";
+import { AllQuestionsType } from "@/types/question-types";
 import {
   AppShell,
   Box,
@@ -24,13 +25,12 @@ import {
   ThemeIcon,
   UnstyledButton,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
-  Answer,
   Attempt,
   Course,
   Mastery,
   Question,
-  QuestionMedia,
   QuestionWithAddedTime,
   Topic,
   User,
@@ -58,16 +58,13 @@ export type CoursesInfoType = Course & {
 
 export type AttemptsInfoType = (Attempt & {
   user: User;
-  question: Question;
-  answer: Answer;
-})[];
-
-export type QuestionsInfoType = (Question & {
-  attempts: Attempt[];
-  topic: Topic;
-  questionMedia: QuestionMedia[];
-  answers: Answer[];
-  questionsWithAddedTime: QuestionWithAddedTime[];
+  course: Course;
+  questionWithAddedTime: QuestionWithAddedTime & {
+    question: Question & {
+      topic: Topic;
+    };
+    attempts: Attempt[];
+  };
 })[];
 
 // Sidebar Tabs based on Fetched Data
@@ -80,10 +77,12 @@ const tabs = [
 ];
 
 export default function AdminPage() {
-  const { classes, cx } = useStyles();
+  const { theme, classes, cx } = useStyles();
 
   const [active, setActive] = useState("Overview");
-  const [sidebarOpened, setSidebarOpened] = useState(true);
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
 
   // Use useQueries to fetch all data
   const [
@@ -115,7 +114,7 @@ export default function AdminPage() {
       },
       {
         queryKey: ["all-questions"],
-        queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
+        queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
       },
     ],
   });

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { evaluate } from "mathjs";
 import dynamic from "next/dynamic";
 import {
   Dispatch,
@@ -11,8 +10,9 @@ import {
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-import { QuestionsInfoType } from "@/pages/admin";
-import { CustomMath } from "@/server/Utils";
+import { AllQuestionsType, QuestionFormFullType } from "@/types/question-types";
+import { CustomEval } from "@/utils/CustomEval";
+import { CustomMath } from "@/utils/CustomMath";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
   ActionIcon,
@@ -47,10 +47,10 @@ import {
   Topic,
 } from "@prisma/client";
 import {
-  IconAlertTriangle,
   IconBulb,
   IconCheck,
   IconChecks,
+  IconCircleX,
   IconCode,
   IconDice3,
   IconGripVertical,
@@ -66,7 +66,6 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 import Latex from "../Latex";
 import { CourseTypeBadge } from "../misc/Badges";
-import { FormQuestionType } from "./QuestionViewer";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,
@@ -84,14 +83,16 @@ export default function QuestionEditor({
   setQuestionAddOpened,
   setQuestionEditOpened,
   editorHtml,
-  questionId,
+  currQuestionId,
+  currVariationId,
   initialValues,
 }: {
   setQuestionAddOpened: Dispatch<SetStateAction<boolean>>;
   setQuestionEditOpened: Dispatch<SetStateAction<boolean>>;
   editorHtml: MutableRefObject<string>;
-  questionId?: number;
-  initialValues: FormQuestionType;
+  currQuestionId?: number;
+  currVariationId?: number;
+  initialValues: QuestionFormFullType;
 }) {
   const [questionType, setQuestionType] = useState<"dynamic" | "static">(
     initialValues.variationId === 0 ? "dynamic" : "static"
@@ -171,7 +172,7 @@ export default function QuestionEditor({
               isCorrect: z.boolean(),
             })
           )
-          .length(2, {
+          .min(2, {
             message:
               "Please add at least 2 possible options for static questions",
           })
@@ -231,122 +232,74 @@ export default function QuestionEditor({
       return;
     }
 
-    // For dynamic questions, ensure variables and methods are defined
-    if (
-      !form.values.variables ||
-      !form.values.methods ||
-      form.values.variables.length === 0 ||
-      form.values.methods.length === 0
-    ) {
-      setPreview(invalidMessage);
-      setFinalAnsPreview(invalidMessage);
-      toast.error(
-        "Please add at least 1 variable and 1 method for dynamic questions",
-        {
-          duration: 5000,
-          className: "border border-solid border-red-500",
-        }
-      );
-      return;
-    }
-
-    // Replace curly and square brackets with parentheses and remove backslashes
-    const clean = (str: string) =>
-      str
-        .replace(/[\[\{]/g, "(")
-        .replace(/[\]\}]/g, ")")
-        .replace(/[\\]/g, "");
-
-    // Sort and randomize variables and evalutate default values
-    let rawVariables: { [key: string]: number };
     try {
-      rawVariables = form.values.variables
-        .sort((a, b) => {
-          if (!a.name || !b.name) return 0;
-          if (a.isFinalAnswer) return 1;
-          if (b.isFinalAnswer) return -1;
-          return a.name.localeCompare(b.name);
-        })
-        .reduce((obj, item) => {
-          const itemName = item.encoded;
-          if (toRandomize && item.randomize) {
-            return {
-              ...obj,
-              [itemName]: CustomMath.random(
-                Number(item.min),
-                Number(item.max),
-                Number(item.decimalPlaces)
-              ),
-            };
-          }
-          return {
-            ...obj,
-            [itemName]: item.default
-              ? evaluate(clean(item.default))
-              : undefined,
-          };
-        }, {});
+      const { questionVariables, editorAnswers } = CustomEval(
+        form.values.variables,
+        form.values.methods,
+        toRandomize
+      );
+
+      setPreview(
+        questionVariables
+          .map((item) => {
+            return `${item.name} ${
+              item.unit ? "~(" + item.unit + ")" : ""
+            } &= ${item.default}`;
+          })
+          .join("\\\\")
+      );
+
+      setFinalAnsPreview(
+        editorAnswers
+          .map((item) => {
+            return `${item.name} ${
+              item.unit ? "~(" + item.unit + ")" : ""
+            } &= ${item.answerContent} ~|~ ${item.incorrectAnswers
+              .map((ans) => ans.answerContent)
+              .join("~|~")}`;
+          })
+          .join("\\\\")
+      );
     } catch (e) {
-      console.log(e);
+      console.error(e);
       setPreview(invalidMessage);
       setFinalAnsPreview(invalidMessage);
-      toast.error(
-        "Ensure that Default values are either numbers or valid math expressions for dynamic questions",
-        {
-          duration: 5000,
-          className: "border border-solid border-red-500",
-        }
-      );
-      return;
-    }
-    evaluate("ln(x) = log(x)", rawVariables);
-
-    // Copy all variables and encode them to ensure the expression is valid
-    const formVars = [...form.values.variables];
-    const encode = (str: string) => {
-      formVars.sort((a, b) => b.name.length - a.name.length);
-      for (const variable of formVars) {
-        str = str.replaceAll(variable.name, variable.encoded);
-      }
-      return str;
-    };
-
-    // Evaluate all methods after encoding and cleaning them
-    console.log("[Encoded Math Expressions]");
-    for (const [index, method] of form.values.methods.entries()) {
-      try {
-        const [lhs, rhs] = method.expr.split("=").map((s) => s.trim());
-        if (!lhs || !rhs) throw new Error("Invalid Expression");
-        formVars.push({
-          key: randomId(),
-          name: lhs,
-          encoded: CustomMath.randomString(),
-          randomize: false,
-          isFinalAnswer: false,
-        });
-        console.log(`${index + 1})`, clean(encode(method.expr)));
-        evaluate(clean(encode(method.expr)), rawVariables);
-      } catch (e) {
-        toast.error(
+      if (e instanceof Error && e.cause === "invalid-methods") {
+        const error = JSON.parse(e.message) as {
+          message: string;
+          index: number;
+          expr: string;
+          sanitized: string;
+          encoded: string;
+        };
+        toast(
           (t) => (
-            <Stack ml="md">
-              <Flex>
+            <Stack ml="md" className="w-full max-w-max">
+              <Flex gap="md">
+                <IconCircleX
+                  color="white"
+                  fill="red"
+                  size={40}
+                  className="self-center"
+                />
                 <Text fw={600} fz="sm">
-                  Error: {e instanceof Error ? e.message : "Unknown Error"}
+                  Error: {error.message}
                 </Text>
                 <ActionIcon ml="auto" onClick={() => toast.dismiss(t.id)}>
                   <IconX size={18} />
                 </ActionIcon>
               </Flex>
-              <Text fz="sm">Check or reorder variables & methods in:</Text>
               <Text fz="sm">
-                <Text mr="xs" span>
-                  #{index + 1}
+                Check or reorder{" "}
+                <Text underline span>
+                  method #{error.index}
                 </Text>
-                <Code>{method.expr}</Code>
               </Text>
+              <Code>{error.expr}</Code>
               <Text fz="sm">Sanitized:</Text>
-              <Code>{clean(method.expr)}</Code>
+              <Code>{error.sanitized}</Code>
+              <Text fz="sm">Encoded:</Text>
+              <Code>{error.encoded}</Code>
             </Stack>
           ),
           {
@@ -354,86 +307,12 @@ export default function QuestionEditor({
             className: "border border-solid border-red-500",
           }
         );
-        setPreview(invalidMessage);
-        setFinalAnsPreview(invalidMessage);
-        return;
+      } else {
+        toast.error(e instanceof Error ? e.message : "Unknown Error", {
+          duration: 5000,
+          className: "border border-solid border-red-500",
+        });
       }
-    }
-
-    // Display the variables and final answers in LaTeX
-    try {
-      if (form.values.variables.length == 0) {
-        setPreview("\\text{No variables specified}");
-        throw new Error("No variables specified");
-      }
-      setPreview(
-        form.values.variables
-          .filter((item) => !item.isFinalAnswer)
-          .map((item) => {
-            return `${item.name} ${
-              item.unit ? "~(" + item.unit + ")" : ""
-            } &= ${CustomMath.round(
-              Number(rawVariables[item.encoded]),
-              item?.decimalPlaces ?? 3
-            )}`;
-          })
-          .join("\\\\")
-      );
-
-      const finalAnswers = form.values.variables?.filter(
-        (item) => item.isFinalAnswer
-      );
-      if (finalAnswers.length == 0) {
-        setFinalAnsPreview(invalidMessage);
-        throw new Error("No final answers specified");
-      }
-      setFinalAnsPreview(
-        finalAnswers
-          .map((finalAnswer) => {
-            if (!finalAnswer.name || finalAnswer.decimalPlaces === undefined)
-              return "\\text{Invalid Final Answers}";
-
-            const finalValue = CustomMath.round(
-              Number(rawVariables[finalAnswer.encoded]),
-              finalAnswer.decimalPlaces
-            );
-
-            // Randomly generate incorrect answers
-            if (finalAnswer.step === 0) {
-              throw new Error(`Step can't be 0 for ${finalAnswer.name}`);
-            }
-            const incorrectRange = CustomMath.generateRange(
-              (finalAnswer.min ?? -90) / 100,
-              (finalAnswer.max ?? 90) / 100,
-              (finalAnswer.step ?? 20) / 100
-            );
-            if (incorrectRange.length < 3) {
-              throw new Error(
-                `Not enough incorrect answers for ${finalAnswer.name}\n\nYour settings generated: [${incorrectRange}]`
-              );
-            }
-            const incorrectAnswers = (
-              CustomMath.nRandomItems(3, incorrectRange) as number[]
-            ).map((val) =>
-              CustomMath.round(
-                finalValue * (1 + val),
-                finalAnswer.decimalPlaces ??
-                  CustomMath.getDecimalPlaces(finalValue)
-              )
-            );
-
-            return `${finalAnswer.name} ${
-              finalAnswer.unit ? "~(" + finalAnswer.unit + ")" : ""
-            } &= ${finalValue} ~|~ ${incorrectAnswers.join("~|~")}`;
-          })
-          .join("\\\\")
-      );
-    } catch (e) {
-      setFinalAnsPreview(invalidMessage);
-      toast.error(e instanceof Error ? e.message : "Unknown Error", {
-        duration: 5000,
-        className: "border border-solid border-red-500",
-      });
       return;
     }
 
@@ -488,6 +367,10 @@ export default function QuestionEditor({
                     form.setFieldValue(
                       `variables.${index}.isFinalAnswer`,
                       !item.isFinalAnswer
+                    );
+                    form.setFieldValue(
+                      `variables.${index}.decimalPlaces`,
+                      item.isFinalAnswer ? undefined : 3
                     );
                   }}
                 >
@@ -656,6 +539,7 @@ export default function QuestionEditor({
   ));
 
   const newVar = () => {
+    form.values.variables = form.values.variables ?? [];
     form.insertListItem("variables", {
       key: randomId(),
       encoded: CustomMath.randomString(),
@@ -685,7 +569,7 @@ export default function QuestionEditor({
               {...form.getInputProps(`methods.${index}.expr`)}
             />
             <Box
-              sx={{ flex: 1, alignSelf: "stretch" }}
+              sx={{ flex: 2, alignSelf: "stretch" }}
               className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
             >
               <Latex>{`$$ ${item.expr} $$`}</Latex>
@@ -786,11 +670,7 @@ export default function QuestionEditor({
   };
 
   const answerFields = form.values.answers?.map((item, index) => (
-    <Draggable
-      key={[item.questionId, item.optionNumber].toString()}
-      index={index}
-      draggableId={[item.questionId, item.optionNumber].toString()}
-    >
+    <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Flex
           gap="md"
@@ -876,6 +756,7 @@ export default function QuestionEditor({
   const newAnswer = () => {
     form.values.answers = form.values.answers ?? [];
     form.insertListItem("answers", {
+      key: randomId(),
       answerContent: "",
       isCorrect: false,
       isLatex: false,
@@ -887,7 +768,7 @@ export default function QuestionEditor({
       queries: [
         {
           queryKey: ["all-questions"],
-          queryFn: () => axios.get<QuestionsInfoType>("/api/questions"),
+          queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
         },
         {
           queryKey: ["all-course-names"],
@@ -906,22 +787,34 @@ export default function QuestionEditor({
     const queryClient = useQueryClient();
     const { mutate: addQuestion, status: addQuestionStatus } = useMutation({
       mutationFn: (
-        newQuestion: Omit<Question, "questionId" | "lastModified">
+        newQuestion: Omit<Question, "questionId" | "lastModified"> & {
+          baseQuestionId?: string | null;
+        }
       ) => axios.post("/api/questions/add", newQuestion),
       onSuccess: () => {
         queryClient.invalidateQueries(["all-questions"]);
         setQuestionAddOpened(false);
+        setQuestionEditOpened(false);
       },
     });
 
     const { mutate: editQuestion, status: editQuestionStatus } = useMutation({
       mutationFn: ({
         questionId,
+        variationId,
         editedQuestion,
       }: {
         questionId: number;
-        editedQuestion: Omit<Question, "questionId">;
-      }) => axios.put(`/api/questions/edit?id=${questionId}`, editedQuestion),
+        variationId: number;
+        editedQuestion: Omit<
+          Question,
+          "questionId" | "variationId" | "lastModified"
+        > & { newQuestionId?: string | null; newVariationId?: number | null };
+      }) =>
+        axios.put(
+          `/api/questions/edit?questionId=${questionId}&variationId=${variationId}`,
+          editedQuestion
+        ),
       onSuccess: () => {
         queryClient.invalidateQueries(["all-questions"]);
         setQuestionEditOpened(false);
@@ -930,8 +823,16 @@ export default function QuestionEditor({
 
     const { mutate: deleteQuestion, status: deleteQuestionStatus } =
       useMutation({
-        mutationFn: (questionId: number) =>
-          axios.delete(`/api/questions/delete?id=${questionId}`),
+        mutationFn: ({
+          questionId,
+          variationId,
+        }: {
+          questionId: number;
+          variationId: number;
+        }) =>
+          axios.delete(
+            `/api/questions/delete?questionId=${questionId}&variationId=${variationId}`
+          ),
         onSuccess: () => {
           queryClient.invalidateQueries(["all-questions"]);
         },
@@ -970,7 +871,7 @@ export default function QuestionEditor({
   };
 
   useEffect(() => {
-    if (questionId) {
+    if (currQuestionId) {
       handleCoursesBadges(initialValues.topic);
     }
   }, [courses]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -993,15 +894,15 @@ export default function QuestionEditor({
     }
   );
 
-  // TODO: Able to tag question to an existing static question
   return (
     <form
       className="pr-5"
       onSubmit={form.onSubmit(
         (values: typeof form.values) => {
-          if (!questionId) {
+          if (currQuestionId === undefined || currVariationId === undefined) {
             addQuestion({
-              variationId: 0,
+              baseQuestionId: values.baseQuestionId,
+              variationId: questionType === "dynamic" ? 0 : values.variationId,
               topicSlug: values.topic,
               questionTitle: values.title,
               questionDifficulty: values.difficulty,
@@ -1010,14 +911,17 @@ export default function QuestionEditor({
                 variables: values.variables,
                 methods: values.methods,
                 hints: values.hints,
+                answers: values.answers,
               },
             });
           } else {
             editQuestion({
-              questionId: questionId,
+              questionId: currQuestionId,
+              variationId: currVariationId,
               editedQuestion: {
-                lastModified: new Date(),
-                variationId: values.variationId,
+                newQuestionId: values.baseQuestionId,
+                newVariationId:
+                  questionType === "dynamic" ? 0 : values.variationId,
                 topicSlug: values.topic,
                 questionTitle: values.title,
                 questionDifficulty: values.difficulty,
@@ -1026,6 +930,7 @@ export default function QuestionEditor({
                   variables: values.variables,
                   methods: values.methods,
                   hints: values.hints,
+                  answers: values.answers,
                 },
               },
             });
@@ -1097,28 +1002,49 @@ export default function QuestionEditor({
       />
 
       {questionType === "static" && (
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SimpleGrid
+          mb="lg"
+          cols={2}
+          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+        >
           <Select
             clearable
             searchable
-            placeholder="Leave Empty If New Question Variation"
+            placeholder="Leave Empty if this is a Base Question"
             label="Base Question"
-            mb="lg"
             data={questions?.data
               .filter((question) => question.variationId === 1)
               .map((question) => {
                 return {
-                  label: question.questionTitle ?? `#${question.questionId}`,
-                  value: question.questionId as unknown as string,
+                  label: `[ID#${question.questionId}] ${question.questionTitle}`,
+                  value: question.questionId.toString(),
                 };
               })}
-            {...form.getInputProps("baseQuestionId")}
+            value={form.values.baseQuestionId}
+            onChange={(value: string | null) => {
+              form.setFieldValue("baseQuestionId", value);
+              if (!value) {
+                form.setFieldValue("variationId", 1);
+              } else {
+                const variationIds = questions?.data
+                  .filter((question) => question.questionId === parseInt(value))
+                  .map((question) => question.variationId);
+
+                // Get the smallest id not already used (in case of gaps)
+                const unusedVariationId = variationIds?.reduce((acc, curr) => {
+                  if (curr > acc && !variationIds.includes(acc)) {
+                    return acc;
+                  }
+                  return curr + 1;
+                }, 1);
+                form.setFieldValue("variationId", unusedVariationId);
+              }
+            }}
           />
           <NumberInput
             label="Variation ID"
             disabled
-            mb="lg"
-            {...form.getInputProps("variationId")}
+            value={form.values.variationId}
           />
         </SimpleGrid>
       )}
@@ -1162,6 +1088,7 @@ export default function QuestionEditor({
           onChange={(value) => {
             form.values.topic = value ?? "";
             handleCoursesBadges(value);
+            form.errors.topic = undefined;
           }}
           error={form.errors.topic}
         />
@@ -1382,19 +1309,15 @@ export default function QuestionEditor({
           </ActionIcon>
         </Tooltip>
       </Flex>
-      <Box
-        sx={{ flex: 1, alignSelf: "stretch" }}
-        className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
-      >
-        <Latex className="pt-4 pb-1">{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
+      <Box className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 pt-4 pb-2">
+        <Latex>{`$$ \\begin{aligned} ${preview} \\end{aligned} $$`}</Latex>
       </Box>
       {questionType === "dynamic" && (
         <Box
           mt="md"
-          sx={{ flex: 1, alignSelf: "stretch" }}
-          className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200"
+          className="flex items-center justify-center rounded-md border border-solid border-slate-300 bg-slate-200 pt-4 pb-1"
         >
-          <Latex className="pt-4 pb-1">{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
+          <Latex>{`$$ \\begin{aligned} ${finalAnsPreview} \\end{aligned} $$`}</Latex>
         </Box>
       )}
 
@@ -1458,7 +1381,7 @@ export default function QuestionEditor({
         my="xl"
         type="submit"
         loading={
-          !questionId
+          !currQuestionId && !currVariationId
             ? addQuestionStatus === "loading"
             : editQuestionStatus === "loading"
         }
@@ -1484,9 +1407,11 @@ export default function QuestionEditor({
           }
         }}
       >
-        {!questionId ? "Create Question" : "Save Question"}
+        {!currQuestionId && !currVariationId
+          ? "Create Question"
+          : "Save Question"}
       </Button>
-      {questionId && (
+      {currQuestionId !== undefined && (
         <Button
           fullWidth
           variant="light"
@@ -1528,8 +1453,11 @@ export default function QuestionEditor({
           type="submit"
           loading={deleteQuestionStatus === "loading"}
           onClick={() => {
-            if (questionId) {
-              deleteQuestion(questionId);
+            if (currQuestionId && currVariationId) {
+              deleteQuestion({
+                questionId: currQuestionId,
+                variationId: currVariationId,
+              });
             }
             setConfirmDeleteOpened(false);
             setQuestionEditOpened(false);

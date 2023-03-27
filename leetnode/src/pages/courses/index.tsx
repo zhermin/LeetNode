@@ -138,7 +138,7 @@ export default function CoursesPage() {
         const { data } = await axios.get(`/api/courses`);
         return data;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         throw new Error("Failed to refetch all courses from API");
       }
     },
@@ -164,7 +164,7 @@ export default function CoursesPage() {
       console.log(data);
       return data;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw new Error("Failed to initialise");
     }
   };
@@ -347,7 +347,7 @@ export async function getStaticProps() {
       const data = await getAllCoursesData();
       return data;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw new Error("Failed to fetch all courses directly from the database");
     }
   });
