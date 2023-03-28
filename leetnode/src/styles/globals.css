@@ -54,7 +54,7 @@
     @apply max-w-sm;
   }
 
-  .ql-video {
+  .ql-video iframe {
     @apply min-w-full;
     @apply aspect-video;
   }
