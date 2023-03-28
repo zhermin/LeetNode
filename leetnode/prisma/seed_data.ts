@@ -150,7 +150,6 @@ export const Courses: {
   courseImage: string;
   courseLevel: Level;
   type: CourseType;
-  // slide?: string;
   video?: string;
   week?: number;
   studio?: number;
@@ -178,14 +177,7 @@ export const Courses: {
       "current-division-principle",
       "thevenin-equivalent-circuit",
     ],
-    courseMedia: [
-      {
-        publicId: "",
-        courseSlug: "",
-        courseMediaURL: "",
-        mediaName: "",
-      },
-    ],
+    courseMedia: [],
   },
   {
     moduleCode: "CG1111A",
@@ -200,8 +192,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1510761047613-a5c1d008d780?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY0Mjk&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w1s1-fundamentals-of-electricity.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/agscc9MAIok?showinfo=0"></iframe>',
     topics: ["power", "ohms-law"],
@@ -228,8 +218,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1619345371662-fccc15cc4814?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY3MTY&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w1s2-electrical-circuit-principles.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/knkSt14499I?showinfo=0"></iframe>',
     topics: [
@@ -262,8 +250,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1632571401005-458e9d244591?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY4Nzk&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s1-thevenin-equivalent-circuit.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/hmIDKROT9Eg?showinfo=0"></iframe>',
     topics: ["thevenin-equivalent-circuit"],
@@ -290,8 +276,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1586256053828-a36b572ab01d?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcwNjc&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s2-circuit-analysis-techniques.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/bHx3FSQM9fg?showinfo=0"></iframe>',
     topics: ["node-voltage-analysis-technique"],
@@ -318,8 +302,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1598048145816-4d54a3af68fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2NzM5MDM&ixlib=rb-4.0.3&q=80&w=400",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s1-principles-of-capacitors.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/BsklaRrgQWM?showinfo=0"></iframe>',
     topics: [
@@ -350,8 +332,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1625480860249-be231806e6ed?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcyMzE&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s2-dc-transient-behaviour-of-capacitors.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/AR5bnNADoF8?showinfo=0"></iframe>',
 
@@ -380,8 +360,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1583199873815-b58ce30591ea?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcxNTA&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w4s1-principles-of-inductors.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/dd3gaBiJvXc?showinfo=0"></iframe>',
     topics: [
@@ -413,8 +391,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1611759386165-ed9beec7b14f?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjczMzE&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w7s1-basics-of-operational-amplifiers.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/YZXoTvKaNfU?showinfo=0"></iframe>',
 
@@ -446,8 +422,6 @@ export const Courses: {
       "https://images.unsplash.com/photo-1510746001195-0db09655b6db?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2Mjc0NDU&ixlib=rb-4.0.3&q=50w=300",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
-    // slide:
-    // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w8s1-opamp-comparators-and-filters.pdf",
     video:
       '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/tkH9dECGeT0?showinfo=0"></iframe>',
     topics: ["first-order-low-pass-filters", "first-order-high-pass-filters"],
