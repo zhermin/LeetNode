@@ -54,6 +54,11 @@
     @apply max-w-sm;
   }
 
+  .ql-video {
+    @apply min-w-full;
+    @apply aspect-video;
+  }
+
   /* Re-add most disabled Tailwind preflight styles due to Mantine clash */
   a {
     @apply no-underline;

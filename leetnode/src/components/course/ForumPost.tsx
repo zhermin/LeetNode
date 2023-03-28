@@ -297,7 +297,15 @@ const ForumPost = ({
         <TypographyStylesProvider key={post?.postId}>
           <div
             dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(`${post?.message}`),
+              __html: DOMPurify.sanitize(`${post?.message}`, {
+                ADD_TAGS: ["iframe"],
+                ADD_ATTR: [
+                  "allow",
+                  "allowfullscreen",
+                  "frameborder",
+                  "scrolling",
+                ],
+              }),
             }}
           />
         </TypographyStylesProvider>
@@ -516,7 +524,16 @@ const ForumPost = ({
                                         reply: string | null;
                                       }) => e.commentId === comment.reply
                                     )?.message
-                                  }`
+                                  }`,
+                                  {
+                                    ADD_TAGS: ["iframe"],
+                                    ADD_ATTR: [
+                                      "allow",
+                                      "allowfullscreen",
+                                      "frameborder",
+                                      "scrolling",
+                                    ],
+                                  }
                                 ),
                               }
                             : undefined
@@ -536,7 +553,15 @@ const ForumPost = ({
                   >
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(comment.message),
+                        __html: DOMPurify.sanitize(comment.message, {
+                          ADD_TAGS: ["iframe"],
+                          ADD_ATTR: [
+                            "allow",
+                            "allowfullscreen",
+                            "frameborder",
+                            "scrolling",
+                          ],
+                        }),
                       }}
                     />
                   </TypographyStylesProvider>
@@ -554,7 +579,15 @@ const ForumPost = ({
                 >
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(comment.message),
+                      __html: DOMPurify.sanitize(comment.message, {
+                        ADD_TAGS: ["iframe"],
+                        ADD_ATTR: [
+                          "allow",
+                          "allowfullscreen",
+                          "frameborder",
+                          "scrolling",
+                        ],
+                      }),
                     }}
                   />
                 </TypographyStylesProvider>

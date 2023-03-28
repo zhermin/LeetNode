@@ -13,6 +13,7 @@ async function main() {
   await prisma.questionWithAddedTime.deleteMany();
   await prisma.topic.deleteMany();
   await prisma.course.deleteMany();
+  await prisma.courseMedia.deleteMany();
 
   // Populate the database with the seed data
   await prisma.topic.createMany({
@@ -25,14 +26,15 @@ async function main() {
   console.log("Questions created");
 
   // Extract the courses without topics from Courses
-  const coursesWithoutTopics = Courses.map((course) => {
-    const { topics, ...courseWithoutTopics } = course;
-    return courseWithoutTopics;
+  const coursesWithoutTopicsAndCourseMedia = Courses.map((course) => {
+    const { topics, courseMedia, ...coursesWithoutTopicsAndCourseMedia } =
+      course;
+    return coursesWithoutTopicsAndCourseMedia;
   });
 
-  // Add the Course data and topics separately
+  // Add the Course data and topics and courseMedia separately
   await prisma.course.createMany({
-    data: coursesWithoutTopics,
+    data: coursesWithoutTopicsAndCourseMedia,
   });
 
   for (const course of Courses) {
@@ -51,6 +53,10 @@ async function main() {
           connect: courseTopics,
         },
       },
+    });
+    const { courseMedia } = course;
+    await prisma.courseMedia.createMany({
+      data: courseMedia,
     });
   }
   console.log("Courses created");

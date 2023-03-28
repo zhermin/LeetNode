@@ -182,7 +182,16 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
             className="rawhtml rawhtml-sm-img py-4"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(
-                attempt.questionWithAddedTime.question.questionContent
+                attempt.questionWithAddedTime.question.questionContent,
+                {
+                  ADD_TAGS: ["iframe"],
+                  ADD_ATTR: [
+                    "allow",
+                    "allowfullscreen",
+                    "frameborder",
+                    "scrolling",
+                  ],
+                }
               ),
             }}
           />
