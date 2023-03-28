@@ -115,7 +115,9 @@ export default function CourseMainPage({
         ? { label: "Lecture Slides", icon: IconPresentation }
         : null,
       courseDetails.video ? { label: "Lecture Videos", icon: IconVideo } : null,
-      { label: "Additional Resources", icon: IconReportSearch },
+      courseDetails.markdown
+        ? { label: "Additional Resources", icon: IconReportSearch }
+        : null,
     ],
     practice: [
       { label: "Question", icon: IconZoomQuestion },
@@ -154,25 +156,18 @@ export default function CourseMainPage({
       )
     : courseDetails.video;
 
-  console.log(modifiedVideo);
-
   const parts = courseDetails.markdown?.split(/(<iframe.*?>.*?<\/iframe>)/g);
 
-  console.log(parts);
   const output = parts?.map((part) => {
-    console.log(part);
     if (part.match(/<iframe.*?>.*?<\/iframe>/)) {
       const iframe = part
         .replace(/(width=".*?")|(height=".*?")/g, "")
         .replace(/<iframe/, '<iframe width="100%" height="100%"');
-      console.log(iframe);
       return { type: "video", string: iframe };
     } else {
       return { type: "markdown", string: part };
     }
   });
-
-  console.log(output);
 
   return (
     <AppShell
@@ -260,7 +255,15 @@ export default function CourseMainPage({
               <div
                 style={{ width: "100%", height: "100%" }}
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(courseDetails.courseDescription),
+                  __html: DOMPurify.sanitize(courseDetails.courseDescription, {
+                    ADD_TAGS: ["iframe"],
+                    ADD_ATTR: [
+                      "allow",
+                      "allowfullscreen",
+                      "frameborder",
+                      "scrolling",
+                    ],
+                  }),
                 }}
               />
             </TypographyStylesProvider>
@@ -331,7 +334,15 @@ export default function CourseMainPage({
             <div
               style={{ width: "100%", height: "100%" }}
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(modifiedVideo as string),
+                __html: DOMPurify.sanitize(modifiedVideo as string, {
+                  ADD_TAGS: ["iframe"],
+                  ADD_ATTR: [
+                    "allow",
+                    "allowfullscreen",
+                    "frameborder",
+                    "scrolling",
+                  ],
+                }),
               }}
             />
           </Group>
@@ -343,7 +354,15 @@ export default function CourseMainPage({
                   key={resource.string}
                   style={{ width: "100%", height: "100%" }}
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(resource.string as string),
+                    __html: DOMPurify.sanitize(resource.string as string, {
+                      ADD_TAGS: ["iframe"],
+                      ADD_ATTR: [
+                        "allow",
+                        "allowfullscreen",
+                        "frameborder",
+                        "scrolling",
+                      ],
+                    }),
                   }}
                 />
               ) : (

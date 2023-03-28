@@ -1,4 +1,5 @@
 import {
+  CourseMedia,
   CourseType,
   Level,
   Prisma,
@@ -154,6 +155,7 @@ export const Courses: {
   week?: number;
   studio?: number;
   topics: Topic["topicSlug"][];
+  courseMedia: CourseMedia[];
 }[] = [
   {
     moduleCode: "CG1111A",
@@ -176,6 +178,14 @@ export const Courses: {
       "current-division-principle",
       "thevenin-equivalent-circuit",
     ],
+    courseMedia: [
+      {
+        publicId: "",
+        courseSlug: "",
+        courseMediaURL: "",
+        mediaName: "",
+      },
+    ],
   },
   {
     moduleCode: "CG1111A",
@@ -192,8 +202,18 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w1s1-fundamentals-of-electricity.pdf",
-    video: "agscc9MAIok",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/agscc9MAIok?showinfo=0"></iframe>',
     topics: ["power", "ohms-law"],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w1s1-fundamentals-of-electricity",
+        courseSlug: "fundamentals-of-electricity",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/course_slides_media/w1s1-fundamentals-of-electricity.pdf",
+        mediaName: "Fundamentals Of Electricity",
+      },
+    ],
   },
   {
     moduleCode: "CG1111A",
@@ -210,13 +230,23 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w1s2-electrical-circuit-principles.pdf",
-    video: "knkSt14499I",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/knkSt14499I?showinfo=0"></iframe>',
     topics: [
       "kcl",
       "kvl",
       "equivalent-resistance-in-series-or-parallel",
       "voltage-division-principle",
       "current-division-principle",
+    ],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w1s2-electrical-circuit-principles",
+        courseSlug: "electrical-circuit-principles",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w1s2-electrical-circuit-principles.pdf",
+        mediaName: "Electrical Circuit Principles",
+      },
     ],
   },
   {
@@ -234,8 +264,18 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s1-thevenin-equivalent-circuit.pdf",
-    video: "hmIDKROT9Eg",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/hmIDKROT9Eg?showinfo=0"></iframe>',
     topics: ["thevenin-equivalent-circuit"],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w2s1-thevenin-equivalent-circuit",
+        courseSlug: "thevenin-equivalent-circuit",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w2s1-thevenin-equivalent-circuit.pdf",
+        mediaName: "Thevenin Equivalent Circuit",
+      },
+    ],
   },
   {
     moduleCode: "CG1111A",
@@ -252,8 +292,18 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w2s2-circuit-analysis-techniques.pdf",
-    video: "bHx3FSQM9fg",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/bHx3FSQM9fg?showinfo=0"></iframe>',
     topics: ["node-voltage-analysis-technique"],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w2s2-circuit-analysis-techniques",
+        courseSlug: "circuit-analysis-techniques",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w2s2-circuit-analysis-techniques.pdf",
+        mediaName: "Circuit Analysis Techniques",
+      },
+    ],
   },
   {
     moduleCode: "CG1111A",
@@ -270,11 +320,21 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s1-principles-of-capacitors.pdf",
-    video: "BsklaRrgQWM",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/BsklaRrgQWM?showinfo=0"></iframe>',
     topics: [
       "rc-steady-state-analysis",
       "equivalent-capacitance",
       "energy-stored-in-capacitors",
+    ],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w3s1-principles-of-capacitors",
+        courseSlug: "principles-of-capacitors",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w3s1-principles-of-capacitors.pdf",
+        mediaName: "Principles Of Capacitors",
+      },
     ],
   },
   {
@@ -292,8 +352,20 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w3s2-dc-transient-behaviour-of-capacitors.pdf",
-    video: "AR5bnNADoF8",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/AR5bnNADoF8?showinfo=0"></iframe>',
+
     topics: ["rc-transient-analysis"],
+    courseMedia: [
+      {
+        publicId:
+          "course_slides_media/w3s2-dc-transient-behaviour-of-capacitors",
+        courseSlug: "dc-transient-behaviour-of-capacitors",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w3s2-dc-transient-behaviour-of-capacitors.pdf",
+        mediaName: "DC Transient Behaviour Of Capacitors",
+      },
+    ],
   },
   {
     moduleCode: "CG1111A",
@@ -310,12 +382,22 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w4s1-principles-of-inductors.pdf",
-    video: "dd3gaBiJvXc",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/dd3gaBiJvXc?showinfo=0"></iframe>',
     topics: [
       "rl-steady-state-analysis",
       "equivalent-inductance",
       "energy-stored-in-inductors",
       "rl-transient-analysis",
+    ],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w4s1-principles-of-inductors",
+        courseSlug: "principles-of-inductors",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w4s1-principles-of-inductors.pdf",
+        mediaName: "Principles Of Inductors",
+      },
     ],
   },
   {
@@ -333,11 +415,22 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/slides/w7s1-basics-of-operational-amplifiers.pdf",
-    video: "YZXoTvKaNfU",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/YZXoTvKaNfU?showinfo=0"></iframe>',
+
     topics: [
       "inverting-non-inverting-amplifier-gains",
       "opamp-circuit-analysis",
       "opamp-golden-rules",
+    ],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w7s1-basics-of-operational-amplifiers",
+        courseSlug: "basics-of-operational-amplifiers",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w7s1-basics-of-operational-amplifiers.pdf",
+        mediaName: "Basics Of Operational Amplifiers",
+      },
     ],
   },
   {
@@ -355,8 +448,18 @@ export const Courses: {
     type: CourseType.Content,
     // slide:
     // "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/slides/w8s1-opamp-comparators-and-filters.pdf",
-    video: "tkH9dECGeT0",
+    video:
+      '<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="https://www.youtube.com/embed/tkH9dECGeT0?showinfo=0"></iframe>',
     topics: ["first-order-low-pass-filters", "first-order-high-pass-filters"],
+    courseMedia: [
+      {
+        publicId: "course_slides_media/w8s1-opamp-comparators-and-filters",
+        courseSlug: "opamp-comparators-and-filters",
+        courseMediaURL:
+          "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/course_slides_media/w8s1-opamp-comparators-and-filters.pdf",
+        mediaName: "Opamp Comparators And Filters",
+      },
+    ],
   },
 ];
 

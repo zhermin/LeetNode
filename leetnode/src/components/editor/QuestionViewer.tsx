@@ -284,7 +284,16 @@ export default function QuestionViewer() {
                 className="rawhtml rawhtml-lg-img"
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    currentQuestion.current.questionContent
+                    currentQuestion.current.questionContent,
+                    {
+                      ADD_TAGS: ["iframe"],
+                      ADD_ATTR: [
+                        "allow",
+                        "allowfullscreen",
+                        "frameborder",
+                        "scrolling",
+                      ],
+                    }
                   ),
                 }}
               />

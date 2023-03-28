@@ -233,7 +233,15 @@ export default function PracticeQuestion() {
         <div
           className="rawhtml rawhtml-lg-img mt-4"
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(UCQAT.data.question.questionContent),
+            __html: DOMPurify.sanitize(UCQAT.data.question.questionContent, {
+              ADD_TAGS: ["iframe"],
+              ADD_ATTR: [
+                "allow",
+                "allowfullscreen",
+                "frameborder",
+                "scrolling",
+              ],
+            }),
           }}
         />
         <VariablesBox

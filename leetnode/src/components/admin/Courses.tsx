@@ -127,6 +127,7 @@ const Courses = ({
   const [additionalMessage, setAdditionalMessage] = useState(
     thisCourse?.markdown as string
   );
+  const [files, setFiles] = useState<File[] | null>([]);
 
   useEffect(() => {
     setOverviewMessage(details?.courseDescription as string);
@@ -212,11 +213,12 @@ const Courses = ({
     },
   });
 
-  const handleFileUpload = async (files: File[]): Promise<string[]> => {
-    const uploadPromises = files.map(async (file) => {
+  const handleFileUpload = async (files: File[] | null): Promise<string[]> => {
+    const uploadPromises = files?.map(async (file) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", "course_slides_media");
+      console.log(formData);
       try {
         const res = await axios.post(
           "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
@@ -238,7 +240,7 @@ const Courses = ({
         throw error;
       }
     });
-    const uploadedUrls = await Promise.all(uploadPromises);
+    const uploadedUrls = await Promise.all(uploadPromises as Promise<string>[]);
     return uploadedUrls;
   };
 
@@ -420,7 +422,16 @@ const Courses = ({
                                   className="rawhtml rawhtml-lg-img"
                                   dangerouslySetInnerHTML={{
                                     __html: DOMPurify.sanitize(
-                                      question.questionContent
+                                      question.questionContent,
+                                      {
+                                        ADD_TAGS: ["iframe"],
+                                        ADD_ATTR: [
+                                          "allow",
+                                          "allowfullscreen",
+                                          "frameborder",
+                                          "scrolling",
+                                        ],
+                                      }
                                     ),
                                   }}
                                 />
@@ -602,6 +613,7 @@ const Courses = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            handleFileUpload(files);
             editMutation.mutate({
               courseSlug: details?.courseSlug as string,
               content: {
@@ -646,7 +658,7 @@ const Courses = ({
             </Box>
             <Dropzone
               onDrop={(files) => {
-                handleFileUpload(files);
+                setFiles(files);
               }}
               onReject={(files) => console.log("rejected files", files)}
               maxSize={10000000}
@@ -825,7 +837,15 @@ const Courses = ({
               >
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(c.courseDescription),
+                    __html: DOMPurify.sanitize(c.courseDescription, {
+                      ADD_TAGS: ["iframe"],
+                      ADD_ATTR: [
+                        "allow",
+                        "allowfullscreen",
+                        "frameborder",
+                        "scrolling",
+                      ],
+                    }),
                   }}
                 />
               </TypographyStylesProvider>
