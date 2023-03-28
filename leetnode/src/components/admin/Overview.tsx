@@ -229,8 +229,8 @@ const Overview = ({
         <Grid.Col span={4}>
           <Center>
             <Group>
-              <Paper withBorder radius="md" p="lg">
-                <Group py={"md"} position="apart">
+              <Paper withBorder radius="md" p="lg" w={250}>
+                <Group py={"md"}>
                   {numStudentsWithTopicPing === 0 ? (
                     <IconUserCheck />
                   ) : (
@@ -280,8 +280,8 @@ const Overview = ({
         </Grid.Col> */}
         <Grid.Col span={4}>
           <Center>
-            <Paper withBorder radius="md" p="lg">
-              <Group py={"md"} position="apart">
+            <Paper withBorder radius="md" p="lg" w={250}>
+              <Group py={"md"}>
                 <IconUserPlus />
                 <div>
                   <Text
@@ -302,8 +302,8 @@ const Overview = ({
         </Grid.Col>
         <Grid.Col span={4}>
           <Center>
-            <Paper withBorder radius="md" p="lg">
-              <Group py={"md"} position="apart">
+            <Paper withBorder radius="md" p="lg" w={250}>
+              <Group py={"md"}>
                 <IconUserMinus />
                 <div>
                   <Text
