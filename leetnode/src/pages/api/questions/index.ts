@@ -9,7 +9,11 @@ export default async function handler(
   const questions = await prisma.question.findMany({
     include: {
       topic: true,
-      questionsWithAddedTime: true,
+      questionsWithAddedTime: {
+        include: {
+          attempts: true,
+        },
+      },
     },
   });
 

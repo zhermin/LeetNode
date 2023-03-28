@@ -113,7 +113,11 @@ export default function Navbar({
         )}
 
         {session.status === "unauthenticated" && (
-          <Button color="cyan" onClick={() => signIn("google")}>
+          <Button
+            color="cyan"
+            onClick={() => signIn("google")}
+            className={classes.control}
+          >
             Log In
           </Button>
         )}
@@ -338,5 +342,24 @@ const useStyles = createStyles((theme) => ({
   userActive: {
     backgroundColor:
       theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
+  },
+
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
   },
 }));
