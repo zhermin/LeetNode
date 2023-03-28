@@ -26,7 +26,6 @@ import {
   Title,
 } from "@mantine/core";
 import {
-  IconHandClick,
   IconUserCheck,
   IconUserExclamation,
   IconUserMinus,
@@ -74,18 +73,15 @@ const Overview = ({
     (attempt) => new Date(attempt.submittedAt) > oneWeekAgo
   );
 
-  const topicSlugCounts = attemptsWithinPastWeek.reduce(
-    (counts, attempt) => {
-      const topicSlug = attempt.questionWithAddedTime.question.topicSlug;
-      if (topicSlug in counts) {
-        counts[topicSlug]++;
-      } else {
-        counts[topicSlug] = 1;
-      }
-      return counts;
-    },
-    {} as Record<string, number>
-  );
+  const topicSlugCounts = attemptsWithinPastWeek.reduce((counts, attempt) => {
+    const topicSlug = attempt.questionWithAddedTime.question.topicSlug;
+    if (topicSlug in counts) {
+      counts[topicSlug]++;
+    } else {
+      counts[topicSlug] = 1;
+    }
+    return counts;
+  }, {} as Record<string, number>);
 
   const mostCommonTopicSlug = Object.entries(topicSlugCounts).reduce(
     (mostCommon, current) => {
@@ -230,36 +226,38 @@ const Overview = ({
   return (
     <Container size="xl">
       <Grid gutter="lg">
-        <Grid.Col span={3}>
+        <Grid.Col span={4}>
           <Center>
-            <Paper withBorder radius="md" p="sm" h={100} w={300}>
-              <Group py={"md"}>
-                {numStudentsWithTopicPing === 0 ? (
-                  <IconUserCheck />
-                ) : (
-                  <IconUserExclamation />
-                )}
-                <div>
-                  <Text
-                    color="dimmed"
-                    size="xs"
-                    transform="uppercase"
-                    weight={700}
-                  >
-                    Students to help
-                  </Text>
-                  <Text weight={700} size="xl">
-                    {numStudentsWithTopicPing}/{users.length}
-                  </Text>
-                </div>
-              </Group>
-            </Paper>
+            <Group>
+              <Paper withBorder radius="md" p="lg">
+                <Group py={"md"} position="apart">
+                  {numStudentsWithTopicPing === 0 ? (
+                    <IconUserCheck />
+                  ) : (
+                    <IconUserExclamation />
+                  )}
+                  <div>
+                    <Text
+                      color="dimmed"
+                      size="xs"
+                      transform="uppercase"
+                      weight={700}
+                    >
+                      Students to help
+                    </Text>
+                    <Text weight={700} size="md">
+                      {numStudentsWithTopicPing}/{users.length}
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+            </Group>
           </Center>
         </Grid.Col>
-        <Grid.Col span={3}>
+        {/* <Grid.Col span={3}>
           <Center>
-            <Paper withBorder radius="md" p="sm" h={100} w={300}>
-              <Group py={"md"}>
+            <Paper withBorder radius="md" p="md">
+              <Group py={"md"} position="apart">
                 <IconHandClick />
                 <div>
                   <Text
@@ -270,7 +268,7 @@ const Overview = ({
                   >
                     Recent top topic
                   </Text>
-                  <Text weight={700} size="xl">
+                  <Text weight={700} size="md">
                     {mostCommonTopicName === ""
                       ? "No topic!"
                       : mostCommonTopicName}
@@ -279,11 +277,11 @@ const Overview = ({
               </Group>
             </Paper>
           </Center>
-        </Grid.Col>
-        <Grid.Col span={3}>
+        </Grid.Col> */}
+        <Grid.Col span={4}>
           <Center>
-            <Paper withBorder radius="md" p="sm" h={100} w={300}>
-              <Group py={"md"}>
+            <Paper withBorder radius="md" p="lg">
+              <Group py={"md"} position="apart">
                 <IconUserPlus />
                 <div>
                   <Text
@@ -294,7 +292,7 @@ const Overview = ({
                   >
                     Best Student
                   </Text>
-                  <Text weight={700} size="xl">
+                  <Text weight={700} size="md">
                     {bestStudent}
                   </Text>
                 </div>
@@ -302,10 +300,10 @@ const Overview = ({
             </Paper>
           </Center>
         </Grid.Col>
-        <Grid.Col span={3}>
+        <Grid.Col span={4}>
           <Center>
-            <Paper withBorder radius="md" p="sm" h={100} w={300}>
-              <Group py={"md"}>
+            <Paper withBorder radius="md" p="lg">
+              <Group py={"md"} position="apart">
                 <IconUserMinus />
                 <div>
                   <Text
@@ -316,7 +314,7 @@ const Overview = ({
                   >
                     Weakest Student
                   </Text>
-                  <Text weight={700} size="xl">
+                  <Text weight={700} size="md">
                     {worstStudent}
                   </Text>
                 </div>

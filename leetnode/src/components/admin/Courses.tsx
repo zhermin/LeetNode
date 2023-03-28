@@ -45,7 +45,7 @@ import {
   TypographyStylesProvider,
   useMantineTheme,
 } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
+import { Dropzone, FileWithPath } from "@mantine/dropzone";
 import { CourseMedia } from "@prisma/client";
 import {
   IconApps,
@@ -127,7 +127,7 @@ const Courses = ({
   const [additionalMessage, setAdditionalMessage] = useState(
     thisCourse?.markdown as string
   );
-  const [files, setFiles] = useState<File[] | null>([]);
+  const [files, setFiles] = useState<FileWithPath[]>([]);
 
   useEffect(() => {
     setOverviewMessage(details?.courseDescription as string);
@@ -141,7 +141,7 @@ const Courses = ({
     details?.video,
   ]);
 
-  // console.log(message);
+  console.log(questions);
   console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
   let filteredCourses;
   {
@@ -213,7 +213,7 @@ const Courses = ({
     },
   });
 
-  const handleFileUpload = async (files: File[] | null): Promise<string[]> => {
+  const handleFileUpload = async (files: FileWithPath[]): Promise<string[]> => {
     const uploadPromises = files?.map(async (file) => {
       const formData = new FormData();
       formData.append("file", file);
@@ -244,12 +244,10 @@ const Courses = ({
     return uploadedUrls;
   };
 
-  const handleDeleteFile = async (media: CourseMedia) => {
+  const handleDeleteFile = async (name: string) => {
     // Delete the record from slidesMessage state
-    const updatedSlidesMessage = slidesMessage.filter(
-      (slide) => slide.publicId !== media.publicId
-    );
-    setSlidesMessage(updatedSlidesMessage);
+    const updatedFiles = files?.filter((slide) => slide.name !== name);
+    setFiles(updatedFiles);
     // Unsigned presets does not allow delete after 10 mins
     // try {
     //   const response = await axios.post(
@@ -413,9 +411,30 @@ const Courses = ({
                                   </Title>
                                   <Text>
                                     Total Number of Attempts:{" "}
-                                    {question.attempts.length}
+                                    {
+                                      question.questionsWithAddedTime.filter(
+                                        (q) =>
+                                          q.attempts.some(
+                                            (a) =>
+                                              a.courseSlug ===
+                                              details?.courseSlug
+                                          )
+                                      ).length
+                                    }
                                   </Text>
                                 </Group>
+                                <Text italic fw={500}>
+                                  Correct % for This Question:{" "}
+                                  {(question.questionsWithAddedTime.flatMap(
+                                    (q) =>
+                                      q.attempts.filter(
+                                        (attempt) => attempt.isCorrect
+                                      )
+                                  ).length /
+                                    question.questionsWithAddedTime.length) *
+                                    100}
+                                  %
+                                </Text>
                               </Accordion.Control>
                               <Accordion.Panel>
                                 <div
@@ -558,11 +577,14 @@ const Courses = ({
                                         <Text>
                                           Number of Attempts:{" "}
                                           {
-                                            // question.attempts.filter(
-                                            //   (attempt) =>
-                                            //     attempt.attemptOption ===
-                                            //     answer.key
-                                            // ).length
+                                            question.questionsWithAddedTime.filter(
+                                              (q) =>
+                                                q.attempts.some(
+                                                  (a) =>
+                                                    a.courseSlug ===
+                                                    details?.courseSlug
+                                                )
+                                            ).length
                                           }
                                         </Text>
                                       </>
@@ -572,9 +594,60 @@ const Courses = ({
                               </Accordion.Panel>
                             </Accordion.Item>
                           ) : (
-                            <Text key={question.questionId}>
-                              Variation Type Questions
-                            </Text>
+                            <Accordion.Item
+                              value={String(question.questionId)}
+                              key={question.questionId}
+                            >
+                              <Accordion.Control>
+                                <Group my={"xs"} position="apart">
+                                  <Title size={"xs"}>
+                                    Question ID: {question.questionId}
+                                  </Title>
+                                  <Text>
+                                    Total Number of Attempts on This Variation
+                                    of Question:{" "}
+                                    {question.questionsWithAddedTime.length}
+                                  </Text>
+                                </Group>
+                                <Text italic fw={500}>
+                                  Correct % for This Question:{" "}
+                                  {(question.questionsWithAddedTime.flatMap(
+                                    (q) =>
+                                      q.attempts.filter(
+                                        (attempt) => attempt.isCorrect
+                                      )
+                                  ).length /
+                                    question.questionsWithAddedTime.length) *
+                                    100}
+                                  %
+                                </Text>
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <div
+                                  className="rawhtml rawhtml-lg-img"
+                                  dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(
+                                      question.questionContent,
+                                      {
+                                        ADD_TAGS: ["iframe"],
+                                        ADD_ATTR: [
+                                          "allow",
+                                          "allowfullscreen",
+                                          "frameborder",
+                                          "scrolling",
+                                        ],
+                                      }
+                                    ),
+                                  }}
+                                />
+                                <VariablesBox
+                                  variables={
+                                    (question.questionData as QuestionDataType)
+                                      .variables
+                                  }
+                                />
+                              </Accordion.Panel>
+                            </Accordion.Item>
                           )
                         )}
                     </Accordion>
@@ -640,15 +713,16 @@ const Courses = ({
               <Group m={10} pt={"md"}>
                 <IconPresentation size={19} />
                 <Title order={4}>Edit Lecture Slides</Title>
+                <Text italic>*PDF Files Only</Text>
               </Group>
             </Box>
             <Box>
               <>
-                {slidesMessage.map((media) => {
+                {files?.map((media) => {
                   return (
-                    <Group key={media.courseMediaURL}>
-                      <Text>{media.mediaName}</Text>
-                      <ActionIcon onClick={() => handleDeleteFile(media)}>
+                    <Group key={media.name}>
+                      <Text>{media.name}</Text>
+                      <ActionIcon onClick={() => handleDeleteFile(media.name)}>
                         <IconX size={18} />
                       </ActionIcon>
                     </Group>
@@ -658,7 +732,10 @@ const Courses = ({
             </Box>
             <Dropzone
               onDrop={(files) => {
-                setFiles(files);
+                setFiles((prevSelectedFiles) => [
+                  ...prevSelectedFiles,
+                  ...files,
+                ]);
               }}
               onReject={(files) => console.log("rejected files", files)}
               maxSize={10000000}

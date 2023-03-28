@@ -7,9 +7,8 @@ import {
 } from "@prisma/client";
 
 export type AllQuestionsType = (Question & {
-  attempts: Attempt[];
   topic: Topic;
-  questionsWithAddedTime: QuestionWithAddedTime[];
+  questionsWithAddedTime: (QuestionWithAddedTime & { attempts: Attempt[] })[];
 })[];
 
 export type QuestionFormFullType = {

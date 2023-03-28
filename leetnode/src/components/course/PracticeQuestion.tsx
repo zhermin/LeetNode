@@ -176,7 +176,7 @@ export default function PracticeQuestion() {
     }
   );
 
-  updatePoints();
+  // updatePoints();
 
   if (!UCQAT) {
     return (
