@@ -125,10 +125,14 @@ export default function User() {
                 </Center>
                 <Center>
                   <Text
-                    className={classes.userName}
+                    className="whitespace-pre-wrap"
                     sx={{ lineHeight: 1, fontSize: "20px" }}
                     weight={500}
-                    color={theme.colors.gray[9]}
+                    color={
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[0]
+                        : theme.black
+                    }
                   >
                     {userInfo?.name}
                   </Text>
@@ -136,10 +140,14 @@ export default function User() {
                 <Center>
                   {userInfo?.nickname && (
                     <Text
-                      className={classes.userName}
+                      className="whitespace-pre-wrap"
                       sx={{ lineHeight: 1, fontSize: "16px" }}
                       weight={400}
-                      color={theme.colors.gray[9]}
+                      color={
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[0]
+                          : theme.black
+                      }
                     >
                       ({userInfo?.nickname})
                     </Text>
@@ -290,13 +298,6 @@ const useStyles = createStyles((theme, _params, getRef) => {
               : theme.colors.dark[8],
           opacity: 0.9,
         },
-      },
-    },
-
-    userName: {
-      color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-      [theme.fn.smallerThan("sm")]: {
-        display: "none",
       },
     },
   };

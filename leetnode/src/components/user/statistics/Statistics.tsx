@@ -2,13 +2,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
-import {
-  Center,
-  Group,
-  Loader,
-  ScrollArea,
-  SegmentedControl,
-} from "@mantine/core";
+import { Center, Loader, ScrollArea, SegmentedControl } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import MasteryBar from "./MasteryBar";
@@ -48,33 +42,34 @@ export default function Statistics() {
     <ScrollArea>
       <h1 className="text-center">Statistics</h1>
       <hr className="my-4 h-px border-0 bg-gray-200" />
+      <SegmentedControl
+        color="cyan"
+        value={period}
+        onChange={setPeriod}
+        data={[
+          { label: "Current", value: "current" },
+          { label: "Previous week", value: "week" },
+          { label: "2 Weeks ago", value: "fortnight" },
+        ]}
+        fullWidth
+      />
       <Overview data={masteryData} />
-      <Group position="apart">
-        <SegmentedControl
-          color="cyan"
-          value={period}
-          onChange={setPeriod}
-          data={[
-            { label: "Current", value: "current" },
-            { label: "Previous week", value: "week" },
-            { label: "2 Weeks ago", value: "fortnight" },
-          ]}
-        />
-        <SegmentedControl
-          color="cyan"
-          value={view}
-          onChange={setView}
-          data={[
-            { label: "Bar", value: "bar" },
-            { label: "Radar", value: "radar" },
-          ]}
-        />
-      </Group>
+      <SegmentedControl
+        color="cyan"
+        value={view}
+        onChange={setView}
+        data={[
+          { label: "Bar", value: "bar" },
+          { label: "Radar", value: "radar" },
+        ]}
+        fullWidth
+        className="hidden xl:flex" // Disable radar view if sm-lg (due to resizing and overlapping labels)
+      />
 
-      {view === "bar" ? (
-        <MasteryBar data={masteryData} />
-      ) : (
+      {view === "radar" ? (
         <RadarChart data={masteryData} />
+      ) : (
+        <MasteryBar data={masteryData} />
       )}
     </ScrollArea>
   );

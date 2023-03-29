@@ -39,12 +39,12 @@ export default function Overall() {
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE;
 
-    if (!!allUsers && debouncedQuery !== "") {
+    if (!!allUsers && debouncedQuery.trim() !== "") {
       // Filtering
       setRecords(
         allUsers.filter(({ name, nickname, points }) => {
           if (
-            !`${nickname ?? name} ${points}` // Search by nickname (if exist, else by name) and points
+            !`${nickname ?? name}${points}` // Search by nickname (if exist, else by name) and points
               .toLowerCase()
               .includes(debouncedQuery.trim().toLowerCase())
           ) {
@@ -76,14 +76,15 @@ export default function Overall() {
         onChange={(e) => setQuery(e.currentTarget.value)}
         className="m-3"
       />
-      <Box sx={{ height: 330 }} className="m-3">
+      <Box sx={{ maxHeight: 890 }} className="m-3">
         <DataTable
           withBorder
+          minHeight={250}
           records={records}
           columns={[
             {
               accessor: "Rank",
-              width: "5%",
+              width: "10%",
               textAlignment: "center",
               render: (record) => {
                 return allUsers?.indexOf(record) === 0 ? (
@@ -99,7 +100,7 @@ export default function Overall() {
             },
             {
               accessor: "nickname",
-              width: "80%",
+              width: "65%",
               render: (record) => {
                 return (
                   <Group spacing="sm">
@@ -109,7 +110,11 @@ export default function Overall() {
                       radius={26}
                       imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
                     />
-                    <Text size="md" weight={500}>
+                    <Text
+                      size="md"
+                      weight={500}
+                      className="whitespace-pre-wrap"
+                    >
                       {record.nickname ?? record.name}
                     </Text>
                   </Group>
@@ -118,7 +123,7 @@ export default function Overall() {
             },
             {
               accessor: "points",
-              width: "15%",
+              width: "25%",
               textAlignment: "right",
               render: (record) => (
                 <Text size="md" weight={500}>

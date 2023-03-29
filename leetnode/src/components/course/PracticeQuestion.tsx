@@ -110,6 +110,7 @@ export default function PracticeQuestion() {
         );
         queryClient.invalidateQueries(["get-ucqat"]);
         queryClient.invalidateQueries(["get-attempts", data.courseSlug]);
+        updatePoints(); // Update points for attempting questions
       },
     });
 
@@ -140,7 +141,7 @@ export default function PracticeQuestion() {
     async () => {
       if (!!userInfo) {
         const lastActive = new Date(userInfo.lastActive); // get last active
-        console.log(lastActive);
+
         const res = await axios.post("/api/user/updatePoints", {
           id: session?.data?.user?.id,
           points:
@@ -175,8 +176,6 @@ export default function PracticeQuestion() {
       },
     }
   );
-
-  // updatePoints();
 
   if (!UCQAT) {
     return (

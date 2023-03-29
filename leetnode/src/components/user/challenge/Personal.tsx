@@ -68,7 +68,7 @@ export default function Personal() {
 
   // Pre-processing to render the calendar
   const lastActive = new Date(userInfo.lastActive ?? ""); // lastActive
-  const startDateTime = new Date();
+  const startDateTime = new Date(userInfo.lastActive ?? "");
   startDateTime.setDate(lastActive.getDate() - userInfo.loginStreak + 1); // Start of login streak
   startDateTime.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
   lastActive.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
@@ -81,7 +81,7 @@ export default function Personal() {
         radius="md"
         p="xs"
         key="userInfo"
-        className="m-3 grid grid-cols-1 items-center justify-center md:grid-cols-3"
+        className="m-3 grid grid-cols-1 items-center justify-center gap-6 md:grid-cols-3"
       >
         <div className="flex flex-row items-center justify-center text-center">
           <RingProgress
@@ -163,7 +163,7 @@ export default function Personal() {
 
       <Group position="center">
         <Calendar
-          size="xl"
+          size="md"
           onChange={() => {
             return null; // Do nothing
           }}
