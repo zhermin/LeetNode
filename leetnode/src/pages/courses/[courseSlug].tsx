@@ -366,7 +366,12 @@ export default function CourseMainPage({
                   }}
                 />
               ) : (
-                <Latex key={resource.string}>{resource.string}</Latex>
+                <Latex
+                  key={resource.string}
+                  style={{ width: "100%", height: "100%" }}
+                >
+                  {resource.string}
+                </Latex>
               )
             )}
           </Group>

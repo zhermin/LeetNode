@@ -197,7 +197,8 @@ export const Courses: {
     topics: ["power", "ohms-law"],
     courseMedia: [
       {
-        publicId: "course_slides_media/w1s1-fundamentals-of-electricity",
+        publicId:
+          "LeetNode/course_slides_media/w1s1-fundamentals-of-electricity",
         courseSlug: "fundamentals-of-electricity",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/course_slides_media/w1s1-fundamentals-of-electricity.pdf",
@@ -229,7 +230,8 @@ export const Courses: {
     ],
     courseMedia: [
       {
-        publicId: "course_slides_media/w1s2-electrical-circuit-principles",
+        publicId:
+          "LeetNode/course_slides_media/w1s2-electrical-circuit-principles",
         courseSlug: "electrical-circuit-principles",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w1s2-electrical-circuit-principles.pdf",
@@ -255,7 +257,8 @@ export const Courses: {
     topics: ["thevenin-equivalent-circuit"],
     courseMedia: [
       {
-        publicId: "course_slides_media/w2s1-thevenin-equivalent-circuit",
+        publicId:
+          "LeetNode/course_slides_media/w2s1-thevenin-equivalent-circuit",
         courseSlug: "thevenin-equivalent-circuit",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w2s1-thevenin-equivalent-circuit.pdf",
@@ -281,7 +284,8 @@ export const Courses: {
     topics: ["node-voltage-analysis-technique"],
     courseMedia: [
       {
-        publicId: "course_slides_media/w2s2-circuit-analysis-techniques",
+        publicId:
+          "LeetNode/course_slides_media/w2s2-circuit-analysis-techniques",
         courseSlug: "circuit-analysis-techniques",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w2s2-circuit-analysis-techniques.pdf",
@@ -311,7 +315,7 @@ export const Courses: {
     ],
     courseMedia: [
       {
-        publicId: "course_slides_media/w3s1-principles-of-capacitors",
+        publicId: "LeetNode/course_slides_media/w3s1-principles-of-capacitors",
         courseSlug: "principles-of-capacitors",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w3s1-principles-of-capacitors.pdf",
@@ -339,7 +343,7 @@ export const Courses: {
     courseMedia: [
       {
         publicId:
-          "course_slides_media/w3s2-dc-transient-behaviour-of-capacitors",
+          "LeetNode/course_slides_media/w3s2-dc-transient-behaviour-of-capacitors",
         courseSlug: "dc-transient-behaviour-of-capacitors",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w3s2-dc-transient-behaviour-of-capacitors.pdf",
@@ -370,7 +374,7 @@ export const Courses: {
     ],
     courseMedia: [
       {
-        publicId: "course_slides_media/w4s1-principles-of-inductors",
+        publicId: "LeetNode/course_slides_media/w4s1-principles-of-inductors",
         courseSlug: "principles-of-inductors",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w4s1-principles-of-inductors.pdf",
@@ -401,7 +405,8 @@ export const Courses: {
     ],
     courseMedia: [
       {
-        publicId: "course_slides_media/w7s1-basics-of-operational-amplifiers",
+        publicId:
+          "LeetNode/course_slides_media/w7s1-basics-of-operational-amplifiers",
         courseSlug: "basics-of-operational-amplifiers",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007593/LeetNode/course_slides_media/w7s1-basics-of-operational-amplifiers.pdf",
@@ -427,7 +432,8 @@ export const Courses: {
     topics: ["first-order-low-pass-filters", "first-order-high-pass-filters"],
     courseMedia: [
       {
-        publicId: "course_slides_media/w8s1-opamp-comparators-and-filters",
+        publicId:
+          "LeetNode/course_slides_media/w8s1-opamp-comparators-and-filters",
         courseSlug: "opamp-comparators-and-filters",
         courseMediaURL:
           "https://res.cloudinary.com/dy2tqc45y/image/upload/v1666007594/LeetNode/course_slides_media/w8s1-opamp-comparators-and-filters.pdf",

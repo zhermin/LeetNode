@@ -141,15 +141,15 @@ const Courses = ({
     details?.video,
   ]);
 
-  console.log(questions);
-  console.log(overviewMessage, slidesMessage, videoMessage, additionalMessage);
+  console.log("files:", files);
+  console.log("slidesMessage", slidesMessage);
+
   let filteredCourses;
   {
     sort === "All Courses"
       ? (filteredCourses = courses)
       : (filteredCourses = courses.filter((c) => c.courseLevel === sort));
   }
-  console.log(filteredCourses);
 
   const filteredTopics = details?.topics.filter((topic) =>
     multiValue.includes(topic.topicName)
@@ -184,8 +184,6 @@ const Courses = ({
         });
       }
     });
-
-    console.log(avgMasteryLevels);
   }
 
   const editMutation = useMutation<
@@ -215,29 +213,39 @@ const Courses = ({
 
   const handleFileUpload = async (files: FileWithPath[]): Promise<string[]> => {
     const uploadPromises = files?.map(async (file) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "course_slides_media");
-      console.log(formData);
-      try {
-        const res = await axios.post(
-          "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
-          formData
-        );
-        const updatedSlidesMessage = [...slidesMessage];
-        updatedSlidesMessage.push({
-          publicId: res.data.public_id,
-          courseSlug: details?.courseSlug as string,
-          courseMediaURL: res.data.secure_url,
-          mediaName: res.data.original_filename,
-        });
-        setSlidesMessage(updatedSlidesMessage);
-        toast.success("Successfully Added!");
-        return res.data.secure_url;
-      } catch (error) {
-        console.log(error);
-        toast.error(error instanceof Error ? error.message : "Unknown Error");
-        throw error;
+      if (
+        !slidesMessage.some(
+          (media) =>
+            media.mediaName === file.name ||
+            media.mediaName + ".pdf" === file.name
+        )
+      ) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "course_slides_media");
+        console.log(formData);
+        try {
+          const res = await axios.post(
+            "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
+            formData
+          );
+          setSlidesMessage((existing) => [
+            ...existing,
+            {
+              publicId: res.data.public_id,
+              courseSlug: details?.courseSlug as string,
+              courseMediaURL: res.data.secure_url,
+              mediaName: res.data.original_filename,
+            },
+          ]);
+          toast.success("Successfully Added!");
+          console.log(res.data);
+          return res.data.secure_url;
+        } catch (error) {
+          console.log(error);
+          toast.error(error instanceof Error ? error.message : "Unknown Error");
+          throw error;
+        }
       }
     });
     const uploadedUrls = await Promise.all(uploadPromises as Promise<string>[]);
@@ -671,7 +679,7 @@ const Courses = ({
         onClose={() => {
           setOpenedEdit(false);
           setOverviewMessage(thisCourse?.courseDescription as string);
-          setSlidesMessage(thisCourse?.courseMedia as CourseMedia[]);
+          // setSlidesMessage(thisCourse?.courseMedia as CourseMedia[]);
           setVideoMessage(thisCourse?.video as string);
           setAdditionalMessage(thisCourse?.markdown as string);
         }}
@@ -686,6 +694,14 @@ const Courses = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            const updatedSlidesMessage = slidesMessage?.filter((slide) =>
+              files.some(
+                (f) =>
+                  f.name == slide.mediaName ||
+                  f.name == slide.mediaName + ".pdf"
+              )
+            );
+            setSlidesMessage(updatedSlidesMessage);
             handleFileUpload(files);
             editMutation.mutate({
               courseSlug: details?.courseSlug as string,
@@ -718,7 +734,32 @@ const Courses = ({
             </Box>
             <Box>
               <>
-                {files?.map((media) => {
+                {files.length > 0
+                  ? files.map((media) => {
+                      return (
+                        <Group key={media.name}>
+                          <Text>{media.name}</Text>
+                          <ActionIcon
+                            onClick={() => handleDeleteFile(media.name)}
+                          >
+                            <IconX size={18} />
+                          </ActionIcon>
+                        </Group>
+                      );
+                    })
+                  : slidesMessage.map((media) => {
+                      return (
+                        <Group key={media.mediaName}>
+                          <Text>{media.mediaName}</Text>
+                          <ActionIcon
+                            onClick={() => handleDeleteFile(media.mediaName)}
+                          >
+                            <IconX size={18} />
+                          </ActionIcon>
+                        </Group>
+                      );
+                    })}
+                {/* {files?.map((media) => {
                   return (
                     <Group key={media.name}>
                       <Text>{media.name}</Text>
@@ -727,7 +768,7 @@ const Courses = ({
                       </ActionIcon>
                     </Group>
                   );
-                })}
+                })} */}
               </>
             </Box>
             <Dropzone

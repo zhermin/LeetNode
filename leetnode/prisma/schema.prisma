@@ -128,7 +128,7 @@ model Course {
 }
 
 model CourseMedia {
-  publicId       String
+  publicId       String   @unique
   courseSlug     String
   courseMediaURL String   @db.VarChar(500)
   mediaName      String
