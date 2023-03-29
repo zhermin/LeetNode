@@ -128,13 +128,12 @@ model Course {
 }
 
 model CourseMedia {
-  publicId       String   @unique
+  publicId       String   @id
   courseSlug     String
   courseMediaURL String   @db.VarChar(500)
   mediaName      String
   course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
 
-  @@id([publicId])
   @@index([courseSlug])
 }
 
