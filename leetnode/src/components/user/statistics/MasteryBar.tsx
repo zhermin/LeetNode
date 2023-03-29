@@ -154,12 +154,12 @@ export default function MasteryBar({ data }: TableSortProps) {
       <Table
         horizontalSpacing="md"
         verticalSpacing="xs"
-        sx={{ tableLayout: "fixed", minWidth: 700 }}
+        sx={{ tableLayout: "fixed" }}
       >
         <thead>
           <tr>
             <Th
-              className="w-1/3"
+              className="w-1/2 md:w-1/3"
               sorted={sortBy === "topicName"}
               reversed={reverseSortDirection}
               onSort={() => setSorting("topicName")}
@@ -167,7 +167,7 @@ export default function MasteryBar({ data }: TableSortProps) {
               Topic
             </Th>
             <Th
-              className="w-2/3"
+              className="w-1/2 md:w-2/3"
               sorted={sortBy === "masteryLevel"}
               reversed={reverseSortDirection}
               onSort={() => setSorting("masteryLevel")}
