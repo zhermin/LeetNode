@@ -9,6 +9,7 @@ export default async function handler(
 ) {
   let editedQuestion: Question;
 
+  // If updating question from static to dynamic
   if (
     req.body.newQuestionId === null ||
     (Number(req.query.variationId as string) !==
@@ -34,7 +35,8 @@ export default async function handler(
         },
       },
     });
-  } else {
+  // If updating question from dynamic to static
+  } else if (req.body.newQuestionId && req.body.newVariationId) {
     editedQuestion = await prisma.question.update({
       where: {
         questionId_variationId: {
@@ -45,6 +47,23 @@ export default async function handler(
       data: {
         questionId: Number(req.body.newQuestionId),
         variationId: Number(req.body.newVariationId),
+        topicSlug: req.body.topicSlug,
+        questionTitle: req.body.questionTitle,
+        questionDifficulty: req.body.questionDifficulty,
+        questionContent: req.body.questionContent,
+        questionData: req.body.questionData,
+      },
+    });
+  // If simply updating a question without changing its type
+  } else {
+    editedQuestion = await prisma.question.update({
+      where: {
+        questionId_variationId: {
+          questionId: Number(req.query.questionId as string),
+          variationId: Number(req.query.variationId as string),
+        },
+      },
+      data: {
         topicSlug: req.body.topicSlug,
         questionTitle: req.body.questionTitle,
         questionDifficulty: req.body.questionDifficulty,

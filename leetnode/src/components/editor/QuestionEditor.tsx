@@ -1147,6 +1147,7 @@ export default function QuestionEditor({
         Question <span className="text-red-500">*</span>
       </Text>
       <Editor
+        stickyOffset={-20}
         upload_preset="question_media"
         value={editorHtml.current}
         onChange={(html) => {
@@ -1206,10 +1207,7 @@ export default function QuestionEditor({
         mt="md"
         onClick={() => newVar()}
       >
-        <IconPlus
-          size={16}
-          color={theme.colorScheme === "dark" ? "gray" : ""}
-        />
+        <IconPlus size={16} />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -1261,10 +1259,7 @@ export default function QuestionEditor({
         mt="md"
         onClick={() => newMethod()}
       >
-        <IconPlus
-          size={16}
-          color={theme.colorScheme === "dark" ? "gray" : ""}
-        />
+        <IconPlus size={16} />
       </Button>
 
       <Flex mt="xl" align="center">
@@ -1316,10 +1311,7 @@ export default function QuestionEditor({
         mt="md"
         onClick={() => newHint()}
       >
-        <IconPlus
-          size={16}
-          color={theme.colorScheme === "dark" ? "gray" : ""}
-        />
+        <IconPlus size={16} />
       </Button>
 
       <Flex mt="xl" mb="md" align="center">
