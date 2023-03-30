@@ -128,21 +128,28 @@ const Courses = ({
     thisCourse?.markdown as string
   );
   const [files, setFiles] = useState<FileWithPath[]>([]);
+  const [fileDisplay, setFileDisplay] = useState<string[]>([]);
 
   useEffect(() => {
     setOverviewMessage(details?.courseDescription as string);
-    setSlidesMessage((details?.courseMedia as CourseMedia[]) ?? []);
+    setSlidesMessage((thisCourse?.courseMedia as CourseMedia[]) ?? []);
+    setFileDisplay(
+      (thisCourse?.courseMedia as CourseMedia[])?.map(
+        (media) => media.mediaName
+      ) ?? []
+    );
     setVideoMessage(details?.video as string);
     setAdditionalMessage(details?.markdown as string);
   }, [
     details?.courseDescription,
     details?.markdown,
-    details?.courseMedia,
     details?.video,
+    thisCourse?.courseMedia,
   ]);
 
   console.log("files:", files);
   console.log("slidesMessage", slidesMessage);
+  console.log("fileDisplay", fileDisplay);
 
   let filteredCourses;
   {
@@ -210,7 +217,6 @@ const Courses = ({
       toast.success("Updated Successfully!");
     },
   });
-
   const handleFileUpload = async (files: FileWithPath[]): Promise<string[]> => {
     const uploadPromises = files?.map(async (file) => {
       if (
@@ -229,18 +235,17 @@ const Courses = ({
             "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload",
             formData
           );
-          setSlidesMessage((existing) => [
-            ...existing,
-            {
-              publicId: res.data.public_id,
-              courseSlug: details?.courseSlug as string,
-              courseMediaURL: res.data.secure_url,
-              mediaName: res.data.original_filename,
-            },
+          const newMedia: CourseMedia = {
+            publicId: res.data.public_id,
+            courseSlug: details?.courseSlug as string,
+            courseMediaURL: res.data.secure_url,
+            mediaName: res.data.original_filename,
+          };
+          setSlidesMessage((prevSlidesMessage) => [
+            ...prevSlidesMessage,
+            newMedia,
           ]);
-          toast.success("Successfully Added!");
-          console.log(res.data);
-          return res.data.secure_url;
+          return newMedia;
         } catch (error) {
           console.log(error);
           toast.error(error instanceof Error ? error.message : "Unknown Error");
@@ -248,14 +253,45 @@ const Courses = ({
         }
       }
     });
-    const uploadedUrls = await Promise.all(uploadPromises as Promise<string>[]);
-    return uploadedUrls;
+    setFiles([]);
+    const uploadedMedia = await Promise.all(
+      uploadPromises as Promise<CourseMedia>[]
+    );
+    const newSlidesMessage = [...slidesMessage, ...uploadedMedia];
+    setSlidesMessage(newSlidesMessage);
+    editMutation.mutate({
+      courseSlug: details?.courseSlug as string,
+      content: {
+        overview: overviewMessage,
+        slides: newSlidesMessage,
+        video: videoMessage,
+        additional: additionalMessage,
+      },
+    });
+
+    setOpenedEdit(false);
+    return uploadedMedia.map((media) => media.courseMediaURL);
   };
 
   const handleDeleteFile = async (name: string) => {
-    // Delete the record from slidesMessage state
-    const updatedFiles = files?.filter((slide) => slide.name !== name);
+    // Delete the record from files state
+    const updatedFiles = files?.filter(
+      (slide) => slide.name !== name && slide.name !== name + ".pdf"
+    );
     setFiles(updatedFiles);
+
+    // Delete the record from fileDisplay state
+    const updatedFileDisplay = fileDisplay?.filter(
+      (mediaName) => mediaName !== name && mediaName !== name + ".pdf"
+    );
+    setFileDisplay(updatedFileDisplay);
+
+    // Delete the record from slidesMessage state
+    const updatedSlidesMessage = slidesMessage?.filter(
+      (media) => media.mediaName !== name && media.mediaName !== name + ".pdf"
+    );
+    setSlidesMessage(updatedSlidesMessage);
+
     // Unsigned presets does not allow delete after 10 mins
     // try {
     //   const response = await axios.post(
@@ -694,25 +730,7 @@ const Courses = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            const updatedSlidesMessage = slidesMessage?.filter((slide) =>
-              files.some(
-                (f) =>
-                  f.name == slide.mediaName ||
-                  f.name == slide.mediaName + ".pdf"
-              )
-            );
-            setSlidesMessage(updatedSlidesMessage);
             handleFileUpload(files);
-            editMutation.mutate({
-              courseSlug: details?.courseSlug as string,
-              content: {
-                overview: overviewMessage,
-                slides: slidesMessage,
-                video: videoMessage,
-                additional: additionalMessage,
-              },
-            });
-            setOpenedEdit(false);
           }}
         >
           <>
@@ -734,41 +752,16 @@ const Courses = ({
             </Box>
             <Box>
               <>
-                {files.length > 0
-                  ? files.map((media) => {
-                      return (
-                        <Group key={media.name}>
-                          <Text>{media.name}</Text>
-                          <ActionIcon
-                            onClick={() => handleDeleteFile(media.name)}
-                          >
-                            <IconX size={18} />
-                          </ActionIcon>
-                        </Group>
-                      );
-                    })
-                  : slidesMessage.map((media) => {
-                      return (
-                        <Group key={media.mediaName}>
-                          <Text>{media.mediaName}</Text>
-                          <ActionIcon
-                            onClick={() => handleDeleteFile(media.mediaName)}
-                          >
-                            <IconX size={18} />
-                          </ActionIcon>
-                        </Group>
-                      );
-                    })}
-                {/* {files?.map((media) => {
+                {fileDisplay?.map((mediaName) => {
                   return (
-                    <Group key={media.name}>
-                      <Text>{media.name}</Text>
-                      <ActionIcon onClick={() => handleDeleteFile(media.name)}>
+                    <Group key={mediaName}>
+                      <Text>{mediaName}</Text>
+                      <ActionIcon onClick={() => handleDeleteFile(mediaName)}>
                         <IconX size={18} />
                       </ActionIcon>
                     </Group>
                   );
-                })} */}
+                })}
               </>
             </Box>
             <Dropzone
@@ -776,6 +769,10 @@ const Courses = ({
                 setFiles((prevSelectedFiles) => [
                   ...prevSelectedFiles,
                   ...files,
+                ]);
+                setFileDisplay((prevFileNames) => [
+                  ...prevFileNames,
+                  ...files.map((file) => file.name),
                 ]);
               }}
               onReject={(files) => console.log("rejected files", files)}
