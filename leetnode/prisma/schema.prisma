@@ -40,26 +40,26 @@ model Session {
 }
 
 model User {
-  id              String               @id @default(cuid())
-  nusnetId        String?              @unique // KIV
-  name            String
-  nickname        String?
-  email           String               @unique
-  emailVerified   DateTime? // KIV
-  image           String               @default("https://robohash.org/LeetNode?set=set4")
-  role            Role                 @default(USER)
-  lastActive      DateTime             @default(now())
-  loginStreak     Int                  @default(1)
-  points          Int                  @default(1)
-  emailFrequency  Frequency            @default(Daily)
-  accounts        Account[]
-  sessions        Session[]
-  attempts        Attempt[]
-  courseQuestions UserCourseQuestion[]
-  masteries       Mastery[]
-  posts           Post[]
-  comments        Comment[]
-  postLikes       PostLikes[]
+  id                     String                  @id @default(cuid())
+  nusnetId               String?                 @unique
+  name                   String
+  nickname               String?                 @unique
+  email                  String                  @unique
+  emailVerified          DateTime? // KIV
+  image                  String                  @default("https://robohash.org/LeetNode?set=set4")
+  role                   Role                    @default(USER)
+  lastActive             DateTime                @default(now())
+  loginStreak            Int                     @default(1)
+  points                 Int                     @default(1)
+  emailFrequency         Frequency               @default(Daily)
+  accounts               Account[]
+  sessions               Session[]
+  questionsWithAddedTime QuestionWithAddedTime[]
+  attempts               Attempt[]
+  masteries              Mastery[]
+  posts                  Post[]
+  comments               Comment[]
+  postLikes              PostLikes[]
 }
 
 enum Role {
@@ -108,46 +108,33 @@ enum CourseType {
 }
 
 model Course {
-  courseSlug          String               @id
-  courseName          String               @unique
-  courseDescription   String               @db.Text
-  courseImage         String
-  courseLevel         Level
-  type                CourseType
-  moduleCode          String
-  moduleTitle         String
-  week                Int?
-  studio              Int?
-  video               String?              @db.Text
-  markdown            String?              @db.Text
-  topics              Topic[]
-  userCourseQuestions UserCourseQuestion[]
-  posts               Post[]
-  attempts            Attempt[]
-  courseMedia         CourseMedia[]
+  courseSlug             String                  @id
+  courseName             String                  @unique
+  courseDescription      String                  @db.Text
+  courseImage            String
+  courseLevel            Level
+  type                   CourseType
+  moduleCode             String
+  moduleTitle            String
+  week                   Int?
+  studio                 Int?
+  video                  String?                 @db.Text
+  markdown               String?                 @db.Text
+  topics                 Topic[]
+  posts                  Post[]
+  attempts               Attempt[]
+  courseMedia            CourseMedia[]
+  questionsWithAddedTime QuestionWithAddedTime[]
 }
 
 model CourseMedia {
-  publicId       String   @id
+  publicId       String @id
   courseSlug     String
-  courseMediaURL String   @db.VarChar(500)
+  courseMediaURL String @db.VarChar(500)
   mediaName      String
-  course         Course   @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+  course         Course @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
 
   @@index([courseSlug])
-}
-
-model UserCourseQuestion {
-  userId                 String
-  courseSlug             String
-  courseCompletion       Int                     @default(0) // KIV
-  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course                 Course                  @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
-  questionsWithAddedTime QuestionWithAddedTime[]
-
-  @@id([userId, courseSlug])
-  @@index([courseSlug])
-  @@index([userId])
 }
 
 model Mastery {
@@ -205,20 +192,22 @@ enum QuestionDifficulty {
 
 model QuestionWithAddedTime {
   // Question tagged to a user, and if dynamic, with options generated at runtime //
-  qatId       String             @id @default(cuid())
+  qatId       String    @id @default(cuid())
   questionId  Int
   variationId Int
   userId      String
   courseSlug  String
   variables   Json? // QuestionDataType["variables"]
   answers     Json // QuestionDataType["answers"]
-  addedTime   DateTime           @default(now())
-  question    Question           @relation(fields: [questionId, variationId], references: [questionId, variationId], onDelete: Cascade)
-  userCourse  UserCourseQuestion @relation(fields: [userId, courseSlug], references: [userId, courseSlug], onDelete: Cascade)
+  addedTime   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course    @relation(fields: [courseSlug], references: [courseSlug], onDelete: Cascade)
+  question    Question  @relation(fields: [questionId, variationId], references: [questionId, variationId], onDelete: Cascade)
   attempts    Attempt[]
 
   @@unique([questionId, variationId, userId, courseSlug, addedTime])
-  @@index([userId, courseSlug])
+  @@index([userId])
+  @@index([courseSlug])
   @@index([questionId, variationId])
 }
 

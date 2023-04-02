@@ -13,7 +13,6 @@ async function main() {
   await prisma.questionWithAddedTime.deleteMany();
   await prisma.topic.deleteMany();
   await prisma.course.deleteMany();
-  await prisma.courseMedia.deleteMany();
 
   // Populate the database with the seed data
   await prisma.topic.createMany({
@@ -26,15 +25,14 @@ async function main() {
   console.log("Questions created");
 
   // Extract the courses without topics from Courses
-  const coursesWithoutTopicsAndCourseMedia = Courses.map((course) => {
-    const { topics, courseMedia, ...coursesWithoutTopicsAndCourseMedia } =
-      course;
-    return coursesWithoutTopicsAndCourseMedia;
+  const coursesWithoutTopics = Courses.map((course) => {
+    const { topics, ...courseWithoutTopics } = course;
+    return courseWithoutTopics;
   });
 
-  // Add the Course data and topics and courseMedia separately
+  // Add the Course data and topics separately
   await prisma.course.createMany({
-    data: coursesWithoutTopicsAndCourseMedia,
+    data: coursesWithoutTopics,
   });
 
   for (const course of Courses) {
@@ -53,10 +51,6 @@ async function main() {
           connect: courseTopics,
         },
       },
-    });
-    const { courseMedia } = course;
-    await prisma.courseMedia.createMany({
-      data: courseMedia,
     });
   }
   console.log("Courses created");
@@ -77,14 +71,6 @@ async function main() {
       },
       data: {
         nusnetId: null,
-      },
-    });
-
-    // Add the user's userCourseQuestion
-    await prisma.userCourseQuestion.createMany({
-      data: {
-        userId: user.id,
-        courseSlug: welcomeQuiz.courseSlug,
       },
     });
 
@@ -134,24 +120,17 @@ async function main() {
     console.log("Generated Welcome Quiz Questions: ", randomMediumQuestions);
 
     // Check against the database if we can sort by addedTime
-    const questions = await prisma.userCourseQuestion.findFirst({
+    const questions = await prisma.questionWithAddedTime.findMany({
       where: {
         userId: user.id,
         courseSlug: welcomeQuiz.courseSlug,
       },
-      include: {
-        questionsWithAddedTime: {
-          orderBy: {
-            addedTime: "asc",
-          },
-        },
+      orderBy: {
+        addedTime: "asc",
       },
     });
 
-    console.log(
-      "Queried Welcome Quiz Questions: ",
-      questions?.questionsWithAddedTime
-    );
+    console.log("Queried Welcome Quiz Questions: ", questions);
   }
 }
 

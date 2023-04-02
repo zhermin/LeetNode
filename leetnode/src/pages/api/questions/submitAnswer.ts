@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
+import { unstable_getServerSession } from "next-auth";
 import { z } from "zod";
 
 import { prisma } from "@/server/db/client";
@@ -8,24 +9,27 @@ import { CustomEval } from "@/utils/CustomEval";
 import { CustomMath } from "@/utils/CustomMath";
 import { RecommendQuestion } from "@/utils/Recommender";
 
+import { authOptions } from "../auth/[...nextauth]";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   // Submit Answer
-  // 1. Add a new attempt
-  // 2. Update the BKT model and get user's new mastery
-  // 3. Recommended question
+  // 1. Update the BKT model and get user's new mastery
+  // 2. Recommended question
   //   a. Topic: random topic tested in current course
   //   b. Difficulty: according to new mastery level
-  // 4. Add a new questionWithAddedTime with runtime generated answer options
+  // 3. Add a new questionWithAddedTime with runtime generated answer options
+  // 4. Add a new attempt
   // 5. Return the new mastery to fire a custom notification
 
+  const session = await unstable_getServerSession(req, res, authOptions);
+
   try {
-    const { qatId, userId, courseSlug } = z
+    const { qatId, courseSlug } = z
       .object({
         qatId: z.string(),
-        userId: z.string(),
         courseSlug: z.string(),
       })
       .parse(req.query);
@@ -40,23 +44,12 @@ export default async function handler(
       .parse(req.body);
 
     // Step 1
-    await prisma.attempt.create({
-      data: {
-        userId: userId,
-        courseSlug: courseSlug,
-        qatId: qatId,
-        attemptedKeys: attemptedKeys,
-        isCorrect: isCorrect,
-      },
-    });
-
-    // Step 2
     const { data: pybktUpdate } = await axios.patch<{
       Updated: boolean;
     }>(
-      `https://pybkt-api-deployment.herokuapp.com/update-state/${userId}/${topicSlug}/${String(
-        isCorrect ? 1 : 0
-      )}`,
+      `https://pybkt-api-deployment.herokuapp.com/update-state/${
+        session?.user?.id
+      }/${topicSlug}/${isCorrect ? "1" : "0"}`,
       req,
       {
         headers: {
@@ -70,7 +63,7 @@ export default async function handler(
     }
 
     const { data: pybktGet } = await axios.get<{ Mastery: number }>(
-      `https://pybkt-api-deployment.herokuapp.com/get-mastery/${userId}/${topicSlug}`,
+      `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${topicSlug}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
@@ -84,7 +77,7 @@ export default async function handler(
 
     console.log(`[${topicSlug}] NEW MASTERY: `, pybktGet.Mastery);
 
-    // Step 3
+    // Step 2
     const { recommendedTopicSlug, recommendedQuestion } =
       await RecommendQuestion(courseSlug, pybktGet.Mastery);
 
@@ -93,7 +86,7 @@ export default async function handler(
       recommendedQuestion.questionId
     );
 
-    // Step 4
+    // Step 3
     const questionData = recommendedQuestion.questionData as QuestionDataType;
 
     // Only evaluate variables and methods if dynamic question
@@ -107,7 +100,7 @@ export default async function handler(
 
     await prisma.questionWithAddedTime.create({
       data: {
-        userId: userId,
+        userId: session?.user?.id as string,
         courseSlug: courseSlug,
         questionId: recommendedQuestion.questionId,
         variationId: recommendedQuestion.variationId,
@@ -119,8 +112,20 @@ export default async function handler(
       },
     });
 
+    // Step 4
+    await prisma.attempt.create({
+      data: {
+        userId: session?.user?.id as string,
+        courseSlug: courseSlug,
+        qatId: qatId,
+        attemptedKeys: attemptedKeys,
+        isCorrect: isCorrect,
+      },
+    });
+
     // Step 5
     res.status(200).json({
+      customToast: true,
       message: "Answer submitted successfully",
       topic: topicName,
       masteryLevel: pybktGet.Mastery,
@@ -128,6 +133,7 @@ export default async function handler(
       courseSlug: courseSlug,
     });
   } catch (e) {
+    console.error(e);
     res.status(400).json({
       message:
         e instanceof z.ZodError || e instanceof AxiosError || e instanceof Error

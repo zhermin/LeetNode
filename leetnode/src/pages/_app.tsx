@@ -53,14 +53,17 @@ const LeetNode: AppType<{
           onSuccess: (res) => {
             const { data } = res as AxiosResponse;
 
-            if (data && data.message && data.customIcon) {
-              // For custom toast, return {...res, data: {...res.data, customIcon: "", message: ""}}}
+            if (data && data.customToast) {
+              // For completely custom toasts, return .json{customToast: true} in the response
+              toast.dismiss(toastId.current);
+            } else if (data && data.message && data.customIcon) {
+              // For custom icons, return .json{customIcon: "...", message: "..."} in the response
               toast(() => data.message, {
                 id: toastId.current,
                 icon: data.customIcon,
               });
             } else if (data && data.message) {
-              // For custom message, return {...res, data: {...res.data, message: ""}}
+              // For custom messages, return .json{message: "..."} in the response
               toast.success(data.message, {
                 id: toastId.current,
               });
@@ -88,9 +91,12 @@ const LeetNode: AppType<{
               errorMessage = error.message;
             }
 
-            toast.error(`Error: ${errorMessage}\n\nPlease contact support`, {
-              id: toastId.current,
-            });
+            toast.error(
+              `Error: ${errorMessage}\n\nPlease contact support for further assistance`,
+              {
+                id: toastId.current,
+              }
+            );
           },
         }),
       })

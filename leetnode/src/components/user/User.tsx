@@ -9,6 +9,7 @@ import {
   AppShell,
   Avatar,
   Center,
+  Container,
   createStyles,
   Loader,
   Navbar,
@@ -29,9 +30,9 @@ import Challenge from "./challenge/Challenge";
 import Statistics from "./statistics/Statistics";
 
 const tabs = [
-  { link: "", label: "Account", icon: IconUser },
-  { link: "", label: "Statistics", icon: IconReportAnalytics },
-  { link: "", label: "Challenge", icon: IconTargetArrow },
+  { label: "Account", icon: IconUser },
+  { label: "Statistics", icon: IconReportAnalytics },
+  { label: "Challenge", icon: IconTargetArrow },
 ];
 
 export default function User() {
@@ -64,7 +65,6 @@ export default function User() {
       className={cx(classes.link, {
         [classes.linkActive]: item.label === active,
       })}
-      href={item.link}
       key={item.label}
       onClick={(event) => {
         event.preventDefault();
@@ -128,11 +128,7 @@ export default function User() {
                     className="whitespace-pre-wrap"
                     sx={{ lineHeight: 1, fontSize: "20px" }}
                     weight={500}
-                    color={
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[0]
-                        : theme.black
-                    }
+                    color="white"
                   >
                     {userInfo?.name}
                   </Text>
@@ -159,7 +155,6 @@ export default function User() {
 
             <Navbar.Section className={classes.footer}>
               <a
-                href="#"
                 className={classes.link}
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
@@ -175,15 +170,17 @@ export default function User() {
       footer={<LeetNodeFooter />}
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
-        {active === "Account" ? (
-          <Account userInfo={userInfo} />
-        ) : active === "Statistics" ? (
-          <Statistics />
-        ) : active === "Challenge" ? (
-          <Challenge />
-        ) : (
-          <Text>Error</Text>
-        )}
+        <Container>
+          {active === "Account" ? (
+            <Account userInfo={userInfo} />
+          ) : active === "Statistics" ? (
+            <Statistics />
+          ) : active === "Challenge" ? (
+            <Challenge />
+          ) : (
+            <Text>Error</Text>
+          )}
+        </Container>
       </ScrollArea.Autosize>
     </AppShell>
   );
@@ -215,7 +212,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       borderBottom: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
           .background ?? theme.primaryColor,
-        0.1
+        0.5
       )}`,
     },
 
@@ -225,7 +222,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       borderTop: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
           .background ?? theme.primaryColor,
-        0.1
+        0.5
       )}`,
     },
 
@@ -235,13 +232,11 @@ const useStyles = createStyles((theme, _params, getRef) => {
       alignItems: "center",
       textDecoration: "none",
       fontSize: theme.fontSizes.sm,
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[1]
-          : theme.colors.gray[9],
+      color: "white",
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
+      cursor: "pointer",
 
       "&:hover": {
         backgroundColor:
@@ -259,10 +254,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
 
     linkIcon: {
       ref: icon,
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[2]
-          : theme.colors.gray[8],
+      color: "white",
       marginRight: theme.spacing.sm,
     },
 
@@ -281,21 +273,9 @@ const useStyles = createStyles((theme, _params, getRef) => {
                 }).background ?? theme.primaryColor,
                 0.15
               ),
-        color:
-          theme.colorScheme === "dark"
-            ? theme.fn.variant({
-                variant: "light",
-                color: theme.primaryColor,
-              }).color
-            : theme.colors.dark[8],
+        color: "white",
         [`& .${icon}`]: {
-          color:
-            theme.colorScheme === "dark"
-              ? theme.fn.variant({
-                  variant: "light",
-                  color: theme.primaryColor,
-                }).color
-              : theme.colors.dark[8],
+          color: "white",
           opacity: 0.9,
         },
       },

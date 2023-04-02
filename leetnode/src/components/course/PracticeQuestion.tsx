@@ -75,7 +75,6 @@ export default function PracticeQuestion() {
       }: {
         query: {
           qatId: string;
-          userId: string;
           courseSlug: string;
         };
         body: {
@@ -86,7 +85,7 @@ export default function PracticeQuestion() {
         };
       }) => {
         return axios.post(
-          `/api/questions/submitAnswer?qatId=${query.qatId}&userId=${query.userId}&courseSlug=${query.courseSlug}`,
+          `/api/questions/submitAnswer?qatId=${query.qatId}&courseSlug=${query.courseSlug}`,
           body
         );
       },
@@ -211,7 +210,6 @@ export default function PracticeQuestion() {
           submitAnswer({
             query: {
               qatId: UCQAT.data.qatId,
-              userId: UCQAT.data.userId,
               courseSlug: currentCourseSlug,
             },
             body: {

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -21,10 +20,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 export default function WelcomePage() {
   const { classes } = useStyles();
-
   const router = useRouter();
-  const session = useSession();
-  if (!session) signIn("google");
 
   // States to avoid flash before redirect and to push only once
   const [loaded, setLoaded] = useState(false);
@@ -68,10 +64,15 @@ export default function WelcomePage() {
   const [nusnetId, setNusnetId] = useState("");
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutate(nusnetId);
+    if (nusnetId.trim() === "") {
+      setLoaded(false);
+      router.push("/courses");
+    } else {
+      mutate(nusnetId);
+    }
   };
 
-  if (!loaded || mutationIsLoading) {
+  if (!loaded) {
     return (
       <Center className="h-screen">
         <Loader />
@@ -96,14 +97,13 @@ export default function WelcomePage() {
               Welcome to LeetNode!
             </Title>
             <Text color="dimmed" size="md" align="center" mt={5}>
-              To complete your registration, please enter your NUSNET ID
+              Please enter your NUSNET ID if you are an NUS student
             </Text>
             <Paper withBorder shadow="md" p={30} mt={30} radius="md">
               <TextInput
                 label="NUSNET ID"
                 placeholder="A0123456Z"
                 value={nusnetId}
-                required
                 onChange={(e) => setNusnetId(e.target.value.toUpperCase())}
                 error={
                   nusnetId.trim().length > 0 &&
@@ -116,8 +116,13 @@ export default function WelcomePage() {
                 mt="xl"
                 type="submit"
                 className={classes.control}
+                loading={mutationIsLoading}
               >
-                Submit
+                {mutationIsLoading
+                  ? "Submitting..."
+                  : nusnetId.trim() !== ""
+                  ? "Submit"
+                  : "Skip"}
               </Button>
             </Paper>
           </form>

@@ -36,7 +36,6 @@ import {
   QuestionWithAddedTime,
   Topic,
   User,
-  UserCourseQuestion,
 } from "@prisma/client";
 import {
   IconAdjustments,
@@ -55,7 +54,6 @@ export type UsersWithMasteriesAndAttemptsType = (User & {
 
 export type CoursesInfoType = Course & {
   topics: Topic[];
-  userCourseQuestions: UserCourseQuestion[];
   posts: Post[];
   attempts: Attempt;
   courseMedia: CourseMedia[];

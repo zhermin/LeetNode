@@ -23,18 +23,17 @@ export default function Overview({ data }: OverviewProps) {
     );
 
     return (
-      <div className="m-3 grid grid-cols-1 gap-3 lg:grid-cols-2 ">
+      <div className="my-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Paper
           withBorder
-          shadow="lg"
+          shadow="sm"
           radius="md"
           p="xs"
           key="highestMastery"
           className="flex flex-row items-center"
         >
           <RingProgress
-            className="w-20%"
-            size={80}
+            size={120}
             roundCaps
             thickness={8}
             sections={[
@@ -70,7 +69,7 @@ export default function Overview({ data }: OverviewProps) {
           className="flex flex-row items-center"
         >
           <RingProgress
-            size={80}
+            size={120}
             roundCaps
             thickness={8}
             sections={[

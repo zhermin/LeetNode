@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { useCallback, useState } from "react";
+import { toast } from "react-hot-toast";
+import { z } from "zod";
 
 import {
   Avatar,
@@ -11,6 +12,7 @@ import {
   Group,
   TextInput,
 } from "@mantine/core";
+import { useForm, zodResolver } from "@mantine/form";
 import { User } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -22,21 +24,48 @@ export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
   const { classes } = useStyles();
 
-  const [userName, setUserName] = useState(
-    userInfo.nickname ?? userInfo.name ?? ""
-  );
-  const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId ?? "");
-
-  const [file, setFile] = useState<File | null>(null);
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  const form = useForm({
+    initialValues: {
+      userName: userInfo.nickname ?? "",
+      userNusnetId: userInfo.nusnetId ?? "",
+      file: null,
+    },
+    validateInputOnChange: true,
+    validate: zodResolver(
+      z.object({
+        userName: z
+          .string()
+          .trim()
+          .regex(/^(\w+)$/, "Only letters, numbers and underscores are allowed")
+          .min(5, "Minimum 5 characters")
+          .max(20, "Maximum 20 characters")
+          .or(z.literal(null))
+          .or(z.literal("")),
+        userNusnetId: z
+          .string()
+          .trim()
+          .regex(/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/, "Invalid NUSNET ID")
+          .or(z.literal(null))
+          .or(z.literal("")),
+        file: z
+          .instanceof(File)
+          .refine((file) => file.size <= 500_000, `Max file size is 5MB`)
+          .refine(
+            (file) => allowedTypes.includes(file.type),
+            "Only .png, .jpg, .jpeg, and .webp files are accepted."
+          )
+          .or(z.literal(null)),
+      })
+    ),
+  });
 
   const queryClient = useQueryClient();
-
-  // Update the user in the DB
   const { mutate: updateUser, isLoading: updateUserLoading } = useMutation(
     async () => {
-      // If user inputs a file
-      if (file) {
-        // Generate signature
+      let imageResponse;
+      if (form.values.file) {
+        // Generate Signature for Cloudinary Signed Upload
         const timestamp = Math.round(new Date().getTime() / 1000);
         const res = await axios.post("/api/signature", {
           id: session?.data?.user?.id,
@@ -45,41 +74,30 @@ export default function Account({ userInfo }: AccountProps) {
 
         const [signature, key] = [res.data.signature, res.data.key];
 
-        // Upload profile picture into server
         const formData = new FormData();
-        if (
-          // Ensure only jpeg or png
-          !file ||
-          !(file.type === "image/jpeg" || file.type === "image/png") ||
-          !session?.data?.user?.id
-        ) {
-          throw new Error("Please upload a JPEG or PNG file");
-        }
-        formData.append("file", file);
+        formData.append("file", form.values.file);
         formData.append("api_key", key);
         formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
         formData.append("folder", "LeetNode/profile_media");
-        formData.append("public_id", session?.data?.user?.id);
+        formData.append("public_id", session?.data?.user?.id as string);
         formData.append("timestamp", `${timestamp}`);
         formData.append("signature", signature);
-        const imageRes = await axios.post(
+        imageResponse = await axios.post(
           "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
           formData
         );
-        return await axios.post("/api/user/update", {
-          id: session?.data?.user?.id,
-          nusnetId: userNusnetId,
-          nickname: userName,
-          image: imageRes?.data?.eager?.[0]?.secure_url, // new image link
-        });
-      } else {
-        return await axios.post("/api/user/update", {
-          id: session?.data?.user?.id,
-          nusnetId: userNusnetId,
-          nickname: userName,
-          image: userInfo.image, // current image link
-        });
       }
+
+      return await axios.post("/api/user/update", {
+        id: session?.data?.user?.id,
+        nusnetId:
+          form.values.userNusnetId.trim() === ""
+            ? null
+            : form.values.userNusnetId,
+        nickname:
+          form.values.userName.trim() === "" ? null : form.values.userName,
+        image: imageResponse?.data?.eager?.[0]?.secure_url ?? userInfo.image,
+      });
     },
     {
       onSuccess: (res) => {
@@ -96,24 +114,22 @@ export default function Account({ userInfo }: AccountProps) {
     }
   );
 
-  // Upload file into server and update DB
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setUserNusnetId(userNusnetId.toUpperCase());
-    updateUser();
-  };
-
-  // Reset form
-  const handleReset = useCallback(() => {
-    setUserName(userInfo.nickname ?? userInfo.name ?? "");
-    setUserNusnetId(userInfo.nusnetId ?? "");
-  }, [userInfo.nickname, userInfo.name, userInfo.nusnetId]);
-
   return (
     <>
-      <h1 className="text-center">My Account</h1>
+      <h1 className="text-center">Account Settings</h1>
       <hr className="my-4 h-px border-0 bg-gray-200" />
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={form.onSubmit(
+          () => {
+            updateUser();
+          },
+          (errors: typeof form.errors) => {
+            Object.keys(errors).forEach((key) => {
+              toast.error(errors[key] as string);
+            });
+          }
+        )}
+      >
         <Center className="mt-3">
           <Avatar
             size={90}
@@ -124,63 +140,45 @@ export default function Account({ userInfo }: AccountProps) {
           />
         </Center>
         <FileInput
-          placeholder="Upload"
+          placeholder="Browse image"
           label="Change profile picture"
-          description="* PNG / JPG ONLY"
+          description="* PNG / JPG / JPEG / WEBP"
           name="image"
-          accept="image/png,image/jpeg"
-          onChange={setFile}
+          accept={allowedTypes.join(",")}
+          {...form.getInputProps("file")}
         />
         <TextInput
           className="mt-4"
-          type="text"
           label="Nickname (Visible to everyone)"
+          placeholder="Please select a nickname"
           name="name"
           variant="filled"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          required
+          {...form.getInputProps("userName")}
         />
-        {/^(\s*\w+\s*){5,}$/.test(userName) ? null : (
-          <p className="text-xs italic text-red-500">
-            Nickname must contain at least 5 letters and CANNOT contain symbols
-          </p>
-        )}
         <TextInput
           className="mt-4"
-          type="text"
           label="NUSNET ID"
+          placeholder="Please enter your NUSNET ID if you are an NUS student"
           name="nusnetId"
           variant="filled"
-          value={userNusnetId}
-          onChange={(e) => setUserNusnetId(e.target.value)}
-          required
+          value={form.values.userNusnetId}
+          onChange={(e) => {
+            form.setFieldValue("userNusnetId", e.target.value.toUpperCase());
+          }}
+          error={form.errors.userNusnetId}
         />
-        {/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ? null : (
-          <p className="text-xs italic text-red-500">
-            Invalid NUSNETID format (e.g. A0123456X)
-          </p>
-        )}
         <Group position="center" mt="xl">
-          <Button
-            type="submit"
-            size="md"
-            disabled={
-              !/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ||
-              !/^(\s*\w+\s*){5,}$/.test(userName)
-            }
-            loading={updateUserLoading}
-          >
+          <Button type="submit" size="md" loading={updateUserLoading}>
             Confirm
           </Button>
           <Button
             variant="white"
             type="button"
             size="md"
-            onClick={handleReset}
+            onClick={form.reset}
             className={classes.cancel}
           >
-            Cancel
+            Reset
           </Button>
         </Group>
       </form>

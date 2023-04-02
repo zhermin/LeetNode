@@ -22,11 +22,18 @@ export const CustomEval = (
     );
   }
 
-  // Trim whitespaces from start/end of variable names and do some validation
+  // Trim whitespaces from start/end of variable names and methods and validate
   variables?.map((variable) => {
     variable.name = variable.name.trim();
     if (variable.name.length === 0) {
-      throw new Error("Variable name cannot be empty");
+      throw new Error("Variable names cannot be empty");
+    }
+  });
+
+  methods?.map((method) => {
+    method.expr = method.expr.trim();
+    if (method.expr.length === 0) {
+      throw new Error("Methods cannot be empty");
     }
   });
 
@@ -142,10 +149,11 @@ export const CustomEval = (
       finalAnswer.decimalPlaces
     );
 
-    if (isNaN(finalValue))
+    if (isNaN(finalValue)) {
       throw new Error(
         `Final answer ${finalAnswer.name} is not a number, please check that it is used in your methods correctly`
       );
+    }
 
     // Randomly generate incorrect answers
     if (finalAnswer.step === 0) {
@@ -155,12 +163,25 @@ export const CustomEval = (
       (finalAnswer.min ?? -90) / 100,
       (finalAnswer.max ?? 90) / 100,
       (finalAnswer.step ?? 20) / 100
-    );
+    )
+      .map((val) =>
+        CustomMath.round(
+          val,
+          finalAnswer.decimalPlaces ?? CustomMath.getDecimalPlaces(finalValue)
+        )
+      )
+      .filter((val) => val !== 0);
+
     if (incorrectRange.length < 3) {
       throw new Error(
-        `Not enough wrong answers for variable:\n${finalAnswer.name}\n\nYour settings generated: [${incorrectRange}]`
+        `Not enough wrong answers for variable:\n${
+          finalAnswer.name
+        }. Try increasing the decimal places, step size or range.\n\nYour settings generated: [${incorrectRange.map(
+          (val) => (val * 100).toString() + "%"
+        )}]`
       );
     }
+
     const incorrectAnswers = (
       CustomMath.nRandomItems(3, incorrectRange) as number[]
     ).map((val) =>
@@ -168,6 +189,13 @@ export const CustomEval = (
         finalValue * (1 + val),
         finalAnswer.decimalPlaces ?? CustomMath.getDecimalPlaces(finalValue)
       )
+    );
+
+    console.log(
+      "[Random Incorrect Final Answers]",
+      finalAnswer.name,
+      incorrectRange,
+      incorrectAnswers
     );
 
     return {

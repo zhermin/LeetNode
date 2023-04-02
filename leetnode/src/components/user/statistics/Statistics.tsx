@@ -48,8 +48,8 @@ export default function Statistics() {
         onChange={setPeriod}
         data={[
           { label: "Current", value: "current" },
-          { label: "Previous week", value: "week" },
-          { label: "2 Weeks ago", value: "fortnight" },
+          { label: "Previous Week", value: "week" },
+          { label: "2 Weeks Ago", value: "fortnight" },
         ]}
         fullWidth
       />

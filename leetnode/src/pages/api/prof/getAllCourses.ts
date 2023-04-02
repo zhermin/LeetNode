@@ -9,7 +9,6 @@ export default async function handler(
   const getAllCourses = await prisma.course.findMany({
     include: {
       topics: true,
-      userCourseQuestions: true,
       posts: true,
       attempts: true,
       courseMedia: true,

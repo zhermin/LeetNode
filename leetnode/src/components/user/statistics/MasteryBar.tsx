@@ -136,6 +136,7 @@ export default function MasteryBar({ data }: TableSortProps) {
               color: "cyan",
             },
           ]}
+          animate
         />
       </td>
     </tr>
@@ -145,7 +146,7 @@ export default function MasteryBar({ data }: TableSortProps) {
     <ScrollArea>
       <TextInput
         className="mt-4"
-        placeholder="Search by any field"
+        placeholder="Filter by Topic or Mastery Level"
         mb="md"
         icon={<IconSearch size={14} stroke={1.5} />}
         value={search}

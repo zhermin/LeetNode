@@ -9,7 +9,7 @@ export default async function handler(
 ) {
   let editedQuestion: Question;
 
-  // If updating question from static to dynamic
+  // If updating question from static to dynamic or vice versa
   if (
     req.body.newQuestionId === null ||
     (Number(req.query.variationId as string) !==
@@ -35,7 +35,7 @@ export default async function handler(
         },
       },
     });
-  // If updating question from dynamic to static
+  // If tagging a static question to a base question
   } else if (req.body.newQuestionId && req.body.newVariationId) {
     editedQuestion = await prisma.question.update({
       where: {
