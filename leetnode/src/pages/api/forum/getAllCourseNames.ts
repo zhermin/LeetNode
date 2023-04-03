@@ -8,6 +8,7 @@ export default async function handler(
 ) {
   const courseNames = await prisma.course.findMany({
     select: {
+      courseSlug: true,
       courseName: true,
       courseLevel: true,
       type: true,

@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.user.findMany();
+  const users = await prisma.user.findMany();
 
-  res.status(200).json(comments);
+  res.status(200).json(users);
 }

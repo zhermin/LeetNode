@@ -3,62 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* Custom styles for Markdown content */
-  .markdown h1 {
-    @apply text-4xl;
-    @apply font-semibold;
-    @apply py-3;
-  }
-  .markdown h2 {
-    @apply text-3xl;
-    @apply font-medium;
-    @apply py-2;
-  }
-  .markdown h3 {
-    @apply text-2xl;
-    @apply font-medium;
-    @apply py-1;
-  }
-  .markdown h4 {
-    @apply text-xl;
-    @apply font-medium;
-    @apply py-1;
-  }
-  .markdown h5 {
-    @apply text-lg;
-    @apply font-medium;
-    @apply py-1;
-  }
-  .markdown h6 {
-    @apply text-base;
-    @apply font-medium;
-    @apply py-1;
-  }
-  .markdown a {
-    @apply text-cyan-500;
-    @apply underline;
-  }
-
-  /* Custom styles for Raw HTML content */
-  .rawhtml img {
-    @apply h-auto;
-    @apply rounded-md;
-    @apply my-4;
-  }
-
-  .rawhtml-lg-img img {
-    @apply max-w-lg;
-  }
-
-  .rawhtml-sm-img img {
-    @apply max-w-sm;
-  }
-
-  .ql-video iframe {
-    @apply min-w-full;
-    @apply aspect-video;
-  }
-
   /* Re-add most disabled Tailwind preflight styles due to Mantine clash */
   a {
     @apply no-underline;
@@ -97,5 +41,25 @@
   video {
     max-width: 100%;
     height: auto;
+  }
+
+  /* Custom styles for Raw HTML content */
+  .rawhtml img {
+    @apply h-auto;
+    @apply rounded-md;
+    @apply my-4;
+  }
+
+  .rawhtml-lg-img img {
+    @apply max-w-lg;
+  }
+
+  .rawhtml-sm-img img {
+    @apply max-w-sm;
+  }
+
+  .ql-video iframe {
+    @apply min-w-full;
+    @apply aspect-video;
   }
 }

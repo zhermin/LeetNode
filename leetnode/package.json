@@ -62,6 +62,7 @@
   },
   "devDependencies": {
     "@prisma/client": "^4.11.0",
+    "@tailwindcss/typography": "^0.5.9",
     "@tanstack/react-query-devtools": "^4.28.0",
     "@types/katex": "^0.16.0",
     "@types/node": "18.11.17",

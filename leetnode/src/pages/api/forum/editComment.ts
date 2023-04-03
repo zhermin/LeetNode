@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const comments = await prisma.comment.update({
+  await prisma.comment.update({
     where: {
       commentId: req.body.commentId,
     },
@@ -15,5 +15,5 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(comments);
+  res.status(200).json({ message: "Comment edited successfully!" });
 }

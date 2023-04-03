@@ -66,7 +66,7 @@ export function PostTypeBadge({
     <Badge
       color={
         postType === PostType.Content
-          ? "cyan"
+          ? "grape"
           : postType === PostType.Quiz
           ? "blue"
           : "gray"

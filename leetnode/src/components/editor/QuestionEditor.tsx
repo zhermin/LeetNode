@@ -65,6 +65,7 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
+import { CourseNamesType } from "../course/CourseDiscussion";
 import Latex from "../Latex";
 import { CourseTypeBadge } from "../misc/Badges";
 
@@ -72,13 +73,6 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,
   loading: () => <p>Loading Editor...</p>,
 });
-
-type CourseNamesType = {
-  type: CourseType;
-  topics: Topic[];
-  courseName: string;
-  courseLevel: Level;
-}[];
 
 export default function QuestionEditor({
   setQuestionAddOpened,
@@ -101,7 +95,7 @@ export default function QuestionEditor({
   const { theme } = useStyles();
 
   const [rawDataOpened, setRawDataOpened] = useState(false);
-  const [filteredCourses, setFilteredCourses] = useState<CourseNamesType>([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseNamesType[]>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const form = useForm({
@@ -805,7 +799,7 @@ export default function QuestionEditor({
         {
           queryKey: ["all-course-names"],
           queryFn: () =>
-            axios.get<CourseNamesType>("/api/forum/getAllCourseNames"),
+            axios.get<CourseNamesType[]>("/api/forum/getAllCourseNames"),
         },
         {
           queryKey: ["all-topic-names"],
