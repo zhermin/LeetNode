@@ -1,356 +1,362 @@
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
-import { Key, useState } from "react";
-import Latex from "react-latex-next";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
 
-import { UserQuestionWithAttemptsType } from "@/pages/courses/[courseSlug]";
+import { QuestionDataType } from "@/types/question-types";
+import { CustomMath } from "@/utils/CustomMath";
 import {
+  ActionIcon,
+  Box,
   Button,
   Center,
-  createStyles,
+  Checkbox,
+  Flex,
   Loader,
+  Modal,
   Paper,
   Radio,
+  Stack,
   Text,
-  Title,
+  Tooltip,
+  useMantineTheme,
 } from "@mantine/core";
-import { Question } from "@prisma/client";
+import { Question, QuestionWithAddedTime, User } from "@prisma/client";
+import { IconBulb } from "@tabler/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const LoadTopic = ({
-  questionDisplay,
-  courseSlug,
-}: {
-  questionDisplay: UserQuestionWithAttemptsType;
-  courseSlug: string;
-}) => {
-  const { classes } = useStyles();
+import VariablesBox from "../editor/VariablesBox";
+import Latex from "../Latex";
+import { QuestionDifficultyBadge } from "../misc/Badges";
+
+interface UserData extends User {
+  attempts: { [timestamp: string]: number };
+}
+
+export type UCQATAnswersType = {
+  key: string;
+  answerContent: string;
+  isCorrect: boolean;
+  isLatex: boolean;
+}[];
+
+export default function PracticeQuestion() {
   const session = useSession();
+  const theme = useMantineTheme();
+  const router = useRouter();
+  const currentCourseSlug = router.query.courseSlug as string;
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [hintsOpened, setHintsOpened] = useState<boolean>(false);
 
-  const [loading, setLoading] = useState(false);
-  // const [optionNumber, setOptionNumber] = useState<number>(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState<
-    { answerByUser: string }[]
-  >([]);
-  const [attempt, setAttempt] = useState<
-    { currentQuestion: number; isCorrect: boolean; question: Question }[]
-  >([]);
-  const [endReached, setEndReached] = useState(false);
+  const { data: UCQAT } = useQuery({
+    queryKey: ["get-ucqat"],
+    queryFn: () =>
+      axios.get<
+        QuestionWithAddedTime & {
+          question: Question & {
+            topic: {
+              topicName: string;
+            };
+          };
+        }
+      >(
+        `/api/questions/questionsWithAddedTime?courseSlug=${currentCourseSlug}`
+      ),
+  });
 
-  let optionNumber: number;
+  const useSubmitAnswer = () => {
+    const queryClient = useQueryClient();
+    const { mutate: submitAnswer, status: submitAnswerStatus } = useMutation({
+      mutationFn: ({
+        query,
+        body,
+      }: {
+        query: {
+          qatId: string;
+          courseSlug: string;
+        };
+        body: {
+          attemptedKeys: string[];
+          isCorrect: boolean;
+          topicSlug: string;
+          topicName: string;
+        };
+      }) => {
+        return axios.post(
+          `/api/questions/submitAnswer?qatId=${query.qatId}&courseSlug=${query.courseSlug}`,
+          body
+        );
+      },
+      onSuccess: (res) => {
+        setSelectedKeys([]);
+        const { data } = res;
+        console.log(data);
+        toast(
+          `[${data.topic}] Mastery: ${CustomMath.round(
+            data.masteryLevel * 100,
+            1
+          )}%`,
+          {
+            icon: data.isCorrect ? "🎉" : "💪",
+            className: `border border-solid ${
+              data.isCorrect ? "border-green-500" : "border-red-500"
+            }`,
+            position: "top-right",
+            duration: 5000,
+          }
+        );
+        queryClient.invalidateQueries(["get-ucqat"]);
+        queryClient.invalidateQueries(["get-attempts", data.courseSlug]);
+        updatePoints(); // Update points for attempting questions
+      },
+    });
 
-  const handleAnswerOption = (answer: string) => {
-    setSelectedOptions([
-      (selectedOptions[currentQuestion] = {
-        answerByUser: answer,
-      }),
-    ]);
-    setSelectedOptions([...selectedOptions]);
-    console.log(selectedOptions);
-
-    //check if answer correct
-    const data = questionDisplay?.[currentQuestion]?.question?.answers;
-    const result = data?.filter(
-      (x: { isCorrect: boolean }) => x.isCorrect === true
-    );
-
-    setAttempt([
-      (attempt[currentQuestion] = {
-        currentQuestion: currentQuestion,
-        isCorrect:
-          selectedOptions[currentQuestion]?.answerByUser ===
-          result?.[0]?.answerContent,
-        question: questionDisplay?.[currentQuestion]?.question as Question,
-      }),
-    ]);
-    setAttempt([...attempt]);
+    return {
+      submitAnswer,
+      submitAnswerStatus,
+    };
   };
 
-  // //Previous button used for testing!
-  // const handlePrevious = () => {
-  //   const prevQues = currentQuestion - 1;
-  //   prevQues >= 0 && setCurrentQuestion(prevQues);
-  // };
-  const handleNext = async () => {
-    if (currentQuestion in selectedOptions) {
-      // logic for updating mastery for user
+  const { submitAnswer, submitAnswerStatus } = useSubmitAnswer();
 
-      // Store question option number to optionNumber variable
-      questionDisplay?.[currentQuestion]?.question.answers.map((options) => {
-        if (
-          selectedOptions[currentQuestion]?.answerByUser ===
-          options.answerContent
-        ) {
-          optionNumber = options.optionNumber;
-        }
+  // For checking if first question attempted
+  const { data: userInfo } = useQuery<UserData>(
+    ["userInfo", session?.data?.user?.id],
+    async () => {
+      const res = await axios.post("/api/user", {
+        id: session?.data?.user?.id,
       });
+      return res?.data;
+    },
+    { enabled: !!session?.data?.user?.id }
+  );
 
-      console.log(optionNumber);
+  const queryClient = useQueryClient();
 
-      setLoading(true);
-      console.log(loading);
-      //update attempt -> check attempt -> update pybkt (update mastery table) -> check mastery table
+  // Award points for attempting a question
+  const { mutate: updatePoints } = useMutation(
+    async () => {
+      if (!!userInfo) {
+        const lastActive = new Date(userInfo.lastActive); // get last active
 
-      //update attempt table in prisma
-      const updateAttempts = async (request: {
-        id: string;
-        correct: boolean;
-        optionNumber: number;
-        questionId: number;
-        courseSlug: string;
-      }) => {
-        try {
-          //update mastery of student
-          const res = await axios.post(
-            "/api/questions///updateAttempts",
-            request
-          ); //use data destructuring to get data from the promise object
-          return res.data;
-        } catch (error) {
-          console.log("attempt error");
-          // console.log(request);
-          // console.log(error);
-        }
-      };
-      const updatedAttempts = await updateAttempts({
-        id: session?.data?.user?.id as string,
-        correct: attempt[currentQuestion]?.isCorrect as boolean,
-        optionNumber: optionNumber,
-        questionId: questionDisplay?.[currentQuestion]?.question
-          ?.questionId as number,
-        courseSlug: courseSlug,
-      });
-      console.log(updatedAttempts);
-
-      //checks attempt table in prisma
-      const attemptCheck = async (request: {
-        id: string;
-        topicSlug: string;
-      }) => {
-        try {
-          //update mastery of student
-          const res = await axios.post("/api/questions/checkAttempts", request); //use data destructuring to get data from the promise object
-          return res.data;
-        } catch (error) {
-          console.log("attempt error");
-        }
-      };
-
-      const checkAttempts = await attemptCheck({
-        id: session?.data?.user?.id as string,
-        topicSlug: questionDisplay?.[currentQuestion]?.question
-          ?.topicSlug as string,
-      });
-      console.log(checkAttempts);
-      console.log(checkAttempts);
-
-      //check condition
-      //correctness count last 5 to check if all wrong (need to refine)
-      const topicErrorCount = checkAttempts
-        .slice(-5)
-        .filter(
-          (item: { isCorrect: boolean }) => item.isCorrect === false
-        ).length;
-      console.log(topicErrorCount);
-
-      // const wrongMeter = question;
-
-      let masteryConditionFlag = false;
-      if (topicErrorCount === 5) {
-        masteryConditionFlag = true;
+        const res = await axios.post("/api/user/updatePoints", {
+          id: session?.data?.user?.id,
+          points:
+            (userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+              ? userInfo.points + 5 // First question attempted today
+              : userInfo.points + 1, // > 1 question attempted today
+        });
+        return {
+          ...res,
+          data: {
+            ...res.data,
+            customIcon: "🎯",
+            message: (
+              <>
+                Question(s) attempted:{" "}
+                {(userInfo.attempts[lastActive.toDateString()] ?? 0) + 1} ⚡
+                <span className="text-yellow-600">
+                  +
+                  {(userInfo.attempts[lastActive.toDateString()] ?? 0) === 0
+                    ? 5
+                    : 1}
+                </span>
+              </>
+            ),
+          },
+        };
       }
-
-      const updateMastery = async (request: {
-        id: string;
-        topicSlug: string;
-        correct: boolean;
-        optionNumber: number;
-        questionId: number;
-        masteryConditionFlag: boolean;
-        courseSlug: string;
-      }) => {
-        try {
-          //update mastery of student
-          const res = await axios.post(
-            "/api/pybkt/update",
-            request //returns { Mastery: .... }
-          ); //use data destructuring to get data from the promise object
-          console.log(res.data);
-          return res.data;
-        } catch (error) {
-          console.log("update error");
-          console.log(error);
-        }
-      };
-
-      //should output mastery skill
-      const updated = await updateMastery({
-        id: session?.data?.user?.id as string,
-        topicSlug: questionDisplay?.[currentQuestion]?.question
-          ?.topicSlug as string,
-        correct: attempt[currentQuestion]?.isCorrect as boolean,
-        optionNumber: optionNumber,
-        questionId: questionDisplay?.[currentQuestion]?.question
-          ?.questionId as number,
-        masteryConditionFlag: masteryConditionFlag as boolean,
-        courseSlug: questionDisplay?.[currentQuestion]?.courseSlug as string,
-      });
-
-      setLoading(false);
-      console.log(session?.data?.user?.id);
-      console.log(questionDisplay?.[currentQuestion]?.question?.topicSlug);
-      console.log(attempt[currentQuestion]?.isCorrect);
-      console.log(attempt[currentQuestion]?.question);
-      //get the topic from here, also change to get attempts from prisma instead instead of state
-      console.log(attempt[currentQuestion]?.question?.topicSlug);
-      // const topicSlug = questionDisplay?.[currentQuestion]?.question?.topicSlug;
-      // const topicCount = attempt.filter(
-      //   (item) => item.question?.topicSlug === topicSlug
-      // ).length;
-      // console.log(topicCount);
-      // console.log(attempt);
-
-      console.log(optionNumber);
-      console.log(questionDisplay?.[currentQuestion]?.question?.questionId);
-      console.log(updated);
-      console.log(currentQuestion);
-      console.log(questionDisplay?.length);
-
-      // //checks mastery table in prisma
-      // const checkMastery = async (request: {
-      //   id: string;
-      //   topicSlug: string;
-      // }) => {
-      //   try {
-      //     //update mastery of student
-      //     const res = await axios.post("/api/questions/checkMastery", request); //use data destructuring to get data from the promise object
-      //     return res.data;
-      //   } catch (error) {
-      //     console.log("attempt error");
-      //     // console.log(request);
-      //     // console.log(error);
-      //   }
-      // };
-
-      if (currentQuestion + 1 === questionDisplay?.length) {
-        console.log("reached the end");
-        setEndReached(true);
-        console.log(endReached);
-      } else if (questionDisplay) {
-        //go to next page
-        const nextQues = currentQuestion + 1;
-        nextQues < questionDisplay.length && setCurrentQuestion(nextQues);
-      }
-    } else {
-      alert("Please complete this question before proceeding!");
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["userInfo", session?.data?.user?.id]); // Get latest number of attempts
+      },
     }
-  };
+  );
+
+  if (!UCQAT) {
+    return (
+      <Center className="h-[calc(100vh-180px)]">
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (!UCQAT.data) {
+    return (
+      <Center className="h-[calc(100vh-180px)]">
+        <Text>Stay tuned, more questions are coming your way!</Text>
+      </Center>
+    );
+  }
+
+  const answerOptions = UCQAT.data.answers as QuestionDataType["answers"];
+
+  const correctKeys = answerOptions
+    .filter((item) => item.isCorrect)
+    .map((item) => item.key);
 
   return (
-    <>
-      {endReached === false ? (
-        <>
-          {loading === true ? (
-            <Center className="h-[calc(100vh-180px)]">
-              <Loader />
-            </Center>
-          ) : (
-            <Paper p="xl" radius="md" withBorder>
-              <Title order={1}>Question {currentQuestion + 1}</Title>
-              <Text size="xl" mt="sm">
-                <Latex>
-                  {
-                    questionDisplay?.[currentQuestion]?.question
-                      ?.questionContent
-                  }
-                </Latex>
-              </Text>
-              <Image
-                src={
-                  questionDisplay?.[currentQuestion]?.question?.questionMedia[0]
-                    ?.questionMediaURL ?? ""
-                }
-                alt={
-                  questionDisplay?.[currentQuestion]?.question
-                    ?.questionContent ?? ""
-                }
-                width="0"
-                height="0"
-                sizes="100vw"
-                className={`my-8 h-auto w-1/3 rounded-lg ${classes.image}`}
-              />
-              <Radio.Group orientation="vertical" size="md" mb={40}>
-                {questionDisplay?.[currentQuestion]?.question?.answers?.map(
-                  (
-                    answer: { answerContent: string },
-                    index: Key | null | undefined
-                  ) => (
-                    <Radio
-                      key={index}
-                      label={<Latex>{answer.answerContent}</Latex>}
-                      value={answer.answerContent}
-                      onClick={() => handleAnswerOption(answer.answerContent)}
-                      checked={
-                        answer.answerContent ===
-                        (selectedOptions[currentQuestion]
-                          ?.answerByUser as string)
-                      }
-                      className={classes.options}
-                      styles={{
-                        label: {
-                          cursor: "pointer",
-                        },
-                        radio: {
-                          cursor: "pointer",
-                        },
-                      }}
-                    />
+    <Paper p="xl" radius="md" withBorder>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (selectedKeys.length === 0) {
+            toast.error("Please select an option");
+            return;
+          }
+          submitAnswer({
+            query: {
+              qatId: UCQAT.data.qatId,
+              courseSlug: currentCourseSlug,
+            },
+            body: {
+              attemptedKeys: selectedKeys,
+              isCorrect:
+                selectedKeys.length === correctKeys.length &&
+                selectedKeys.every((item) => correctKeys.includes(item)),
+              topicSlug: UCQAT.data.question.topicSlug,
+              topicName: UCQAT.data.question.topic.topicName,
+            },
+          });
+        }}
+      >
+        <QuestionDifficultyBadge
+          questionDifficulty={UCQAT.data.question.questionDifficulty}
+          {...{ radius: "lg", size: "md" }}
+        />
+        <div
+          className="rawhtml rawhtml-lg-img mt-4"
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(UCQAT.data.question.questionContent, {
+              ADD_TAGS: ["iframe"],
+              ADD_ATTR: [
+                "allow",
+                "allowfullscreen",
+                "frameborder",
+                "scrolling",
+              ],
+            }),
+          }}
+        />
+        <VariablesBox
+          variables={UCQAT.data.variables as QuestionDataType["variables"]}
+        />
+        {correctKeys.length === 1 ? (
+          <Radio.Group
+            mt="xl"
+            value={selectedKeys[0]}
+            onChange={(value) => {
+              console.log(
+                value === answerOptions.find((item) => item.isCorrect)?.key
+              );
+              setSelectedKeys([value]);
+            }}
+            orientation="vertical"
+            description="Select only one option"
+            required
+          >
+            {answerOptions.map((item) => (
+              <Radio
+                key={item.key}
+                value={item.key}
+                label={
+                  item.isLatex ? (
+                    <Latex>{`$$ ${item.answerContent} $$`}</Latex>
+                  ) : (
+                    <Text>{item.answerContent}</Text>
                   )
-                )}
-              </Radio.Group>
-              {/* <Button onClick={handlePrevious} radius="md" size="md">
-                  Previous
-                </Button> */}
-              {currentQuestion + 1 === questionDisplay?.length &&
-              endReached === false ? (
-                <Button onClick={handleNext} radius="md" size="md">
-                  Complete Quiz
-                </Button>
-              ) : (
-                <Button onClick={handleNext} radius="md" size="md">
-                  Submit Answer
-                </Button>
-              )}
-            </Paper>
+                }
+                className={`flex items-center justify-start rounded-md border border-solid ${
+                  theme.colorScheme === "dark"
+                    ? "border-zinc-600 bg-zinc-700"
+                    : "border-gray-200 bg-gray-100"
+                } p-2`}
+              />
+            ))}
+          </Radio.Group>
+        ) : (
+          <Checkbox.Group
+            mt="xl"
+            value={selectedKeys}
+            onChange={(values) => {
+              console.log(
+                values.length === correctKeys.length &&
+                  values.every((item) => correctKeys.includes(item))
+              );
+              setSelectedKeys(values);
+            }}
+            orientation="vertical"
+            description="Select all correct options"
+            required
+          >
+            {answerOptions.map((item) => (
+              <Checkbox
+                key={item.key}
+                value={item.key}
+                label={
+                  item.isLatex ? (
+                    <Latex>{item.answerContent}</Latex>
+                  ) : (
+                    <Text>{item.answerContent}</Text>
+                  )
+                }
+                className={`flex items-center justify-start rounded-md border border-solid ${
+                  theme.colorScheme === "dark"
+                    ? "border-zinc-600 bg-zinc-700"
+                    : "border-gray-200 bg-gray-100"
+                } p-2`}
+              />
+            ))}
+          </Checkbox.Group>
+        )}
+        <Flex mt="xl" align="center" gap="md">
+          <Button
+            type="submit"
+            variant="light"
+            fullWidth
+            loading={submitAnswerStatus === "loading"}
+          >
+            {submitAnswerStatus === "loading" ? "Submitting..." : "Submit"}
+          </Button>
+          {(UCQAT.data.question.questionData as QuestionDataType).hints && (
+            <Tooltip label="Hints" withArrow>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                radius="xl"
+                onClick={() => setHintsOpened(true)}
+              >
+                <IconBulb size={20} />
+              </ActionIcon>
+            </Tooltip>
           )}
-        </>
-      ) : (
-        <Center className="h-[calc(100vh-180px)]">
-          <Text>
-            You have reached the end of this series of questions, please refer
-            to the Attempts and Mastery tabs for your results and topic
-            masteries.
-          </Text>
-        </Center>
-      )}
-    </>
+        </Flex>
+
+        {/* Hints Modal */}
+        <Modal
+          opened={hintsOpened}
+          onClose={() => setHintsOpened(false)}
+          title="Hints"
+          size="md"
+        >
+          <Stack>
+            {(UCQAT.data.question.questionData as QuestionDataType).hints?.map(
+              (item, index) => (
+                <Box
+                  key={index}
+                  className="flex items-center justify-start gap-3 rounded-md border border-solid border-gray-200 bg-gray-100 p-2"
+                >
+                  <Text color="dimmed">#{index + 1}</Text>
+                  <Text>{item.hint}</Text>
+                </Box>
+              )
+            )}
+          </Stack>
+        </Modal>
+      </form>
+    </Paper>
   );
-};
-
-export default LoadTopic;
-
-const useStyles = createStyles((theme) => ({
-  image: {
-    filter: theme.colorScheme === "dark" ? "invert(1)" : "none",
-  },
-
-  options: {
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.colors.gray[9]
-        : theme.colors.gray[0],
-  },
-}));
+}

@@ -10,6 +10,8 @@ import {
 import React from "react";
 import { Radar } from "react-chartjs-2";
 
+import { useMantineTheme } from "@mantine/core";
+
 interface MasteryProps {
   data: {
     topicName: string;
@@ -18,6 +20,8 @@ interface MasteryProps {
 }
 
 export default function RadarChart({ data }: MasteryProps) {
+  const theme = useMantineTheme();
+
   ChartJS.register(
     RadialLinearScale,
     PointElement,
@@ -40,14 +44,15 @@ export default function RadarChart({ data }: MasteryProps) {
       {
         label: "Mastery Level",
         data: masteryLevel,
-        backgroundColor: "rgba(153, 233, 242, 0.2)",
-        borderColor: "rgba(153, 233, 242, 1)",
+        backgroundColor: theme.fn.rgba(theme.colors.cyan[2], 0.2),
+        borderColor: theme.colors.cyan[4],
         borderWidth: 1,
       },
     ],
   };
+
   return (
-    <div className="h-screen">
+    <div className="mt-4 h-screen">
       <Radar
         data={mastery}
         options={{
@@ -58,12 +63,25 @@ export default function RadarChart({ data }: MasteryProps) {
                 font: {
                   size: 11,
                 },
+                color:
+                  theme.colorScheme === "dark"
+                    ? theme.colors.gray[3]
+                    : theme.colors.gray[8],
+              },
+              angleLines: {
+                color: theme.colors.gray[3],
+              },
+              grid: {
+                color: theme.colors.gray[3],
+              },
+              ticks: {
+                backdropColor: theme.colors.gray[0],
               },
             },
           },
           plugins: {
             tooltip: {
-              enabled: false, // Off the tooltip
+              enabled: false,
             },
           },
         }}

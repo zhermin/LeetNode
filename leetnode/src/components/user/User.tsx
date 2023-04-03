@@ -1,6 +1,6 @@
 import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
@@ -9,12 +9,14 @@ import {
   AppShell,
   Avatar,
   Center,
+  Container,
   createStyles,
   Loader,
   Navbar,
   ScrollArea,
   Text,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconLogout,
   IconReportAnalytics,
@@ -28,9 +30,9 @@ import Challenge from "./challenge/Challenge";
 import Statistics from "./statistics/Statistics";
 
 const tabs = [
-  { link: "", label: "Account", icon: IconUser },
-  { link: "", label: "Statistics", icon: IconReportAnalytics },
-  { link: "", label: "Challenge", icon: IconTargetArrow },
+  { label: "Account", icon: IconUser },
+  { label: "Statistics", icon: IconReportAnalytics },
+  { label: "Challenge", icon: IconTargetArrow },
 ];
 
 export default function User() {
@@ -39,6 +41,10 @@ export default function User() {
   const { classes, theme, cx } = useStyles();
   const [active, setActive] = useState("Account");
 
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+
   const {
     data: userInfo,
     isLoading,
@@ -46,12 +52,12 @@ export default function User() {
   } = useQuery(
     ["userInfo", session?.data?.user?.id],
     async () => {
-      const res = await axios.post("/api/user/get", {
+      const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { refetchOnMount: false, enabled: !!session?.data?.user?.id }
+    { enabled: !!session?.data?.user?.id }
   );
 
   const links = tabs.map((item) => (
@@ -59,7 +65,6 @@ export default function User() {
       className={cx(classes.link, {
         [classes.linkActive]: item.label === active,
       })}
-      href={item.link}
       key={item.label}
       onClick={(event) => {
         event.preventDefault();
@@ -93,78 +98,89 @@ export default function User() {
       header={
         <>
           <LeetNodeHeader />
-          <LeetNodeNavbar />
+          <LeetNodeNavbar
+            sidebarOpened={sidebarOpened}
+            setSidebarOpened={setSidebarOpened}
+          />
         </>
       }
       navbar={
-        <Navbar
-          height="100%"
-          width={{ sm: 200, lg: 300, base: 100 }}
-          p="md"
-          hiddenBreakpoint="sm"
-          className={classes.navbar}
-        >
-          <Navbar.Section>
-            <div className={classes.header}>
-              <Center>
-                <Avatar
-                  size={100}
-                  src={userInfo?.image}
-                  radius={100}
-                  className="mb-3"
-                  imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
-                />
-              </Center>
-              <Center>
-                <Text
-                  className={classes.userName}
-                  sx={{ lineHeight: 1, fontSize: "20px" }}
-                  weight={500}
-                  color={theme.colors.gray[9]}
-                >
-                  {userInfo?.name}
-                </Text>
-              </Center>
-              <Center>
-                {userInfo?.nickname && (
+        sidebarOpened ? (
+          <Navbar
+            height="100%"
+            width={{ sm: 300 }}
+            p="md"
+            className={classes.navbar}
+          >
+            <Navbar.Section>
+              <div className={classes.header}>
+                <Center>
+                  <Avatar
+                    size={100}
+                    src={userInfo?.image}
+                    radius={100}
+                    className="mb-3"
+                    imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
+                  />
+                </Center>
+                <Center>
                   <Text
-                    className={classes.userName}
-                    sx={{ lineHeight: 1, fontSize: "16px" }}
-                    weight={400}
-                    color={theme.colors.gray[9]}
+                    className="whitespace-pre-wrap"
+                    sx={{ lineHeight: 1, fontSize: "20px" }}
+                    weight={500}
+                    color="white"
                   >
-                    ({userInfo?.nickname})
+                    {userInfo?.name}
                   </Text>
-                )}
-              </Center>
-            </div>
-            {links}
-          </Navbar.Section>
+                </Center>
+                <Center>
+                  {userInfo?.nickname && (
+                    <Text
+                      className="whitespace-pre-wrap"
+                      sx={{ lineHeight: 1, fontSize: "16px" }}
+                      weight={400}
+                      color={
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[0]
+                          : theme.black
+                      }
+                    >
+                      ({userInfo?.nickname})
+                    </Text>
+                  )}
+                </Center>
+              </div>
+              {links}
+            </Navbar.Section>
 
-          <Navbar.Section className={classes.footer}>
-            <a
-              href="#"
-              className={classes.link}
-              onClick={() => signOut({ callbackUrl: "/" })}
-            >
-              <IconLogout className={classes.linkIcon} stroke={1.5} />
-              <span>Logout</span>
-            </a>
-          </Navbar.Section>
-        </Navbar>
+            <Navbar.Section className={classes.footer}>
+              <a
+                className={classes.link}
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                <IconLogout className={classes.linkIcon} stroke={1.5} />
+                <span>Logout</span>
+              </a>
+            </Navbar.Section>
+          </Navbar>
+        ) : (
+          <></>
+        )
       }
       footer={<LeetNodeFooter />}
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
-        {active === "Account" ? (
-          <Account userInfo={userInfo} />
-        ) : active === "Statistics" ? (
-          <Statistics />
-        ) : active === "Challenge" ? (
-          <Challenge />
-        ) : (
-          <Text>Error</Text>
-        )}
+        <Container>
+          {active === "Account" ? (
+            <Account userInfo={userInfo} />
+          ) : active === "Statistics" ? (
+            <Statistics />
+          ) : active === "Challenge" ? (
+            <Challenge />
+          ) : (
+            <Text>Error</Text>
+          )}
+        </Container>
       </ScrollArea.Autosize>
     </AppShell>
   );
@@ -174,10 +190,20 @@ const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");
   return {
     navbar: {
-      backgroundColor: theme.fn.variant({
-        variant: "filled",
-        color: theme.primaryColor,
-      }).background,
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[7]
+          : theme.fn.variant({
+              variant: "filled",
+              color: theme.primaryColor,
+            }).background,
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[7]
+          : theme.fn.variant({
+              variant: "filled",
+              color: theme.primaryColor,
+            }).background,
     },
 
     header: {
@@ -186,7 +212,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       borderBottom: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
           .background ?? theme.primaryColor,
-        0.1
+        0.5
       )}`,
     },
 
@@ -196,7 +222,7 @@ const useStyles = createStyles((theme, _params, getRef) => {
       borderTop: `1px solid ${theme.fn.lighten(
         theme.fn.variant({ variant: "filled", color: theme.primaryColor })
           .background ?? theme.primaryColor,
-        0.1
+        0.5
       )}`,
     },
 
@@ -206,44 +232,52 @@ const useStyles = createStyles((theme, _params, getRef) => {
       alignItems: "center",
       textDecoration: "none",
       fontSize: theme.fontSizes.sm,
-      color: theme.white,
+      color: "white",
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
+      cursor: "pointer",
 
       "&:hover": {
-        backgroundColor: theme.fn.lighten(
-          theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background ?? theme.primaryColor,
-          0.1
-        ),
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.fn.lighten(
+                theme.fn.variant({
+                  variant: "filled",
+                  color: theme.primaryColor,
+                }).background ?? theme.primaryColor,
+                0.1
+              ),
       },
     },
 
     linkIcon: {
       ref: icon,
-      color: theme.white,
-      opacity: 0.75,
+      color: "white",
       marginRight: theme.spacing.sm,
     },
 
     linkActive: {
       "&, &:hover": {
-        backgroundColor: theme.fn.lighten(
-          theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .background ?? theme.primaryColor,
-          0.15
-        ),
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.fn.variant({
+                variant: "light",
+                color: theme.primaryColor,
+              }).background
+            : theme.fn.lighten(
+                theme.fn.variant({
+                  variant: "filled",
+                  color: theme.primaryColor,
+                }).background ?? theme.primaryColor,
+                0.15
+              ),
+        color: "white",
         [`& .${icon}`]: {
+          color: "white",
           opacity: 0.9,
         },
-      },
-    },
-
-    userName: {
-      color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-      [theme.fn.smallerThan("sm")]: {
-        display: "none",
       },
     },
   };

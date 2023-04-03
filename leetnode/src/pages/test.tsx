@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Document, Page } from "react-pdf";
 
 import QuestionViewer from "@/components/editor/QuestionViewer";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
-import MarkdownLatex from "@/components/MarkdownLatex";
+import Latex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
 import {
   AppShell,
@@ -18,6 +18,7 @@ import {
   SegmentedControl,
   Text,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   Icon2fa,
   IconBellRinging,
@@ -62,8 +63,11 @@ export default function Test() {
   const { theme, classes, cx } = useStyles();
   const [section, setSection] = useState<"account" | "general">("account");
   const [active, setActive] = useState("Editor");
-  const [sidebarOpened, setSidebarOpened] = useState(true);
   const [editorOpened, setEditorOpened] = useState(false);
+
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
+  useMemo(() => setSidebarOpened(!mobile), [mobile]);
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
@@ -124,12 +128,7 @@ export default function Test() {
       footer={<LeetNodeFooter />}
       navbar={
         sidebarOpened ? (
-          <Navbar
-            p="md"
-            hiddenBreakpoint="sm"
-            hidden={!sidebarOpened}
-            width={{ sm: 200, lg: 300 }}
-          >
+          <Navbar p="md" width={{ sm: 200, lg: 300 }}>
             <Navbar.Section>
               <Text
                 weight={500}
@@ -217,15 +216,15 @@ export default function Test() {
             <p>
               Page {pageNumber} of {numPages}
             </p>
-            <MarkdownLatex>{markdown_with_video}</MarkdownLatex>
+            <Latex>{markdown_with_video}</Latex>
           </>
         ) : active === "Latex" ? (
           <>
-            <MarkdownLatex>{`Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
+            <Latex>{`Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
 
 $$
 L = \\frac{1}{2} \\rho v^2 S C_L
-$$`}</MarkdownLatex>
+$$`}</Latex>
           </>
         ) : active === "Editor" ? (
           <QuestionViewer />

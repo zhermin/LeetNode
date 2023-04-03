@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@/server/db/client";
+import { Prisma } from "@prisma/client";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,7 +23,18 @@ export default async function handler(
       });
       res.status(200).json(info);
     } catch (error) {
-      res.status(400).json({ message: "Something went wrong" });
+      console.error(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          res.status(400).json({
+            message: "Nickname or NUSNET ID already exists",
+          });
+        }
+      } else {
+        res.status(400).json({
+          message: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     }
   }
 }

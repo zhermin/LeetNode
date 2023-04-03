@@ -39,6 +39,26 @@
     @apply underline;
   }
 
+  /* Custom styles for Raw HTML content */
+  .rawhtml img {
+    @apply h-auto;
+    @apply rounded-md;
+    @apply my-4;
+  }
+
+  .rawhtml-lg-img img {
+    @apply max-w-lg;
+  }
+
+  .rawhtml-sm-img img {
+    @apply max-w-sm;
+  }
+
+  .ql-video iframe {
+    @apply min-w-full;
+    @apply aspect-video;
+  }
+
   /* Re-add most disabled Tailwind preflight styles due to Mantine clash */
   a {
     @apply no-underline;

@@ -10,6 +10,7 @@ import {
   Button,
   Center,
   Container,
+  createStyles,
   Divider,
   Group,
   Loader,
@@ -23,7 +24,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Comment, PostMedia, PostType } from "@prisma/client";
+import { Comment, Post, PostLikes } from "@prisma/client";
 import {
   QueryKey,
   useMutation,
@@ -40,20 +41,12 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
-type postType = {
-  postId: string;
-  userId: string;
-  title: string;
-  postType: PostType;
-  message: string;
-  likes: number;
-  courseSlug: string;
-  topicSlug: string;
-  createdAt: string;
-  updatedAt: string;
-  postMedia: PostMedia[];
-  comment: Comment[];
-} | null;
+export type postType =
+  | (Post & {
+      comment: Comment[];
+      postLikes: PostLikes[];
+    })
+  | null;
 
 const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const [redirect, setRedirect] = useState(false);
@@ -79,6 +72,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   const [message, setMessage] = useState("");
 
   const session = useSession();
+  const { classes, theme } = useStyles();
   const queryClient = useQueryClient();
 
   const [posts, courses, topics] = useQueries({
@@ -254,6 +248,8 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     }
   });
 
+  console.log(posts);
+
   return (
     <>
       {redirect ? (
@@ -337,7 +333,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   onChange={setMessage}
                 />
                 <Group position="center" mt="xl">
-                  <Button type="submit" size="md">
+                  <Button type="submit" size="md" className={classes.control}>
                     Send message
                   </Button>
                 </Group>
@@ -384,17 +380,32 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 />
               </Group>
               <Group position="apart" mt={"xl"}>
-                <Button variant="outline" onClick={() => handleCloseModal()}>
+                <Button
+                  variant={theme.colorScheme === "dark" ? "filled" : "outline"}
+                  onClick={() => handleCloseModal()}
+                  className={classes.control}
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => handleCloseSubmitModal()}>Ok</Button>
+                <Button
+                  onClick={() => handleCloseSubmitModal()}
+                  className={classes.control}
+                >
+                  Ok
+                </Button>
               </Group>
             </Modal>
             <Group position="apart" mb={"md"}>
-              <Button onClick={() => setOpenedPosting(true)}>
+              <Button
+                onClick={() => setOpenedPosting(true)}
+                className={classes.control}
+              >
                 Post a Thread
               </Button>
-              <Button onClick={() => setOpenedFilter(true)}>
+              <Button
+                onClick={() => setOpenedFilter(true)}
+                className={classes.control}
+              >
                 Filter Options
               </Button>
             </Group>
@@ -426,11 +437,11 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                       </Anchor>
                       <Group>
                         <Text>
-                          {new Date(
-                            post?.createdAt as string
-                          ).toLocaleDateString("en-GB") +
+                          {new Date(post?.createdAt as Date).toLocaleDateString(
+                            "en-GB"
+                          ) +
                             " " +
-                            new Date(post?.createdAt as string).toLocaleString(
+                            new Date(post?.createdAt as Date).toLocaleString(
                               ["en-GB"],
                               {
                                 hour12: true,
@@ -442,7 +453,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         <Divider orientation="vertical" />
 
                         <Text size={"sm"} color={"cyan.7"}>
-                          {DateDiffCalc(post?.createdAt as string)}
+                          {DateDiffCalc(post?.createdAt as Date)}
                         </Text>
                       </Group>
                     </td>
@@ -480,6 +491,22 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 onChange={setCurrentPage}
                 total={nPages}
                 size="md"
+                styles={(theme) => ({
+                  item: {
+                    "&[data-active]": {
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.fn.variant({
+                              variant: "light",
+                              color: theme.primaryColor,
+                            }).background
+                          : theme.fn.variant({
+                              variant: "filled",
+                              color: theme.primaryColor,
+                            }).background,
+                    },
+                  },
+                })}
               />
               <Select
                 value={postsPerPage}
@@ -499,6 +526,27 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     </>
   );
 };
+
+const useStyles = createStyles((theme) => ({
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
+  },
+}));
 
 export const useGetFetchQuery = (key: QueryKey) => {
   const queryClient = useQueryClient();

@@ -52,7 +52,18 @@ const LeetNode: AppType<{
           },
           onSuccess: (res) => {
             const { data } = res as AxiosResponse;
-            if (data && data.message) {
+
+            if (data && data.customToast) {
+              // For completely custom toasts, return .json{customToast: true} in the response
+              toast.dismiss(toastId.current);
+            } else if (data && data.message && data.customIcon) {
+              // For custom icons, return .json{customIcon: "...", message: "..."} in the response
+              toast(() => data.message, {
+                id: toastId.current,
+                icon: data.customIcon,
+              });
+            } else if (data && data.message) {
+              // For custom messages, return .json{message: "..."} in the response
               toast.success(data.message, {
                 id: toastId.current,
               });
@@ -61,31 +72,31 @@ const LeetNode: AppType<{
                 id: toastId.current,
               });
             }
-            toast.dismiss();
+
+            // Fallback to dismiss all toasts after 10 seconds
+            setTimeout(() => {
+              toast.dismiss();
+            }, 10000);
           },
           onError: (error) => {
+            console.error("[GLOBAL ERROR]", error);
+
             let errorMessage = "Unknown Error";
 
-            // TEMP: If error is from Prisma (database), ugly-extract the error message
-            if (
-              error instanceof AxiosError &&
-              error.response &&
-              error.response.data
-            ) {
-              const jsonStr = error.response.data.match(
-                /<script id="__NEXT_DATA__".*?>(.*?)<\/script>/s
-              )[1];
-              const data = JSON.parse(jsonStr);
-              errorMessage = data.err.message;
-            }
-
-            if (error instanceof Error || error instanceof AxiosError) {
+            if (error instanceof AxiosError) {
+              errorMessage = error.response
+                ? error.response.data.message
+                : error.message;
+            } else if (error instanceof Error) {
               errorMessage = error.message;
             }
 
-            toast.error(`Please contact support\n\n${errorMessage}`, {
-              id: toastId.current,
-            });
+            toast.error(
+              `Error: ${errorMessage}\n\nPlease contact support for further assistance`,
+              {
+                id: toastId.current,
+              }
+            );
           },
         }),
       })

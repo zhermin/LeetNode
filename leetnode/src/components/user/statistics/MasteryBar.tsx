@@ -136,6 +136,7 @@ export default function MasteryBar({ data }: TableSortProps) {
               color: "cyan",
             },
           ]}
+          animate
         />
       </td>
     </tr>
@@ -145,7 +146,7 @@ export default function MasteryBar({ data }: TableSortProps) {
     <ScrollArea>
       <TextInput
         className="mt-4"
-        placeholder="Search by any field"
+        placeholder="Filter by Topic or Mastery Level"
         mb="md"
         icon={<IconSearch size={14} stroke={1.5} />}
         value={search}
@@ -154,12 +155,12 @@ export default function MasteryBar({ data }: TableSortProps) {
       <Table
         horizontalSpacing="md"
         verticalSpacing="xs"
-        sx={{ tableLayout: "fixed", minWidth: 700 }}
+        sx={{ tableLayout: "fixed" }}
       >
         <thead>
           <tr>
             <Th
-              className="w-1/3"
+              className="w-1/2 md:w-1/3"
               sorted={sortBy === "topicName"}
               reversed={reverseSortDirection}
               onSort={() => setSorting("topicName")}
@@ -167,7 +168,7 @@ export default function MasteryBar({ data }: TableSortProps) {
               Topic
             </Th>
             <Th
-              className="w-2/3"
+              className="w-1/2 md:w-2/3"
               sorted={sortBy === "masteryLevel"}
               reversed={reverseSortDirection}
               onSort={() => setSorting("masteryLevel")}

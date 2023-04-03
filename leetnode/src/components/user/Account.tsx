@@ -1,16 +1,18 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
+import { z } from "zod";
 
 import {
   Avatar,
   Button,
   Center,
+  createStyles,
   FileInput,
   Group,
   TextInput,
 } from "@mantine/core";
+import { useForm, zodResolver } from "@mantine/form";
 import { User } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -20,24 +22,81 @@ interface AccountProps {
 
 export default function Account({ userInfo }: AccountProps) {
   const session = useSession();
+  const { classes } = useStyles();
 
-  const [userName, setUserName] = useState(
-    userInfo.nickname ?? (userInfo.name || "")
-  );
-  const [userNusnetId, setUserNusnetId] = useState(userInfo.nusnetId ?? "");
-
-  const [file, setFile] = useState<File | null>(null);
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  const form = useForm({
+    initialValues: {
+      userName: userInfo.nickname ?? "",
+      userNusnetId: userInfo.nusnetId ?? "",
+      file: null,
+    },
+    validateInputOnChange: true,
+    validate: zodResolver(
+      z.object({
+        userName: z
+          .string()
+          .trim()
+          .regex(/^(\w+)$/, "Only letters, numbers and underscores are allowed")
+          .min(5, "Minimum 5 characters")
+          .max(20, "Maximum 20 characters")
+          .or(z.literal(null))
+          .or(z.literal("")),
+        userNusnetId: z
+          .string()
+          .trim()
+          .regex(/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/, "Invalid NUSNET ID")
+          .or(z.literal(null))
+          .or(z.literal("")),
+        file: z
+          .instanceof(File)
+          .refine((file) => file.size <= 500_000, `Max file size is 5MB`)
+          .refine(
+            (file) => allowedTypes.includes(file.type),
+            "Only .png, .jpg, .jpeg, and .webp files are accepted."
+          )
+          .or(z.literal(null)),
+      })
+    ),
+  });
 
   const queryClient = useQueryClient();
-
-  // Update the user in the DB
   const { mutate: updateUser, isLoading: updateUserLoading } = useMutation(
-    async (image: string) => {
+    async () => {
+      let imageResponse;
+      if (form.values.file) {
+        // Generate Signature for Cloudinary Signed Upload
+        const timestamp = Math.round(new Date().getTime() / 1000);
+        const res = await axios.post("/api/signature", {
+          id: session?.data?.user?.id,
+          timestamp: timestamp,
+        });
+
+        const [signature, key] = [res.data.signature, res.data.key];
+
+        const formData = new FormData();
+        formData.append("file", form.values.file);
+        formData.append("api_key", key);
+        formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
+        formData.append("folder", "LeetNode/profile_media");
+        formData.append("public_id", session?.data?.user?.id as string);
+        formData.append("timestamp", `${timestamp}`);
+        formData.append("signature", signature);
+        imageResponse = await axios.post(
+          "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
+          formData
+        );
+      }
+
       return await axios.post("/api/user/update", {
         id: session?.data?.user?.id,
-        nusnetId: userNusnetId,
-        nickname: userName,
-        image: image,
+        nusnetId:
+          form.values.userNusnetId.trim() === ""
+            ? null
+            : form.values.userNusnetId,
+        nickname:
+          form.values.userName.trim() === "" ? null : form.values.userName,
+        image: imageResponse?.data?.eager?.[0]?.secure_url ?? userInfo.image,
       });
     },
     {
@@ -48,159 +107,116 @@ export default function Account({ userInfo }: AccountProps) {
           nickname: res.data.nickname,
           image: res.data.image,
         });
-        toast.success("Updated!", { id: "updateUserInfo" }); // Notification for successful update
-      },
-      onError: () => {
-        toast.error("Failed", { id: "updateUserInfo" }); // Notification for failed update
-      },
-    }
-  );
-
-  const { mutate: uploadImage, isLoading: uploadImageLoading } = useMutation(
-    async () => {
-      // Generate signature
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const res = await axios.post("/api/signature", {
-        id: session?.data?.user?.id,
-        timestamp: timestamp,
-      });
-      const [signature, key] = [res.data.signature, res.data.key];
-
-      // Upload profile picture into server
-      const formData = new FormData();
-      if (
-        !file ||
-        !(file.type === "image/jpeg" || file.type === "image/png") ||
-        !session?.data?.user?.id
-      ) {
-        throw new Error("Please upload a JPEG or PNG file");
-      }
-      formData.append("file", file);
-      formData.append("api_key", key);
-      formData.append("eager", "b_rgb:9B9B9B,c_pad,h_150,w_150");
-      formData.append("folder", "LeetNode/profile_media");
-      formData.append("public_id", session?.data?.user?.id);
-      formData.append("timestamp", `${timestamp}`);
-      formData.append("signature", signature);
-      return await axios.post(
-        "https://api.cloudinary.com/v1_1/dy2tqc45y/image/upload/",
-        formData
-      );
-    },
-    {
-      onSuccess: (res) => {
-        updateUser(res?.data?.eager?.[0]?.url);
       },
       onError: (e) => {
-        toast.error(e instanceof Error ? e.message : "Unknown error", {
-          id: "updateUserInfo",
-        }); // Notification for failed update
+        console.log(e instanceof Error ? e.message : "Unknown error");
       },
     }
   );
-
-  // Upload file into server and update DB
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setUserNusnetId(userNusnetId.toUpperCase());
-
-    toast.loading("Updating...", { id: "updateUserInfo" }); // Notification for updating user
-    // If user inputs a file
-    if (file) {
-      uploadImage(); // Generate signature, upload file into server and update DB
-    } else {
-      updateUser(userInfo.image); // Update DB
-    }
-  };
-
-  // Reset form
-  const handleReset = useCallback(() => {
-    setUserName(userInfo.nickname ?? userInfo.name);
-    setUserNusnetId(userInfo.nusnetId ?? "");
-  }, [userInfo.nickname, userInfo.name, userInfo.nusnetId]);
 
   return (
     <>
-      <h1 className="text-center">My Account</h1>
-      <hr className="h-px my-4 bg-gray-200 border-0" />
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 mb-6 grid-cols-3">
-          <div className="col-span-2">
-            <TextInput
-              className="mt-4"
-              type="text"
-              label="Nickname (Visible to everyone)"
-              name="name"
-              variant="filled"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-            />
-            {/^(\s*\w+\s*){5,}$/.test(userName) ? null : (
-              <p className="text-red-500 text-xs italic">
-                Nickname must contain at least 5 letters and CANNOT contain
-                symbols
-              </p>
-            )}
-            <TextInput
-              className="mt-4"
-              type="text"
-              label="NUSNET ID"
-              name="nusnetId"
-              variant="filled"
-              value={userNusnetId}
-              onChange={(e) => setUserNusnetId(e.target.value)}
-              required
-            />
-            {/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ? null : (
-              <p className="text-red-500 text-xs italic">
-                Invalid NUSNETID format (e.g. A0123456X)
-              </p>
-            )}
-          </div>
-          <div className="col-span-1 flex-auto justify-center items-center">
-            <Center className="mt-3">
-              <Avatar
-                size={90}
-                src={userInfo?.image}
-                radius={100}
-                className="mb-3"
-                imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
-              />
-            </Center>
-            <FileInput
-              className="mt-1"
-              placeholder="Upload"
-              label="Change profile picture"
-              name="image"
-              accept="image/png,image/jpeg"
-              onChange={setFile}
-            />
-            <p
-              className="mt-1 text-gray-500 text-xs italic"
-              id="file_input_help"
-            >
-              * PNG / JPG ONLY
-            </p>
-          </div>
-        </div>
+      <h1 className="text-center">Account Settings</h1>
+      <hr className="my-4 h-px border-0 bg-gray-200" />
+      <form
+        onSubmit={form.onSubmit(
+          () => {
+            updateUser();
+          },
+          (errors: typeof form.errors) => {
+            Object.keys(errors).forEach((key) => {
+              toast.error(errors[key] as string);
+            });
+          }
+        )}
+      >
+        <Center className="mt-3">
+          <Avatar
+            size={90}
+            src={userInfo?.image}
+            radius={100}
+            className="mb-3"
+            imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
+          />
+        </Center>
+        <FileInput
+          placeholder="Browse image"
+          label="Change profile picture"
+          description="* PNG / JPG / JPEG / WEBP"
+          name="image"
+          accept={allowedTypes.join(",")}
+          {...form.getInputProps("file")}
+        />
+        <TextInput
+          className="mt-4"
+          label="Nickname (Visible to everyone)"
+          placeholder="Please select a nickname"
+          name="name"
+          variant="filled"
+          {...form.getInputProps("userName")}
+        />
+        <TextInput
+          className="mt-4"
+          label="NUSNET ID"
+          placeholder="Please enter your NUSNET ID if you are an NUS student"
+          name="nusnetId"
+          variant="filled"
+          value={form.values.userNusnetId}
+          onChange={(e) => {
+            form.setFieldValue("userNusnetId", e.target.value.toUpperCase());
+          }}
+          error={form.errors.userNusnetId}
+        />
         <Group position="center" mt="xl">
-          <Button
-            type="submit"
-            size="md"
-            disabled={
-              !/^[A-Za-z]{1}[0-9]{7}[A-Za-z]{1}$/.test(userNusnetId) ||
-              !/^(\s*\w+\s*){5,}$/.test(userName)
-            }
-            loading={updateUserLoading || uploadImageLoading}
-          >
+          <Button type="submit" size="md" loading={updateUserLoading}>
             Confirm
           </Button>
-          <Button variant="white" type="button" size="md" onClick={handleReset}>
-            Cancel
+          <Button
+            variant="white"
+            type="button"
+            size="md"
+            onClick={form.reset}
+            className={classes.cancel}
+          >
+            Reset
           </Button>
         </Group>
       </form>
     </>
   );
 }
+
+const useStyles = createStyles((theme) => ({
+  control: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+            color: theme.primaryColor,
+          }).background
+        : theme.fn.variant({
+            variant: "filled",
+            color: theme.primaryColor,
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
+            .color
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
+            .color,
+  },
+  cancel: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
+            variant: "light",
+          }).background
+        : theme.fn.variant({
+            variant: "white",
+          }).background,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light" }).color
+        : theme.fn.variant({ variant: "white" }).color,
+  },
+}));

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
+import { getSession } from "next-auth/react";
 
 import { prisma } from "@/server/db/client";
 import { Mastery } from "@prisma/client";
@@ -8,8 +9,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const session = await getSession({ req });
+
   const displayData = async (req: {
-    id: string;
     topicSlug: string;
     correct: boolean;
     optionNumber: number;
@@ -17,6 +19,7 @@ export default async function handler(
     masteryConditionFlag: boolean;
     courseSlug: string;
   }) => {
+    console.log(req.topicSlug);
     // //check if masteryLevel === 0 =>
     // axios
     //   .get(
@@ -45,9 +48,9 @@ export default async function handler(
 
     //patch then get data then update mastery
     const res = await axios.patch(
-      `https://pybkt-api-deployment.herokuapp.com/update-state/${req.id}/${
-        req.topicSlug
-      }/${String(req.correct ? 1 : 0)}`,
+      `https://pybkt-api-deployment.herokuapp.com/update-state/${
+        session?.user?.id
+      }/${req.topicSlug}/${String(req.correct ? 1 : 0)}`,
       req,
       {
         headers: {
@@ -61,14 +64,13 @@ export default async function handler(
 
     if (info === true) {
       const res2 = await axios.get(
-        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${req.id}/${req.topicSlug}`,
+        `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${req.topicSlug}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
           },
         }
       );
-      console.log("reached res2");
       console.log(res2.data);
       const output = res2.data;
 

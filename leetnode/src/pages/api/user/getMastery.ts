@@ -14,7 +14,7 @@ export default async function handler(
           userId: req.body.id,
         },
         select: {
-          masteryLevel: req.body.period === "current" || true,
+          masteryLevel: req.body.period === "current",
           weeklyMasteryLevel: req.body.period === "week",
           fortnightlyMasteryLevel: req.body.period === "fortnight",
           topic: {

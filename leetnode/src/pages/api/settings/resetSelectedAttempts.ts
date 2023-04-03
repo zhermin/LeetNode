@@ -9,9 +9,11 @@ export default async function handler(
   req.body.topics.map(async (topic: string) => {
     const resetSelectedAttempts = await prisma.attempt.deleteMany({
       where: {
-        question: {
-          topic: {
-            topicSlug: topic,
+        questionWithAddedTime: {
+          question: {
+            topic: {
+              topicSlug: topic,
+            },
           },
         },
       },
