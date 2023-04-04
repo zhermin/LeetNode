@@ -108,9 +108,6 @@ export default function Account({ userInfo }: AccountProps) {
           image: res.data.image,
         });
       },
-      onError: (e) => {
-        console.log(e instanceof Error ? e.message : "Unknown error");
-      },
     }
   );
 

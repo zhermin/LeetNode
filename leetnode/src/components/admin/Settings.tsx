@@ -98,6 +98,7 @@ const Settings = ({
   console.log(editField);
   console.log(selfEmailFreq);
 
+  // TODO: Change .then to async/await
   const handleSubmitChanges = () => {
     axios
       .post("/api/settings/updateEmailFreq", {

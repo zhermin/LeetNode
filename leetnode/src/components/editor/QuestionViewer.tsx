@@ -186,49 +186,6 @@ export default function QuestionViewer() {
                     max: -10,
                     step: 7.5,
                   },
-                  // {
-                  //   key: randomId(),
-                  //   name: "R_2",
-                  //   randomize: false,
-                  //   isFinalAnswer: false,
-                  //   unit: "\\Omega",
-                  //   default: 10,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   name: "R_3",
-                  //   randomize: false,
-                  //   unit: "\\Omega",
-                  //   isFinalAnswer: false,
-                  //   default: 8,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   name: "V_{\\alpha}",
-                  //   randomize: true,
-                  //   isFinalAnswer: false,
-                  //   unit: "\\text{V}",
-                  //   default: 12,
-                  //   min: 1,
-                  //   max: 30,
-                  //   decimalPlaces: 0,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   name: "I_3",
-                  //   randomize: false,
-                  //   isFinalAnswer: true,
-                  //   unit: "\\text{A}",
-                  //   decimalPlaces: 2,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   name: "I_{\\text{final}}",
-                  //   randomize: false,
-                  //   isFinalAnswer: true,
-                  //   unit: "\\text{A}",
-                  //   decimalPlaces: 1,
-                  // },
                 ],
                 methods: [
                   {
@@ -246,26 +203,6 @@ export default function QuestionViewer() {
                     expr: "V_{L}(t) = L * 1/\\tau * e^{- t / \\tau}",
                     explanation: undefined,
                   },
-                  // {
-                  //   key: randomId(),
-                  //   expr: "I_1 = V_{\\alpha} / R_1",
-                  //   explanation: undefined,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   expr: "I_3 = V_{\\alpha} / R_3",
-                  //   explanation: undefined,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   expr: "I_2 = V_{\\alpha} / R_2",
-                  //   explanation: undefined,
-                  // },
-                  // {
-                  //   key: randomId(),
-                  //   expr: "I_{\\text{final}} = (I_1 + I_2 + I_3)",
-                  //   explanation: undefined,
-                  // },
                 ],
               }}
             />

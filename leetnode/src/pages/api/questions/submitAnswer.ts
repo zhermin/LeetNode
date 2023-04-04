@@ -75,7 +75,9 @@ export default async function handler(
       throw new Error("PyBKT API get unsuccessful");
     }
 
-    console.log(`[${topicSlug}] NEW MASTERY: `, pybktGet.Mastery);
+    console.log(
+      `[${topicSlug}] NEW MASTERY: ${(pybktGet.Mastery * 100).toFixed(2)}%`
+    );
 
     // Step 2
     const { recommendedTopicSlug, recommendedQuestion } =

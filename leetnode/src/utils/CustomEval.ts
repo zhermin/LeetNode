@@ -77,6 +77,8 @@ export const CustomEval = (
     );
   }
 
+  console.log("[Raw Variables]", rawVariables);
+
   // Define custom math functions for common ones
   evaluate("ln(x) = log(x)", rawVariables);
 
@@ -121,25 +123,12 @@ export const CustomEval = (
     }
   }
 
-  // Filter out the variables and round off defaults
-  const questionVariables = variables
-    .filter((item) => !item.isFinalAnswer)
-    .map((item) => {
-      return {
-        ...item,
-        default: CustomMath.round(
-          Number(rawVariables[item.encoded]),
-          item?.decimalPlaces ?? 3
-        ),
-      };
-    });
-
+  // Filter out the final answers and generate 3 incorrect answers to view in the editor
   const finalAnswers = variables?.filter((item) => item.isFinalAnswer);
   if (finalAnswers.length == 0) {
     throw new Error("No final answers specified");
   }
 
-  // Filter out the final answers and generate 3 incorrect answers to view in the editor
   const editorAnswers = finalAnswers.map((finalAnswer) => {
     if (finalAnswer.decimalPlaces === undefined)
       throw new Error(`Invalid name or decimal places for ${finalAnswer.name}`);
@@ -182,6 +171,7 @@ export const CustomEval = (
       );
     }
 
+    console.log("[Random Incorrect Final Answers]");
     const incorrectAnswers = (
       CustomMath.nRandomItems(3, incorrectRange) as number[]
     ).map((val) =>
@@ -191,13 +181,7 @@ export const CustomEval = (
       )
     );
 
-    console.log(
-      "[Random Incorrect Final Answers]",
-      finalAnswer.name,
-      incorrectRange,
-      incorrectAnswers
-    );
-
+    console.log(finalAnswer.name, incorrectRange, incorrectAnswers);
     return {
       ...finalAnswer,
       answerContent: finalValue,
@@ -242,6 +226,20 @@ export const CustomEval = (
       .join(",~");
   });
 
+  // Clean up variables and final answers for frontend integration
+  // TODO: Consider non-number defaults, show original str expr in var but eval in answer
+  const questionVariables = variables
+    .filter((item) => !item.isFinalAnswer)
+    .map((item) => {
+      return {
+        ...item,
+        default: CustomMath.round(
+          Number(rawVariables[item.encoded]),
+          item?.decimalPlaces ?? 3
+        ).toString(),
+      };
+    });
+
   const questionAnswers = [
     {
       key: randomId(),
@@ -257,7 +255,8 @@ export const CustomEval = (
     })),
   ];
 
-  console.log("[GENERATED OPTIONS]", questionAnswers);
+  console.log("[GENERATED VARIABLES]", questionVariables);
+  console.log("[GENERATED ANSWERS]", questionAnswers);
 
   return {
     questionVariables,
