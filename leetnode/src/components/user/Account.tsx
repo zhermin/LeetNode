@@ -50,7 +50,7 @@ export default function Account({ userInfo }: AccountProps) {
           .or(z.literal("")),
         file: z
           .instanceof(File)
-          .refine((file) => file.size <= 500_000, `Max file size is 5MB`)
+          .refine((file) => file.size <= 5_000_000, `Max file size is 5MB`)
           .refine(
             (file) => allowedTypes.includes(file.type),
             "Only .png, .jpg, .jpeg, and .webp files are accepted."
@@ -107,9 +107,6 @@ export default function Account({ userInfo }: AccountProps) {
           nickname: res.data.nickname,
           image: res.data.image,
         });
-      },
-      onError: (e) => {
-        console.log(e instanceof Error ? e.message : "Unknown error");
       },
     }
   );

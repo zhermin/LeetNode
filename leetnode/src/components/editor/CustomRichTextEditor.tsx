@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 import RichTextEditor, {
   RichTextEditorProps,
 } from "@/packages/mantine-rte/src";
+import { Topic, User } from "@prisma/client";
 
 window.katex = katex;
 
@@ -53,7 +54,7 @@ export default function Editor(
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("/api/forum/getAllUsers");
+      const { data } = await axios.get<User[]>("/api/forum/getAllUsers");
       return data.map((user: { name: string }) => ({ value: user.name }));
     } catch (error) {
       console.error(error);
@@ -64,7 +65,7 @@ export default function Editor(
 
   const fetchTopics = async () => {
     try {
-      const { data } = await axios.get("/api/forum/getAllTopicNames");
+      const { data } = await axios.get<Topic[]>("/api/forum/getAllTopicNames");
       return data.map((topic: { topicName: string }) => ({
         value: topic.topicName,
       }));

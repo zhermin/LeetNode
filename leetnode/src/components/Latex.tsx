@@ -16,7 +16,7 @@ export default function Latex({
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
-        className="markdown"
+        className="prose"
       >
         {children}
       </ReactMarkdown>

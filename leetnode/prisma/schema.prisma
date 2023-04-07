@@ -158,6 +158,7 @@ model Topic {
   topicSlug  String     @id
   topicName  String     @unique
   topicLevel Level
+  topicPrior Float      @default(0.25)
   questions  Question[]
   mastery    Mastery[]
   courses    Course[]

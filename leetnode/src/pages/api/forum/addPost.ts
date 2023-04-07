@@ -1,15 +1,19 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { unstable_getServerSession } from "next-auth";
 
 import { prisma } from "@/server/db/client";
+
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const session = await unstable_getServerSession(req, res, authOptions);
 
-  const posts = await prisma.post.create({
+  await prisma.post.create({
     data: {
-      userId: req.body.userId,
+      userId: session?.user?.id as string,
       title: req.body.title,
       message: req.body.message,
       courseName: req.body.courseName,
@@ -17,5 +21,5 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(posts);
+  res.status(200).json({ message: "Post created successfully!" });
 }

@@ -36,29 +36,16 @@ export const RecommendQuestion = async (
   );
 
   let recommendedDifficulty: QuestionDifficulty;
-  if (masteryLevel === 0) {
+  if (masteryLevel <= recommendedTopic.topicPrior) {
     recommendedDifficulty = QuestionDifficulty.Easy;
-  } else if (masteryLevel <= 0.4) {
-    recommendedDifficulty =
-      Math.random() < 0.75
-        ? QuestionDifficulty.Easy
-        : QuestionDifficulty.Medium;
-  } else if (masteryLevel <= 0.7) {
-    recommendedDifficulty =
-      Math.random() < 0.25
-        ? QuestionDifficulty.Easy
-        : Math.random() < 0.5
-        ? QuestionDifficulty.Medium
-        : QuestionDifficulty.Hard;
+  } else if (masteryLevel <= 0.86697) {
+    recommendedDifficulty = QuestionDifficulty.Medium;
   } else {
-    recommendedDifficulty =
-      Math.random() < 0.75
-        ? QuestionDifficulty.Hard
-        : QuestionDifficulty.Medium;
+    recommendedDifficulty = QuestionDifficulty.Hard;
   }
 
   console.log(
-    `[${courseSlug}] RECOMMENDED DIFFICULTY (${masteryLevel * 100}%): `,
+    `[${courseSlug}] RECOMMENDED DIFFICULTY: `,
     recommendedDifficulty
   );
 

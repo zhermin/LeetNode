@@ -2,13 +2,7 @@ import axios, { AxiosError } from "axios";
 import DOMPurify from "dompurify";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
-import {
-  Dispatch,
-  MouseEventHandler,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import {
   ActionIcon,
@@ -30,7 +24,6 @@ import {
   Title,
   TypographyStylesProvider,
 } from "@mantine/core";
-import { Comment } from "@prisma/client";
 import {
   IconChevronLeft,
   IconCornerDownRight,
@@ -39,10 +32,10 @@ import {
   IconThumbUp,
   IconX,
 } from "@tabler/icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PostTypeBadge } from "../misc/Badges";
-import { postType, useGetFetchQuery } from "./CourseDiscussion";
+import { PostFullType } from "./CourseDiscussion";
 import DateDiffCalc from "./DateDiffCalc";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
@@ -59,6 +52,10 @@ const ForumPost = ({
   setRedirect: Dispatch<SetStateAction<boolean>>;
   users: { id: string; image: string; value: string }[];
 }) => {
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const { classes } = useStyles();
+
   const [message, setMessage] = useState("");
   const [sort, setSort] = useState<string | null>("newest");
   const [voted, setVoted] = useState<number>(0);
@@ -78,11 +75,6 @@ const ForumPost = ({
     return () => clearTimeout(timer); // Clear the timer when the component unmounts
   }, [goToComment]);
 
-  const session = useSession();
-  const queryClient = useQueryClient();
-
-  const { classes } = useStyles();
-
   function formatIsoDateTime(isoDateTime: string): string {
     const date = new Date(isoDateTime);
     const formattedDate = date.toLocaleDateString("en-GB", {
@@ -96,35 +88,28 @@ const ForumPost = ({
     });
     return `${formattedDate} ${formattedTime}`;
   }
-  const data = useGetFetchQuery(["all-posts"]);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore -> react query can only provide generic type of unknown, hence will throw error
-  const post: postType = data.data.find(
-    (e: { postId: string }) => e.postId === postId
-  );
-  console.log(post);
+  const { data: posts } = useQuery({
+    queryKey: ["all-posts"],
+    queryFn: () => axios.get<PostFullType[]>("/api/forum/getAllPosts"),
+  });
+
+  const post = posts?.data.find((post) => post?.postId === postId);
 
   useEffect(() => {
     if (
       post?.postLikes.find((user) => user.userId === session.data?.user?.id)
         ?.likes === 1
     ) {
-      console.log("set like as 1");
       setVoted(1);
     } else if (
       post?.postLikes.find((user) => user.userId === session.data?.user?.id)
         ?.likes === -1
     ) {
-      console.log("set like as -1");
       setVoted(-1);
     }
-    setDisplayLikes(
-      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
-        ?.likes as number
-    );
-  }, [post?.postLikes, session.data?.user?.id]);
 
-  const comments = post?.comment as Comment[];
+    setDisplayLikes(post?.postLikes.reduce((acc, user) => acc + user.likes, 0));
+  }, [post, session.data?.user?.id]);
 
   const addMutation = useMutation<
     Response,
@@ -132,14 +117,9 @@ const ForumPost = ({
     { postId: string; userId: string; message: string; reply: unknown },
     () => void
   >({
-    mutationFn: async (newComment) => {
-      console.log(newComment);
-      const res = await axios.post("/api/forum/addComment", newComment);
-      return res.data;
-    },
+    mutationFn: (newComment) => axios.post("/api/forum/addComment", newComment),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
-      // queryClient.invalidateQueries(["post-comments"]);
       setMessage("");
       setReplying(null);
     },
@@ -151,13 +131,10 @@ const ForumPost = ({
     { commentId: string; message: string },
     () => void
   >({
-    mutationFn: async (editComment) => {
-      console.log(editComment);
-      const res = await axios.post("/api/forum/editComment", editComment);
-      return res.data;
-    },
+    mutationFn: (editComment) =>
+      axios.post("/api/forum/editComment", editComment),
     onSuccess: () => {
-      // queryClient.invalidateQueries(["post-comments"]);
+      queryClient.invalidateQueries(["all-posts"]);
       setMessage("");
       setReplying(null);
       setEdit(null);
@@ -170,27 +147,16 @@ const ForumPost = ({
     { postId: string; message: string },
     () => void
   >({
-    mutationFn: async (editPost) => {
-      console.log(editPost);
-      const res = await axios.post("/api/forum/editPost", editPost);
-      return res.data;
-    },
+    mutationFn: (editPost) => axios.post("/api/forum/editPost", editPost),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
-      // queryClient.invalidateQueries(["post-comments"]);
       setMessage("");
       setReplying(null);
       setEdit(null);
     },
   });
 
-  function handleBack() {
-    setRedirect(false);
-    queryClient.invalidateQueries(["all-posts"]);
-    // queryClient.invalidateQueries(["post-comments"]);
-  }
-
-  function handleVote(vote: number): MouseEventHandler<HTMLButtonElement> {
+  function handleVote(vote: number) {
     return async () => {
       const difference = voted - vote;
       setVoted(vote);
@@ -205,14 +171,6 @@ const ForumPost = ({
     };
   }
 
-  function handleReply(commentId: string) {
-    setReplying(commentId);
-  }
-
-  function handleEdit(commentId: string) {
-    setEdit(commentId);
-  }
-
   return (
     <Box
       sx={() => ({
@@ -222,7 +180,10 @@ const ForumPost = ({
     >
       <Flex align="center" gap="xl" mb="md">
         <Button
-          onClick={handleBack}
+          onClick={() => {
+            setRedirect(false);
+            queryClient.invalidateQueries(["all-posts"]);
+          }}
           leftIcon={<IconChevronLeft size={14} />}
           size="sm"
           className={classes.control}
@@ -248,7 +209,7 @@ const ForumPost = ({
           onChange={setPostOpened}
         >
           <Popover.Target>
-            <ActionIcon size={"sm"}>
+            <ActionIcon size="sm">
               <IconDotsVertical onClick={() => setPostOpened((o) => !o)} />
             </ActionIcon>
           </Popover.Target>
@@ -256,7 +217,7 @@ const ForumPost = ({
             <NavLink
               label="Edit"
               onClick={() => {
-                handleEdit(post?.postId as string);
+                setEdit(post?.postId as string);
                 setMessage(post?.message as string);
                 setPostOpened(false);
               }}
@@ -287,6 +248,7 @@ const ForumPost = ({
             <Button
               onClick={() => {
                 setEdit(null);
+                setMessage("");
               }}
             >
               Cancel
@@ -310,7 +272,7 @@ const ForumPost = ({
           />
         </TypographyStylesProvider>
       )}
-      <Group position="apart" mt={"4vw"}>
+      <Group position="apart" mt="4vw">
         <Group>
           <ActionIcon
             onClick={voted === 1 ? handleVote(0) : handleVote(1)}
@@ -328,7 +290,7 @@ const ForumPost = ({
           {post?.createdAt !== post?.updatedAt && (
             <>
               <Divider orientation="vertical" />
-              <Text size={"sm"} color={"cyan.7"}>
+              <Text size="sm" color="dimmed">
                 Updated {DateDiffCalc(post?.updatedAt as Date)}
               </Text>
             </>
@@ -355,8 +317,8 @@ const ForumPost = ({
         </Flex>
       </Group>
       <Divider my="sm" />
-      <Group position="apart" mt={"xl"}>
-        <Title size={"sm"}>Comments</Title>
+      <Group position="apart" mt="xl">
+        <Title size="sm">Comments</Title>
         <Group>
           <Text>Sort by: </Text>
           <Select
@@ -367,12 +329,12 @@ const ForumPost = ({
             ]}
             onChange={(value) => {
               setSort(value);
-              comments?.reverse();
+              post?.comment.reverse();
             }}
           />
         </Group>
       </Group>
-      {comments
+      {post?.comment
         .map((comment) => (
           <Box key={comment.commentId} id={comment.commentId} mt={4}>
             <Divider my="sm" />
@@ -405,7 +367,7 @@ const ForumPost = ({
                 onChange={setCommentOpened}
               >
                 <Popover.Target>
-                  <ActionIcon size={"sm"}>
+                  <ActionIcon size="sm">
                     <IconDotsVertical
                       onClick={() => {
                         setCommentOpened((o) => !o);
@@ -418,7 +380,7 @@ const ForumPost = ({
                   <NavLink
                     label="Edit"
                     onClick={() => {
-                      handleEdit(comment?.commentId);
+                      setEdit(comment?.commentId);
                       setMessage(comment.message);
                       setCommentOpened(false);
                     }}
@@ -427,7 +389,7 @@ const ForumPost = ({
                   <NavLink
                     label="Reply"
                     onClick={() => {
-                      handleReply(comment?.commentId);
+                      setReplying(comment?.commentId);
                       setCommentOpened(false);
                     }}
                   />
@@ -451,7 +413,14 @@ const ForumPost = ({
                 />
                 <Group position="center" mt="xl">
                   <Button type="submit">Edit message</Button>
-                  <Button onClick={() => setEdit(null)}>Cancel</Button>
+                  <Button
+                    onClick={() => {
+                      setEdit(null);
+                      setMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </Group>
               </form>
             ) : comment.reply !== null ? (
@@ -474,8 +443,8 @@ const ForumPost = ({
                   }}
                 >
                   <Text
-                    ml={"xl"}
-                    mt={"md"}
+                    ml="xl"
+                    mt="md"
                     sx={(theme) => ({
                       fontWeight: "bold",
                       fontStyle: "normal",
@@ -486,7 +455,7 @@ const ForumPost = ({
                       users.find(
                         (user) =>
                           user["id"] ===
-                          comments?.find(
+                          post?.comment?.find(
                             (e: { commentId: string; reply: string | null }) =>
                               e.commentId === comment.reply
                           )?.userId
@@ -494,7 +463,8 @@ const ForumPost = ({
                     }
                   </Text>
                   <Blockquote
-                    icon={<IconCornerDownRight size={"lg"} />}
+                    // TODO: Reply seems to be broken
+                    icon={<IconCornerDownRight size="lg" />}
                     styles={{
                       body: {
                         overflow: "hidden",
@@ -518,7 +488,7 @@ const ForumPost = ({
                             ? {
                                 __html: DOMPurify.sanitize(
                                   `${
-                                    comments.find(
+                                    post?.comment.find(
                                       (e: {
                                         commentId: string;
                                         reply: string | null;
@@ -593,7 +563,7 @@ const ForumPost = ({
                 </TypographyStylesProvider>
               </Text>
             )}
-            <Group mt={"md"}>
+            <Group mt="md">
               <Text size="xs" color="dimmed">
                 {formatIsoDateTime(comment?.createdAt.toString() as string)}
               </Text>
@@ -601,7 +571,7 @@ const ForumPost = ({
                 <Divider orientation="vertical" />
               )}
               {comment?.createdAt < comment?.updatedAt && (
-                <Text size={"sm"} color={"cyan.7"}>
+                <Text size="sm" color="dimmed">
                   Updated {DateDiffCalc(comment?.updatedAt as Date)}
                 </Text>
               )}
@@ -623,22 +593,22 @@ const ForumPost = ({
           });
         }}
       >
-        <Text size={"sm"} weight={500} mt="lg" mb="sm">
+        <Text size="sm" weight={500} mt="lg" mb="sm">
           New Comment
         </Text>
         {replying && (
           <Box onClick={() => setReplying(null)} sx={replyingHeaderStyle}>
             <Group>
-              <ActionIcon pl={10} variant="transparent" size={"md"}>
+              <ActionIcon pl={10} variant="transparent" size="md">
                 <IconX />
               </ActionIcon>
               <Text c="grey" fw={500}>
-                Replying to&nbsp;
+                Replying to{" "}
                 {
                   users.find(
                     (user) =>
                       user["id"] ===
-                      (comments.find(
+                      (post?.comment.find(
                         (comment) => comment["commentId"] === replying
                       )?.["userId"] as string)
                   )?.["value"]

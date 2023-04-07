@@ -11,6 +11,7 @@ export default async function handler(
       postId: "desc",
     },
     include: {
+      course: true,
       comment: true,
       postLikes: true,
     },

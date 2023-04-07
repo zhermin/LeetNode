@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const postchange = await prisma.post.update({
+  await prisma.post.update({
     where: {
       postId: req.body.postId,
     },
@@ -15,5 +15,5 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(postchange);
+  res.status(200).json({ message: "Post edited successfully!" });
 }

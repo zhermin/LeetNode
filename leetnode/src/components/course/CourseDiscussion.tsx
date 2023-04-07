@@ -1,7 +1,6 @@
-import axios, { AxiosError } from "axios";
-import { useSession } from "next-auth/react";
+import axios from "axios";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import ForumPost from "@/components/course/ForumPost";
 import {
@@ -10,7 +9,6 @@ import {
   Button,
   Center,
   Container,
-  createStyles,
   Divider,
   Group,
   Loader,
@@ -18,22 +16,27 @@ import {
   Pagination,
   Select,
   SimpleGrid,
+  Stack,
   Table,
   Text,
   TextInput,
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Comment, Post, PostLikes } from "@prisma/client";
 import {
-  QueryKey,
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+  Comment,
+  Course,
+  CourseType,
+  Level,
+  Post,
+  PostLikes,
+  PostType,
+  Topic,
+  User,
+} from "@prisma/client";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
-import { PostTypeBadge } from "../misc/Badges";
+import { CourseTypeBadge, PostTypeBadge } from "../misc/Badges";
 import DateDiffCalc from "./DateDiffCalc";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
@@ -41,214 +44,144 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
-export type postType =
-  | (Post & {
-      comment: Comment[];
-      postLikes: PostLikes[];
-    })
-  | null;
+export type PostFullType = Post & {
+  course: Course;
+  postLikes: PostLikes[];
+  comment: Comment[];
+};
+
+export type CourseNamesType = {
+  courseName: string;
+  type: CourseType;
+  courseSlug: string;
+  topics: Topic[];
+  courseLevel: Level;
+};
 
 const CourseDiscussion = ({ courseName }: { courseName: string }) => {
+  const queryClient = useQueryClient();
+
   const [redirect, setRedirect] = useState(false);
-  const [postData, setPostData] = useState<postType>(null);
+  const [message, setMessage] = useState("");
+  const [postData, setPostData] = useState<PostFullType | null>(null);
   const [openedPosting, setOpenedPosting] = useState(false);
   const [openedFilter, setOpenedFilter] = useState(false);
 
-  //initialize pagination variables
+  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage, setPostsPerPage] = useState<string | null>("5");
-  const [postCourseFilter, setPostCourseFilter] = useState<string | null>(
+  const [postsPerPage, setPostsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filteredCourseName, setFilteredCourseName] = useState<string | null>(
     courseName
   );
-  const [postTypeFilter, setPostTypeFilter] = useState<string | null>("All");
-
-  const [postCourseFilterStagger, setPostCourseFilterStagger] = useState<
-    string | null
-  >(courseName);
-  const [postTypeFilterStagger, setPostTypeFilterStagger] = useState<
-    string | null
-  >("All");
-
-  const [message, setMessage] = useState("");
-
-  const session = useSession();
-  const { classes, theme } = useStyles();
-  const queryClient = useQueryClient();
-
-  const [posts, courses, topics] = useQueries({
-    queries: [
-      {
-        queryKey: ["all-posts"],
-        queryFn: () => {
-          return axios.get("/api/forum/getAllPosts");
-        },
-      },
-      {
-        queryKey: ["all-course-names"],
-        queryFn: () => {
-          return axios.get("/api/forum/getAllCourseNames");
-        },
-      },
-      {
-        queryKey: ["all-topic-names"],
-        queryFn: () => {
-          return axios.get("/api/forum/getAllTopicNames");
-        },
-      },
-    ],
-  });
-
-  // Use the useQuery hook to make the API call to get all users
-  const {
-    data: users,
-    isLoading: isLoadingUsers,
-    isFetching: isFetchingUsers,
-    isError: isErrorUsers,
-  } = useQuery(["all-users"], async () => {
-    const res = await axios.get("/api/forum/getAllUsers");
-    const people: { id: string; image: string; value: string }[] = [];
-    res.data.map((e: { name: string; id: string; image: string }) => {
-      const jsonstr = `{"id":"${e.id}","image":"${e.image}","value":"${e.name}"}`;
-      people.push(JSON.parse(jsonstr));
-    });
-    return people;
-  });
-
-  function handleClick(post: postType) {
-    setRedirect(true);
-    setPostData(post);
-  }
-
-  const handleCloseModal = () => {
-    setOpenedFilter(false);
-  };
-  const handleCloseSubmitModal = () => {
-    setPostCourseFilter(postCourseFilterStagger);
-    setPostTypeFilter(postTypeFilterStagger);
-    setOpenedFilter(false);
-  };
-
-  const mutation = useMutation<
-    Response,
-    AxiosError,
-    {
-      userId: string;
-      title: string;
-      message: string;
-      courseName: string;
-      postType: string;
-    },
-    () => void
-  >({
-    mutationFn: async (newPost) => {
-      const res = await axios.post("/api/forum/addPost", newPost);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["all-posts"]);
-      form.values.title = "";
-      form.values.courseName = courseName;
-      form.values.postType = "Content";
-      setOpenedPosting(false);
-      setMessage("");
-    },
-  });
+  const [filteredPostType, setFilteredPostType] = useState<"All" | PostType>(
+    "All"
+  );
 
   const form = useForm({
     initialValues: {
       title: "",
       courseName: courseName,
-      postType: "Content",
+      postType: PostType.Content,
     },
     validate: {
       title: (value) => value.trim().length === 0,
     },
   });
 
+  const [
+    { data: posts, status: statusPosts },
+    { data: courses, status: statusCourses },
+    { data: topics, status: statusTopics },
+    { data: users, status: statusUsers },
+  ] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-posts"],
+        queryFn: () => axios.get<PostFullType[]>("/api/forum/getAllPosts"),
+      },
+      {
+        queryKey: ["all-course-names"],
+        queryFn: () =>
+          axios.get<CourseNamesType[]>("/api/forum/getAllCourseNames"),
+      },
+      {
+        queryKey: ["all-topic-names"],
+        queryFn: () => axios.get<Topic[]>("/api/forum/getAllTopicNames"),
+      },
+      {
+        queryKey: ["all-users"],
+        queryFn: () => axios.get<User[]>("/api/forum/getAllUsers"),
+      },
+    ],
+  });
+
+  const mutation = useMutation({
+    mutationFn: (newPost: {
+      title: string;
+      message: string;
+      courseName: string;
+      postType: "All" | PostType;
+    }) => axios.post("/api/forum/addPost", newPost),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-posts"]);
+      form.reset();
+      setOpenedPosting(false);
+      setMessage("");
+    },
+  });
+
+  const [slicedPosts, setSlicedPosts] = useState<PostFullType[]>(
+    posts?.data.filter((post) => post.courseName === courseName) ?? []
+  );
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+
+    const filteredPosts =
+      posts?.data.filter(
+        (post) =>
+          post.courseName === filteredCourseName &&
+          (filteredPostType === "All" || post.postType === filteredPostType)
+      ) ?? [];
+
+    setSlicedPosts(filteredPosts.slice(startIndex, endIndex));
+    setTotalPages(Math.ceil(filteredPosts.length / postsPerPage));
+  }, [posts, filteredCourseName, filteredPostType, currentPage, postsPerPage]);
+
   if (
-    posts.isLoading ||
-    posts.isFetching ||
-    !posts ||
-    courses.isLoading ||
-    courses.isFetching ||
-    !courses ||
-    topics.isLoading ||
-    topics.isFetching ||
-    !topics ||
-    isLoadingUsers ||
-    isFetchingUsers ||
-    !users
-  )
+    statusPosts === "error" ||
+    statusCourses === "error" ||
+    statusTopics === "error" ||
+    statusUsers === "error"
+  ) {
+    return <div>Something went wrong!</div>;
+  }
+
+  if (!posts || !courses || !topics || !users) {
     return (
-      <Center className="h-screen">
+      <Center className="h-[calc(100vh-180px)]">
         <Loader />
       </Center>
     );
-  if (posts.isError || courses.isError || topics.isError || isErrorUsers)
-    return <div>Something went wrong!</div>;
-
-  const indexOfLastPost = currentPage * Number(postsPerPage);
-  const indexOfFirstPost = indexOfLastPost - Number(postsPerPage);
-  let filteredCoursePosts: string;
-  let filteredTypePosts;
-
-  // console.log(posts.data.data);
-  // console.log(courses.data.data);
-  // console.log(topics.data.data);
-
-  //filter by Course
-  for (let i = 0; i < courses.data.data.length; i++) {
-    if (postCourseFilter === courses.data.data[i].courseName) {
-      filteredCoursePosts = courses.data.data[i].courseName;
-    } else {
-      // console.log(courses.data.data[i].courseName);
-    }
   }
 
-  filteredTypePosts = posts.data.data.filter(
-    (course: { courseName: string }) =>
-      course.courseName === filteredCoursePosts
-  );
-
-  //filter by Topic
-
-  //filter by PostType
-
-  postTypeFilter === "All"
-    ? (filteredTypePosts = posts.data.data)
-    : postTypeFilter === "Content"
-    ? (filteredTypePosts = posts.data.data.filter(
-        (post: { postType: string }) => post.postType === "Content"
-      ))
-    : postTypeFilter === "Quiz"
-    ? (filteredTypePosts = posts.data.data.filter(
-        (post: { postType: string }) => post.postType === "Quiz"
-      ))
-    : (filteredTypePosts = posts.data.data.filter(
-        (post: { postType: string }) => post.postType === "Misc"
-      ));
-
-  const currentPosts = filteredTypePosts.slice(
-    indexOfFirstPost,
-    indexOfLastPost
-  );
-  const nPages = Math.ceil(filteredTypePosts.length / Number(postsPerPage));
-
-  //store all courses in array for filter purposes
-  const coursesArr = [
-    { value: courseName, label: courseName, group: "Current Course" },
-  ];
-  courses.data.data.map((course: { courseName: string }) => {
-    if (course.courseName != courseName) {
-      coursesArr.push({
+  const coursesArr = courses.data
+    .map((course) => {
+      return {
         value: course.courseName,
         label: course.courseName,
-        group: "Other Courses",
-      });
-    }
-  });
-
-  console.log(posts);
+        group:
+          courseName === course.courseName ? "Current Course" : "Other Courses",
+      };
+    })
+    .sort((a, b) => {
+      return a.group === "Current Course"
+        ? -1
+        : b.group === "Current Course"
+        ? 1
+        : 0;
+    });
 
   return (
     <>
@@ -256,14 +189,20 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
         <ForumPost
           postId={postData?.postId as string}
           setRedirect={setRedirect}
-          users={users}
+          users={users.data.map((user) => {
+            return {
+              id: user.id,
+              image: user.image,
+              value: user.name,
+            };
+          })}
         />
       ) : (
         <>
           <Title align="center">Discussion Forum</Title>
           <Container size="md">
             <Modal
-              size={"50vw"}
+              size="80vw"
               transition="fade"
               transitionDuration={600}
               transitionTimingFunction="ease"
@@ -272,7 +211,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
               opened={openedPosting}
               onClose={() => {
                 setOpenedPosting(false);
-                setMessage("");
               }}
               title="Post a Forum Thread"
               styles={(theme) => ({
@@ -287,17 +225,16 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 onSubmit={(e) => {
                   e.preventDefault();
                   mutation.mutate({
-                    userId: session?.data?.user?.id as string,
                     title: form.values.title,
                     message: message,
-                    courseName: form.values.courseName,
+                    courseName: form.values.courseName as string,
                     postType: form.values.postType,
                   });
                 }}
               >
                 <TextInput
                   label="Title"
-                  placeholder="Title"
+                  placeholder="Discussion Title"
                   name="title"
                   variant="filled"
                   required
@@ -324,7 +261,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                     {...form.getInputProps("course")}
                   />
                 </SimpleGrid>
-                <Text size={"sm"} weight={500}>
+                <Text size="sm" weight={500}>
                   Message
                 </Text>
                 <Editor
@@ -333,80 +270,55 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   onChange={setMessage}
                 />
                 <Group position="center" mt="xl">
-                  <Button type="submit" size="md" className={classes.control}>
-                    Send message
+                  <Button type="submit" size="md" variant="light" fullWidth>
+                    Submit Discussion
                   </Button>
                 </Group>
               </form>
             </Modal>
             <Modal
+              size="md"
+              overlayOpacity={0.3}
               transition="fade"
               transitionDuration={600}
               transitionTimingFunction="ease"
               centered
               overflow="inside"
               opened={openedFilter}
-              onClose={() => handleCloseSubmitModal()}
+              onClose={() => {
+                setOpenedFilter(false);
+              }}
               title="Filter Options"
             >
-              <Group position="apart" mb={"sm"}>
+              <Group position="apart" mb="sm">
                 <Text>Course</Text>
                 <Select
-                  value={postCourseFilterStagger}
+                  value={filteredCourseName}
                   data={coursesArr}
-                  onChange={setPostCourseFilterStagger}
+                  onChange={setFilteredCourseName}
                   dropdownPosition="bottom"
                   size="sm"
-                  styles={() => ({
-                    root: {
-                      width: 150,
-                    },
-                  })}
                 />
               </Group>
-              <Group position="apart" mb={"sm"}>
+              <Group position="apart" mb="sm">
                 <Text>Type of Forum Thread</Text>
                 <Select
-                  value={postTypeFilterStagger}
+                  value={filteredPostType}
                   data={["All", "Content", "Quiz", "Misc"]}
-                  onChange={setPostTypeFilterStagger}
+                  onChange={(value: "All" | PostType) =>
+                    setFilteredPostType(value)
+                  }
                   dropdownPosition="bottom"
                   size="sm"
-                  styles={() => ({
-                    root: {
-                      width: 150,
-                    },
-                  })}
                 />
               </Group>
-              <Group position="apart" mt={"xl"}>
-                <Button
-                  variant={theme.colorScheme === "dark" ? "filled" : "outline"}
-                  onClick={() => handleCloseModal()}
-                  className={classes.control}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => handleCloseSubmitModal()}
-                  className={classes.control}
-                >
-                  Ok
-                </Button>
-              </Group>
             </Modal>
-            <Group position="apart" mb={"md"}>
-              <Button
-                onClick={() => setOpenedPosting(true)}
-                className={classes.control}
-              >
-                Post a Thread
+            <Group position="apart" mb="md">
+              <Button onClick={() => setOpenedPosting(true)}>
+                + New Thread
               </Button>
-              <Button
-                onClick={() => setOpenedFilter(true)}
-                className={classes.control}
-              >
-                Filter Options
+              <Button onClick={() => setOpenedFilter(true)}>
+                Filter Posts
               </Button>
             </Group>
 
@@ -417,23 +329,20 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                   <th>Comments</th>
                   <th>Likes</th>
                   <th>Author</th>
-                  <th>Type</th>
+                  <th>Categories</th>
                 </tr>
               </thead>
               <tbody>
-                {currentPosts.map((post: postType) => (
+                {slicedPosts.map((post) => (
                   <tr key={post?.postId}>
                     <td>
                       <Anchor
                         onClick={() => {
-                          handleClick(post);
-                          form.values.title = "";
-                          form.values.courseName = courseName;
-                          form.values.postType = "Content";
-                          setMessage("");
+                          setRedirect(true);
+                          setPostData(post);
                         }}
                       >
-                        <Text size={"lg"}>{post?.title}</Text>
+                        <Text size="lg">{post?.title}</Text>
                       </Anchor>
                       <Group>
                         <Text>
@@ -452,7 +361,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         </Text>
                         <Divider orientation="vertical" />
 
-                        <Text size={"sm"} color={"cyan.7"}>
+                        <Text size="sm" color="dimmed">
                           {DateDiffCalc(post?.createdAt as Date)}
                         </Text>
                       </Group>
@@ -463,7 +372,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                       <Group>
                         <Avatar
                           src={
-                            users.find((user) => user.id === post?.userId)
+                            users.data.find((user) => user.id === post?.userId)
                               ?.image
                           }
                           alt={post?.userId}
@@ -472,24 +381,27 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         />
                         <Text size="sm">
                           {
-                            users.find((user) => user.id === post?.userId)
-                              ?.value
+                            users.data.find((user) => user.id === post?.userId)
+                              ?.name
                           }
                         </Text>
                       </Group>
                     </td>
                     <td>
-                      <PostTypeBadge postType={post?.postType} />
+                      <Stack align="flex-start">
+                        <CourseTypeBadge course={post?.course} />
+                        <PostTypeBadge postType={post?.postType} />
+                      </Stack>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
-            <Group position="center" mt={"md"}>
+            <Group position="center" mt="md">
               <Pagination
                 page={currentPage}
                 onChange={setCurrentPage}
-                total={nPages}
+                total={totalPages}
                 size="md"
                 styles={(theme) => ({
                   item: {
@@ -509,10 +421,13 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                 })}
               />
               <Select
-                value={postsPerPage}
-                onChange={setPostsPerPage}
-                data={["5", "10", "15", "20"]}
-                size="sm"
+                value={postsPerPage.toString()}
+                onChange={(value) => {
+                  setPostsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+                data={["1", "5", "10", "15", "20"]}
+                size="xs"
                 styles={() => ({
                   root: {
                     width: 63,
@@ -525,33 +440,6 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       )}
     </>
   );
-};
-
-const useStyles = createStyles((theme) => ({
-  control: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.variant({
-            variant: "light",
-            color: theme.primaryColor,
-          }).background
-        : theme.fn.variant({
-            variant: "filled",
-            color: theme.primaryColor,
-          }).background,
-    color:
-      theme.colorScheme === "dark"
-        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
-            .color
-        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .color,
-  },
-}));
-
-export const useGetFetchQuery = (key: QueryKey) => {
-  const queryClient = useQueryClient();
-
-  return queryClient.getQueryData(key);
 };
 
 export default CourseDiscussion;
