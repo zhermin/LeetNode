@@ -21,155 +21,61 @@ The adaptive learning software tool has great potential for the following:
 
 ## Tech Stack (Reference: T3-Stack)
 
-### Frontend
+### Source Code
 
-- NextJS (ReactJS)
-- Tailwind CSS
-- Mantine Component Library
+The code for the LeetNode website can be found in this repo in the folder `/leetnode` or at this [link](https://github.com/zhermin/LeetNode/tree/main/leetnode).
 
-### Backend
+For the recommender microservice, the source code is currently found in a separate repo [here](https://github.com/MysticaLee/recommender-deployment/) (by Jasmine).
 
-- TypeScript
-- Routing, REST API, etc.: NextJS
-- React Query
-- Zod
+### Stack Overview
 
-### Database
+![LeetNode Tech Stack](leetnode/public/docs/techstack.png)
 
-- Relational DB: MySQL
-- ORM: Prisma
+The technologies listed below are follow the order of the diagram above from top to bottom, left to right, except for the ones used for the recommender service.
 
-### Authentication
+#### General
 
-- NextAuth
+- NextJS: "Full-Stack" Framework
+- TypeScript: Programming Language
 
-### Recommender Microservice
+#### Frontend
 
-- Machine Learning: pyBKT
-- FastAPI
-- Docker
+- ReactJS: Frontend Framework
+- Tailwind CSS: Inline Styling
+- Mantine Component Library: React UI Components
 
-### Hosting
+#### Backend
 
-- Web: Vercel
-- Database: PlanetScale
-- Media: Cloudinary
-- Recommender Microservice: Heroku
-- Recommender Pickle Models: Firebase
+- NextAuth: Authentication and Authorization
+- Prisma ORM: Abstration from SQL with Database
+- MySQL: Relational Database
+- React Query: Cache Fetched Data
+- Zod: Type Validator
 
-### Miscellaneous
+#### Hosting
 
-- Schema Design: Mermaid & Draw.io
-- UI/UX Design: Figma
-- Project Management: Notion
+- Vercel: Website
+- PlanetScale: MySQL Database
+- Cloudinary: Media
+
+#### Recommender Microservice
+
+- pyBKT: Machine Learning Model
+- FastAPI: Endpoints for ML Model
+- Docker: Containerize the FastAPI Service
+- Heroku: Hosts the Service
+- Redis: Performance Boosts
+- Firebase: Storage of ML Models in Pickle Format
+
+#### Miscellaneous
+
+- Mermaid & Draw.io: Schema Design
+- Figma: UI/UX Design
+- Notion: Project Management
 
 ## Schema Design (Made with Mermaid)
 
-```mermaid
-erDiagram
-  Account }|--|| User : has
-  Session }|--|| User : has
-  User ||--o{ Post : writes
-  Post ||--o{ PostMedia : has
-  User ||--|{ Mastery : has
-  User ||--o{ Attempt : attempts
-  User ||--|{ UserCourseQuestion : has
-  Mastery }|--|| Topic : in
-  Attempt }o--|| Question : answers
-  Attempt }|--|| Answer : chooses
-  Question ||--|{ Answer : has
-  Question ||--o{ QuestionMedia : has
-  QuestionWithAddedTime }|--|| Question : is
-  UserCourseQuestion ||--|{ QuestionWithAddedTime : has
-  UserCourseQuestion }|--|| Course : has
-  Course }|--|{ Topic : has
-  Topic ||--|{ Question : has
-
-  User {
-    string id PK
-    string nusnetId
-    string name
-    string email
-    datetime emailVerified
-    string image
-    Role role
-  }
-  Attempt {
-    string attemptId PK
-    string userId FK
-    int questionId FK
-    int attemptOption FK
-    bool isCorrect
-    datetime submittedAt
-    int attemptSeconds
-  }
-  Course {
-    string courseSlug PK
-    string courseName
-    string courseDescription
-    string courseImage
-    Level courseLevel
-    CourseType type
-    string moduleCode
-    string moduleTitle
-    int week
-    int studio
-    string slide
-    string video
-    string markdown
-  }
-  UserCourseQuestion {
-    string userId FK
-    string courseSlug FK
-    int courseCompletion
-  }
-  Mastery {
-    string userId FK
-    string topicSlug FK
-    float masteryLevel
-  }
-  Topic {
-    string topicSlug PK
-    string topicName
-    Level topicLevel
-  }
-  QuestionWithAddedTime {
-    int questionId FK
-    string userId FK
-    string courseSlug FK
-    datetime addedTime
-  }
-  Question {
-    int questionId PK
-    int variationId
-    string topicSlug
-    string questionContent
-    QuestionDifficulty questionDifficulty
-  }
-  QuestionMedia {
-    int questionId FK
-    string questionMediaURL FK
-  }
-  Answer {
-    int questionId FK
-    int optionNumber FK
-    string answerContent
-    bool isCorrect
-  }
-  Post {
-    string postId PK
-    string userId FK
-    string title
-    string message
-    int likes
-    datetime createdAt
-    datetime updatedAt
-  }
-  PostMedia {
-    string postId FK
-    string postMediaURL FK
-  }
-```
+![LeetNode ERD](leetnode/public/docs/leetnode-erd.png)
 
 ## UI/UX Design
 
@@ -178,6 +84,6 @@ erDiagram
 ## The Team
 
 - [Zac Zher Min](https://www.linkedin.com/in/tamzhermin/)
-- [Mingzhe](#)
-- [Jasmine](#)
-- [Angelina](#)
+- [Mingzhe](https://www.linkedin.com/in/mingzhe-wang/)
+- [Jasmine](https://www.linkedin.com/in/lxyj/)
+- [Angelina](https://www.linkedin.com/in/angelina-grace/)
