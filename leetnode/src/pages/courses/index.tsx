@@ -1,6 +1,5 @@
 import axios from "axios";
 import Link from "next/link";
-import toast from "react-hot-toast";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -20,14 +19,7 @@ import {
   Title,
 } from "@mantine/core";
 import { Course, CourseMedia, CourseType, Level, Topic } from "@prisma/client";
-import {
-  dehydrate,
-  QueryCache,
-  QueryClient,
-  useQuery,
-} from "@tanstack/react-query";
-
-import { getAllCoursesData } from "../api/course";
+import { useQuery } from "@tanstack/react-query";
 
 export type CourseWithMediaAndTopicType = Course & {
   courseMedia: CourseMedia[];
@@ -134,18 +126,10 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 export default function CoursesPage() {
   const { classes } = useStyles();
 
-  const { data: courses } = useQuery<CourseWithMediaAndTopicType[]>({
+  const { data: courses } = useQuery({
     queryKey: ["all-courses"],
-    queryFn: async () => {
-      try {
-        const { data } = await axios.get("/api/course");
-        return data;
-      } catch (error) {
-        console.error(error);
-        throw new Error("Failed to refetch all courses from API");
-      }
-    },
-    useErrorBoundary: true,
+    queryFn: async () =>
+      axios.get<CourseWithMediaAndTopicType[]>("/api/course"),
   });
 
   if (!courses) {
@@ -183,7 +167,7 @@ export default function CoursesPage() {
           ability to tackle examinations.
         </Text>
         <CarouselWrapper>
-          {courses
+          {courses.data
             .filter((course) => course.type === CourseType.Quiz)
             .map((course) => (
               <Carousel.Slide key={course.courseSlug}>
@@ -213,7 +197,7 @@ export default function CoursesPage() {
           important to master.
         </Text>
         <CarouselWrapper>
-          {courses
+          {courses.data
             .filter(
               (course) =>
                 course.courseLevel === Level.Foundational &&
@@ -246,7 +230,7 @@ export default function CoursesPage() {
           and are the next step in your journey.
         </Text>
         <CarouselWrapper>
-          {courses
+          {courses.data
             .filter(
               (course) =>
                 course.courseLevel === Level.Intermediate &&
@@ -280,7 +264,7 @@ export default function CoursesPage() {
           and will challenge you to the fullest extent.
         </Text>
         <CarouselWrapper>
-          {courses
+          {courses.data
             .filter(
               (course) =>
                 course.courseLevel === Level.Advanced &&
@@ -308,48 +292,6 @@ export default function CoursesPage() {
       <Footer />
     </>
   );
-}
-
-export async function getStaticProps() {
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Something went wrong: ${error.message}`);
-        }
-      },
-    }),
-  });
-
-  await queryClient.fetchQuery<CourseWithMediaAndTopicType[]>(
-    ["all-courses"],
-    async () => {
-      try {
-        const data = await getAllCoursesData();
-        return data;
-      } catch (error) {
-        console.error(error);
-        throw new Error(
-          "Failed to fetch all courses directly from the database"
-        );
-      }
-    }
-  );
-
-  const courses = queryClient.getQueryData<CourseWithMediaAndTopicType[]>([
-    "all-courses",
-  ]);
-  console.log(
-    typeof courses === "object"
-      ? "PREFETCHED ALL COURSES"
-      : "FAILED TO PREFETCH"
-  );
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-    },
-  };
 }
 
 const useStyles = createStyles((theme) => ({
