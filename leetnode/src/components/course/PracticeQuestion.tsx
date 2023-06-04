@@ -61,9 +61,7 @@ export default function PracticeQuestion() {
             };
           };
         }
-      >(
-        `/api/questions/questionsWithAddedTime?courseSlug=${currentCourseSlug}`
-      ),
+      >(`/api/question/questionsWithAddedTime?courseSlug=${currentCourseSlug}`),
   });
 
   const useSubmitAnswer = () => {
@@ -85,7 +83,7 @@ export default function PracticeQuestion() {
         };
       }) => {
         return axios.post(
-          `/api/questions/submitAnswer?qatId=${query.qatId}&courseSlug=${query.courseSlug}`,
+          `/api/question/submitAnswer?qatId=${query.qatId}&courseSlug=${query.courseSlug}`,
           body
         );
       },
@@ -122,16 +120,16 @@ export default function PracticeQuestion() {
   const { submitAnswer, submitAnswerStatus } = useSubmitAnswer();
 
   // For checking if first question attempted
-  const { data: userInfo } = useQuery<UserData>(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
+  const { data: userInfo } = useQuery<UserData>({
+    queryKey: ["userInfo", session?.data?.user?.id],
+    queryFn: async () => {
       const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { enabled: !!session?.data?.user?.id }
-  );
+    enabled: !!session?.data?.user?.id,
+  });
 
   const queryClient = useQueryClient();
 

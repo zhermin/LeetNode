@@ -25,6 +25,7 @@ import {
   createStyles,
   Group,
   Indicator,
+  Loader,
   Paper,
   RingProgress,
   ScrollArea,
@@ -43,6 +44,7 @@ import {
   IconMoodSad,
   IconMoodSmile,
 } from "@tabler/icons";
+import { useQueries } from "@tanstack/react-query";
 
 import DateDiffCalc from "../course/DateDiffCalc";
 
@@ -58,13 +60,7 @@ ChartJS.register(
 
 ChartJS.defaults.font.size = 16;
 
-const Users = ({
-  users,
-  topics,
-}: {
-  users: UsersWithMasteriesAndAttemptsType;
-  topics: Topic[];
-}) => {
+const Users = () => {
   const { classes } = useStyles();
   const [active, setActive] = useState("");
   const [userData, setUserData] = useState<UsersWithMasteriesAndAttemptsType>(
@@ -75,41 +71,53 @@ const Users = ({
   const [checkedHelp, setCheckedHelp] = useState(false);
   const [notif, setNotif] = useState(false);
 
+  const [{ data: users }, { data: topics }] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-users-data"],
+        queryFn: () =>
+          axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+      },
+      {
+        queryKey: ["all-topics"],
+        queryFn: () => axios.get<Topic[]>("/api/topic"),
+      },
+    ],
+  });
+
   useEffect(() => {
-    setUserData(
-      users.filter((user: { id: string }) => {
-        return user.id == active;
-      })
-    );
+    if (users) {
+      setUserData(
+        users.data.filter((user: { id: string }) => {
+          return user.id == active;
+        })
+      );
+    }
   }, [users, active]);
 
-  console.log(userData);
-  console.log(masteryData);
+  if (!users || !topics) {
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
+  }
 
-  const students = users.slice();
+  const students = users.data;
 
   {
     sort === "Last Active (Newest)"
       ? students.sort((a, b) => {
-          if (a.lastActive && b.lastActive) {
-            return b.lastActive.getTime() - a.lastActive.getTime();
-          }
-          // Handle null values, for example, by placing them at the end of the sorted array
-          return a.lastActive ? -1 : b.lastActive ? 1 : 0;
+          return b.lastActive > a.lastActive ? 1 : -1;
         })
       : sort === "Last Active (Oldest)"
       ? students.sort((a, b) => {
-          if (a.lastActive && b.lastActive) {
-            return a.lastActive.getTime() - b.lastActive.getTime();
-          }
-          // Handle null values, for example, by placing them at the end of the sorted array
-          return a.lastActive ? 1 : b.lastActive ? -1 : 0;
+          return a.lastActive > b.lastActive ? 1 : -1;
         })
-      : students;
+      : students.sort((a, b) => {
+          return a.name.localeCompare(b.name);
+        });
   }
-
-  console.log(sort);
-  console.log(students);
 
   let filteredStudents: UsersWithMasteriesAndAttemptsType = [];
 
@@ -120,7 +128,6 @@ const Users = ({
   });
 
   const numStudentsWithTopicPing = studentsWithTopicPing.length;
-  console.log(numStudentsWithTopicPing);
 
   if (checkedHelp) {
     filteredStudents = studentsWithTopicPing;
@@ -129,14 +136,13 @@ const Users = ({
   }
 
   const labelTopics: string[] = [];
-  topics
+  topics.data
     .sort((a: { topicSlug: string }, b: { topicSlug: string }) =>
       a.topicSlug.localeCompare(b.topicSlug)
     )
     .forEach((topic: { topicName: string }) =>
       labelTopics.push(topic.topicName)
     );
-  console.log(labelTopics);
 
   const allData = [];
   for (let i = 0; i < labelTopics.length; ++i) {
@@ -153,10 +159,7 @@ const Users = ({
   const sortedLabels = allData.map((e) => e.label);
   const sortedData = allData.map((e) => e.data);
 
-  console.log(sortedLabels); // ["B", "A", "D", "C"]
-  console.log(sortedData); // [1, 3, 5, 10]
-
-  //look into componentMount if this still has multiple renders in production
+  // Look into componentMount if this still has multiple renders in production
   if (numStudentsWithTopicPing > 0 && !notif) {
     toast(
       `You have ${numStudentsWithTopicPing} student${
@@ -166,16 +169,15 @@ const Users = ({
     );
     setNotif(true);
   }
-  console.log(topics);
-  console.log(users);
 
+  // TODO: Change .then to async/await
   const handleClick = (data: {
     userId: string;
     topicSlug: string;
     newPing: boolean;
   }) => {
     axios
-      .post("/api/prof/updatePing", data)
+      .post("/api/admin/updatePing", data)
       .then()
       .catch((err) => {
         console.log(err);
@@ -184,10 +186,10 @@ const Users = ({
 
   const topicAvgMasteryLevels: { topic: string; avgMasteryLevel: number }[] =
     [];
-  topics.map((topic) => {
+  topics.data.map((topic) => {
     let totalMasteryLevel = 0;
     let count = 0;
-    users.map((user) => {
+    users.data.map((user) => {
       const mastery = user.masteries.find(
         (mastery: Mastery) => mastery.topicSlug === topic.topicSlug
       );
@@ -220,14 +222,11 @@ const Users = ({
     if (topicAvgMastery && topicAvgMastery.avgMasteryLevel !== 0) {
       if (mastery.masteryLevel - topicAvgMastery.avgMasteryLevel > 0) {
         counter++;
-        console.log(counter);
       } else if (mastery.masteryLevel - topicAvgMastery.avgMasteryLevel < 0) {
         counter--;
-        console.log(counter);
       }
     }
   });
-  console.log(counter);
 
   return (
     <ScrollArea>
@@ -369,13 +368,15 @@ const Users = ({
                             Overall correct %
                           </Text>
                           <Text weight={700} size="xl">
-                            {(
-                              (item.attempts.filter(
-                                (attempt) => attempt.isCorrect === true
-                              ).length /
-                                item.attempts.length) *
-                              100
-                            ).toFixed(2)}
+                            {item.attempts.length
+                              ? (
+                                  (item.attempts.filter(
+                                    (attempt) => attempt.isCorrect === true
+                                  ).length /
+                                    item.attempts.length) *
+                                  100
+                                ).toFixed(2)
+                              : 0}
                             %
                           </Text>
                         </div>
@@ -402,11 +403,11 @@ const Users = ({
                           </Text>
                           {counter > 0 ? (
                             <Text weight={700} size="xl">
-                              Better than average
+                              Above Average
                             </Text>
                           ) : counter < 0 ? (
                             <Text weight={700} size="xl">
-                              Worse than average
+                              Below Average
                             </Text>
                           ) : (
                             <Text weight={700} size="xl">
@@ -427,8 +428,8 @@ const Users = ({
                         {
                           label: "Mastery Level",
                           data: sortedData,
-                          backgroundColor: "rgba(0, 128, 128, 1)",
-                          borderColor: "rgba(0, 128, 128, 1)",
+                          backgroundColor: "rgba(0, 128, 128, 0.75)",
+                          borderColor: "rgba(0, 128, 128, 0.75)",
                           borderWidth: 1,
                           barPercentage: 0.8,
                           categoryPercentage: 0.7,
@@ -477,7 +478,7 @@ const Users = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {topics.map((t) => (
+                      {topics.data.map((t) => (
                         <tr key={t.topicSlug}>
                           <td>
                             <Anchor<"a">

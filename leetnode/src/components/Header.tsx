@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { User } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface UserData extends User {
+export interface UserData extends User {
   attempts: { [timestamp: string]: number };
 }
 
@@ -19,16 +19,16 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery<UserData>(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
+  } = useQuery<UserData>({
+    queryKey: ["userInfo", session?.data?.user?.id],
+    queryFn: async () => {
       const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { enabled: !!session?.data?.user?.id }
-  );
+    enabled: !!session?.data?.user?.id,
+  });
 
   const { mutate: updateActive } = useMutation(
     async (variables: {
@@ -143,7 +143,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     const updateLastActive = async () => {
       if (!!session?.data?.user?.id) {
         try {
-          const { data } = await axios.post("/api/prof/updateLastActive", {
+          const { data } = await axios.post("/api/admin/updateLastActive", {
             id: session?.data?.user?.id as string,
           });
           console.log("Last Active Updated @", new Date(data.lastActive));

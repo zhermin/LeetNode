@@ -1,4 +1,3 @@
-import axios from "axios";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -11,14 +10,11 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import { RoleBadge } from "@/components/misc/Badges";
 import LeetNodeNavbar from "@/components/Navbar";
-import { AllQuestionsType } from "@/types/question-types";
 import {
   AppShell,
   Box,
-  Center,
   createStyles,
   Group,
-  Loader,
   Navbar,
   ScrollArea,
   Text,
@@ -29,9 +25,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import {
   Attempt,
   Course,
-  CourseMedia,
   Mastery,
-  Post,
   Question,
   QuestionWithAddedTime,
   Topic,
@@ -45,19 +39,11 @@ import {
   IconPuzzle,
   IconUsers,
 } from "@tabler/icons";
-import { QueryKey, useQueries, useQueryClient } from "@tanstack/react-query";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
   attempts: Attempt[];
   masteries: Mastery[];
 })[];
-
-export type CoursesInfoType = Course & {
-  topics: Topic[];
-  posts: Post[];
-  attempts: Attempt;
-  courseMedia: CourseMedia[];
-};
 
 export type AttemptsInfoType = (Attempt & {
   user: User;
@@ -86,66 +72,6 @@ export default function AdminPage() {
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const [sidebarOpened, setSidebarOpened] = useState(!mobile);
   useMemo(() => setSidebarOpened(!mobile), [mobile]);
-
-  // Use useQueries to fetch all data
-  const [
-    { data: usersData, isError: isErrorUsersData },
-    { data: topics, isError: isErrorTopics },
-    { data: courses, isError: isErrorCourses },
-    { data: attempts, isError: isErrorAttempts },
-    { data: questions, isError: isErrorQuestions },
-  ] = useQueries({
-    queries: [
-      {
-        queryKey: ["all-users-data"],
-        queryFn: () =>
-          axios.get<UsersWithMasteriesAndAttemptsType>(
-            "/api/prof/getAllUsersData"
-          ),
-      },
-      {
-        queryKey: ["all-topics"],
-        queryFn: () => axios.get<Topic[]>("/api/prof/getAllTopics"),
-      },
-      {
-        queryKey: ["all-courses"],
-        queryFn: () => axios.get<CoursesInfoType[]>("/api/prof/getAllCourses"),
-      },
-      {
-        queryKey: ["all-attempts"],
-        queryFn: () => axios.get<AttemptsInfoType>("/api/prof/getAllAttempts"),
-      },
-      {
-        queryKey: ["all-questions"],
-        queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
-      },
-    ],
-  });
-
-  if (
-    isErrorUsersData ||
-    isErrorTopics ||
-    isErrorCourses ||
-    isErrorAttempts ||
-    isErrorQuestions
-  ) {
-    return (
-      <Center className="h-screen">
-        <Text>Error fetching data</Text>
-      </Center>
-    );
-  }
-
-  // Only check if data is undefined, checking isFetching causes infinite fetching
-  if (!usersData || !topics || !courses || !attempts || !questions) {
-    return (
-      <Center className="h-screen">
-        <Loader />
-      </Center>
-    );
-  }
-
-  console.log(usersData);
 
   return (
     <>
@@ -223,23 +149,15 @@ export default function AdminPage() {
       >
         <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
           {active === "Overview" ? (
-            <Overview
-              users={usersData.data}
-              courses={courses.data}
-              attempts={attempts.data}
-            />
+            <Overview />
           ) : active === "Questions" ? (
             <QuestionViewer />
           ) : active === "Courses" ? (
-            <Courses
-              users={usersData.data}
-              attempts={attempts.data}
-              questions={questions.data}
-            />
+            <Courses />
           ) : active === "Users" ? (
-            <Users users={usersData.data} topics={topics.data} />
+            <Users />
           ) : active === "Settings" ? (
-            <Settings users={usersData.data} topics={topics.data} />
+            <Settings />
           ) : (
             <></>
           )}
@@ -248,12 +166,6 @@ export default function AdminPage() {
     </>
   );
 }
-
-export const useGetFetchQuery = (key: QueryKey) => {
-  const queryClient = useQueryClient();
-
-  return queryClient.getQueryData(key);
-};
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef("icon");

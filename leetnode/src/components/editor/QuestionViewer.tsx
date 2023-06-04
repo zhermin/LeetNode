@@ -35,7 +35,7 @@ export default function QuestionViewer() {
 
   const { data: questions } = useQuery({
     queryKey: ["all-questions"],
-    queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
+    queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
   });
 
   if (!questions) {

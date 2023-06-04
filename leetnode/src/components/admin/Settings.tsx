@@ -10,11 +10,13 @@ import {
   Affix,
   Avatar,
   Button,
+  Center,
   Checkbox,
   Container,
   createStyles,
   Divider,
   Group,
+  Loader,
   Modal,
   MultiSelect,
   SegmentedControl,
@@ -26,14 +28,9 @@ import {
 } from "@mantine/core";
 import { Frequency, Role, Topic } from "@prisma/client";
 import { IconClick, IconEdit, IconTrash } from "@tabler/icons";
+import { useQueries } from "@tanstack/react-query";
 
-const Settings = ({
-  users,
-  topics,
-}: {
-  users: UsersWithMasteriesAndAttemptsType;
-  topics: Topic[];
-}) => {
+const Settings = () => {
   const [selectedAttemptsResetChecked, setSelectedAttemptsResetChecked] =
     useState(false);
   const [selfEmailFreq, setSelfEmailFreq] = useState<string | null>(null);
@@ -64,14 +61,36 @@ const Settings = ({
 
   const { classes } = useStyles();
 
-  const transformedTopics = topics.map(({ topicSlug, topicName }) => ({
+  const [{ data: users }, { data: topics }] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-users-data"],
+        queryFn: () =>
+          axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+      },
+      {
+        queryKey: ["all-topics"],
+        queryFn: () => axios.get<Topic[]>("/api/topic"),
+      },
+    ],
+  });
+
+  if (!users || !topics) {
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
+  }
+
+  const transformedTopics = topics.data.map(({ topicSlug, topicName }) => ({
     value: topicSlug,
     label: topicName,
   }));
 
   if (selfEmailFreq === null) {
     setSelfEmailFreq(
-      users.find((user) => user.id === session?.data?.user?.id)
+      users.data.find((user) => user.id === session?.data?.user?.id)
         ?.emailFrequency as string
     );
   }
@@ -93,15 +112,10 @@ const Settings = ({
     setEditOpened(true);
   };
 
-  console.log(toEditId);
-  console.log(toEditName);
-  console.log(editField);
-  console.log(selfEmailFreq);
-
   // TODO: Change .then to async/await
   const handleSubmitChanges = () => {
     axios
-      .post("/api/settings/updateEmailFreq", {
+      .post("/api/admin/settings/updateEmailFreq", {
         id: session?.data?.user?.id,
         emailFreq: selfEmailFreq,
       })
@@ -110,13 +124,13 @@ const Settings = ({
 
     if (allAttemptsReset) {
       axios
-        .get("/api/settings/resetAllAttempts")
+        .get("/api/admin/settings/resetAllAttempts")
         .then((response) => console.log(response.data))
         .catch((error) => console.error(error));
     }
     if (selectedAttemptsResetChecked && topicReset.length > 0) {
       axios
-        .post("/api/settings/resetSelectedAttempts", {
+        .post("/api/admin/settings/resetSelectedAttempts", {
           topics: topicReset,
         })
         .then((response) => console.log(response.data))
@@ -125,7 +139,7 @@ const Settings = ({
 
     if (editField.length > 0) {
       axios
-        .post("/api/settings/resetUserDetails", {
+        .post("/api/admin/settings/resetUserDetails", {
           editField: editField,
         })
         .then((response) => console.log(response.data))
@@ -133,7 +147,7 @@ const Settings = ({
     }
     if (deleteUser.length > 0) {
       axios
-        .post("/api/settings/deleteUser", {
+        .post("/api/admin/settings/deleteUser", {
           deleteUser: deleteUser,
         })
         .then((response) => console.log(response.data))
@@ -145,7 +159,7 @@ const Settings = ({
 
   const totalUsersPerPage = 5;
 
-  const adminSlides = users
+  const adminSlides = users.data
     .filter((user) => user.role === Role.SUPERUSER || user.role === Role.ADMIN)
     .reduce((slides: UsersWithMasteriesAndAttemptsType[], user, index) => {
       const slideIndex = Math.floor(index / totalUsersPerPage);
@@ -183,7 +197,7 @@ const Settings = ({
       </Carousel.Slide>
     ));
 
-  const userSlides = users
+  const userSlides = users.data
     .filter((user) => user.role === Role.USER)
     .reduce((slides: UsersWithMasteriesAndAttemptsType[], user, index) => {
       const slideIndex = Math.floor(index / totalUsersPerPage);
@@ -263,10 +277,7 @@ const Settings = ({
         zIndex={201}
         centered
       >
-        <Group position="apart">
-          <Button onClick={() => setConfirmPopup(false)} color="red">
-            No
-          </Button>
+        <Group grow>
           <Button
             onClick={() => {
               handleSubmitChanges();
@@ -274,7 +285,10 @@ const Settings = ({
             }}
             color="green"
           >
-            Yes
+            Confirm
+          </Button>
+          <Button onClick={() => setConfirmPopup(false)} color="red">
+            Cancel
           </Button>
         </Group>
       </Modal>

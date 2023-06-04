@@ -19,7 +19,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { Course, CourseType, Level } from "@prisma/client";
+import { Course, CourseMedia, CourseType, Level, Topic } from "@prisma/client";
 import {
   dehydrate,
   QueryCache,
@@ -27,13 +27,12 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 
-import { getAllCoursesData } from "../api/courses";
+import { getAllCoursesData } from "../api/course";
 
-type allCoursesType = (Course & {
-  topics: {
-    topicSlug: string;
-  }[];
-})[];
+export type CourseWithMediaAndTopicType = Course & {
+  courseMedia: CourseMedia[];
+  topics: Topic[];
+};
 
 interface BadgeCardProps {
   slug: string;
@@ -135,19 +134,19 @@ function CarouselWrapper({ children }: { children: React.ReactNode }) {
 export default function CoursesPage() {
   const { classes } = useStyles();
 
-  const { data: courses } = useQuery<allCoursesType>(
-    ["all-courses"],
-    async () => {
+  const { data: courses } = useQuery<CourseWithMediaAndTopicType[]>({
+    queryKey: ["all-courses"],
+    queryFn: async () => {
       try {
-        const { data } = await axios.get(`/api/courses`);
+        const { data } = await axios.get("/api/course");
         return data;
       } catch (error) {
         console.error(error);
         throw new Error("Failed to refetch all courses from API");
       }
     },
-    { useErrorBoundary: true }
-  );
+    useErrorBoundary: true,
+  });
 
   if (!courses) {
     return (
@@ -322,17 +321,24 @@ export async function getStaticProps() {
     }),
   });
 
-  await queryClient.fetchQuery<allCoursesType>(["all-courses"], async () => {
-    try {
-      const data = await getAllCoursesData();
-      return data;
-    } catch (error) {
-      console.error(error);
-      throw new Error("Failed to fetch all courses directly from the database");
+  await queryClient.fetchQuery<CourseWithMediaAndTopicType[]>(
+    ["all-courses"],
+    async () => {
+      try {
+        const data = await getAllCoursesData();
+        return data;
+      } catch (error) {
+        console.error(error);
+        throw new Error(
+          "Failed to fetch all courses directly from the database"
+        );
+      }
     }
-  });
+  );
 
-  const courses = queryClient.getQueryData<allCoursesType>(["all-courses"]);
+  const courses = queryClient.getQueryData<CourseWithMediaAndTopicType[]>([
+    "all-courses",
+  ]);
   console.log(
     typeof courses === "object"
       ? "PREFETCHED ALL COURSES"

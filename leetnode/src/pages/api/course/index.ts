@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@/server/db/client";
 
 export async function getAllCoursesData() {
   return await prisma.course.findMany({
     include: {
-      topics: {
-        select: { topicSlug: true },
-      },
+      topics: true,
+      courseMedia: true,
     },
     orderBy: [
       {

@@ -30,9 +30,12 @@ export default function Overall() {
     data: allUsers,
     isLoading,
     isError,
-  } = useQuery<User[]>(["challenge"], async () => {
-    const res = await axios.get("/api/user/getAllUsersPoints");
-    return res.data;
+  } = useQuery<User[]>({
+    queryKey: ["challenge"],
+    queryFn: async () => {
+      const res = await axios.get("/api/user/getAllUsersPoints");
+      return res.data;
+    },
   });
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 
 import LeetNodeFooter from "@/components/Footer";
-import LeetNodeHeader from "@/components/Header";
+import LeetNodeHeader, { UserData } from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
 import {
   AppShell,
@@ -49,16 +49,16 @@ export default function User() {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
+  } = useQuery<UserData>({
+    queryKey: ["userInfo", session?.data?.user?.id],
+    queryFn: async () => {
       const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { enabled: !!session?.data?.user?.id }
-  );
+    enabled: !!session?.data?.user?.id,
+  });
 
   const links = tabs.map((item) => (
     <a

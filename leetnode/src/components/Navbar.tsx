@@ -35,6 +35,7 @@ import {
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
+import { UserData } from "./Header";
 import { RoleBadge } from "./misc/Badges";
 
 const HEADER_HEIGHT = 80;
@@ -83,16 +84,16 @@ export default function Navbar({
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
+  } = useQuery<UserData>({
+    queryKey: ["userInfo", session?.data?.user?.id],
+    queryFn: async () => {
       const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { enabled: !!session?.data?.user?.id }
-  );
+    enabled: !!session?.data?.user?.id,
+  });
 
   return (
     <Header className={classes.header} height={HEADER_HEIGHT}>

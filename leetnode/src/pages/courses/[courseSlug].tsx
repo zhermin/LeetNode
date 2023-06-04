@@ -53,7 +53,7 @@ import {
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
-import { getCourseDetails } from "../api/courses/[courseSlug]";
+import { getCourseDetails } from "../api/course/[courseSlug]";
 
 export type CourseInfoType = {
   topics: (Topic & {
@@ -96,7 +96,7 @@ export default function CourseMainPage({
   const { data: course } = useQuery({
     queryKey: ["course", currentCourseSlug],
     queryFn: () =>
-      axios.get<CourseInfoType>(`/api/courses/${currentCourseSlug}`),
+      axios.get<CourseInfoType>(`/api/course/${currentCourseSlug}`),
   });
 
   if (!course) {
@@ -145,6 +145,7 @@ export default function CourseMainPage({
       )
   );
 
+  // TODO: Fix these nasty regex hacks (and in other places as well)
   // Check if courseDetails.video/courseDetails.markdown contains an iframe tag
   const hasIframeVideo = /<iframe.*?>/.test(courseDetails.video as string);
 

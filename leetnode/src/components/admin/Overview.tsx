@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -12,15 +13,15 @@ import { Bar } from "react-chartjs-2";
 
 import {
   AttemptsInfoType,
-  CoursesInfoType,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
+import { CourseWithMediaAndTopicType } from "@/pages/courses";
 import {
-  Box,
   Center,
   Container,
-  Grid,
+  Flex,
   Group,
+  Loader,
   Paper,
   Text,
   Title,
@@ -31,6 +32,7 @@ import {
   IconUserMinus,
   IconUserPlus,
 } from "@tabler/icons";
+import { useQueries } from "@tanstack/react-query";
 
 ChartJS.register(
   CategoryScale,
@@ -44,390 +46,219 @@ ChartJS.register(
 
 ChartJS.defaults.font.size = 16;
 
-const Overview = ({
-  users,
-  courses,
-  attempts,
-}: {
-  users: UsersWithMasteriesAndAttemptsType;
-  courses: CoursesInfoType[];
-  attempts: AttemptsInfoType;
-}) => {
-  console.log(attempts);
-
-  const students = users.slice();
-
-  const studentsWithTopicPing = students.filter((student) => {
-    return student.masteries.some(
-      (mastery: { topicPing: boolean }) => mastery.topicPing === true
-    );
+const Overview = () => {
+  const [{ data: users }, { data: courses }, { data: attempts }] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-users-data"],
+        queryFn: () =>
+          axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+      },
+      {
+        queryKey: ["all-courses"],
+        queryFn: () => axios.get<CourseWithMediaAndTopicType[]>("/api/course"),
+      },
+      {
+        queryKey: ["all-attempts"],
+        queryFn: () => axios.get<AttemptsInfoType>("/api/attempt/admin"),
+      },
+    ],
   });
 
-  const numStudentsWithTopicPing = studentsWithTopicPing.length;
-  console.log(students);
+  if (!users || !courses || !attempts) {
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
+  }
 
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-  const attemptsWithinPastWeek = attempts.filter(
-    (attempt) => new Date(attempt.submittedAt) > oneWeekAgo
+  // Students flagged for more assistance
+  const studentsWithTopicPing = users.data.filter((student) =>
+    student.masteries.some((mastery) => mastery.topicPing)
   );
+  const numStudentsWithTopicPing = studentsWithTopicPing.length;
 
-  const topicSlugCounts = attemptsWithinPastWeek.reduce((counts, attempt) => {
+  // Best and worst students based on mastery average
+  const studentMasteryAverages = users.data
+    .map((student) => {
+      const masteryLevel = student.masteries.reduce(
+        (total, mastery) => total + mastery.masteryLevel,
+        0
+      );
+      const masteryAverage = masteryLevel / student.masteries.length || 0;
+      return { name: student.name, masteryAverage };
+    })
+    .filter((student) => student.masteryAverage > 0)
+    .sort((a, b) => b.masteryAverage - a.masteryAverage);
+
+  // Sorted array of all topics based on all attempts by topic
+  const topicAttempts = attempts.data.reduce((counts, attempt) => {
     const topicSlug = attempt.questionWithAddedTime.question.topicSlug;
-    if (topicSlug in counts) {
-      counts[topicSlug]++;
+    const key = counts[topicSlug];
+    if (key) {
+      key.correctCount += attempt.isCorrect ? 1 : 0;
+      key.totalCount++;
     } else {
-      counts[topicSlug] = 1;
+      counts[topicSlug] = {
+        topicName: attempt.questionWithAddedTime.question.topic.topicName,
+        correctCount: attempt.isCorrect ? 1 : 0,
+        totalCount: 1,
+      };
     }
     return counts;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { topicName: string; correctCount: number; totalCount: number }>);
 
-  const mostCommonTopicSlug = Object.entries(topicSlugCounts).reduce(
-    (mostCommon, current) => {
-      return current[1] > mostCommon[1] ? current : mostCommon;
-    },
-    ["", 0]
-  )[0];
-
-  console.log(mostCommonTopicSlug);
-  let mostCommonTopicName: string | undefined = "";
-  if (mostCommonTopicSlug !== "") {
-    mostCommonTopicName = courses
-      .find((c) =>
-        c.topics.some((topic) => topic.topicSlug === mostCommonTopicSlug)
-      )
-      ?.topics.find(
-        (topic) => topic.topicSlug === mostCommonTopicSlug
-      )?.topicName;
-  }
-
-  console.log(mostCommonTopicName);
-
-  let bestStudent = "";
-  let worstStudent = "";
-  let bestMasteryLevel = -1;
-  let worstMasteryLevel = 1;
-
-  for (const student of students) {
-    const masteryLevel = student.masteries.reduce(
-      (total, mastery) => total + mastery.masteryLevel,
-      0
-    );
-    const masteryAverage = masteryLevel / student.masteries.length;
-
-    if (masteryAverage > bestMasteryLevel) {
-      bestMasteryLevel = masteryAverage;
-      bestStudent = student.name;
-    }
-
-    if (masteryAverage < worstMasteryLevel && masteryAverage > 0) {
-      worstMasteryLevel = masteryAverage;
-      worstStudent = student.name;
-    }
-  }
-
-  // Step 1: Create a map to store the number of correct attempts and total attempts for each course.
-  const courseCounts = new Map();
-  courses.forEach((course) =>
-    courseCounts.set(course.courseSlug, { correctCount: 0, totalCount: 0 })
+  const topicAttemptsArray = Object.entries(topicAttempts).map(
+    ([topicSlug, { topicName, correctCount, totalCount }]) => ({
+      topicSlug,
+      topicName,
+      correctCount,
+      totalCount,
+    })
   );
 
-  // Step 2: Iterate over the attempts array, and for each attempt, check if it is correct and belongs to a topic in a course. If it does, increment the count for that course in the map.
-  attempts.forEach((attempt) => {
-    const { isCorrect, questionWithAddedTime } = attempt;
-    if (isCorrect) {
-      const topic = questionWithAddedTime.question.topicSlug;
-      const course = courses.find((c) =>
-        c.topics.some((t) => t.topicSlug === topic)
-      );
-      if (course) {
-        const courseData = courseCounts.get(course.courseSlug);
-        courseCounts.set(course.courseSlug, {
-          correctCount: courseData.correctCount + 1,
-          totalCount: courseData.totalCount + 1,
-        });
-      }
-    } else {
-      const topic = questionWithAddedTime.question.topicSlug;
-      const course = courses.find((c) =>
-        c.topics.some((t) => t.topicSlug === topic)
-      );
-      if (course) {
-        const courseData = courseCounts.get(course.courseSlug);
-        courseCounts.set(course.courseSlug, {
-          ...courseData,
-          totalCount: courseData.totalCount + 1,
-        });
-      }
-    }
-  });
-
-  // Step 3: Sort the map by the count of correct attempts in descending order.
-  const sortedCounts = [...courseCounts.entries()].sort(
-    (a, b) => b[1].correctCount - a[1].correctCount
-  );
-
-  // Step 4: Extract the top 3 and bottom 3 courses from the sorted map, and calculate the average percentage of correct attempts for each course.
-  const top3Courses = sortedCounts
-    .slice(0, 3)
-    .map(([slug, { correctCount, totalCount }]) => {
-      const course = courses.find((c) => c.courseSlug === slug);
-      const averagePercentage =
-        totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * 100);
-      return { ...course, averagePercentage };
-    });
-  const bottom3Courses = sortedCounts
-    .slice(-3)
-    .map(([slug, { correctCount, totalCount }]) => {
-      const course = courses.find((c) => c.courseSlug === slug);
-      const averagePercentage =
-        totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * 100);
-      return { ...course, averagePercentage };
-    });
-
-  console.log("Top 3 courses:", top3Courses);
-  console.log("Bottom 3 courses:", bottom3Courses);
-
-  const top3CoursesLabel: (string | undefined)[] = [];
-  top3Courses.map((course) => {
-    // if (course.averagePercentage > 0) {
-    top3CoursesLabel.push(course.courseName);
-    // }
-  });
-
-  const bottom3CoursesLabel: (string | undefined)[] = [];
-  bottom3Courses.map((course) => {
-    // if (course.averagePercentage > 0) {
-    bottom3CoursesLabel.push(course.courseName);
-    // }
-  });
-
-  const top3CoursesData: (number | undefined)[] = [];
-  top3Courses.map((course) => {
-    if (course.averagePercentage > 0) {
-      top3CoursesData.push(course.averagePercentage / 100);
-    } else {
-      top3CoursesData.push(0);
-    }
-  });
-
-  const bottom3CoursesData: (number | undefined)[] = [];
-  bottom3Courses.map((course) => {
-    if (course.averagePercentage > 0) {
-      bottom3CoursesData.push(course.averagePercentage / 100);
-    } else {
-      bottom3CoursesData.push(0);
-    }
-  });
-
-  console.log(top3CoursesData);
-  console.log(bottom3CoursesData);
   return (
     <Container size="xl">
-      <Grid gutter="lg">
-        <Grid.Col span={4}>
-          <Center>
-            <Group>
-              <Paper withBorder radius="md" p="lg" w={250}>
-                <Group py={"md"}>
-                  {numStudentsWithTopicPing === 0 ? (
-                    <IconUserCheck />
-                  ) : (
-                    <IconUserExclamation />
-                  )}
-                  <div>
-                    <Text
-                      color="dimmed"
-                      size="xs"
-                      transform="uppercase"
-                      weight={700}
-                    >
-                      Students to help
-                    </Text>
-                    <Text weight={700} size="md">
-                      {numStudentsWithTopicPing}/{users.length}
-                    </Text>
-                  </div>
-                </Group>
-              </Paper>
+      <Flex justify="center" align="center" gap="xl" wrap="wrap" mt="xl">
+        <Center>
+          <Paper radius="md" p="lg" w={250} bg="rgba(252,211,77,0.5)">
+            <Group py="md">
+              {numStudentsWithTopicPing === 0 ? (
+                <IconUserCheck />
+              ) : (
+                <IconUserExclamation />
+              )}
+              <div>
+                <Text size="xs" transform="uppercase" weight={700}>
+                  Students to help
+                </Text>
+                <Text weight={700} size="md">
+                  {numStudentsWithTopicPing}/{users.data.length}
+                </Text>
+              </div>
             </Group>
-          </Center>
-        </Grid.Col>
-        {/* <Grid.Col span={3}>
-          <Center>
-            <Paper withBorder radius="md" p="md">
-              <Group py={"md"} position="apart">
-                <IconHandClick />
-                <div>
-                  <Text
-                    color="dimmed"
-                    size="xs"
-                    transform="uppercase"
-                    weight={700}
-                  >
-                    Recent top topic
-                  </Text>
-                  <Text weight={700} size="md">
-                    {mostCommonTopicName === ""
-                      ? "No topic!"
-                      : mostCommonTopicName}
-                  </Text>
-                </div>
-              </Group>
-            </Paper>
-          </Center>
-        </Grid.Col> */}
-        <Grid.Col span={4}>
-          <Center>
-            <Paper withBorder radius="md" p="lg" w={250}>
-              <Group py={"md"}>
-                <IconUserPlus />
-                <div>
-                  <Text
-                    color="dimmed"
-                    size="xs"
-                    transform="uppercase"
-                    weight={700}
-                  >
-                    Best Student
-                  </Text>
-                  <Text weight={700} size="md">
-                    {bestStudent}
-                  </Text>
-                </div>
-              </Group>
-            </Paper>
-          </Center>
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <Center>
-            <Paper withBorder radius="md" p="lg" w={250}>
-              <Group py={"md"}>
-                <IconUserMinus />
-                <div>
-                  <Text
-                    color="dimmed"
-                    size="xs"
-                    transform="uppercase"
-                    weight={700}
-                  >
-                    Weakest Student
-                  </Text>
-                  <Text weight={700} size="md">
-                    {worstStudent}
-                  </Text>
-                </div>
-              </Group>
-            </Paper>
-          </Center>
-        </Grid.Col>
-      </Grid>
-      {/* <Grid grow gutter="lg">
-        <Grid.Col className={classes.gridChart} span={4}> */}
-      <Container mt={"xl"}>
-        <Title size={"h2"}>Top 3 Courses</Title>
-        <Box my={"md"}>
-          <Bar
-            datasetIdKey="id"
-            data={{
-              labels: top3CoursesLabel,
-              datasets: [
-                {
-                  label: "Top 3 Courses",
-                  data: top3CoursesData,
-                  backgroundColor: "rgb(119, 221, 119)",
-                  borderColor: "rgb(119, 221, 119)",
-                  borderWidth: 1,
-                  barPercentage: 0.8,
-                  categoryPercentage: 0.7,
-                },
-              ],
-            }}
-            options={{
-              maintainAspectRatio: false,
-              indexAxis: "y",
-              scales: {
-                y: {
-                  ticks: {
-                    autoSkip: false,
-                  },
-                  grid: {
-                    display: false,
-                  },
-                },
-                x: {
-                  max: 1,
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function (value) {
-                      return value.toLocaleString(undefined, {
-                        style: "percent",
-                      });
-                    },
-                  },
-                },
+          </Paper>
+        </Center>
+        <Center>
+          <Paper radius="md" p="lg" w={250} bg="rgba(110,231,183,0.5)">
+            <Group py="md">
+              <IconUserPlus />
+              <div>
+                <Text size="xs" transform="uppercase" weight={700}>
+                  Best Student
+                </Text>
+                <Text weight={700} size="md">
+                  {studentMasteryAverages[0]?.name}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+        </Center>
+        <Center>
+          <Paper radius="md" p="lg" w={250} bg="rgba(248,113,113,0.5)">
+            <Group py="md">
+              <IconUserMinus />
+              <div>
+                <Text size="xs" transform="uppercase" weight={700}>
+                  Weakest Student
+                </Text>
+                <Text weight={700} size="md">
+                  {
+                    studentMasteryAverages[studentMasteryAverages.length - 1]
+                      ?.name
+                  }
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+        </Center>
+      </Flex>
+
+      <Container my="xl" py="xl">
+        <Title size="h2">% Correct by Topic</Title>
+        <Bar
+          datasetIdKey="id"
+          data={{
+            labels: topicAttemptsArray.map((topic) => topic.topicName),
+            datasets: [
+              {
+                label: " % Correct",
+                data: topicAttemptsArray
+                  .sort(
+                    (a, b) =>
+                      b.correctCount / b.totalCount -
+                        a.correctCount / a.totalCount || 0
+                  )
+                  .map((topic) => topic.correctCount / topic.totalCount),
               },
-              plugins: {
-                legend: {
+            ],
+          }}
+          options={{
+            indexAxis: "y",
+            scales: {
+              y: {
+                ticks: {
+                  autoSkip: false,
+                },
+                grid: {
                   display: false,
                 },
               },
-            }}
-          />
-        </Box>
+              x: {
+                ticks: {
+                  format: {
+                    style: "percent",
+                    maximumSignificantDigits: 3,
+                  },
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+          }}
+        />
       </Container>
-      <Container mt={"xl"}>
-        <Title size={"h2"}>Bottom 3 Courses</Title>
-        <Box my={"md"}>
-          <Bar
-            datasetIdKey="id"
-            data={{
-              labels: bottom3CoursesLabel,
-              datasets: [
-                {
-                  label: "Bottom 3 Courses",
-                  data: bottom3CoursesData,
-                  backgroundColor: "rgb(255, 121, 116)",
-                  borderColor: "rgb(255, 121, 116))",
-                  borderWidth: 1,
-                  barPercentage: 0.8,
-                  categoryPercentage: 0.7,
-                },
-              ],
-            }}
-            options={{
-              maintainAspectRatio: false,
-              indexAxis: "y",
-              scales: {
-                y: {
-                  ticks: {
-                    autoSkip: false,
-                  },
-                  grid: {
-                    display: false,
-                  },
-                },
-                x: {
-                  max: 1,
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function (value) {
-                      return value.toLocaleString(undefined, {
-                        style: "percent",
-                      });
-                    },
-                  },
-                },
+
+      <Container my="xl" py="xl">
+        <Title size="h2"># Attempted by Topic</Title>
+        <Bar
+          datasetIdKey="id"
+          data={{
+            labels: topicAttemptsArray.map((topic) => topic.topicName),
+            datasets: [
+              {
+                label: " # Attempts",
+                data: topicAttemptsArray
+                  .sort((a, b) => b.totalCount - a.totalCount)
+                  .map((topic) => topic.totalCount),
+                backgroundColor: "rgba(119, 221, 119, 0.75)",
+                borderColor: "rgba(119, 221, 119, 0.75)",
               },
-              plugins: {
-                legend: {
+            ],
+          }}
+          options={{
+            indexAxis: "y",
+            scales: {
+              y: {
+                ticks: {
+                  autoSkip: false,
+                },
+                grid: {
                   display: false,
                 },
               },
-            }}
-          />
-        </Box>
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+          }}
+        />
       </Container>
     </Container>
   );

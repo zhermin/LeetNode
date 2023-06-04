@@ -6,7 +6,7 @@ import { Role } from "@prisma/client";
 export default withAuth(function middleware(req) {
   // Redirect if they don't have the allowed role
   if (
-    req.nextUrl.pathname.startsWith("/admin") &&
+    req.nextUrl.pathname.includes("admin") &&
     req.nextauth.token?.role !== Role.SUPERUSER &&
     req.nextauth.token?.role !== Role.ADMIN
   ) {

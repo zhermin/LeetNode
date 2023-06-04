@@ -27,7 +27,7 @@ export default function ShowResults() {
       {
         queryKey: ["course", router.query.courseSlug],
         queryFn: () =>
-          axios.get<CourseInfoType>(`/api/courses/${router.query.courseSlug}`),
+          axios.get<CourseInfoType>(`/api/course/${router.query.courseSlug}`),
       },
     ],
   });
