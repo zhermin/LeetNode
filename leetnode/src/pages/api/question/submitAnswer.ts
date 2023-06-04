@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 
 import { prisma } from "@/server/db/client";
@@ -24,7 +24,7 @@ export default async function handler(
   // 4. Add a new attempt
   // 5. Return the new mastery to fire a custom notification
 
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
 
   try {
     const { qatId, courseSlug } = z
