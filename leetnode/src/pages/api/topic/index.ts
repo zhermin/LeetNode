@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const getAllTopics = await prisma.topic.findMany();
+  const topics = await prisma.topic.findMany();
 
-  res.status(200).json(getAllTopics);
+  res.status(200).json(topics);
 }

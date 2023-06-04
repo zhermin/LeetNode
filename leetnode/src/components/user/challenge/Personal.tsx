@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
 
+import { UserData } from "@/components/Header";
 import {
   Center,
   Group,
@@ -20,10 +21,6 @@ import {
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
-interface UserData extends User {
-  attempts: { [timestamp: string]: number };
-}
-
 export default function Personal() {
   const session = useSession();
 
@@ -31,24 +28,27 @@ export default function Personal() {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery<UserData>(
-    ["userInfo", session?.data?.user?.id],
-    async () => {
+  } = useQuery<UserData>({
+    queryKey: ["userInfo", session?.data?.user?.id],
+    queryFn: async () => {
       const res = await axios.post("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
     },
-    { enabled: !!session?.data?.user?.id }
-  );
+    enabled: !!session?.data?.user?.id,
+  });
 
   const {
     data: allUsers,
     isLoading: allUsersIsLoading,
     isError: allUsersIsError,
-  } = useQuery<User[]>(["challenge"], async () => {
-    const res = await axios.get("/api/user/getAllUsersPoints");
-    return res.data;
+  } = useQuery<User[]>({
+    queryKey: ["challenge"],
+    queryFn: async () => {
+      const res = await axios.get("/api/user/getAllUsersPoints");
+      return res.data;
+    },
   });
 
   if (

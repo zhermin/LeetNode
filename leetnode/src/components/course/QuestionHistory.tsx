@@ -44,7 +44,7 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
             };
           };
         })[]
-      >(`/api/attempts?course=${courseSlug}`),
+      >(`/api/attempt?course=${courseSlug}`),
   });
 
   if (!attempts) {

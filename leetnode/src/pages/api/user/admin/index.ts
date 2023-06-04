@@ -6,14 +6,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const getAllCourses = await prisma.course.findMany({
+  //updates lastActive after each submission
+  const allUsersMasteriesAndAttempts = await prisma.user.findMany({
     include: {
-      topics: true,
-      posts: true,
+      masteries: true,
       attempts: true,
-      courseMedia: true,
     },
   });
 
-  res.status(200).json(getAllCourses);
+  res.status(200).json(allUsersMasteriesAndAttempts);
 }

@@ -3,7 +3,7 @@ import { unstable_getServerSession } from "next-auth";
 
 import { prisma } from "@/server/db/client";
 
-import { authOptions } from "../auth/[...nextauth]";
+import { authOptions } from "../../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,7 +11,7 @@ export default async function handler(
 ) {
   const session = await unstable_getServerSession(req, res, authOptions);
 
-  const getAllAttempts = await prisma.attempt.findMany({
+  const allAttempts = await prisma.attempt.findMany({
     include: {
       user: true,
       questionWithAddedTime: {
@@ -35,5 +35,5 @@ export default async function handler(
     },
   });
 
-  res.status(200).json(getAllAttempts);
+  res.status(200).json(allAttempts);
 }

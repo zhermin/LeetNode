@@ -794,7 +794,7 @@ export default function QuestionEditor({
       queries: [
         {
           queryKey: ["all-questions"],
-          queryFn: () => axios.get<AllQuestionsType>("/api/questions"),
+          queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
         },
         {
           queryKey: ["all-course-names"],
@@ -816,7 +816,7 @@ export default function QuestionEditor({
         newQuestion: Omit<Question, "questionId" | "lastModified"> & {
           baseQuestionId?: string | null;
         }
-      ) => axios.post("/api/questions/add", newQuestion),
+      ) => axios.post("/api/question/admin/add", newQuestion),
       onSuccess: () => {
         queryClient.invalidateQueries(["all-questions"]);
         setQuestionAddOpened(false);
@@ -838,7 +838,7 @@ export default function QuestionEditor({
         > & { newQuestionId?: string | null; newVariationId?: number | null };
       }) =>
         axios.put(
-          `/api/questions/edit?questionId=${questionId}&variationId=${variationId}`,
+          `/api/question/admin/edit?questionId=${questionId}&variationId=${variationId}`,
           editedQuestion
         ),
       onSuccess: () => {
@@ -857,7 +857,7 @@ export default function QuestionEditor({
           variationId: number;
         }) =>
           axios.delete(
-            `/api/questions/delete?questionId=${questionId}&variationId=${variationId}`
+            `/api/question/admin/delete?questionId=${questionId}&variationId=${variationId}`
           ),
         onSuccess: () => {
           queryClient.invalidateQueries(["all-questions"]);

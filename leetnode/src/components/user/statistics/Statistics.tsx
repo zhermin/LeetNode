@@ -18,17 +18,17 @@ export default function Statistics() {
     data: masteryData,
     isLoading,
     isError,
-  } = useQuery(
-    ["stats", period],
-    async () => {
+  } = useQuery({
+    queryKey: ["stats", period],
+    queryFn: async () => {
       const res = await axios.post("/api/user/getMastery", {
         id: session?.data?.user?.id,
         period: period,
       });
       return res?.data;
     },
-    { keepPreviousData: true }
-  );
+    keepPreviousData: true,
+  });
 
   if (!masteryData || isLoading || isError) {
     return (

@@ -16,10 +16,9 @@ import toast from "react-hot-toast";
 
 import {
   AttemptsInfoType,
-  CoursesInfoType,
-  useGetFetchQuery,
   UsersWithMasteriesAndAttemptsType,
 } from "@/pages/admin";
+import { CourseWithMediaAndTopicType } from "@/pages/courses";
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import {
   Accordion,
@@ -32,6 +31,7 @@ import {
   createStyles,
   Divider,
   Group,
+  Loader,
   Modal,
   MultiSelect,
   Paper,
@@ -63,7 +63,7 @@ import {
   IconX,
   IconZoomQuestion,
 } from "@tabler/icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 import VariablesBox from "../editor/VariablesBox";
 import Latex from "../Latex";
@@ -83,39 +83,71 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   loading: () => <p>Loading Editor...</p>,
 });
 
-interface FetchData {
-  data: CoursesInfoType[];
-}
-
-const Courses = ({
-  users,
-  attempts,
-  questions,
-}: {
-  users: UsersWithMasteriesAndAttemptsType;
-  attempts: AttemptsInfoType;
-  questions: AllQuestionsType;
-}) => {
+const Courses = () => {
   const { classes } = useStyles();
   const queryClient = useQueryClient();
   const theme = useMantineTheme();
-  const data: string[] = [];
-
-  const getCourses = useGetFetchQuery(["all-courses"]) as FetchData;
-  const courses: CoursesInfoType[] = getCourses?.data;
 
   const [sort, setSort] = useState("All Courses");
   const [openedDetails, setOpenedDetails] = useState(false);
   const [openedEdit, setOpenedEdit] = useState(false);
-  const [details, setDetails] = useState<CoursesInfoType | null>();
+  const [details, setDetails] = useState<CourseWithMediaAndTopicType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
-  details?.topics.map((topic) => {
-    data.push(topic.topicName);
+
+  const editMutation = useMutation<
+    Response,
+    AxiosError,
+    {
+      courseSlug: string;
+      content: {
+        overview: string;
+        slides: CourseMedia[];
+        video: string;
+        additional: string;
+      };
+    },
+    () => void
+  >({
+    mutationFn: async (editCourse) => {
+      console.log(editCourse);
+      const res = await axios.post("/api/course/editCourse", editCourse);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-courses"]);
+      toast.success("Updated Successfully!");
+    },
   });
 
-  const thisCourse: CoursesInfoType | undefined = courses.find(
-    (course) => course.courseSlug === details?.courseSlug
-  );
+  const [
+    { data: users },
+    { data: courses },
+    { data: attempts },
+    { data: questions },
+  ] = useQueries({
+    queries: [
+      {
+        queryKey: ["all-users-data"],
+        queryFn: () =>
+          axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+      },
+      {
+        queryKey: ["all-courses"],
+        queryFn: () => axios.get<CourseWithMediaAndTopicType[]>("/api/course"),
+      },
+      {
+        queryKey: ["all-attempts"],
+        queryFn: () => axios.get<AttemptsInfoType>("/api/attempt/admin"),
+      },
+      {
+        queryKey: ["all-questions"],
+        queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
+      },
+    ],
+  });
+
+  const thisCourse: CourseWithMediaAndTopicType | undefined =
+    courses?.data.find((course) => course.courseSlug === details?.courseSlug);
 
   const [overviewMessage, setOverviewMessage] = useState(
     thisCourse?.courseDescription as string
@@ -147,16 +179,23 @@ const Courses = ({
     thisCourse?.courseMedia,
   ]);
 
-  console.log("files:", files);
-  console.log("slidesMessage", slidesMessage);
-  console.log("fileDisplay", fileDisplay);
-
-  let filteredCourses;
-  {
-    sort === "All Courses"
-      ? (filteredCourses = courses)
-      : (filteredCourses = courses.filter((c) => c.courseLevel === sort));
+  if (!users || !courses || !attempts || !questions) {
+    return (
+      <Center className="h-screen">
+        <Loader />
+      </Center>
+    );
   }
+
+  const topicData: string[] = [];
+  details?.topics.map((topic) => {
+    topicData.push(topic.topicName);
+  });
+
+  const filteredCourses =
+    sort === "All Courses"
+      ? courses.data
+      : courses.data.filter((c) => c.courseLevel === sort);
 
   const filteredTopics = details?.topics.filter((topic) =>
     multiValue.includes(topic.topicName)
@@ -172,7 +211,7 @@ const Courses = ({
     filteredTopics.forEach((topic) => {
       const masteryLevels: number[] = [];
 
-      users.forEach((user) => {
+      users.data.forEach((user) => {
         const mastery = user.masteries.find(
           (m) => m.topicSlug === topic.topicSlug
         );
@@ -193,30 +232,6 @@ const Courses = ({
     });
   }
 
-  const editMutation = useMutation<
-    Response,
-    AxiosError,
-    {
-      courseSlug: string;
-      content: {
-        overview: string;
-        slides: CourseMedia[];
-        video: string;
-        additional: string;
-      };
-    },
-    () => void
-  >({
-    mutationFn: async (editCourse) => {
-      console.log(editCourse);
-      const res = await axios.post("/api/courses/editCourse", editCourse);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["all-courses"]);
-      toast.success("Updated Successfully!");
-    },
-  });
   const handleFileUpload = async (files: FileWithPath[]): Promise<string[]> => {
     const uploadPromises = files?.map(async (file) => {
       if (
@@ -337,7 +352,7 @@ const Courses = ({
                   {`${
                     Array.from(
                       new Set(
-                        attempts
+                        attempts.data
                           .filter((user) =>
                             details?.topics.some(
                               (topic) =>
@@ -348,7 +363,7 @@ const Courses = ({
                           .map((user) => user.userId)
                       )
                     ).length
-                  }/${users.length}`}
+                  }/${users.data.length}`}
                 </Text>
               </div>
             </Group>
@@ -357,12 +372,12 @@ const Courses = ({
         <MultiSelect
           value={multiValue}
           onChange={setMultiValue}
-          data={data}
+          data={topicData}
           label="Selected Topics"
           placeholder="Pick all the topics that you'd like to show"
           px={"md"}
           py={"md"}
-          defaultValue={data}
+          defaultValue={topicData}
         />
         {avgMasteryLevels.map((topic) => (
           <Paper
@@ -401,7 +416,7 @@ const Courses = ({
               size="lg"
               radius="xl"
             />
-            {questions.filter(
+            {questions.data.filter(
               (q) =>
                 q.questionsWithAddedTime.some(
                   (qt) => qt.courseSlug === details?.courseSlug
@@ -435,7 +450,7 @@ const Courses = ({
                   </Accordion.Control>
                   <Accordion.Panel>
                     <Accordion>
-                      {questions
+                      {questions.data
                         .filter(
                           (question) =>
                             question.questionsWithAddedTime.some(
@@ -469,14 +484,16 @@ const Courses = ({
                                 </Group>
                                 <Text italic fw={500}>
                                   Correct % for This Question:{" "}
-                                  {(question.questionsWithAddedTime.flatMap(
-                                    (q) =>
-                                      q.attempts.filter(
-                                        (attempt) => attempt.isCorrect
-                                      )
-                                  ).length /
-                                    question.questionsWithAddedTime.length) *
-                                    100}
+                                  {(
+                                    (question.questionsWithAddedTime.flatMap(
+                                      (q) =>
+                                        q.attempts.filter(
+                                          (attempt) => attempt.isCorrect
+                                        )
+                                    ).length /
+                                      question.questionsWithAddedTime.length) *
+                                    100
+                                  ).toFixed(2)}
                                   %
                                 </Text>
                               </Accordion.Control>
@@ -655,14 +672,16 @@ const Courses = ({
                                 </Group>
                                 <Text italic fw={500}>
                                   Correct % for This Question:{" "}
-                                  {(question.questionsWithAddedTime.flatMap(
-                                    (q) =>
-                                      q.attempts.filter(
-                                        (attempt) => attempt.isCorrect
-                                      )
-                                  ).length /
-                                    question.questionsWithAddedTime.length) *
-                                    100}
+                                  {(
+                                    (question.questionsWithAddedTime.flatMap(
+                                      (q) =>
+                                        q.attempts.filter(
+                                          (attempt) => attempt.isCorrect
+                                        )
+                                    ).length /
+                                      question.questionsWithAddedTime.length) *
+                                    100
+                                  ).toFixed(2)}
                                   %
                                 </Text>
                               </Accordion.Control>
