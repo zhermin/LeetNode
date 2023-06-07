@@ -133,7 +133,6 @@ export default function Account({ userInfo }: AccountProps) {
             src={userInfo?.image}
             radius={100}
             className="mb-3"
-            imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
           />
         </Center>
         <FileInput

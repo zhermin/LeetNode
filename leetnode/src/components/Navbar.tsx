@@ -116,7 +116,7 @@ export default function Navbar({
         {session.status === "unauthenticated" && (
           <Button
             color="cyan"
-            onClick={() => signIn("google")}
+            onClick={() => signIn()}
             className={classes.control}
           >
             Log In

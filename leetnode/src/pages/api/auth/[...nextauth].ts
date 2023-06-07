@@ -1,4 +1,5 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
+import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
 // Prisma adapter for NextAuth, optional and can be removed
@@ -25,6 +26,27 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+
+    async signIn(request) {
+      const allowedEmails = await prisma.user.findMany({
+        select: {
+          email: true,
+        },
+      });
+      if (!request.user.email) {
+        return false;
+      }
+
+      const isAllowedToSignIn = allowedEmails.some(
+        (allowedEmail) => allowedEmail.email === request.user.email
+      );
+      if (isAllowedToSignIn) {
+        return true;
+      } else {
+        // Return false for default error message or return redirect URL, eg. return '/unauthorized'
+        return false;
+      }
+    },
   },
   // Configure one or more authentication providers
   adapter: PrismaAdapter(prisma),
@@ -32,6 +54,11 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
+    EmailProvider({
+      server: env.EMAIL_SERVER,
+      from: env.EMAIL_FROM,
+      maxAge: 24 * 60 * 60, // How long email links are valid for (default 24h)
     }),
   ],
   pages: {

@@ -31,7 +31,7 @@ For the recommender microservice, the source code is currently found in a separa
 
 ![LeetNode Tech Stack](leetnode/public/docs/techstack.png)
 
-The technologies listed below are follow the order of the diagram above from top to bottom, left to right, except for the ones used for the recommender service.
+The technologies listed below follow the order of the diagram above from top to bottom, left to right, except for the ones used for the recommender service.
 
 #### General
 
@@ -72,6 +72,7 @@ The technologies listed below are follow the order of the diagram above from top
 - Mermaid & Draw.io: Schema Design
 - Figma: UI/UX Design
 - Notion: Project Management
+- GitHub Actions: Cron Jobs for Auto-Sending Email
 
 ## Schema Design (Made with Mermaid)
 

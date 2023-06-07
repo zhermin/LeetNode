@@ -19,6 +19,8 @@ export const serverSchema = z.object({
   HEROKU_API_KEY: z.string(),
   GMAIL: z.string(),
   GMAIL_PASS: z.string(),
+  EMAIL_SERVER: z.string(),
+  EMAIL_FROM: z.string(),
   ACTION_KEY: z.string(),
 });
 

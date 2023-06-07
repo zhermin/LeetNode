@@ -15,7 +15,7 @@ export type QuestionFormFullType = {
   baseQuestionId?: string | null;
   variationId: number;
   title: string;
-  difficulty: QuestionDifficulty;
+  difficulty?: QuestionDifficulty;
   topic: string;
   variables?: QuestionDataType["variables"];
   methods?: QuestionDataType["methods"];

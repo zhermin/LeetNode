@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 
 import { prisma } from "@/server/db/client";
 import { QuestionDataType } from "@/types/question-types";
@@ -13,7 +13,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
 
   // Questions specific to user and course, newest first
   let userCourseQuestionsWithAddedTime =

@@ -16,12 +16,11 @@ import {
   createStyles,
   Group,
   Navbar,
-  ScrollArea,
   Text,
   ThemeIcon,
   UnstyledButton,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import { useMediaQuery, useSessionStorage } from "@mantine/hooks";
 import {
   Attempt,
   Course,
@@ -34,10 +33,10 @@ import {
 import {
   IconAdjustments,
   IconArrowBarLeft,
+  IconBrain,
   IconChartDots,
   IconPresentationAnalytics,
   IconPuzzle,
-  IconUsers,
 } from "@tabler/icons";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
@@ -61,14 +60,17 @@ const tabs = [
   { label: "Overview", icon: IconChartDots },
   { label: "Questions", icon: IconPuzzle },
   { label: "Courses", icon: IconPresentationAnalytics },
-  { label: "Users", icon: IconUsers },
+  { label: "Performance", icon: IconBrain },
   { label: "Settings", icon: IconAdjustments },
 ];
 
 export default function AdminPage() {
   const { theme, classes, cx } = useStyles();
 
-  const [active, setActive] = useState("Overview");
+  const [active, setActive] = useSessionStorage({
+    key: "adminActiveTab",
+    defaultValue: "Overview",
+  });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const [sidebarOpened, setSidebarOpened] = useState(!mobile);
   useMemo(() => setSidebarOpened(!mobile), [mobile]);
@@ -114,6 +116,7 @@ export default function AdminPage() {
                     onClick={(event: { preventDefault: () => void }) => {
                       event.preventDefault();
                       setActive(item.label);
+                      mobile && setSidebarOpened(false);
                     }}
                   >
                     <Box className={classes.controlBox}>
@@ -147,21 +150,21 @@ export default function AdminPage() {
           )
         }
       >
-        <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+        <>
           {active === "Overview" ? (
             <Overview />
           ) : active === "Questions" ? (
             <QuestionViewer />
           ) : active === "Courses" ? (
             <Courses />
-          ) : active === "Users" ? (
+          ) : active === "Performance" ? (
             <Users />
           ) : active === "Settings" ? (
             <Settings />
           ) : (
             <></>
           )}
-        </ScrollArea.Autosize>
+        </>
       </AppShell>
     </>
   );

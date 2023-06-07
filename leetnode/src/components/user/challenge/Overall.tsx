@@ -30,10 +30,10 @@ export default function Overall() {
     data: allUsers,
     isLoading,
     isError,
-  } = useQuery<User[]>({
+  } = useQuery({
     queryKey: ["challenge"],
     queryFn: async () => {
-      const res = await axios.get("/api/user/getAllUsersPoints");
+      const res = await axios.get<User[]>("/api/user/getAllUsersPoints");
       return res.data;
     },
   });
@@ -111,7 +111,6 @@ export default function Overall() {
                       size={26}
                       src={record.image}
                       radius={26}
-                      imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
                     />
                     <Text
                       size="md"

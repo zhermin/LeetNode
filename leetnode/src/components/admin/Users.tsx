@@ -23,6 +23,7 @@ import {
   Checkbox,
   Container,
   createStyles,
+  Flex,
   Group,
   Indicator,
   Loader,
@@ -232,11 +233,11 @@ const Users = () => {
     <ScrollArea>
       <Container size="xl" py="xl">
         <Title order={2} align="center" mb="lg" className={classes.title}>
-          User Details
+          User Performance
         </Title>
-        <Group position="apart" pb="md">
+        <Flex align="center" justify="space-between" pb="md" gap="md" wrap="wrap">
           <Checkbox
-            mb={-50}
+            className="self-end"
             label="All students who need help!"
             checked={checkedHelp}
             onChange={(event) => setCheckedHelp(event.currentTarget.checked)}
@@ -259,7 +260,7 @@ const Users = () => {
             value={sort}
             onChange={setSort}
           />
-        </Group>
+        </Flex>
         <Accordion variant="filled">
           {filteredStudents.map((item) => (
             <Accordion.Item

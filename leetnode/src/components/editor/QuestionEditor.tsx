@@ -5,6 +5,7 @@ import {
   MutableRefObject,
   SetStateAction,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import toast from "react-hot-toast";
@@ -98,6 +99,31 @@ export default function QuestionEditor({
   const [filteredCourses, setFilteredCourses] = useState<CourseNamesType[]>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
+  const [{ data: questions }, { data: courses }, { data: topics }] = useQueries(
+    {
+      queries: [
+        {
+          queryKey: ["all-questions"],
+          queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
+        },
+        {
+          queryKey: ["all-course-names"],
+          queryFn: () =>
+            axios.get<CourseNamesType[]>("/api/forum/getAllCourseNames"),
+        },
+        {
+          queryKey: ["all-topic-names"],
+          queryFn: () => axios.get<Topic[]>("/api/forum/getAllTopicNames"),
+        },
+      ],
+    }
+  );
+
+  const titles = useMemo(() => {
+    const titles = new Set(questions?.data.map((q) => q.questionTitle));
+    return [...titles];
+  }, [questions?.data]);
+
   const form = useForm({
     initialValues: initialValues,
     validateInputOnChange: true,
@@ -107,7 +133,10 @@ export default function QuestionEditor({
           .string()
           .trim()
           .min(5, { message: "Title is too short" })
-          .max(150, { message: "Title is too long" }),
+          .max(150, { message: "Title is too long" })
+          .refine((title) => !titles.includes(title), {
+            message: "Title already exists",
+          }),
         topic: z.string().min(1, { message: "Please pick a topic" }),
         difficulty: z.nativeEnum(QuestionDifficulty, {
           errorMap: () => ({ message: "Please pick a difficulty" }),
@@ -789,26 +818,6 @@ export default function QuestionEditor({
     });
   };
 
-  const [{ data: questions }, { data: courses }, { data: topics }] = useQueries(
-    {
-      queries: [
-        {
-          queryKey: ["all-questions"],
-          queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
-        },
-        {
-          queryKey: ["all-course-names"],
-          queryFn: () =>
-            axios.get<CourseNamesType[]>("/api/forum/getAllCourseNames"),
-        },
-        {
-          queryKey: ["all-topic-names"],
-          queryFn: () => axios.get<Topic[]>("/api/forum/getAllTopicNames"),
-        },
-      ],
-    }
-  );
-
   const useCRUDQuestion = () => {
     const queryClient = useQueryClient();
     const { mutate: addQuestion, status: addQuestionStatus } = useMutation({
@@ -931,7 +940,8 @@ export default function QuestionEditor({
               variationId: questionType === "dynamic" ? 0 : values.variationId,
               topicSlug: values.topic,
               questionTitle: values.title,
-              questionDifficulty: values.difficulty,
+              questionDifficulty:
+                values.difficulty ?? QuestionDifficulty.Medium,
               questionContent: editorHtml.current,
               questionData: {
                 variables: values.variables,
@@ -950,7 +960,8 @@ export default function QuestionEditor({
                   questionType === "dynamic" ? 0 : values.variationId,
                 topicSlug: values.topic,
                 questionTitle: values.title,
-                questionDifficulty: values.difficulty,
+                questionDifficulty:
+                  values.difficulty ?? QuestionDifficulty.Medium,
                 questionContent: editorHtml.current,
                 questionData: {
                   variables: values.variables,
@@ -1077,7 +1088,7 @@ export default function QuestionEditor({
 
       <TextInput
         label="Title"
-        placeholder="Short Description"
+        placeholder="Short Title (Must be unique)"
         name="title"
         mb="lg"
         required
