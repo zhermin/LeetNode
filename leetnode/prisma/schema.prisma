@@ -180,7 +180,7 @@ model Question {
   questionId             Int                     @default(autoincrement())
   variationId            Int                     @default(1)
   topicSlug              String
-  questionTitle          String
+  questionTitle          String                  @unique
   questionDifficulty     QuestionDifficulty
   questionContent        String                  @db.Text
   questionData           Json?

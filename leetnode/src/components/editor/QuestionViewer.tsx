@@ -1,7 +1,7 @@
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { DataTable } from "mantine-datatable";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
@@ -12,7 +12,6 @@ import {
   Container,
   createStyles,
   Modal,
-  MultiSelect,
   Stack,
   TextInput,
   Title,
@@ -39,47 +38,34 @@ export default function QuestionViewer() {
     queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
   });
 
-  const topics = useMemo(() => {
-    const topics = new Set(questions?.data.map((q) => q.topic.topicName));
-    return [...topics];
-  }, [questions?.data]);
-
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(questions?.data.slice(0, PAGE_SIZE));
+  const [totalRecords, setTotalRecords] = useState(questions?.data.length);
 
+  // KIV: Mantine Datatable (v2.0.0^, and their new filters, v2.5.1^) do not work with Mantine v5. We have not updated our Mantine version to v6 yet as it will break @mantine/RTE (our custom fork of the now deprecated editor component). Hence, either change the editor or continue maintaining the custom RTE fork and migrate to v6 for both the fork and the rest of the site.
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 200);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   useEffect(() => {
     if (!questions) return;
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE;
-    setRecords(
-      questions.data
-        .filter((q) => {
-          if (
-            debouncedQuery !== "" &&
-            !q.questionTitle
-              .toLowerCase()
-              .includes(debouncedQuery.trim().toLowerCase())
-          ) {
-            return false;
-          }
+    const filteredRecords = questions.data.filter((q) => {
+      if (
+        debouncedQuery !== "" &&
+        !`${q.questionId} ${q.variationId} ${q.questionDifficulty} ${q.questionTitle} ${q.topic.topicName}`
+          .toLowerCase()
+          .includes(debouncedQuery.trim().toLowerCase())
+      ) {
+        return false;
+      }
 
-          if (
-            selectedTopics.length > 0 &&
-            !selectedTopics.some((topic) => topic === q.topic.topicName)
-          ) {
-            return false;
-          }
-
-          return true;
-        })
-        .slice(from, to)
-    );
-  }, [page, questions, debouncedQuery, selectedTopics]);
+      return true;
+    });
+    setTotalRecords(filteredRecords.length);
+    setRecords(filteredRecords.slice(from, to));
+  }, [page, questions, debouncedQuery]);
 
   return (
     <Container size="lg" py="xl">
@@ -104,10 +90,19 @@ export default function QuestionViewer() {
         + Add New Question
       </Button>
 
+      <TextInput
+        placeholder="Search Question..."
+        icon={<IconSearch size={16} />}
+        value={query}
+        onChange={(e) => {
+          setQuery(e.currentTarget.value);
+          setPage(1);
+        }}
+        mb="xs"
+      />
+
       <DataTable
-        idAccessor={({ questionId, variationId }) =>
-          `${questionId}-${variationId}`
-        }
+        idAccessor="questionTitle"
         height={320}
         withBorder
         highlightOnHover
@@ -166,35 +161,10 @@ export default function QuestionViewer() {
           {
             accessor: "questionTitle",
             title: "Title",
-            // TODO: Filters in Mantine Datatable have a "does not recognize `getControlProps`" warning likely because our Mantine version is not updated to v6 yet due to some breaking changes
-            filter: (
-              <TextInput
-                label="Question Search"
-                placeholder="Search Question Title..."
-                icon={<IconSearch size={16} />}
-                value={query}
-                onChange={(e) => setQuery(e.currentTarget.value)}
-              />
-            ),
-            filtering: query !== "",
           },
           {
             accessor: "topic.topicName",
             title: "Topic",
-            filter: (
-              <MultiSelect
-                label="Topics"
-                description="Filter by all selected Topics"
-                data={topics}
-                value={selectedTopics}
-                placeholder="Search Topics"
-                onChange={setSelectedTopics}
-                icon={<IconSearch size={16} />}
-                clearable
-                searchable
-              />
-            ),
-            filtering: selectedTopics.length > 0,
           },
           {
             accessor: "actions",
@@ -215,7 +185,7 @@ export default function QuestionViewer() {
         records={records}
         page={page}
         onPageChange={setPage}
-        totalRecords={questions?.data.length}
+        totalRecords={totalRecords}
         recordsPerPage={PAGE_SIZE}
         onRowClick={(q) => {
           editorHtml.current = q.questionContent;
@@ -237,8 +207,8 @@ export default function QuestionViewer() {
           editorHtml={editorHtml}
           initialValues={{
             variationId: 0,
-            title: "Given voltage and 3 resistors, find I_3 and I_final",
-            difficulty: QuestionDifficulty.Medium,
+            title: "",
+            difficulty: undefined,
             topic: "",
             variables: [
               {

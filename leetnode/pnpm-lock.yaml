@@ -40,7 +40,7 @@ specifiers:
   eslint-config-next: 13.1.1
   highlight.js: ^11.7.0
   katex: ^0.16.4
-  mantine-datatable: ^2.5.6
+  mantine-datatable: ^2.0.0
   mathjs: ^11.7.0
   next: 13.4.3
   next-auth: ~4.22.1
@@ -93,7 +93,7 @@ dependencies:
   embla-carousel-react: 7.1.0_react@18.2.0
   highlight.js: 11.7.0
   katex: 0.16.4
-  mantine-datatable: 2.5.6_6uguzvy4iidch4ozvytdicn22m
+  mantine-datatable: 2.0.0_6uguzvy4iidch4ozvytdicn22m
   mathjs: 11.7.0
   next: 13.4.3_biqbaboplfbrettd7655fr4n2y
   next-auth: 4.22.1_d3p5al2th6e2b23icmyi25lzsm
@@ -3749,11 +3749,11 @@ packages:
     resolution: {integrity: sha512-oWiDZMcVB1/A487251hEWza1xzgCzl6MXxe9aF24l5Bt9N9UEbqTqKumEfuuLhmlhRZYnc+suVvW4vUs8bwO7Q==}
     dev: false
 
-  /mantine-datatable/2.5.6_6uguzvy4iidch4ozvytdicn22m:
-    resolution: {integrity: sha512-UVTIXs9DHfhQGKTp9OoKjyVrh7i/e0jPBCZaFEBRtriNWsu38gXJlTdhJAaVOuKEoV3xl9JmVGgN166GOODSzA==}
+  /mantine-datatable/2.0.0_6uguzvy4iidch4ozvytdicn22m:
+    resolution: {integrity: sha512-yJPTK+b1pvU1lIhNYRL3wHwWj4/vNJZJ71WpsWVNOLkYAGJHYuc3DvfFhgaNQfMUQyeT882uIw0BKzKc5JV+4A==}
     peerDependencies:
-      '@mantine/core': ^6.0.13
-      '@mantine/hooks': ^6.0.13
+      '@mantine/core': ^6.0.0
+      '@mantine/hooks': ^6.0.0
       react: ^18.2.0
     dependencies:
       '@mantine/core': 5.10.5_63mspeouacpkyd6rtnsb5tmso4
