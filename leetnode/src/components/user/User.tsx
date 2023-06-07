@@ -16,7 +16,7 @@ import {
   ScrollArea,
   Text,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import { useMediaQuery, useSessionStorage } from "@mantine/hooks";
 import {
   IconLogout,
   IconReportAnalytics,
@@ -39,8 +39,10 @@ export default function User() {
   const session = useSession();
 
   const { classes, theme, cx } = useStyles();
-  const [active, setActive] = useState("Account");
-
+  const [active, setActive] = useSessionStorage({
+    key: "dashboardActiveTab",
+    defaultValue: "Account",
+  });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const [sidebarOpened, setSidebarOpened] = useState(!mobile);
   useMemo(() => setSidebarOpened(!mobile), [mobile]);
@@ -69,6 +71,7 @@ export default function User() {
       onClick={(event) => {
         event.preventDefault();
         setActive(item.label);
+        mobile && setSidebarOpened(false);
       }}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />
@@ -120,7 +123,6 @@ export default function User() {
                     src={userInfo?.image}
                     radius={100}
                     className="mb-3"
-                    imageProps={{ referrerPolicy: "no-referrer" }} // Avoid 403 forbidden error when loading google profile pics
                   />
                 </Center>
                 <Center>

@@ -46,6 +46,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { Dropzone, FileWithPath } from "@mantine/dropzone";
+import { useMediaQuery } from "@mantine/hooks";
 import { CourseMedia } from "@prisma/client";
 import {
   IconApps,
@@ -87,6 +88,7 @@ const Courses = () => {
   const { classes } = useStyles();
   const queryClient = useQueryClient();
   const theme = useMantineTheme();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
 
   const [sort, setSort] = useState("All Courses");
   const [openedDetails, setOpenedDetails] = useState(false);
@@ -328,14 +330,150 @@ const Courses = () => {
 
   return (
     <>
+      <Container size="lg" py="xl">
+        <Title order={2} align="center" mb="lg" className={classes.title}>
+          Courses Details
+        </Title>
+        <Center>
+          <SegmentedControl
+            sx={(theme) => ({
+              root: {
+                backgroundColor:
+                  theme.colorScheme === "dark"
+                    ? theme.colors.dark[6]
+                    : theme.white,
+                boxShadow: theme.shadows.md,
+                border: `1px solid ${
+                  theme.colorScheme === "dark"
+                    ? theme.colors.dark[4]
+                    : theme.colors.gray[1]
+                }`,
+              },
+
+              active: {
+                backgroundImage: theme.fn.gradient({
+                  from: "pink",
+                  to: "orange",
+                }),
+              },
+
+              control: {
+                border: "0 !important",
+              },
+
+              labelActive: {
+                color: `${theme.white} !important`,
+              },
+            })}
+            size={mobile ? "xs" : "md"}
+            radius="xl"
+            data={[
+              { value: "All Courses", label: "All Courses" },
+              {
+                value: "Foundational",
+                label: "Foundational",
+              },
+              {
+                value: "Intermediate",
+                label: "Intermediate",
+              },
+              {
+                value: "Advanced",
+                label: "Advanced",
+              },
+            ]}
+            value={sort}
+            onChange={setSort}
+          />
+        </Center>
+        <SimpleGrid
+          cols={3}
+          spacing="xl"
+          mt={30}
+          breakpoints={[{ maxWidth: "md", cols: 1 }]}
+        >
+          {filteredCourses.map((c) => (
+            <Card
+              key={c.courseSlug}
+              shadow="md"
+              radius="md"
+              className={classes.card}
+              p="xl"
+            >
+              {c.courseLevel === "Advanced" ? (
+                <IconSquareNumber3 className="stroke-red-500 dark:stroke-red-700" />
+              ) : c.courseLevel === "Foundational" ? (
+                <IconSquareNumber1 className="stroke-green-500 dark:stroke-green-700" />
+              ) : (
+                <IconSquareNumber2 className="stroke-yellow-500 dark:stroke-yellow-700" />
+              )}
+              <Text
+                size="lg"
+                weight={500}
+                className={classes.cardTitle}
+                mt="md"
+              >
+                {c.courseName}
+              </Text>
+              <TypographyStylesProvider
+                sx={(theme) => ({
+                  color: theme.colors.gray[6],
+                  fontSize: theme.fontSizes.sm,
+                })}
+                mt="sm"
+                mb={70}
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(c.courseDescription, {
+                      ADD_TAGS: ["iframe"],
+                      ADD_ATTR: [
+                        "allow",
+                        "allowfullscreen",
+                        "frameborder",
+                        "scrolling",
+                      ],
+                    }),
+                  }}
+                />
+              </TypographyStylesProvider>
+              <Group className={classes.action}>
+                <Button
+                  radius="xl"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setOpenedEdit(true);
+                    setDetails(c);
+                  }}
+                  className={classes.controlModal}
+                >
+                  Edit
+                </Button>
+                <Button
+                  radius="xl"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setOpenedDetails(true);
+                    setDetails(c);
+                  }}
+                  className={classes.controlModal}
+                >
+                  Details
+                </Button>
+              </Group>
+            </Card>
+          ))}
+        </SimpleGrid>
+      </Container>
+
       <Modal
         opened={openedDetails}
         onClose={() => setOpenedDetails(false)}
         title={details?.courseName}
-        size="70%"
+        size={mobile ? "full" : "70%"}
       >
         <Group px={"md"}>
-          <Paper withBorder radius="md" p="sm" h={100}>
+          <Paper withBorder radius="md" px="sm" py="xs">
             <Group py={"md"}>
               <IconUsers />
 
@@ -734,12 +872,11 @@ const Courses = () => {
         onClose={() => {
           setOpenedEdit(false);
           setOverviewMessage(thisCourse?.courseDescription as string);
-          // setSlidesMessage(thisCourse?.courseMedia as CourseMedia[]);
           setVideoMessage(thisCourse?.video as string);
           setAdditionalMessage(thisCourse?.markdown as string);
         }}
         title={details?.courseName}
-        size="70%"
+        size={mobile ? "full" : "70%"}
       >
         <Center>
           <Text fw={500}>
@@ -876,141 +1013,6 @@ const Courses = () => {
           </>
         </form>
       </Modal>
-      <Container size="lg" py="xl">
-        <Title order={2} align="center" mb="lg" className={classes.title}>
-          Courses Details
-        </Title>
-        <Center>
-          <SegmentedControl
-            sx={(theme) => ({
-              root: {
-                backgroundColor:
-                  theme.colorScheme === "dark"
-                    ? theme.colors.dark[6]
-                    : theme.white,
-                boxShadow: theme.shadows.md,
-                border: `1px solid ${
-                  theme.colorScheme === "dark"
-                    ? theme.colors.dark[4]
-                    : theme.colors.gray[1]
-                }`,
-              },
-
-              active: {
-                backgroundImage: theme.fn.gradient({
-                  from: "pink",
-                  to: "orange",
-                }),
-              },
-
-              control: {
-                border: "0 !important",
-              },
-
-              labelActive: {
-                color: `${theme.white} !important`,
-              },
-            })}
-            size="md"
-            radius="xl"
-            data={[
-              { value: "All Courses", label: "All Courses" },
-              {
-                value: "Foundational",
-                label: "Foundational",
-              },
-              {
-                value: "Intermediate",
-                label: "Intermediate",
-              },
-              {
-                value: "Advanced",
-                label: "Advanced",
-              },
-            ]}
-            value={sort}
-            onChange={setSort}
-          />
-        </Center>
-        <SimpleGrid
-          cols={3}
-          spacing="xl"
-          mt={30}
-          breakpoints={[{ maxWidth: "md", cols: 1 }]}
-        >
-          {filteredCourses.map((c) => (
-            <Card
-              key={c.courseSlug}
-              shadow="md"
-              radius="md"
-              className={classes.card}
-              p="xl"
-            >
-              {c.courseLevel === "Advanced" ? (
-                <IconSquareNumber3 className="stroke-red-500 dark:stroke-red-700" />
-              ) : c.courseLevel === "Foundational" ? (
-                <IconSquareNumber1 className="stroke-green-500 dark:stroke-green-700" />
-              ) : (
-                <IconSquareNumber2 className="stroke-yellow-500 dark:stroke-yellow-700" />
-              )}
-              <Text
-                size="lg"
-                weight={500}
-                className={classes.cardTitle}
-                mt="md"
-              >
-                {c.courseName}
-              </Text>
-              <TypographyStylesProvider
-                sx={(theme) => ({
-                  color: theme.colors.gray[6],
-                  fontSize: theme.fontSizes.sm,
-                })}
-                mt="sm"
-                mb={70}
-              >
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(c.courseDescription, {
-                      ADD_TAGS: ["iframe"],
-                      ADD_ATTR: [
-                        "allow",
-                        "allowfullscreen",
-                        "frameborder",
-                        "scrolling",
-                      ],
-                    }),
-                  }}
-                />
-              </TypographyStylesProvider>
-              <Group className={classes.action}>
-                <Button
-                  radius="xl"
-                  style={{ flex: 1 }}
-                  onClick={() => {
-                    setOpenedEdit(true);
-                    setDetails(c);
-                  }}
-                  className={classes.controlModal}
-                >
-                  Edit
-                </Button>
-                <Button
-                  radius="xl"
-                  style={{ flex: 1 }}
-                  onClick={() => {
-                    setOpenedDetails(true);
-                    setDetails(c);
-                  }}
-                  className={classes.controlModal}
-                >
-                  Details
-                </Button>
-              </Group>
-            </Card>
-          ))}
-        </SimpleGrid>
-      </Container>
     </>
   );
 };
@@ -1052,6 +1054,7 @@ const useStyles = createStyles((theme) => ({
       marginTop: theme.spacing.sm,
     },
   },
+
   action: {
     position: "absolute",
     bottom: theme.spacing.xl,

@@ -88,6 +88,7 @@ export default function Test() {
           icon: "🚀",
         });
         setActive(item.label);
+        mobile && setSidebarOpened(false);
       }}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />

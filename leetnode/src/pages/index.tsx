@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -23,7 +22,7 @@ export default function Home() {
     <>
       <Header />
       <Navbar />
-      <Container className={classes.wrapper} size={1400}>
+      <Container className={classes.wrapper} size={1400} px="xl">
         <Dots
           dotPositions={[
             { left: 0, top: 0 },
@@ -59,16 +58,19 @@ export default function Home() {
             </Text>
           </Container>
           <Box className={classes.controls} mt="xl">
-            <Link href="/courses" passHref>
-              <Button className={classes.control} size="lg">
-                Start Your Journey
-              </Button>
-            </Link>
+            <Button
+              className={classes.control}
+              size="lg"
+              component="a"
+              href="/courses"
+            >
+              Start Your Journey
+            </Button>
           </Box>
         </Box>
       </Container>
-      <Container size={1000} pt="xl" mb={100}>
-        <Grid grow gutter="xl">
+      <Container size={1000} p="xl" mb={100}>
+        <Grid grow>
           <Grid.Col sm={3} pb="lg" className={classes.image}>
             <Image
               src="/bkt-diagram.png"
@@ -79,13 +81,13 @@ export default function Home() {
               className="h-auto w-full"
             />
           </Grid.Col>
-          <Grid.Col sm={1} ml="xl">
+          <Grid.Col sm={1}>
             <Stack justify="flex-start">
               <Title order={3}>The Recommendation Engine</Title>
               <Text size="md" align="left" color="dimmed">
-                LeetNode leverages the Machine Learning algorithm known as
-                Bayesian Knowledge Tracing (BKT) to provide a personalized
-                learning experience.
+                LeetNode leverages the Machine Learning algorithm known as{" "}
+                <em>Bayesian Knowledge Tracing (BKT)</em> to provide a
+                personalized learning experience.
               </Text>
               <Text size="md" align="left" color="dimmed">
                 BKT is a probabilistic model that estimates a student&apos;s
