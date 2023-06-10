@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Courses from "@/components/admin/Courses";
 import Overview from "@/components/admin/Overview";
@@ -72,8 +72,12 @@ export default function AdminPage() {
     defaultValue: "Overview",
   });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
-  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
-  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+  const [sidebarOpened, setSidebarOpened] = useState(false);
+  useMemo(() => {
+    if (mobile !== undefined) {
+      setSidebarOpened(!mobile);
+    }
+  }, [mobile]);
 
   return (
     <>

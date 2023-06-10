@@ -44,8 +44,12 @@ export default function User() {
     defaultValue: "Account",
   });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
-  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
-  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+  const [sidebarOpened, setSidebarOpened] = useState(false);
+  useMemo(() => {
+    if (mobile !== undefined) {
+      setSidebarOpened(!mobile);
+    }
+  }, [mobile]);
 
   const {
     data: userInfo,

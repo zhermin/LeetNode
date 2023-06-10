@@ -77,8 +77,12 @@ export default function CourseMainPage({
 
   // States
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
-  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
-  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+  const [sidebarOpened, setSidebarOpened] = useState(false);
+  useMemo(() => {
+    if (mobile !== undefined) {
+      setSidebarOpened(!mobile);
+    }
+  }, [mobile]);
 
   const [section, setSection] = useState<"learn" | "practice">("learn");
   const [active, setActive] = useState("Overview");

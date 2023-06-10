@@ -105,7 +105,7 @@ export default function Navbar({
               onClick={() => setSidebarOpened((o) => !o)}
               color={theme.colors.gray[6]}
             />
-            <FullLogo />
+            {mobile ? <SmallLogo /> : <FullLogo />}
           </Flex>
         ) : mobile ? (
           <SmallLogo />
