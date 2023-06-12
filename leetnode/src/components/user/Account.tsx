@@ -27,7 +27,7 @@ export default function Account({ userInfo }: AccountProps) {
   const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
   const form = useForm({
     initialValues: {
-      userName: userInfo.nickname ?? "",
+      userName: userInfo.username,
       userNusnetId: userInfo.nusnetId ?? "",
       file: null,
     },
@@ -94,7 +94,7 @@ export default function Account({ userInfo }: AccountProps) {
           form.values.userNusnetId.trim() === ""
             ? null
             : form.values.userNusnetId,
-        nickname:
+        username:
           form.values.userName.trim() === "" ? null : form.values.userName,
         image: imageResponse?.data?.eager?.[0]?.secure_url ?? userInfo.image,
       });
@@ -104,7 +104,7 @@ export default function Account({ userInfo }: AccountProps) {
         queryClient.setQueryData(["userInfo", session?.data?.user?.id], {
           ...userInfo,
           nusnetId: res.data.nusnetId,
-          nickname: res.data.nickname,
+          username: res.data.username,
           image: res.data.image,
         });
       },
@@ -145,8 +145,8 @@ export default function Account({ userInfo }: AccountProps) {
         />
         <TextInput
           className="mt-4"
-          label="Nickname (Visible to everyone)"
-          placeholder="Please select a nickname"
+          label="Username (Visible to everyone)"
+          placeholder="Please select a username"
           name="name"
           variant="filled"
           {...form.getInputProps("userName")}

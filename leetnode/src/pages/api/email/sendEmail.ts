@@ -29,7 +29,7 @@ export default async function handler(
           user: {
             select: {
               nusnetId: true,
-              name: true,
+              username: true,
               email: true,
             },
           },
@@ -113,7 +113,7 @@ export default async function handler(
       const templateString = usersPing.map(
         (student) => `
           Topic name: ${student.topic.topicName}\n
-          Name: ${student.user.name} 
+          Name: ${student.user.username} 
           Matric No.: ${student.user.nusnetId}
           Email: ${student.user.email}\n
           `
@@ -125,7 +125,7 @@ export default async function handler(
           return `
         <tr>
           <td style="border: 1px solid">${student.topic.topicName}</td>
-          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.username}</td>
           <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
           <td style="border: 1px solid; text-align: center">${student.user.email}</td>
         </tr>

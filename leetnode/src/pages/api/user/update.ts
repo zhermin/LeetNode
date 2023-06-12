@@ -17,7 +17,7 @@ export default async function handler(
         },
         data: {
           nusnetId: req.body.nusnetId,
-          nickname: req.body.nickname,
+          username: req.body.username,
           image: req.body.image,
         },
       });
@@ -27,7 +27,7 @@ export default async function handler(
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === "P2002") {
           res.status(400).json({
-            message: "Nickname or NUSNET ID already exists",
+            message: "Username or NUSNET ID already exists",
           });
         }
       } else {

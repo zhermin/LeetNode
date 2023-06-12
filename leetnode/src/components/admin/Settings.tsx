@@ -52,7 +52,7 @@ const Settings = () => {
   const [editField, setEditField] = useState<
     {
       id: string;
-      name: string;
+      username: string;
       resetAllAttempts: boolean;
       resetTopicAttempts: string[];
     }[]
@@ -101,12 +101,12 @@ const Settings = () => {
       : setDeleteUser((previousUsers) => [...previousUsers, userId]);
   };
 
-  const handleEdit = ({ id, name }: { id: string; name: string }) => {
+  const handleEdit = ({ id, username }: { id: string; username: string }) => {
     setToEditId(id);
     if (editField.some((u) => u.id === id)) {
-      setToEditName(editField.find((u) => u.id === id)?.name as string);
+      setToEditName(editField.find((u) => u.id === id)?.username as string);
     } else {
-      setToEditName(name);
+      setToEditName(username);
     }
     setCloseButton(false);
     setEditOpened(true);
@@ -185,7 +185,7 @@ const Settings = () => {
                   <Group spacing="sm">
                     <Avatar size={26} src={user.image} radius={26} />
                     <Text size="sm" weight={500}>
-                      {user.name}
+                      {user.username}
                     </Text>
                   </Group>
                 </td>
@@ -224,7 +224,7 @@ const Settings = () => {
                   <Group spacing="sm">
                     <Avatar size={26} src={user.image} radius={26} />
                     <Text size="sm" weight={500}>
-                      {user.name}
+                      {user.username}
                     </Text>
                   </Group>
                 </td>
@@ -252,7 +252,10 @@ const Settings = () => {
                         editField.some((u) => u.id === user.id) ? "blue" : ""
                       }
                       onClick={() => {
-                        handleEdit({ id: user.id, name: user.name });
+                        handleEdit({
+                          id: user.id,
+                          username: user.username,
+                        });
                       }}
                     >
                       <IconEdit size="1rem" />
@@ -302,7 +305,7 @@ const Settings = () => {
               const updatedField = [...editField]; // create a copy of editField
               updatedField[existingIndex] = {
                 id: toEditId,
-                name: toEditName,
+                username: toEditName,
                 resetAllAttempts: allUserAttemptsReset,
                 resetTopicAttempts: userTopicReset,
               };
@@ -313,7 +316,7 @@ const Settings = () => {
                 ...prevFields,
                 {
                   id: toEditId,
-                  name: toEditName,
+                  username: toEditName,
                   resetAllAttempts: allUserAttemptsReset,
                   resetTopicAttempts: userTopicReset,
                 },

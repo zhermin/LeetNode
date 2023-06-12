@@ -92,7 +92,7 @@ const Overview = () => {
         0
       );
       const masteryAverage = masteryLevel / student.masteries.length || 0;
-      return { name: student.name, masteryAverage };
+      return { name: student.username, masteryAverage };
     })
     .filter((student) => student.masteryAverage > 0)
     .sort((a, b) => b.masteryAverage - a.masteryAverage);

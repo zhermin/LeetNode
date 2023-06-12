@@ -21,14 +21,18 @@ export default function Home() {
   return (
     <>
       <Header />
-      <Navbar />
+      <Container>
+        <Navbar withBorder={false} />
+      </Container>
       <Container className={classes.wrapper} size={1400} px="xl">
         <Dots
           dotPositions={[
-            { left: 0, top: 0 },
-            { left: 60, top: 0 },
-            { left: 0, top: 140 },
-            { right: 0, top: 60 },
+            { left: 20, top: -60 },
+            { left: 200, top: -60 },
+            { left: -20, top: 20 },
+            { left: 100, top: 0 },
+            { left: 60, top: 100 },
+            { right: 20, top: 60 },
             { right: 60, top: 200 },
           ]}
         />
@@ -123,7 +127,6 @@ const useStyles = createStyles((theme) => ({
 
   inner: {
     position: "relative",
-    zIndex: 1,
   },
 
   dots: {

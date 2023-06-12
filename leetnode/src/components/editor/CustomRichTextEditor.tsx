@@ -55,7 +55,9 @@ export default function Editor(
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get<User[]>("/api/forum/getAllUsers");
-      return data.map((user: { name: string }) => ({ value: user.name }));
+      return data.map((user: { username: string }) => ({
+        value: user.username,
+      }));
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : "Unknown Error");

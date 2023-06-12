@@ -116,7 +116,7 @@ const Users = () => {
           return a.lastActive > b.lastActive ? 1 : -1;
         })
       : students.sort((a, b) => {
-          return a.name.localeCompare(b.name);
+          return a.username.localeCompare(b.username);
         });
   }
 
@@ -265,7 +265,7 @@ const Users = () => {
           {filteredStudents.map((item) => (
             <Accordion.Item
               className={classes.item}
-              value={item.name}
+              value={item.username}
               key={item.id}
             >
               <Accordion.Control
@@ -292,7 +292,7 @@ const Users = () => {
 
                     <div>
                       <Text size="sm" weight={500}>
-                        {item.name}
+                        {item.username}
                       </Text>
                       <Text size="xs" color="dimmed">
                         {item.email}

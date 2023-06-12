@@ -192,8 +192,8 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
           users={users.data.map((user) => {
             return {
               id: user.id,
-              image: user.image,
-              value: user.name,
+              image: user.image as string,
+              value: user.username,
             };
           })}
         />
@@ -382,7 +382,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
                         <Text size="sm">
                           {
                             users.data.find((user) => user.id === post?.userId)
-                              ?.name
+                              ?.username
                           }
                         </Text>
                       </Group>

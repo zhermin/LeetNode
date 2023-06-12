@@ -38,8 +38,7 @@ export default async function handler(
         },
         select: {
           id: true,
-          name: true,
-          nickname: true,
+          username: true,
           image: true,
           points: true,
         },

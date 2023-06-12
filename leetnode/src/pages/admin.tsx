@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import Courses from "@/components/admin/Courses";
 import Overview from "@/components/admin/Overview";

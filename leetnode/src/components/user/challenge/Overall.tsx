@@ -45,9 +45,9 @@ export default function Overall() {
     if (!!allUsers && debouncedQuery.trim() !== "") {
       // Filtering
       setRecords(
-        allUsers.filter(({ name, nickname, points }) => {
+        allUsers.filter(({ username }) => {
           if (
-            !`${nickname ?? name}${points}` // Search by nickname (if exist, else by name) and points
+            !username
               .toLowerCase()
               .includes(debouncedQuery.trim().toLowerCase())
           ) {
@@ -102,22 +102,18 @@ export default function Overall() {
               },
             },
             {
-              accessor: "nickname",
+              accessor: "username",
               width: "65%",
               render: (record) => {
                 return (
                   <Group spacing="sm">
-                    <Avatar
-                      size={26}
-                      src={record.image}
-                      radius={26}
-                    />
+                    <Avatar size={26} src={record.image} radius={26} />
                     <Text
                       size="md"
                       weight={500}
                       className="whitespace-pre-wrap"
                     >
-                      {record.nickname ?? record.name}
+                      {record.username}
                     </Text>
                   </Group>
                 );
