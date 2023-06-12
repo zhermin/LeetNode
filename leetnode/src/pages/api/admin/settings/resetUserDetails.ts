@@ -9,7 +9,7 @@ export default async function handler(
   req.body.editField.map(
     async (userDetail: {
       id: string;
-      name: string;
+      username: string;
       resetAllAttempts: boolean;
       resetTopicAttempts: string[];
     }) => {
@@ -18,7 +18,7 @@ export default async function handler(
           id: userDetail.id,
         },
         data: {
-          name: userDetail.name,
+          username: userDetail.username,
         },
       });
 
