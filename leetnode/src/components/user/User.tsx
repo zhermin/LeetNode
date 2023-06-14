@@ -8,6 +8,7 @@ import LeetNodeNavbar from "@/components/Navbar";
 import {
   AppShell,
   Avatar,
+  Box,
   Center,
   Container,
   createStyles,
@@ -44,8 +45,12 @@ export default function User() {
     defaultValue: "Account",
   });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
-  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
-  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+  const [sidebarOpened, setSidebarOpened] = useState(false);
+  useMemo(() => {
+    if (mobile !== undefined) {
+      setSidebarOpened(!mobile);
+    }
+  }, [mobile]);
 
   const {
     data: userInfo,
@@ -116,7 +121,7 @@ export default function User() {
             className={classes.navbar}
           >
             <Navbar.Section>
-              <div className={classes.header}>
+              <Box className={classes.header}>
                 <Center>
                   <Avatar
                     size={100}
@@ -132,26 +137,10 @@ export default function User() {
                     weight={500}
                     color="white"
                   >
-                    {userInfo?.name}
+                    {userInfo?.username}
                   </Text>
                 </Center>
-                <Center>
-                  {userInfo?.nickname && (
-                    <Text
-                      className="whitespace-pre-wrap"
-                      sx={{ lineHeight: 1, fontSize: "16px" }}
-                      weight={400}
-                      color={
-                        theme.colorScheme === "dark"
-                          ? theme.colors.dark[0]
-                          : theme.black
-                      }
-                    >
-                      ({userInfo?.nickname})
-                    </Text>
-                  )}
-                </Center>
-              </div>
+              </Box>
               {links}
             </Navbar.Section>
 

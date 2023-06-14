@@ -29,7 +29,7 @@ export default async function handler(
           user: {
             select: {
               nusnetId: true,
-              name: true,
+              username: true,
               email: true,
             },
           },
@@ -113,7 +113,7 @@ export default async function handler(
       const templateString = usersPing.map(
         (student) => `
           Topic name: ${student.topic.topicName}\n
-          Name: ${student.user.name} 
+          Name: ${student.user.username} 
           Matric No.: ${student.user.nusnetId}
           Email: ${student.user.email}\n
           `
@@ -125,7 +125,7 @@ export default async function handler(
           return `
         <tr>
           <td style="border: 1px solid">${student.topic.topicName}</td>
-          <td style="border: 1px solid; text-align: center">${student.user.name}</td>
+          <td style="border: 1px solid; text-align: center">${student.user.username}</td>
           <td style="border: 1px solid; text-align: center">${student.user.nusnetId}</td>
           <td style="border: 1px solid; text-align: center">${student.user.email}</td>
         </tr>
@@ -141,6 +141,9 @@ export default async function handler(
         auth: {
           user: process.env.GMAIL,
           pass: process.env.GMAIL_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       });
 
@@ -176,20 +179,22 @@ export default async function handler(
       await transporter.sendMail(mailOptions);
 
       // update lastFlagged when this is called
-      usersPing.map(async (record) => {
-        const flagUpdate: Mastery = await prisma.mastery.update({
-          where: {
-            userId_topicSlug: {
-              userId: record.userId as string,
-              topicSlug: record.topicSlug as string,
+      await Promise.all(
+        usersPing.map(async (record) => {
+          const flagUpdate: Mastery = await prisma.mastery.update({
+            where: {
+              userId_topicSlug: {
+                userId: record.userId as string,
+                topicSlug: record.topicSlug as string,
+              },
             },
-          },
-          data: {
-            lastFlagged: new Date(),
-          },
-        });
-        console.log(flagUpdate);
-      });
+            data: {
+              lastFlagged: new Date(),
+            },
+          });
+          console.log(flagUpdate);
+        })
+      );
 
       res.status(200).json({ message: "success" });
     } catch (err) {

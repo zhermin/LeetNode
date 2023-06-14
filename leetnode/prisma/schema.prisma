@@ -50,11 +50,10 @@ model VerificationToken {
 model User {
   id                     String                  @id @default(cuid())
   nusnetId               String?                 @unique
-  name                   String
-  nickname               String?                 @unique
+  username               String                  @unique
   email                  String                  @unique
   emailVerified          DateTime?
-  image                  String                  @default("https://robohash.org/LeetNode?set=set4")
+  image                  String?
   role                   Role                    @default(USER)
   lastActive             DateTime                @default(now())
   loginStreak            Int                     @default(1)

@@ -16,37 +16,38 @@ export default async function handler(
         },
         select: {
           nusnetId: true,
-          name: true,
-          nickname: true,
+          username: true,
           image: true,
           lastActive: true,
           loginStreak: true,
-          points: true
+          points: true,
         },
       });
 
       const startDateTime = new Date();
-      startDateTime.setDate(startDateTime.getDate() - (info?.loginStreak ?? 1) + 1);
+      startDateTime.setDate(
+        startDateTime.getDate() - (info?.loginStreak ?? 1) + 1
+      );
       startDateTime.setHours(0, 0, 0, 0);
       const attempts = await prisma.attempt.findMany({
         where: {
           userId: req.body.id,
           submittedAt: {
-            gte: new Date(startDateTime.toISOString().substring(0, 10)) // get all attempts done since begining of streak
-          }
+            gte: new Date(startDateTime.toISOString().substring(0, 10)), // get all attempts done since begining of streak
+          },
         },
-      })
+      });
 
-      const attemptsPerDay: { [timestamp: string]: number } = {} // { timestamp: count }
+      const attemptsPerDay: { [timestamp: string]: number } = {}; // { timestamp: count }
 
       attempts.map((attempt) => {
-        const submittedAt = new Date(attempt.submittedAt)
+        const submittedAt = new Date(attempt.submittedAt);
         if (submittedAt.toDateString() in attemptsPerDay) {
-          attemptsPerDay[submittedAt.toDateString()] += 1
+          attemptsPerDay[submittedAt.toDateString()] += 1;
         } else {
-          attemptsPerDay[submittedAt.toDateString()] = 1
+          attemptsPerDay[submittedAt.toDateString()] = 1;
         }
-      })
+      });
 
       res.status(200).json({ ...info, attempts: attemptsPerDay }); // return info and no. of attempts today
     } catch (error) {

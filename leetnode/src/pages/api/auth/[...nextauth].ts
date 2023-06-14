@@ -2,15 +2,14 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
-// Prisma adapter for NextAuth, optional and can be removed
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 import { env } from "../../../env/server.mjs";
 import { prisma } from "../../../server/db/client";
 
 export const authOptions: NextAuthOptions = {
-  // Include user.id on session
   callbacks: {
+    // Include id and role in session and jwt tokens
     async session({ session, token, user }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
@@ -28,27 +27,42 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn(request) {
-      const allowedEmails = await prisma.user.findMany({
-        select: {
-          email: true,
-        },
-      });
+      // Return false for default error message or return redirect URL, eg. return '/unauthorized'
       if (!request.user.email) {
         return false;
       }
 
-      const isAllowedToSignIn = allowedEmails.some(
+      // Check if allowed to sign in based on whitelist
+      const allowedUsers = await prisma.user.findMany({
+        select: {
+          email: true,
+        },
+      });
+      const isAllowedToSignIn = allowedUsers.some(
         (allowedEmail) => allowedEmail.email === request.user.email
       );
-      if (isAllowedToSignIn) {
-        return true;
-      } else {
-        // Return false for default error message or return redirect URL, eg. return '/unauthorized'
+      if (!isAllowedToSignIn) {
         return false;
       }
+
+      // Initialize image for first login
+      if (!request.user.image) {
+        await prisma.user.update({
+          where: {
+            email: request.user.email,
+          },
+          data: {
+            image: `https://api.dicebear.com/6.x/fun-emoji/png?seed=${request.user.username}`,
+          },
+        });
+      }
+
+      // TODO: Proper newUser redirect for Email sign in
+
+      // Successful login
+      return true;
     },
   },
-  // Configure one or more authentication providers
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({

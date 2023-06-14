@@ -35,6 +35,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { Mastery, Topic } from "@prisma/client";
 import {
   IconChevronsDown,
@@ -61,8 +62,10 @@ ChartJS.register(
 
 ChartJS.defaults.font.size = 16;
 
-const Users = () => {
-  const { classes } = useStyles();
+const Performance = () => {
+  const { theme, classes } = useStyles();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+
   const [active, setActive] = useState("");
   const [userData, setUserData] = useState<UsersWithMasteriesAndAttemptsType>(
     []
@@ -75,7 +78,7 @@ const Users = () => {
   const [{ data: users }, { data: topics }] = useQueries({
     queries: [
       {
-        queryKey: ["all-users-data"],
+        queryKey: ["all-users"],
         queryFn: () =>
           axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
       },
@@ -116,7 +119,7 @@ const Users = () => {
           return a.lastActive > b.lastActive ? 1 : -1;
         })
       : students.sort((a, b) => {
-          return a.name.localeCompare(b.name);
+          return a.username.localeCompare(b.username);
         });
   }
 
@@ -231,11 +234,17 @@ const Users = () => {
 
   return (
     <ScrollArea>
-      <Container size="xl" py="xl">
+      <Container size="lg" py={!mobile ? "xl" : undefined}>
         <Title order={2} align="center" mb="lg" className={classes.title}>
           User Performance
         </Title>
-        <Flex align="center" justify="space-between" pb="md" gap="md" wrap="wrap">
+        <Flex
+          align="center"
+          justify="space-between"
+          pb="md"
+          gap="md"
+          wrap="wrap"
+        >
           <Checkbox
             className="self-end"
             label="All students who need help!"
@@ -265,7 +274,7 @@ const Users = () => {
           {filteredStudents.map((item) => (
             <Accordion.Item
               className={classes.item}
-              value={item.name}
+              value={item.username}
               key={item.id}
             >
               <Accordion.Control
@@ -292,7 +301,7 @@ const Users = () => {
 
                     <div>
                       <Text size="sm" weight={500}>
-                        {item.name}
+                        {item.username}
                       </Text>
                       <Text size="xs" color="dimmed">
                         {item.email}
@@ -531,7 +540,7 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Performance;
 
 const useStyles = createStyles((theme) => ({
   title: {

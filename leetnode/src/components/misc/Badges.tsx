@@ -1,5 +1,3 @@
-import { useSession } from "next-auth/react";
-
 import { Badge } from "@mantine/core";
 import {
   CourseType,
@@ -8,28 +6,26 @@ import {
   QuestionDifficulty,
   Role,
 } from "@prisma/client";
-import { IconLock } from "@tabler/icons";
+import { IconLock, IconShieldLock } from "@tabler/icons";
 
-export function RoleBadge({ ...props }) {
-  const session = useSession();
+export function RoleBadge({ role, ...props }: { role: Role | undefined }) {
+  if (!role) throw new Error("RoleBadge: role is undefined");
   return (
     <Badge
       color={
-        session?.data?.user?.role === Role.SUPERUSER
-          ? "red"
-          : session?.data?.user?.role === Role.ADMIN
-          ? "orange"
-          : ""
+        role === Role.SUPERUSER ? "red" : role === Role.ADMIN ? "orange" : ""
       }
       leftSection={
-        (session?.data?.user?.role === Role.SUPERUSER ||
-          session?.data?.user?.role === Role.ADMIN) && (
+        (role === Role.SUPERUSER && (
+          <IconShieldLock size={12} style={{ marginLeft: 4 }} strokeWidth={2} />
+        )) ||
+        (role === Role.ADMIN && (
           <IconLock size={12} style={{ marginLeft: 4 }} strokeWidth={2} />
-        )
+        ))
       }
       {...props}
     >
-      {session?.data?.user?.role}
+      {role}
     </Badge>
   );
 }

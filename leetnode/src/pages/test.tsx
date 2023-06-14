@@ -66,8 +66,12 @@ export default function Test() {
   const [editorOpened, setEditorOpened] = useState(false);
 
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
-  const [sidebarOpened, setSidebarOpened] = useState(!mobile);
-  useMemo(() => setSidebarOpened(!mobile), [mobile]);
+  const [sidebarOpened, setSidebarOpened] = useState(false);
+  useMemo(() => {
+    if (mobile !== undefined) {
+      setSidebarOpened(!mobile);
+    }
+  }, [mobile]);
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);

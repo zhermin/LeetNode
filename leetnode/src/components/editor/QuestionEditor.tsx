@@ -126,7 +126,7 @@ export default function QuestionEditor({
 
   const form = useForm({
     initialValues: initialValues,
-    validateInputOnChange: true,
+    validateInputOnBlur: true,
     validate: zodResolver(
       z.object({
         title: z
@@ -933,7 +933,7 @@ export default function QuestionEditor({
     <form
       className="pr-5"
       onSubmit={form.onSubmit(
-        (values: typeof form.values) => {
+        (values) => {
           if (currQuestionId === undefined || currVariationId === undefined) {
             addQuestion({
               baseQuestionId: values.baseQuestionId,
@@ -973,7 +973,7 @@ export default function QuestionEditor({
             });
           }
         },
-        (errors: typeof form.errors) => {
+        (errors) => {
           Object.keys(errors).forEach((key) => {
             toast.error(errors[key] as string);
           });
@@ -1210,7 +1210,7 @@ export default function QuestionEditor({
         className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
-        onClick={() => newVar()}
+        onClick={newVar}
       >
         <IconPlus size={16} />
       </Button>
@@ -1262,7 +1262,7 @@ export default function QuestionEditor({
         className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
-        onClick={() => newMethod()}
+        onClick={newMethod}
       >
         <IconPlus size={16} />
       </Button>
@@ -1314,7 +1314,7 @@ export default function QuestionEditor({
         className={theme.colorScheme === "dark" ? "bg-zinc-800" : "bg-gray-100"}
         radius="sm"
         mt="md"
-        onClick={() => newHint()}
+        onClick={newHint}
       >
         <IconPlus size={16} />
       </Button>
@@ -1427,7 +1427,7 @@ export default function QuestionEditor({
             }
             radius="sm"
             mt="md"
-            onClick={() => newAnswer()}
+            onClick={newAnswer}
           >
             <IconPlus size={16} />
           </Button>

@@ -25,7 +25,9 @@ import {
   Paper,
   Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconUserCheck,
   IconUserExclamation,
@@ -47,10 +49,13 @@ ChartJS.register(
 ChartJS.defaults.font.size = 16;
 
 const Overview = () => {
+  const theme = useMantineTheme();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+
   const [{ data: users }, { data: courses }, { data: attempts }] = useQueries({
     queries: [
       {
-        queryKey: ["all-users-data"],
+        queryKey: ["all-users"],
         queryFn: () =>
           axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
       },
@@ -87,7 +92,7 @@ const Overview = () => {
         0
       );
       const masteryAverage = masteryLevel / student.masteries.length || 0;
-      return { name: student.name, masteryAverage };
+      return { name: student.username, masteryAverage };
     })
     .filter((student) => student.masteryAverage > 0)
     .sort((a, b) => b.masteryAverage - a.masteryAverage);
@@ -122,7 +127,12 @@ const Overview = () => {
     <Container size="xl">
       <Flex justify="center" align="center" gap="xl" wrap="wrap" mt="xl">
         <Center>
-          <Paper radius="md" p="lg" w={250} bg="rgba(252,211,77,0.5)">
+          <Paper
+            radius="md"
+            p="lg"
+            w={250}
+            bg={theme.fn.rgba(theme.colors.yellow[3], 0.5)}
+          >
             <Group py="md">
               {numStudentsWithTopicPing === 0 ? (
                 <IconUserCheck />
@@ -141,7 +151,12 @@ const Overview = () => {
           </Paper>
         </Center>
         <Center>
-          <Paper radius="md" p="lg" w={250} bg="rgba(110,231,183,0.5)">
+          <Paper
+            radius="md"
+            p="lg"
+            w={250}
+            bg={theme.fn.rgba(theme.colors.teal[3], 0.5)}
+          >
             <Group py="md">
               <IconUserPlus />
               <div>
@@ -156,7 +171,12 @@ const Overview = () => {
           </Paper>
         </Center>
         <Center>
-          <Paper radius="md" p="lg" w={250} bg="rgba(248,113,113,0.5)">
+          <Paper
+            radius="md"
+            p="lg"
+            w={250}
+            bg={theme.fn.rgba(theme.colors.red[3], 0.5)}
+          >
             <Group py="md">
               <IconUserMinus />
               <div>
@@ -191,6 +211,7 @@ const Overview = () => {
                         a.correctCount / a.totalCount || 0
                   )
                   .map((topic) => topic.correctCount / topic.totalCount),
+                backgroundColor: theme.fn.rgba(theme.colors.green[4], 0.75),
               },
             ],
           }}
@@ -200,6 +221,9 @@ const Overview = () => {
               y: {
                 ticks: {
                   autoSkip: false,
+                  font: {
+                    size: mobile ? 10 : 14,
+                  },
                 },
                 grid: {
                   display: false,
@@ -235,8 +259,6 @@ const Overview = () => {
                 data: topicAttemptsArray
                   .sort((a, b) => b.totalCount - a.totalCount)
                   .map((topic) => topic.totalCount),
-                backgroundColor: "rgba(119, 221, 119, 0.75)",
-                borderColor: "rgba(119, 221, 119, 0.75)",
               },
             ],
           }}
@@ -246,6 +268,9 @@ const Overview = () => {
               y: {
                 ticks: {
                   autoSkip: false,
+                  font: {
+                    size: mobile ? 10 : 14,
+                  },
                 },
                 grid: {
                   display: false,

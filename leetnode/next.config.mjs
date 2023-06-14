@@ -25,7 +25,7 @@ export default defineNextConfig({
       "res.cloudinary.com",
       "lh3.googleusercontent.com",
       "images.unsplash.com",
-      "robohash.org",
+      "api.dicebear.com",
     ],
   },
 });

@@ -2,6 +2,7 @@ import { createStyles } from "@mantine/core";
 
 const useStyles = createStyles((theme) => ({
   dots: {
+    zIndex: -1,
     position: "absolute",
     color:
       theme.colorScheme === "dark"

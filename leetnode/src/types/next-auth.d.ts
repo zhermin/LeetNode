@@ -16,6 +16,7 @@ declare module "next-auth" {
    */
   interface Session {
     user?: {
+      username: string;
       id: string;
       role: Role;
     } & DefaultSession["user"];
@@ -23,6 +24,7 @@ declare module "next-auth" {
 
   /** Passed as a parameter to the `jwt` callback */
   interface User {
+    username: string;
     id: string;
     role: Role;
   }

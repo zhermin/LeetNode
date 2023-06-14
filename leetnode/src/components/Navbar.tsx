@@ -6,11 +6,11 @@ import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
+  ActionIcon,
   Box,
   Burger,
   Button,
   Center,
-  Container,
   createStyles,
   Flex,
   Group,
@@ -69,9 +69,11 @@ const SmallLogo = () => (
 export default function Navbar({
   sidebarOpened,
   setSidebarOpened,
+  withBorder = true,
 }: {
   sidebarOpened?: boolean;
   setSidebarOpened?: Dispatch<SetStateAction<boolean>>;
+  withBorder?: boolean;
 }) {
   const session = useSession();
 
@@ -95,17 +97,44 @@ export default function Navbar({
     enabled: !!session?.data?.user?.id,
   });
 
+  const handleColorSchemeChange = () => {
+    const value = colorScheme === "dark" ? "light" : "dark";
+
+    // change mantine color scheme
+    toggleColorScheme(value);
+
+    // change tailwind color scheme
+    if (value === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    // notification for color scheme change
+    toast.success(
+      value === "dark" ? "Dark mode enabled" : "Light mode enabled",
+      {
+        position: mobile ? "bottom-right" : "top-right",
+        duration: 3000,
+        style: {
+          background: value === "dark" ? theme.colors.dark[9] : "",
+          color: value === "dark" ? theme.white : "",
+        },
+      }
+    );
+  };
+
   return (
-    <Header className={classes.header} height={HEADER_HEIGHT}>
-      <Container className={classes.inner}>
+    <Header height={HEADER_HEIGHT} withBorder={withBorder}>
+      <Box className={classes.inner}>
         {sidebarOpened !== undefined && setSidebarOpened ? (
           <Flex align="center" gap="xl">
             <Burger
               opened={sidebarOpened}
               onClick={() => setSidebarOpened((o) => !o)}
-              color={theme.colors.gray[6]}
+              color={theme.colors.gray[5]}
             />
-            <FullLogo />
+            {mobile ? <SmallLogo /> : <FullLogo />}
           </Flex>
         ) : mobile ? (
           <SmallLogo />
@@ -113,14 +142,29 @@ export default function Navbar({
           <FullLogo />
         )}
 
+        {session.status === "loading" && (
+          <Center>
+            <Loader />
+          </Center>
+        )}
+
         {session.status === "unauthenticated" && (
-          <Button
-            color="cyan"
-            onClick={() => signIn()}
-            className={classes.control}
-          >
-            Log In
-          </Button>
+          <Center>
+            <ActionIcon mr="xl" onClick={() => handleColorSchemeChange()}>
+              {colorScheme === "dark" ? (
+                <IconSun size={18} stroke={1.5} />
+              ) : (
+                <IconMoon size={18} stroke={1.5} />
+              )}
+            </ActionIcon>
+            <Button
+              color="cyan"
+              onClick={() => signIn()}
+              className={classes.control}
+            >
+              Log In
+            </Button>
+          </Center>
         )}
 
         {session.status === "authenticated" && (
@@ -144,21 +188,22 @@ export default function Navbar({
                     <Loader />
                   ) : (
                     <>
+                      <Image
+                        src={userInfo.image || ""}
+                        alt={userInfo.username}
+                        className="mr-2 rounded-full"
+                        width={25}
+                        height={25}
+                      />
                       <Text
                         className={classes.userName}
                         sx={{ lineHeight: 1 }}
                         weight={500}
                         color={theme.colors.gray[9]}
+                        mr="xs"
                       >
-                        {userInfo?.name}
+                        {userInfo?.username}
                       </Text>
-                      <Image
-                        src={userInfo?.image || ""}
-                        alt={userInfo?.name || ""}
-                        className="ml-1 rounded-full"
-                        width={25}
-                        height={25}
-                      />
                     </>
                   )}
 
@@ -171,33 +216,7 @@ export default function Navbar({
               <SegmentedControl
                 fullWidth
                 value={colorScheme}
-                onChange={(value: "light" | "dark") => {
-                  // change mantine color scheme
-                  toggleColorScheme(value);
-
-                  // change tailwind color scheme
-                  if (value === "dark") {
-                    document.documentElement.classList.add("dark");
-                  } else {
-                    document.documentElement.classList.remove("dark");
-                  }
-
-                  // notification for color scheme change
-                  toast.success(
-                    value === "dark"
-                      ? "Dark mode enabled"
-                      : "Light mode enabled",
-                    {
-                      position: "top-right",
-                      duration: 3000,
-                      style: {
-                        background:
-                          value === "dark" ? theme.colors.dark[9] : "",
-                        color: value === "dark" ? theme.white : "",
-                      },
-                    }
-                  );
-                }}
+                onChange={() => handleColorSchemeChange()}
                 data={[
                   {
                     value: "light",
@@ -234,7 +253,7 @@ export default function Navbar({
                   >
                     Signed In As:
                   </Text>
-                  <RoleBadge />
+                  <RoleBadge role={session?.data?.user?.role} />
                 </Group>
                 {session?.data?.user?.email}
               </Menu.Label>
@@ -278,25 +297,18 @@ export default function Navbar({
             </Menu.Dropdown>
           </Menu>
         )}
-      </Container>
+      </Box>
     </Header>
   );
 }
 
 const useStyles = createStyles((theme) => ({
-  header: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
-    borderBottom: `1px solid ${
-      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
-    }`,
-  },
-
   inner: {
     height: HEADER_HEIGHT,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    padding: `0 ${theme.spacing.md}px`,
   },
 
   logoFull: {
