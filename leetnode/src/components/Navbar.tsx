@@ -142,6 +142,12 @@ export default function Navbar({
           <FullLogo />
         )}
 
+        {session.status === "loading" && (
+          <Center>
+            <Loader />
+          </Center>
+        )}
+
         {session.status === "unauthenticated" && (
           <Center>
             <ActionIcon mr="xl" onClick={() => handleColorSchemeChange()}>
@@ -247,7 +253,7 @@ export default function Navbar({
                   >
                     Signed In As:
                   </Text>
-                  <RoleBadge />
+                  <RoleBadge role={session?.data?.user?.role} />
                 </Group>
                 {session?.data?.user?.email}
               </Menu.Label>

@@ -142,6 +142,9 @@ export default async function handler(
           user: process.env.GMAIL,
           pass: process.env.GMAIL_PASS,
         },
+        tls: {
+          rejectUnauthorized: false,
+        },
       });
 
       // Define the email options
@@ -176,20 +179,22 @@ export default async function handler(
       await transporter.sendMail(mailOptions);
 
       // update lastFlagged when this is called
-      usersPing.map(async (record) => {
-        const flagUpdate: Mastery = await prisma.mastery.update({
-          where: {
-            userId_topicSlug: {
-              userId: record.userId as string,
-              topicSlug: record.topicSlug as string,
+      await Promise.all(
+        usersPing.map(async (record) => {
+          const flagUpdate: Mastery = await prisma.mastery.update({
+            where: {
+              userId_topicSlug: {
+                userId: record.userId as string,
+                topicSlug: record.topicSlug as string,
+              },
             },
-          },
-          data: {
-            lastFlagged: new Date(),
-          },
-        });
-        console.log(flagUpdate);
-      });
+            data: {
+              lastFlagged: new Date(),
+            },
+          });
+          console.log(flagUpdate);
+        })
+      );
 
       res.status(200).json({ message: "success" });
     } catch (err) {

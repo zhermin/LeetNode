@@ -64,7 +64,7 @@ const Settings = () => {
   const [{ data: users }, { data: topics }] = useQueries({
     queries: [
       {
-        queryKey: ["all-users-data"],
+        queryKey: ["all-users"],
         queryFn: () =>
           axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
       },

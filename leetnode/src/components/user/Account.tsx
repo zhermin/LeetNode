@@ -31,7 +31,7 @@ export default function Account({ userInfo }: AccountProps) {
       userNusnetId: userInfo.nusnetId ?? "",
       file: null,
     },
-    validateInputOnChange: true,
+    validateInputOnBlur: true,
     validate: zodResolver(
       z.object({
         userName: z

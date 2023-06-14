@@ -57,6 +57,8 @@ export const authOptions: NextAuthOptions = {
         });
       }
 
+      // TODO: Proper newUser redirect for Email sign in
+
       // Successful login
       return true;
     },

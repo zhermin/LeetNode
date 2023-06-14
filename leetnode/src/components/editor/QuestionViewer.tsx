@@ -1,10 +1,11 @@
 import axios from "axios";
 import DOMPurify from "dompurify";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useRef, useState } from "react";
 
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   ActionIcon,
   Button,
@@ -16,7 +17,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { randomId, useDebouncedValue } from "@mantine/hooks";
+import { randomId, useDebouncedValue, useMediaQuery } from "@mantine/hooks";
 import { QuestionDifficulty } from "@prisma/client";
 import { IconEye, IconSearch } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -24,8 +25,15 @@ import { useQuery } from "@tanstack/react-query";
 import QuestionEditor from "./QuestionEditor";
 import VariablesBox from "./VariablesBox";
 
+enum QuestionDifficultyEnum {
+  Easy,
+  Medium,
+  Hard,
+}
+
 export default function QuestionViewer() {
   const { theme, classes } = useStyles();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
 
   const editorHtml = useRef("");
   const currentQuestion = useRef<AllQuestionsType[number]>();
@@ -38,10 +46,15 @@ export default function QuestionViewer() {
     queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
   });
 
+  const [bodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(questions?.data.slice(0, PAGE_SIZE));
   const [totalRecords, setTotalRecords] = useState(questions?.data.length);
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "questionId",
+    direction: "asc",
+  });
 
   // KIV: Mantine Datatable (v2.0.0^, and their new filters, v2.5.1^) do not work with Mantine v5. We have not updated our Mantine version to v6 yet as it will break @mantine/RTE (our custom fork of the now deprecated editor component). Hence, either change the editor or continue maintaining the custom RTE fork and migrate to v6 for both the fork and the rest of the site.
   const [query, setQuery] = useState("");
@@ -49,12 +62,11 @@ export default function QuestionViewer() {
 
   useEffect(() => {
     if (!questions) return;
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE;
-    const filteredRecords = questions.data.filter((q) => {
+
+    const filteredRecords = questions.data.filter((record) => {
       if (
         debouncedQuery !== "" &&
-        !`${q.questionId} ${q.variationId} ${q.questionDifficulty} ${q.questionTitle} ${q.topic.topicName}`
+        !`${record.questionId} ${record.variationId} ${record.questionDifficulty} ${record.questionTitle} ${record.topic.topicName}`
           .toLowerCase()
           .includes(debouncedQuery.trim().toLowerCase())
       ) {
@@ -63,12 +75,39 @@ export default function QuestionViewer() {
 
       return true;
     });
-    setTotalRecords(filteredRecords.length);
-    setRecords(filteredRecords.slice(from, to));
-  }, [page, questions, debouncedQuery]);
+
+    const sortedRecords = filteredRecords.sort((a, b) => {
+      if (sortStatus.columnAccessor === "questionId") {
+        return sortStatus.direction === "asc"
+          ? a.questionId - b.questionId
+          : b.questionId - a.questionId;
+      } else if (sortStatus.columnAccessor === "questionDifficulty") {
+        return sortStatus.direction === "asc"
+          ? QuestionDifficultyEnum[a.questionDifficulty] -
+              QuestionDifficultyEnum[b.questionDifficulty]
+          : QuestionDifficultyEnum[b.questionDifficulty] -
+              QuestionDifficultyEnum[a.questionDifficulty];
+      } else if (sortStatus.columnAccessor === "questionTitle") {
+        return sortStatus.direction === "asc"
+          ? a.questionTitle.localeCompare(b.questionTitle)
+          : b.questionTitle.localeCompare(a.questionTitle);
+      } else if (sortStatus.columnAccessor === "topic.topicName") {
+        return sortStatus.direction === "asc"
+          ? a.topic.topicName.localeCompare(b.topic.topicName)
+          : b.topic.topicName.localeCompare(a.topic.topicName);
+      }
+      return 0;
+    });
+
+    setTotalRecords(sortedRecords.length);
+
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE;
+    setRecords(sortedRecords.slice(from, to));
+  }, [page, questions, sortStatus, debouncedQuery]);
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py={!mobile ? "xl" : undefined}>
       <Center>
         <Stack align="center" mb="md">
           <Title order={2} className={classes.title} align="center">
@@ -115,24 +154,26 @@ export default function QuestionViewer() {
             accessor: "questionId",
             title: "ID",
             visibleMediaQuery: `(min-width: ${theme.breakpoints.xs}px)`,
+            sortable: true,
           },
           {
             accessor: "variationId",
             title: "Variant",
             visibleMediaQuery: `(min-width: ${theme.breakpoints.xs}px)`,
-            render: (q) =>
+            render: (record) =>
               `${
-                q.variationId === 0
+                record.variationId === 0
                   ? "0 (Dynamic)"
-                  : q.variationId === 1
+                  : record.variationId === 1
                   ? "1 (Static; Base)"
-                  : `${q.variationId} (Static)`
+                  : `${record.variationId} (Static)`
               }`,
           },
           {
             accessor: "questionDifficulty",
             title: "Difficulty",
             width: 76,
+            sortable: true,
             cellsStyle: ({ questionDifficulty }) => {
               switch (questionDifficulty) {
                 case QuestionDifficulty.Easy:
@@ -161,19 +202,21 @@ export default function QuestionViewer() {
           {
             accessor: "questionTitle",
             title: "Title",
+            sortable: true,
           },
           {
             accessor: "topic.topicName",
             title: "Topic",
+            sortable: true,
           },
           {
             accessor: "actions",
             title: "",
-            render: (q) => (
+            render: (record) => (
               <ActionIcon
                 onClick={(e) => {
                   e.stopPropagation();
-                  currentQuestion.current = q;
+                  currentQuestion.current = record;
                   setQuestionViewOpened(true);
                 }}
               >
@@ -187,11 +230,14 @@ export default function QuestionViewer() {
         onPageChange={setPage}
         totalRecords={totalRecords}
         recordsPerPage={PAGE_SIZE}
-        onRowClick={(q) => {
-          editorHtml.current = q.questionContent;
-          currentQuestion.current = q;
+        onRowClick={(record) => {
+          editorHtml.current = record.questionContent;
+          currentQuestion.current = record;
           setQuestionEditOpened(true);
         }}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        bodyRef={bodyRef}
       />
 
       {/* Question Adder Modal */}

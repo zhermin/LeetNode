@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import ForumPost from "@/components/course/ForumPost";
+import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
 import {
   Anchor,
   Avatar,
@@ -32,7 +33,6 @@ import {
   PostLikes,
   PostType,
   Topic,
-  User,
 } from "@prisma/client";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
@@ -111,7 +111,8 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       },
       {
         queryKey: ["all-users"],
-        queryFn: () => axios.get<User[]>("/api/forum/getAllUsers"),
+        queryFn: () =>
+          axios.get<UsersWithMasteriesAndAttemptsType>("/api/admin/users"),
       },
     ],
   });

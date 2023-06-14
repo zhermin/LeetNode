@@ -1,10 +1,12 @@
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import Accounts from "@/components/admin/Accounts";
 import Courses from "@/components/admin/Courses";
 import Overview from "@/components/admin/Overview";
+import Users from "@/components/admin/Performance";
 import Settings from "@/components/admin/Settings";
-import Users from "@/components/admin/Users";
 import QuestionViewer from "@/components/editor/QuestionViewer";
 import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
@@ -31,12 +33,13 @@ import {
   User,
 } from "@prisma/client";
 import {
-  IconAdjustments,
   IconArrowBarLeft,
   IconBrain,
   IconChartDots,
   IconPresentationAnalytics,
   IconPuzzle,
+  IconSettings,
+  IconUsers,
 } from "@tabler/icons";
 
 export type UsersWithMasteriesAndAttemptsType = (User & {
@@ -59,13 +62,15 @@ export type AttemptsInfoType = (Attempt & {
 const tabs = [
   { label: "Overview", icon: IconChartDots },
   { label: "Questions", icon: IconPuzzle },
+  { label: "Accounts", icon: IconUsers },
   { label: "Courses", icon: IconPresentationAnalytics },
   { label: "Performance", icon: IconBrain },
-  { label: "Settings", icon: IconAdjustments },
+  { label: "Settings", icon: IconSettings },
 ];
 
 export default function AdminPage() {
   const { theme, classes, cx } = useStyles();
+  const session = useSession();
 
   const [active, setActive] = useSessionStorage({
     key: "adminActiveTab",
@@ -107,7 +112,7 @@ export default function AdminPage() {
                   <Text size="xl" weight={500}>
                     Admin
                   </Text>
-                  <RoleBadge />
+                  <RoleBadge role={session?.data?.user?.role} />
                 </Group>
               </Navbar.Section>
               <Navbar.Section grow className={classes.navbarEntry}>
@@ -159,6 +164,8 @@ export default function AdminPage() {
             <Overview />
           ) : active === "Questions" ? (
             <QuestionViewer />
+          ) : active === "Accounts" ? (
+            <Accounts />
           ) : active === "Courses" ? (
             <Courses />
           ) : active === "Performance" ? (

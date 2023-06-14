@@ -1,9 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { prisma } from "@/server/db/client";
-
-import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,

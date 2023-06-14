@@ -1,13 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { prisma } from "@/server/db/client";
 import { QuestionDataType } from "@/types/question-types";
 import { CustomEval } from "@/utils/CustomEval";
 import { CustomMath } from "@/utils/CustomMath";
 import { RecommendQuestion } from "@/utils/Recommender";
-
-import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,

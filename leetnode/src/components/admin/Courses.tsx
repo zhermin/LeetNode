@@ -43,7 +43,6 @@ import {
   ThemeIcon,
   Title,
   TypographyStylesProvider,
-  useMantineTheme,
 } from "@mantine/core";
 import { Dropzone, FileWithPath } from "@mantine/dropzone";
 import { useMediaQuery } from "@mantine/hooks";
@@ -85,10 +84,9 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
 });
 
 const Courses = () => {
-  const { classes } = useStyles();
-  const queryClient = useQueryClient();
-  const theme = useMantineTheme();
+  const { theme, classes } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const queryClient = useQueryClient();
 
   const [sort, setSort] = useState("All Courses");
   const [openedDetails, setOpenedDetails] = useState(false);
@@ -129,7 +127,7 @@ const Courses = () => {
   ] = useQueries({
     queries: [
       {
-        queryKey: ["all-users-data"],
+        queryKey: ["all-users"],
         queryFn: () =>
           axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
       },
@@ -330,7 +328,7 @@ const Courses = () => {
 
   return (
     <>
-      <Container size="lg" py="xl">
+      <Container size="lg" py={!mobile ? "xl" : undefined}>
         <Title order={2} align="center" mb="lg" className={classes.title}>
           Courses Details
         </Title>

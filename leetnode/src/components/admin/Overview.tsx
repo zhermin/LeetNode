@@ -55,7 +55,7 @@ const Overview = () => {
   const [{ data: users }, { data: courses }, { data: attempts }] = useQueries({
     queries: [
       {
-        queryKey: ["all-users-data"],
+        queryKey: ["all-users"],
         queryFn: () =>
           axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
       },

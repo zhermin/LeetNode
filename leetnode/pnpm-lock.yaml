@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@emotion/react': ^11.10.6
   '@emotion/server': ^11.10.0
+  '@formkit/auto-animate': 1.0.0-beta.6
   '@hello-pangea/dnd': ^16.2.0
   '@mantine/carousel': ^5.10.5
   '@mantine/core': ^5.10.5
@@ -70,6 +71,7 @@ specifiers:
 dependencies:
   '@emotion/react': 11.10.6_kzbn2opkn2327fwg5yzwzya5o4
   '@emotion/server': 11.10.0
+  '@formkit/auto-animate': 1.0.0-beta.6
   '@hello-pangea/dnd': 16.2.0_ie75ejlwqy5zh3tldgt7pftwcu
   '@mantine/carousel': 5.10.5_ydtorevmcufc5jt4isqf3qbxgq
   '@mantine/core': 5.10.5_63mspeouacpkyd6rtnsb5tmso4
@@ -376,6 +378,10 @@ packages:
       tabbable: 6.1.1
     transitivePeerDependencies:
       - '@types/react'
+    dev: false
+
+  /@formkit/auto-animate/1.0.0-beta.6:
+    resolution: {integrity: sha512-PVDhLAlr+B4Xb7e+1wozBUWmXa6BFU8xUPR/W/E+TsQhPS1qkAdAsJ25keEnFrcePSnXHrOsh3tiFbEToOzV9w==}
     dev: false
 
   /@hello-pangea/dnd/16.2.0_ie75ejlwqy5zh3tldgt7pftwcu:
