@@ -9,7 +9,6 @@ import {
 import { IconLock, IconShieldLock } from "@tabler/icons";
 
 export function RoleBadge({ role, ...props }: { role: Role | undefined }) {
-  if (!role) throw new Error("RoleBadge: role is undefined");
   return (
     <Badge
       color={
