@@ -268,8 +268,9 @@ export default function Accounts() {
                   >
                     <IconPlus size={16} />
                   </Button>
+                  {/* TODO: consent -> recruitment */}
                   <Text fz="sm" fs="italic">
-                    Note: This will send them a consent email, likely to their
+                    Note: This will send them a recruitment email, likely to their
                     junk mail
                   </Text>
                   <Button type="submit" loading={addUsersStatus === "loading"}>
