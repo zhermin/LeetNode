@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 
-export const sendConsentEmail = async (emails: string[]) => {
+export const sendRecruitmentEmail = async (emails: string[]) => {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -77,11 +77,13 @@ export default async function handler(
   const emails: string[] = req.body.emails;
 
   try {
-    await sendConsentEmail(emails);
+    await sendRecruitmentEmail(emails);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Error sending consent emails" });
+    return res
+      .status(500)
+      .json({ message: "Error sending recruitment emails" });
   }
 
-  res.status(200).json({ message: "Consent emails sent successfully" });
+  res.status(200).json({ message: "Recruitment email(s) sent successfully" });
 }

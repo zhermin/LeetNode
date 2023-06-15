@@ -2,10 +2,9 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db/client";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-
-import { env } from "../../../env/server.mjs";
-import { prisma } from "../../../server/db/client";
 
 export const authOptions: NextAuthOptions = {
   callbacks: {
@@ -36,6 +35,8 @@ export const authOptions: NextAuthOptions = {
       const allowedUsers = await prisma.user.findMany({
         select: {
           email: true,
+          username: true,
+          isNewUser: true,
         },
       });
       const isAllowedToSignIn = allowedUsers.some(
@@ -45,19 +46,28 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      // Initialize image for first login
-      if (!request.user.image) {
+      // Initialize info for first login, then redirect to /welcome page
+      const user = allowedUsers.find(
+        (user) => user.email === request.user.email
+      );
+      if (user && user.isNewUser) {
+        const username = !allowedUsers.some(
+          (user) => user.username === request.user.email?.split("@")[0]
+        )
+          ? request.user.email.split("@")[0]
+          : request.user.email;
         await prisma.user.update({
           where: {
             email: request.user.email,
           },
           data: {
-            image: `https://api.dicebear.com/6.x/fun-emoji/png?seed=${request.user.username}`,
+            username,
+            image: `https://api.dicebear.com/6.x/fun-emoji/png?seed=${username}`,
+            isNewUser: false,
           },
         });
+        return "/welcome";
       }
-
-      // TODO: Proper newUser redirect for Email sign in
 
       // Successful login
       return true;
@@ -72,7 +82,7 @@ export const authOptions: NextAuthOptions = {
     EmailProvider({
       server: env.EMAIL_SERVER,
       from: env.EMAIL_FROM,
-      maxAge: 24 * 60 * 60, // How long email links are valid for (default 24h)
+      maxAge: 24 * 60 * 60 * 30, // 30d (Email magic links' valid duration, default 24h)
     }),
   ],
   pages: {

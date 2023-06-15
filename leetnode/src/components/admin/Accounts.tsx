@@ -5,16 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 
+import { RoleBadge } from "@/components/misc/Badges";
 import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   Accordion,
   ActionIcon,
   Button,
-  Center,
   Code,
   Container,
   createStyles,
+  Divider,
   Flex,
   Group,
   Modal,
@@ -32,13 +33,12 @@ import {
   IconMail,
   IconMinus,
   IconPlus,
+  IconRefresh,
   IconSearch,
   IconTrash,
   IconX,
 } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { RoleBadge } from "../misc/Badges";
 
 export default function Accounts() {
   const { theme, classes } = useStyles();
@@ -46,6 +46,7 @@ export default function Accounts() {
   const queryClient = useQueryClient();
 
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
+  // const [userEditOpened, setUserEditOpened] = useState(false);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const { data: users, isFetching } = useQuery({
@@ -152,15 +153,17 @@ export default function Accounts() {
     },
   });
 
-  const { mutate: sendConsentEmails } = useMutation({
-    mutationFn: (users: UsersWithMasteriesAndAttemptsType) =>
-      axios.post("/api/user/sendConsentEmails", {
-        emails: users.map((user) => user.email),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["all-users"]);
-    },
-  });
+  const { mutate: sendRecruitmentEmails, status: sendRecruitmentEmailsStatus } =
+    useMutation({
+      mutationFn: (users: UsersWithMasteriesAndAttemptsType) =>
+        axios.post("/api/user/admin/sendRecruitmentEmails", {
+          emails: users.map((user) => user.email),
+        }),
+      onSuccess: () => {
+        queryClient.invalidateQueries(["all-users"]);
+        setSelectedRecords([]);
+      },
+    });
 
   const { mutate: deleteUser, status: deleteUserStatus } = useMutation({
     mutationFn: (email: string) =>
@@ -170,16 +173,28 @@ export default function Accounts() {
     },
   });
 
+  const { mutate: deleteUsers, status: deleteUsersStatus } = useMutation({
+    mutationFn: (emails: string[]) =>
+      axios.post("/api/user/admin/deleteMany", { emails }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-users"]);
+      setSelectedRecords([]);
+    },
+  });
+
   return (
     <>
       <Container size="lg" py={!mobile ? "xl" : undefined}>
-        <Center>
-          <Stack align="center" mb="md">
-            <Title order={2} className={classes.title} align="center">
-              All Accounts
-            </Title>
-          </Stack>
-        </Center>
+        <Title order={2} className={classes.title} align="center" mb="sm">
+          All Accounts
+        </Title>
+        <Divider
+          size="md"
+          w={45}
+          mb="xl"
+          mx="auto"
+          color={theme.fn.primaryColor()}
+        />
 
         <Accordion
           variant="contained"
@@ -268,10 +283,9 @@ export default function Accounts() {
                   >
                     <IconPlus size={16} />
                   </Button>
-                  {/* TODO: consent -> recruitment */}
                   <Text fz="sm" fs="italic">
-                    Note: This will send them a recruitment email, likely to their
-                    junk mail
+                    Note: This will send them a recruitment email, likely to
+                    their junk mail
                   </Text>
                   <Button type="submit" loading={addUsersStatus === "loading"}>
                     Whitelist Emails
@@ -282,16 +296,30 @@ export default function Accounts() {
           </Accordion.Item>
         </Accordion>
 
-        <TextInput
-          placeholder="Search User..."
-          icon={<IconSearch size={16} />}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.currentTarget.value);
-            setPage(1);
-          }}
-          mb="xs"
-        />
+        <Flex mb="xs" align="center" gap="md">
+          <TextInput
+            placeholder="Search User..."
+            icon={<IconSearch size={16} />}
+            sx={{ flex: 1 }}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.currentTarget.value);
+              setPage(1);
+            }}
+          />
+          <Tooltip label="Refresh Table" withArrow>
+            <ActionIcon
+              onClick={() => {
+                queryClient.invalidateQueries(["all-users"]);
+              }}
+              variant="default"
+              className="rounded-full"
+              disabled={isFetching}
+            >
+              <IconRefresh size={16} stroke={1.5} color="gray" />
+            </ActionIcon>
+          </Tooltip>
+        </Flex>
 
         <DataTable
           idAccessor="id"
@@ -338,15 +366,13 @@ export default function Accounts() {
             },
             {
               accessor: "emailVerified",
-              title: "Verified",
-              width: 90,
+              title: "Login Before",
               render: (record) =>
                 record.emailVerified ? (
                   <IconCheck color="green" />
                 ) : (
                   <IconX color="red" />
                 ),
-              visibleMediaQuery: `(min-width: ${theme.breakpoints.xs}px)`,
               sortable: true,
             },
             {
@@ -354,11 +380,11 @@ export default function Accounts() {
               title: "",
               render: (record) => (
                 <Flex wrap="nowrap">
-                  <Tooltip label="Resend Consent Email" withArrow>
+                  <Tooltip label="Resend Recruitment Email" withArrow>
                     <ActionIcon
                       onClick={(e) => {
                         e.stopPropagation();
-                        sendConsentEmails([record]);
+                        sendRecruitmentEmails([record]);
                       }}
                     >
                       <IconMail size={16} />
@@ -386,10 +412,10 @@ export default function Accounts() {
           onPageChange={setPage}
           totalRecords={totalRecords}
           recordsPerPage={PAGE_SIZE}
-          // TODO: onRowClick={(record) => {
-          //   currentUser.current = record;
-          //   setUserEditOpened(true);
-          // }}
+          onRowClick={(record) => {
+            currentUser.current = record;
+            // setUserEditOpened(true);
+          }}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
           selectedRecords={selectedRecords}
@@ -397,7 +423,43 @@ export default function Accounts() {
           isRecordSelectable={({ role }) => role !== Role.SUPERUSER}
           bodyRef={bodyRef}
         />
+
+        {selectedRecords.length > 0 && (
+          <Flex gap="md" justify="stretch" mt="xs">
+            <Button
+              fullWidth
+              color="cyan"
+              loading={
+                sendRecruitmentEmailsStatus === "loading" ||
+                deleteUsersStatus === "loading"
+              }
+              onClick={() => {
+                sendRecruitmentEmails(selectedRecords);
+              }}
+            >
+              Send Recruitment Email{selectedRecords.length > 1 ? "s" : ""} to{" "}
+              {selectedRecords.length} User
+              {selectedRecords.length > 1 ? "s" : ""}
+            </Button>
+            <Button
+              fullWidth
+              color="red"
+              loading={
+                sendRecruitmentEmailsStatus === "loading" ||
+                deleteUsersStatus === "loading"
+              }
+              onClick={() => {
+                deleteUsers(selectedRecords.map((r) => r.email));
+              }}
+            >
+              Delete {selectedRecords.length} User
+              {selectedRecords.length > 1 ? "s" : ""}
+            </Button>
+          </Flex>
+        )}
       </Container>
+
+      {/* TODO: User Edit Modal */}
 
       {/* User Delete Confirmation Modal */}
       <Modal
@@ -447,16 +509,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 900,
     [theme.fn.smallerThan("sm")]: {
       fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
     },
   },
 
