@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   ActionIcon,
   Button,
@@ -48,7 +47,6 @@ export default function QuestionViewer() {
     queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
   });
 
-  const [bodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(questions?.data.slice(0, PAGE_SIZE));
@@ -257,7 +255,6 @@ export default function QuestionViewer() {
         }}
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
-        bodyRef={bodyRef}
       />
 
       {/* Question Adder Modal */}

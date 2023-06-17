@@ -1,5 +1,6 @@
 import axios from "axios";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -7,7 +8,6 @@ import { z } from "zod";
 
 import { RoleBadge } from "@/components/misc/Badges";
 import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   Accordion,
   ActionIcon,
@@ -19,6 +19,7 @@ import {
   Flex,
   Group,
   Modal,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -44,9 +45,10 @@ export default function Accounts() {
   const { theme, classes } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const queryClient = useQueryClient();
+  const session = useSession();
 
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
-  // const [userEditOpened, setUserEditOpened] = useState(false);
+  const [userEditOpened, setUserEditOpened] = useState(false);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const { data: users, isFetching } = useQuery({
@@ -55,7 +57,6 @@ export default function Accounts() {
       axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
   });
 
-  const [bodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(users?.data.slice(0, PAGE_SIZE));
@@ -88,28 +89,36 @@ export default function Accounts() {
     const sortedRecords = filteredRecords.sort((a, b) => {
       if (sortStatus.columnAccessor === "role") {
         if (sortStatus.direction === "asc") {
-          return b.role.length - a.role.length;
+          if (a.role.length === b.role.length) {
+            return a.email.localeCompare(b.email);
+          } else {
+            return b.role.length - a.role.length;
+          }
         } else {
-          return a.role.length - b.role.length;
+          if (a.role.length === b.role.length) {
+            return b.email.localeCompare(a.email);
+          } else {
+            return a.role.length - b.role.length;
+          }
         }
       } else if (sortStatus.columnAccessor === "username") {
-        if (sortStatus.direction === "asc") {
-          return a.username.localeCompare(b.username);
-        } else {
-          return b.username.localeCompare(a.username);
-        }
+        return sortStatus.direction === "asc"
+          ? a.username.localeCompare(b.username)
+          : b.username.localeCompare(a.username);
       } else if (sortStatus.columnAccessor === "email") {
+        return sortStatus.direction === "asc"
+          ? a.email.localeCompare(b.email)
+          : b.email.localeCompare(a.email);
+      } else if (sortStatus.columnAccessor === "isNewUser") {
         if (sortStatus.direction === "asc") {
-          return a.email.localeCompare(b.email);
+          return a.isNewUser ? -1 : 1;
         } else {
-          return b.email.localeCompare(a.email);
+          return b.isNewUser ? -1 : 1;
         }
-      } else if (sortStatus.columnAccessor === "emailVerified") {
-        if (sortStatus.direction === "asc") {
-          return a.emailVerified ? -1 : 1;
-        } else {
-          return b.emailVerified ? -1 : 1;
-        }
+      } else if (sortStatus.columnAccessor === "points") {
+        return sortStatus.direction === "asc"
+          ? a.points - b.points
+          : b.points - a.points;
       }
       return 0;
     });
@@ -145,6 +154,34 @@ export default function Accounts() {
     ),
   });
 
+  const editUserForm = useForm<{
+    username: string;
+    role: Role;
+    points: string;
+  }>({
+    initialValues: {
+      username: "",
+      role: Role.USER,
+      points: "",
+    },
+    validateInputOnBlur: true,
+    validate: zodResolver(
+      z.object({
+        username: z
+          .string()
+          .trim()
+          .regex(/^([\w.@]+)$/, "No special characters allowed")
+          .min(5, "Minimum 5 characters")
+          .max(30, "Maximum 30 characters"),
+        role: z.nativeEnum(Role),
+        points: z
+          .string()
+          .nonempty("Cannot be empty")
+          .pipe(z.coerce.number().int("Must be a whole number").min(0)),
+      })
+    ),
+  });
+
   const { mutate: addUsers, status: addUsersStatus } = useMutation({
     mutationFn: (emails: string[]) =>
       axios.post("/api/user/admin/add", { emails }),
@@ -164,6 +201,18 @@ export default function Accounts() {
         setSelectedRecords([]);
       },
     });
+
+  const { mutate: editUser, status: editUserStatus } = useMutation({
+    mutationFn: (values: { username: string; role: Role; points: string }) =>
+      axios.put(
+        `/api/user/admin/edit?email=${currentUser.current?.email}`,
+        values
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-users"]);
+      setUserEditOpened(false);
+    },
+  });
 
   const { mutate: deleteUser, status: deleteUserStatus } = useMutation({
     mutationFn: (email: string) =>
@@ -311,6 +360,7 @@ export default function Accounts() {
             <ActionIcon
               onClick={() => {
                 queryClient.invalidateQueries(["all-users"]);
+                setSelectedRecords([]);
               }}
               variant="default"
               className="rounded-full"
@@ -341,8 +391,8 @@ export default function Accounts() {
                     src={record.image || ""}
                     alt={record.username}
                     className="rounded-full"
-                    width={20}
-                    height={20}
+                    width={30}
+                    height={30}
                   />
                   <Text sx={{ lineHeight: 1 }} mr="xs">
                     {record.username}
@@ -365,14 +415,18 @@ export default function Accounts() {
               ),
             },
             {
-              accessor: "emailVerified",
+              accessor: "isNewUser",
               title: "Login Before",
               render: (record) =>
-                record.emailVerified ? (
-                  <IconCheck color="green" />
-                ) : (
+                record.isNewUser ? (
                   <IconX color="red" />
+                ) : (
+                  <IconCheck color="green" />
                 ),
+              sortable: true,
+            },
+            {
+              accessor: "points",
               sortable: true,
             },
             {
@@ -414,14 +468,17 @@ export default function Accounts() {
           recordsPerPage={PAGE_SIZE}
           onRowClick={(record) => {
             currentUser.current = record;
-            // setUserEditOpened(true);
+            editUserForm.setValues({
+              username: record.username,
+              role: record.role,
+              points: record.points.toString(),
+            });
+            setUserEditOpened(true);
           }}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
           selectedRecords={selectedRecords}
           onSelectedRecordsChange={setSelectedRecords}
-          isRecordSelectable={({ role }) => role !== Role.SUPERUSER}
-          bodyRef={bodyRef}
         />
 
         {selectedRecords.length > 0 && (
@@ -437,9 +494,9 @@ export default function Accounts() {
                 sendRecruitmentEmails(selectedRecords);
               }}
             >
-              Send Recruitment Email{selectedRecords.length > 1 ? "s" : ""} to{" "}
+              Send Recruitment Email{selectedRecords.length > 1 && "s"} to{" "}
               {selectedRecords.length} User
-              {selectedRecords.length > 1 ? "s" : ""}
+              {selectedRecords.length > 1 && "s"}
             </Button>
             <Button
               fullWidth
@@ -453,13 +510,74 @@ export default function Accounts() {
               }}
             >
               Delete {selectedRecords.length} User
-              {selectedRecords.length > 1 ? "s" : ""}
+              {selectedRecords.length > 1 && "s"}
             </Button>
           </Flex>
         )}
       </Container>
 
-      {/* TODO: User Edit Modal */}
+      {/* User Edit Modal */}
+      <Modal
+        opened={userEditOpened}
+        onClose={() => {
+          setUserEditOpened(false);
+        }}
+        title="Edit User"
+        size="auto"
+        centered
+      >
+        <form
+          onSubmit={editUserForm.onSubmit(
+            (values) => {
+              editUser(values);
+            },
+            (errors) => {
+              Object.keys(errors).forEach((key) => {
+                toast.error(errors[key] as string);
+              });
+            }
+          )}
+        >
+          <Stack spacing="md" align="stretch">
+            <TextInput
+              label="Username (5-30 characters)"
+              type="text"
+              {...editUserForm.getInputProps("username")}
+            />
+            <Select
+              data={[
+                {
+                  label: "SUPERUSER",
+                  value: Role.SUPERUSER,
+                  disabled: session?.data?.user?.role !== Role.SUPERUSER,
+                },
+                {
+                  label: "ADMIN",
+                  value: Role.ADMIN,
+                },
+                {
+                  label: "USER",
+                  value: Role.USER,
+                },
+              ]}
+              label="Role"
+              {...editUserForm.getInputProps("role")}
+            />
+            <TextInput
+              label="Points"
+              type="number"
+              {...editUserForm.getInputProps("points")}
+            />
+            <Button
+              type="submit"
+              loading={editUserStatus === "loading"}
+              color="green"
+            >
+              Confirm Changes
+            </Button>
+          </Stack>
+        </form>
+      </Modal>
 
       {/* User Delete Confirmation Modal */}
       <Modal

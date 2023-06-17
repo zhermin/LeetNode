@@ -37,9 +37,9 @@ export default function Account({ userInfo }: AccountProps) {
         userName: z
           .string()
           .trim()
-          .regex(/^(\w+)$/, "Only letters, numbers and underscores are allowed")
+          .regex(/^([\w.@]+)$/, "No special characters allowed")
           .min(5, "Minimum 5 characters")
-          .max(20, "Maximum 20 characters")
+          .max(30, "Maximum 30 characters")
           .or(z.literal(null))
           .or(z.literal("")),
         userNusnetId: z
