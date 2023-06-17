@@ -103,7 +103,7 @@ export default function AdminPage() {
           sidebarOpened ? (
             <Navbar
               height={800}
-              width={{ sm: 300 }}
+              width={{ sm: 200, lg: 300 }}
               p="md"
               className={classes.navbar}
             >

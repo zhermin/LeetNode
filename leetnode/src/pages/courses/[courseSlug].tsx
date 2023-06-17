@@ -16,13 +16,14 @@ import Latex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
 import { prisma } from "@/server/db/client";
 import {
+  ActionIcon,
   AppShell,
   Box,
   Button,
   Center,
   Container,
   createStyles,
-  Group,
+  Flex,
   Header,
   Loader,
   Navbar as Sidebar,
@@ -34,7 +35,11 @@ import {
   Tooltip,
   TypographyStylesProvider,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import {
+  useMediaQuery,
+  useSessionStorage,
+  useViewportSize,
+} from "@mantine/hooks";
 import { Course, CourseMedia, Mastery, Topic } from "@prisma/client";
 import {
   IconApps,
@@ -44,6 +49,7 @@ import {
   IconChartLine,
   IconChevronsLeft,
   IconChevronsRight,
+  IconDownload,
   IconMessages,
   IconPresentation,
   IconReportSearch,
@@ -74,6 +80,7 @@ export default function CourseMainPage({
 }) {
   // Mantine
   const { theme, classes, cx } = useStyles();
+  const { width } = useViewportSize();
 
   // States
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
@@ -84,8 +91,14 @@ export default function CourseMainPage({
     }
   }, [mobile]);
 
-  const [section, setSection] = useState<"learn" | "practice">("learn");
-  const [active, setActive] = useState("Overview");
+  const [section, setSection] = useSessionStorage<"learn" | "practice">({
+    key: "courseSectionTab",
+    defaultValue: "learn",
+  });
+  const [active, setActive] = useSessionStorage({
+    key: "courseActiveTab",
+    defaultValue: "Overview",
+  });
 
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
@@ -141,6 +154,7 @@ export default function CourseMainPage({
           onClick={(event: { preventDefault: () => void }) => {
             event.preventDefault();
             setActive(item.label);
+            mobile && setSidebarOpened(false);
           }}
         >
           <item.icon className={classes.linkIcon} stroke={1.5} />
@@ -230,6 +244,7 @@ export default function CourseMainPage({
                 onClick={(event: { preventDefault: () => void }) => {
                   event.preventDefault();
                   setActive("Course Discussion");
+                  mobile && setSidebarOpened(false);
                 }}
               >
                 <IconMessages className={classes.linkIcon} stroke={1.5} />
@@ -248,10 +263,10 @@ export default function CourseMainPage({
         )
       }
     >
-      <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
+      <ScrollArea>
         {active === "Overview" ? (
           <Container>
-            <Title>{courseDetails.courseName}</Title>
+            <Title mb="lg">{courseDetails.courseName}</Title>
             <TypographyStylesProvider
               sx={(theme) => ({
                 fontSize: theme.fontSizes.xl,
@@ -276,14 +291,36 @@ export default function CourseMainPage({
         ) : active === "Lecture Slides" ? (
           courseDetails.courseMedia.map((media) => (
             <Stack align="center" key={media.publicId}>
-              <Title my={"md"}>{media.mediaName}</Title>
+              <Flex align="center" gap="md">
+                <Title order={3}>{media.mediaName}</Title>
+                <Tooltip label="Download Slides" withArrow>
+                  <ActionIcon
+                    variant="default"
+                    className="rounded-full p-1"
+                    onClick={() => {
+                      window.open(media.courseMediaURL);
+                    }}
+                  >
+                    <IconDownload size={16} stroke={1.5} />
+                  </ActionIcon>
+                </Tooltip>
+              </Flex>
               <Document
                 file={media.courseMediaURL}
                 onLoadSuccess={onDocumentLoadSuccess}
               >
-                <Page pageNumber={pageNumber} />
+                <Page
+                  pageNumber={pageNumber}
+                  width={
+                    sidebarOpened
+                      ? width > theme.breakpoints.lg
+                        ? (width - 300) * 0.5
+                        : (width - 200) * 0.8
+                      : width * 0.9
+                  }
+                />
               </Document>
-              <Group>
+              <Flex gap={mobile ? "xs" : "md"}>
                 <Button
                   onClick={() => {
                     if (pageNumber > 1) {
@@ -292,8 +329,9 @@ export default function CourseMainPage({
                     setPageNumber(1);
                   }}
                   variant="light"
+                  size={mobile ? "xs" : "md"}
                 >
-                  <IconChevronsLeft stroke={1.5} />
+                  <IconChevronsLeft size={mobile ? 16 : 20} stroke={1.5} />
                 </Button>
                 <Button
                   onClick={() => {
@@ -302,11 +340,17 @@ export default function CourseMainPage({
                     }
                   }}
                   variant="light"
+                  size={mobile ? "xs" : "md"}
                 >
-                  <IconArrowLeft stroke={1.5} />
+                  <IconArrowLeft size={mobile ? 16 : 20} stroke={1.5} />
                 </Button>
                 <Tooltip label="Jump to Page 1" withArrow position="bottom">
-                  <Button variant="light" onClick={() => setPageNumber(1)}>
+                  <Button
+                    variant="light"
+                    onClick={() => setPageNumber(1)}
+                    size={mobile ? "xs" : "md"}
+                    fz={mobile ? "xs" : "sm"}
+                  >
                     Page {pageNumber} of {numPages}
                   </Button>
                 </Tooltip>
@@ -317,8 +361,9 @@ export default function CourseMainPage({
                     }
                   }}
                   variant="light"
+                  size={mobile ? "xs" : "md"}
                 >
-                  <IconArrowRight stroke={1.5} />
+                  <IconArrowRight size={mobile ? 16 : 20} stroke={1.5} />
                 </Button>
                 <Button
                   onClick={() => {
@@ -328,14 +373,15 @@ export default function CourseMainPage({
                     setPageNumber(numPages);
                   }}
                   variant="light"
+                  size={mobile ? "xs" : "md"}
                 >
-                  <IconChevronsRight stroke={1.5} />
+                  <IconChevronsRight size={mobile ? 16 : 20} stroke={1.5} />
                 </Button>
-              </Group>
+              </Flex>
             </Stack>
           ))
         ) : active === "Lecture Videos" ? (
-          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+          <Box className="h-[calc(100vh-180px)]" w="100%" h="100%">
             <div
               style={{ width: "100%", height: "100%" }}
               dangerouslySetInnerHTML={{
@@ -350,9 +396,9 @@ export default function CourseMainPage({
                 }),
               }}
             />
-          </Group>
+          </Box>
         ) : active === "Additional Resources" ? (
-          <Group className="h-[calc(100vh-180px)]" w="100%" h="100%">
+          <Box className="h-[calc(100vh-180px)]" w="100%" h="100%">
             {output?.map((resource) =>
               resource.type === "video" ? (
                 <div
@@ -379,7 +425,7 @@ export default function CourseMainPage({
                 </Latex>
               )
             )}
-          </Group>
+          </Box>
         ) : active === "Course Discussion" ? (
           <CourseDiscussion courseName={courseDetails.courseName} />
         ) : active === "Question" ? (
@@ -391,7 +437,7 @@ export default function CourseMainPage({
         ) : (
           <Text>Error</Text>
         )}
-      </ScrollArea.Autosize>
+      </ScrollArea>
     </AppShell>
   );
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import {
   Avatar,
-  Box,
   Center,
   Group,
   Loader,
@@ -13,13 +12,19 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { User } from "@prisma/client";
 import { IconCrown, IconSearch } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
+type UserWithPoints = {
+  id: string;
+  username: string;
+  points: number;
+  image: string | null;
+};
+
 export default function Overall() {
   const [page, setPage] = useState(1);
-  const [records, setRecords] = useState<User[]>();
+  const [records, setRecords] = useState<UserWithPoints[]>();
 
   const PAGE_SIZE = 15;
 
@@ -33,7 +38,9 @@ export default function Overall() {
   } = useQuery({
     queryKey: ["challenge"],
     queryFn: async () => {
-      const res = await axios.get<User[]>("/api/user/getAllUsersPoints");
+      const res = await axios.get<UserWithPoints[]>(
+        "/api/user/getAllUsersPoints"
+      );
       return res.data;
     },
   });
@@ -57,7 +64,7 @@ export default function Overall() {
         })
       );
     } else if (!!allUsers) {
-      setRecords(allUsers.slice(from, to)); // Set record once data is retrieved
+      setRecords(allUsers.slice(from, to));
     }
   }, [page, debouncedQuery, allUsers]);
 
@@ -77,74 +84,71 @@ export default function Overall() {
         icon={<IconSearch size={16} />}
         value={query}
         onChange={(e) => setQuery(e.currentTarget.value)}
-        className="m-3"
+        m="sm"
       />
-      <Box sx={{ maxHeight: 890 }} className="m-3">
-        <DataTable
-          withBorder
-          minHeight={250}
-          records={records}
-          columns={[
-            {
-              accessor: "Rank",
-              width: "10%",
-              textAlignment: "center",
-              render: (record) => {
-                return allUsers?.indexOf(record) === 0 ? (
-                  <Center>
-                    <IconCrown color="black" className="fill-amber-500" />
-                  </Center>
-                ) : (
-                  <Text size="md" weight={500}>
-                    {(allUsers?.indexOf(record) ?? 0) + 1}
-                  </Text>
-                );
-              },
-            },
-            {
-              accessor: "username",
-              width: "65%",
-              render: (record) => {
-                return (
-                  <Group spacing="sm">
-                    <Avatar size={26} src={record.image} radius={26} />
-                    <Text
-                      size="md"
-                      weight={500}
-                      className="whitespace-pre-wrap"
-                    >
-                      {record.username}
-                    </Text>
-                  </Group>
-                );
-              },
-            },
-            {
-              accessor: "points",
-              width: "25%",
-              textAlignment: "right",
-              render: (record) => (
+      <DataTable
+        withBorder
+        minHeight={320}
+        mx="sm"
+        highlightOnHover
+        borderRadius="sm"
+        records={records}
+        columns={[
+          {
+            accessor: "rank",
+            width: "10%",
+            textAlignment: "center",
+            render: (record) => {
+              return allUsers?.indexOf(record) === 0 ? (
+                <Center>
+                  <IconCrown color="black" className="fill-amber-500" />
+                </Center>
+              ) : (
                 <Text size="md" weight={500}>
-                  {record.points} ⚡
+                  {(allUsers?.indexOf(record) ?? 0) + 1}
                 </Text>
-              ),
+              );
             },
-          ]}
-          totalRecords={allUsers.length}
-          recordsPerPage={PAGE_SIZE}
-          page={page}
-          onPageChange={(p) => setPage(p)}
-          rowStyle={(user: User) =>
-            allUsers.indexOf(user) === 0
-              ? { backgroundColor: "gold", color: "black" }
-              : allUsers.indexOf(user) === 1
-              ? { backgroundColor: "silver", color: "black" }
-              : allUsers.indexOf(user) === 2
-              ? { backgroundColor: "#E67700", color: "black" }
-              : undefined
-          }
-        />
-      </Box>
+          },
+          {
+            accessor: "username",
+            width: "65%",
+            render: (record) => {
+              return (
+                <Group spacing="sm">
+                  <Avatar size={26} src={record.image} radius={26} />
+                  <Text size="md" weight={500} className="whitespace-pre-wrap">
+                    {record.username}
+                  </Text>
+                </Group>
+              );
+            },
+          },
+          {
+            accessor: "points",
+            width: "25%",
+            textAlignment: "right",
+            render: (record) => (
+              <Text size="md" weight={500}>
+                {record.points} ⚡
+              </Text>
+            ),
+          },
+        ]}
+        totalRecords={allUsers.length}
+        recordsPerPage={PAGE_SIZE}
+        page={page}
+        onPageChange={(p) => setPage(p)}
+        rowStyle={(user) =>
+          allUsers.indexOf(user) === 0
+            ? { backgroundColor: "gold", color: "black" }
+            : allUsers.indexOf(user) === 1
+            ? { backgroundColor: "silver", color: "black" }
+            : allUsers.indexOf(user) === 2
+            ? { backgroundColor: "#E67700", color: "black" }
+            : undefined
+        }
+      />
     </ScrollArea>
   );
 }
