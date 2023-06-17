@@ -27,7 +27,7 @@ import {
   Title,
 } from "@mantine/core";
 import { Frequency, Role, Topic } from "@prisma/client";
-import { IconClick, IconEdit, IconTrash } from "@tabler/icons";
+import { IconClick, IconEdit } from "@tabler/icons";
 import { useQueries } from "@tanstack/react-query";
 
 const Settings = () => {
@@ -46,7 +46,6 @@ const Settings = () => {
   const [editOpened, setEditOpened] = useState(false);
   const [toEditId, setToEditId] = useState("");
   const [roleView, setRoleView] = useState("userView");
-  const [deleteUser, setDeleteUser] = useState<string[]>([]);
   const [closeButton, setCloseButton] = useState(false);
   const [confirmPopup, setConfirmPopup] = useState(false);
   const [editField, setEditField] = useState<
@@ -95,12 +94,6 @@ const Settings = () => {
     );
   }
 
-  const handleDeleteUser = (userId: string) => {
-    deleteUser.some((user) => user === userId)
-      ? setDeleteUser(deleteUser.filter((user) => user !== userId))
-      : setDeleteUser((previousUsers) => [...previousUsers, userId]);
-  };
-
   const handleEdit = ({ id, username }: { id: string; username: string }) => {
     setToEditId(id);
     if (editField.some((u) => u.id === id)) {
@@ -141,14 +134,6 @@ const Settings = () => {
       axios
         .post("/api/admin/settings/resetUserDetails", {
           editField: editField,
-        })
-        .then((response) => console.log(response.data))
-        .catch((error) => console.error(error));
-    }
-    if (deleteUser.length > 0) {
-      axios
-        .post("/api/admin/settings/deleteUser", {
-          deleteUser: deleteUser,
         })
         .then((response) => console.log(response.data))
         .catch((error) => console.error(error));
@@ -212,7 +197,7 @@ const Settings = () => {
         <Table mx={50}>
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Username</th>
               <th>Total Attempts</th>
               <th>Actions</th>
             </tr>
@@ -231,17 +216,6 @@ const Settings = () => {
                 <td>{user.attempts.length}</td>
                 <td>
                   <Group>
-                    <ActionIcon
-                      variant={
-                        deleteUser.some((u) => u === user.id)
-                          ? "filled"
-                          : "default"
-                      }
-                      color={deleteUser.some((u) => u === user.id) ? "red" : ""}
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
-                      <IconTrash size="1rem" />
-                    </ActionIcon>
                     <ActionIcon
                       variant={
                         editField.some((u) => u.id === user.id)
@@ -302,14 +276,14 @@ const Settings = () => {
             const existingIndex = editField.findIndex((u) => u.id === toEditId);
             if (existingIndex !== -1) {
               // Update existing object
-              const updatedField = [...editField]; // create a copy of editField
+              const updatedField = [...editField];
               updatedField[existingIndex] = {
                 id: toEditId,
                 username: toEditName,
                 resetAllAttempts: allUserAttemptsReset,
                 resetTopicAttempts: userTopicReset,
               };
-              setEditField(updatedField); // update state variable using setEditField
+              setEditField(updatedField);
             } else {
               // Add new object
               setEditField((prevFields) => [
@@ -328,13 +302,14 @@ const Settings = () => {
         title="Additional User Settings"
         zIndex={201}
       >
-        <Text mt={"md"}>Name</Text>
+        <Text mt="md">Username</Text>
         <TextInput
+          disabled
           value={toEditName}
           onChange={(event) => {
             setToEditName(event.currentTarget.value);
           }}
-          mb={"md"}
+          mb="md"
         />
         <Checkbox
           my="sm"
@@ -391,7 +366,7 @@ const Settings = () => {
       <Divider
         my="md"
         label={
-          <Text size={"lg"} fw={600}>
+          <Text size="lg" fw={600}>
             General
           </Text>
         }
@@ -411,8 +386,8 @@ const Settings = () => {
       <Divider
         my="md"
         label={
-          <Text size={"lg"} fw={600}>
-            Course
+          <Text size="lg" fw={600}>
+            Course Attempts
           </Text>
         }
       />
@@ -435,7 +410,6 @@ const Settings = () => {
       <MultiSelect
         my="sm"
         disabled={!selectedAttemptsResetChecked}
-        // label="Edit Your Email Alert Frequency"
         placeholder="Scroll to see all options"
         data={transformedTopics}
         value={topicReset}
@@ -447,8 +421,8 @@ const Settings = () => {
       <Divider
         my="md"
         label={
-          <Text size={"lg"} fw={600}>
-            Users
+          <Text size="lg" fw={600}>
+            User Attempts
           </Text>
         }
       />
@@ -462,14 +436,10 @@ const Settings = () => {
           onChange={setRoleView}
         />
 
-        <ActionIcon variant={"filled"} color={"red"}>
-          <IconTrash size="1rem" />
-        </ActionIcon>
-        <Text fw={500}>- To be deleted</Text>
-        <ActionIcon variant={"filled"} color={"blue"}>
+        <ActionIcon variant="filled" color="blue">
           <IconEdit size="1rem" />
         </ActionIcon>
-        <Text fw={500}>- To be edited</Text>
+        <Text fw={500}>- To be Edited</Text>
       </Group>
       {roleView === "adminView" ? (
         <Carousel

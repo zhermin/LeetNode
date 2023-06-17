@@ -1,23 +1,25 @@
 import axios from "axios";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 
+import { RoleBadge } from "@/components/misc/Badges";
 import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   Accordion,
   ActionIcon,
   Button,
-  Center,
   Code,
   Container,
   createStyles,
+  Divider,
   Flex,
   Group,
   Modal,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -32,20 +34,21 @@ import {
   IconMail,
   IconMinus,
   IconPlus,
+  IconRefresh,
   IconSearch,
   IconTrash,
   IconX,
 } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { RoleBadge } from "../misc/Badges";
-
 export default function Accounts() {
   const { theme, classes } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const queryClient = useQueryClient();
+  const session = useSession();
 
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
+  const [userEditOpened, setUserEditOpened] = useState(false);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
   const { data: users, isFetching } = useQuery({
@@ -54,7 +57,6 @@ export default function Accounts() {
       axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
   });
 
-  const [bodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(users?.data.slice(0, PAGE_SIZE));
@@ -87,28 +89,36 @@ export default function Accounts() {
     const sortedRecords = filteredRecords.sort((a, b) => {
       if (sortStatus.columnAccessor === "role") {
         if (sortStatus.direction === "asc") {
-          return b.role.length - a.role.length;
+          if (a.role.length === b.role.length) {
+            return a.email.localeCompare(b.email);
+          } else {
+            return b.role.length - a.role.length;
+          }
         } else {
-          return a.role.length - b.role.length;
+          if (a.role.length === b.role.length) {
+            return b.email.localeCompare(a.email);
+          } else {
+            return a.role.length - b.role.length;
+          }
         }
       } else if (sortStatus.columnAccessor === "username") {
-        if (sortStatus.direction === "asc") {
-          return a.username.localeCompare(b.username);
-        } else {
-          return b.username.localeCompare(a.username);
-        }
+        return sortStatus.direction === "asc"
+          ? a.username.localeCompare(b.username)
+          : b.username.localeCompare(a.username);
       } else if (sortStatus.columnAccessor === "email") {
+        return sortStatus.direction === "asc"
+          ? a.email.localeCompare(b.email)
+          : b.email.localeCompare(a.email);
+      } else if (sortStatus.columnAccessor === "isNewUser") {
         if (sortStatus.direction === "asc") {
-          return a.email.localeCompare(b.email);
+          return a.isNewUser ? -1 : 1;
         } else {
-          return b.email.localeCompare(a.email);
+          return b.isNewUser ? -1 : 1;
         }
-      } else if (sortStatus.columnAccessor === "emailVerified") {
-        if (sortStatus.direction === "asc") {
-          return a.emailVerified ? -1 : 1;
-        } else {
-          return b.emailVerified ? -1 : 1;
-        }
+      } else if (sortStatus.columnAccessor === "points") {
+        return sortStatus.direction === "asc"
+          ? a.points - b.points
+          : b.points - a.points;
       }
       return 0;
     });
@@ -144,6 +154,34 @@ export default function Accounts() {
     ),
   });
 
+  const editUserForm = useForm<{
+    username: string;
+    role: Role;
+    points: string;
+  }>({
+    initialValues: {
+      username: "",
+      role: Role.USER,
+      points: "",
+    },
+    validateInputOnBlur: true,
+    validate: zodResolver(
+      z.object({
+        username: z
+          .string()
+          .trim()
+          .regex(/^([\w.@]+)$/, "No special characters allowed")
+          .min(5, "Minimum 5 characters")
+          .max(30, "Maximum 30 characters"),
+        role: z.nativeEnum(Role),
+        points: z
+          .string()
+          .nonempty("Cannot be empty")
+          .pipe(z.coerce.number().int("Must be a whole number").min(0)),
+      })
+    ),
+  });
+
   const { mutate: addUsers, status: addUsersStatus } = useMutation({
     mutationFn: (emails: string[]) =>
       axios.post("/api/user/admin/add", { emails }),
@@ -152,13 +190,27 @@ export default function Accounts() {
     },
   });
 
-  const { mutate: sendConsentEmails } = useMutation({
-    mutationFn: (users: UsersWithMasteriesAndAttemptsType) =>
-      axios.post("/api/user/sendConsentEmails", {
-        emails: users.map((user) => user.email),
-      }),
+  const { mutate: sendRecruitmentEmails, status: sendRecruitmentEmailsStatus } =
+    useMutation({
+      mutationFn: (users: UsersWithMasteriesAndAttemptsType) =>
+        axios.post("/api/user/admin/sendRecruitmentEmails", {
+          emails: users.map((user) => user.email),
+        }),
+      onSuccess: () => {
+        queryClient.invalidateQueries(["all-users"]);
+        setSelectedRecords([]);
+      },
+    });
+
+  const { mutate: editUser, status: editUserStatus } = useMutation({
+    mutationFn: (values: { username: string; role: Role; points: string }) =>
+      axios.put(
+        `/api/user/admin/edit?email=${currentUser.current?.email}`,
+        values
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-users"]);
+      setUserEditOpened(false);
     },
   });
 
@@ -170,16 +222,28 @@ export default function Accounts() {
     },
   });
 
+  const { mutate: deleteUsers, status: deleteUsersStatus } = useMutation({
+    mutationFn: (emails: string[]) =>
+      axios.post("/api/user/admin/deleteMany", { emails }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["all-users"]);
+      setSelectedRecords([]);
+    },
+  });
+
   return (
     <>
       <Container size="lg" py={!mobile ? "xl" : undefined}>
-        <Center>
-          <Stack align="center" mb="md">
-            <Title order={2} className={classes.title} align="center">
-              All Accounts
-            </Title>
-          </Stack>
-        </Center>
+        <Title order={2} className={classes.title} align="center" mb="sm">
+          All Accounts
+        </Title>
+        <Divider
+          size="md"
+          w={45}
+          mb="xl"
+          mx="auto"
+          color={theme.fn.primaryColor()}
+        />
 
         <Accordion
           variant="contained"
@@ -268,10 +332,9 @@ export default function Accounts() {
                   >
                     <IconPlus size={16} />
                   </Button>
-                  {/* TODO: consent -> recruitment */}
                   <Text fz="sm" fs="italic">
-                    Note: This will send them a recruitment email, likely to their
-                    junk mail
+                    Note: This will send them a recruitment email, likely to
+                    their junk mail
                   </Text>
                   <Button type="submit" loading={addUsersStatus === "loading"}>
                     Whitelist Emails
@@ -282,16 +345,31 @@ export default function Accounts() {
           </Accordion.Item>
         </Accordion>
 
-        <TextInput
-          placeholder="Search User..."
-          icon={<IconSearch size={16} />}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.currentTarget.value);
-            setPage(1);
-          }}
-          mb="xs"
-        />
+        <Flex mb="xs" align="center" gap="md">
+          <TextInput
+            placeholder="Search User..."
+            icon={<IconSearch size={16} />}
+            sx={{ flex: 1 }}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.currentTarget.value);
+              setPage(1);
+            }}
+          />
+          <Tooltip label="Refresh Table" withArrow>
+            <ActionIcon
+              onClick={() => {
+                queryClient.invalidateQueries(["all-users"]);
+                setSelectedRecords([]);
+              }}
+              variant="default"
+              className="rounded-full"
+              disabled={isFetching}
+            >
+              <IconRefresh size={16} stroke={1.5} color="gray" />
+            </ActionIcon>
+          </Tooltip>
+        </Flex>
 
         <DataTable
           idAccessor="id"
@@ -313,8 +391,8 @@ export default function Accounts() {
                     src={record.image || ""}
                     alt={record.username}
                     className="rounded-full"
-                    width={20}
-                    height={20}
+                    width={30}
+                    height={30}
                   />
                   <Text sx={{ lineHeight: 1 }} mr="xs">
                     {record.username}
@@ -337,16 +415,18 @@ export default function Accounts() {
               ),
             },
             {
-              accessor: "emailVerified",
-              title: "Verified",
-              width: 90,
+              accessor: "isNewUser",
+              title: "Login Before",
               render: (record) =>
-                record.emailVerified ? (
-                  <IconCheck color="green" />
-                ) : (
+                record.isNewUser ? (
                   <IconX color="red" />
+                ) : (
+                  <IconCheck color="green" />
                 ),
-              visibleMediaQuery: `(min-width: ${theme.breakpoints.xs}px)`,
+              sortable: true,
+            },
+            {
+              accessor: "points",
               sortable: true,
             },
             {
@@ -354,11 +434,11 @@ export default function Accounts() {
               title: "",
               render: (record) => (
                 <Flex wrap="nowrap">
-                  <Tooltip label="Resend Consent Email" withArrow>
+                  <Tooltip label="Resend Recruitment Email" withArrow>
                     <ActionIcon
                       onClick={(e) => {
                         e.stopPropagation();
-                        sendConsentEmails([record]);
+                        sendRecruitmentEmails([record]);
                       }}
                     >
                       <IconMail size={16} />
@@ -386,18 +466,118 @@ export default function Accounts() {
           onPageChange={setPage}
           totalRecords={totalRecords}
           recordsPerPage={PAGE_SIZE}
-          // TODO: onRowClick={(record) => {
-          //   currentUser.current = record;
-          //   setUserEditOpened(true);
-          // }}
+          onRowClick={(record) => {
+            currentUser.current = record;
+            editUserForm.setValues({
+              username: record.username,
+              role: record.role,
+              points: record.points.toString(),
+            });
+            setUserEditOpened(true);
+          }}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
           selectedRecords={selectedRecords}
           onSelectedRecordsChange={setSelectedRecords}
-          isRecordSelectable={({ role }) => role !== Role.SUPERUSER}
-          bodyRef={bodyRef}
         />
+
+        {selectedRecords.length > 0 && (
+          <Flex gap="md" justify="stretch" mt="xs">
+            <Button
+              fullWidth
+              color="cyan"
+              loading={
+                sendRecruitmentEmailsStatus === "loading" ||
+                deleteUsersStatus === "loading"
+              }
+              onClick={() => {
+                sendRecruitmentEmails(selectedRecords);
+              }}
+            >
+              Send Recruitment Email{selectedRecords.length > 1 && "s"} to{" "}
+              {selectedRecords.length} User
+              {selectedRecords.length > 1 && "s"}
+            </Button>
+            <Button
+              fullWidth
+              color="red"
+              loading={
+                sendRecruitmentEmailsStatus === "loading" ||
+                deleteUsersStatus === "loading"
+              }
+              onClick={() => {
+                deleteUsers(selectedRecords.map((r) => r.email));
+              }}
+            >
+              Delete {selectedRecords.length} User
+              {selectedRecords.length > 1 && "s"}
+            </Button>
+          </Flex>
+        )}
       </Container>
+
+      {/* User Edit Modal */}
+      <Modal
+        opened={userEditOpened}
+        onClose={() => {
+          setUserEditOpened(false);
+        }}
+        title="Edit User"
+        size="auto"
+        centered
+      >
+        <form
+          onSubmit={editUserForm.onSubmit(
+            (values) => {
+              editUser(values);
+            },
+            (errors) => {
+              Object.keys(errors).forEach((key) => {
+                toast.error(errors[key] as string);
+              });
+            }
+          )}
+        >
+          <Stack spacing="md" align="stretch">
+            <TextInput
+              label="Username (5-30 characters)"
+              type="text"
+              {...editUserForm.getInputProps("username")}
+            />
+            <Select
+              data={[
+                {
+                  label: "SUPERUSER",
+                  value: Role.SUPERUSER,
+                  disabled: session?.data?.user?.role !== Role.SUPERUSER,
+                },
+                {
+                  label: "ADMIN",
+                  value: Role.ADMIN,
+                },
+                {
+                  label: "USER",
+                  value: Role.USER,
+                },
+              ]}
+              label="Role"
+              {...editUserForm.getInputProps("role")}
+            />
+            <TextInput
+              label="Points"
+              type="number"
+              {...editUserForm.getInputProps("points")}
+            />
+            <Button
+              type="submit"
+              loading={editUserStatus === "loading"}
+              color="green"
+            >
+              Confirm Changes
+            </Button>
+          </Stack>
+        </form>
+      </Modal>
 
       {/* User Delete Confirmation Modal */}
       <Modal
@@ -447,16 +627,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 900,
     [theme.fn.smallerThan("sm")]: {
       fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
     },
   },
 

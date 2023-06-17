@@ -116,7 +116,7 @@ export default function User() {
         sidebarOpened ? (
           <Navbar
             height="100%"
-            width={{ sm: 300 }}
+            width={{ sm: 200, lg: 300 }}
             p="md"
             className={classes.navbar}
           >

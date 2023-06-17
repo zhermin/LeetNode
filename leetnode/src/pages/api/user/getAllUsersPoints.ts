@@ -2,8 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@/server/db/client";
 
-// import { Role } from "@prisma/client";
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -16,25 +14,12 @@ export default async function handler(
       currentDatetime.setDate(1);
       const info = await prisma.user.findMany({
         where: {
-          // Filter in future
-          //   OR: [
-          //     {
-          //       role: {
-          //         equals: Role.USER,
-          //       },
-          //     },
-          //     {
-          //       role: {
-          //         equals: Role.SUPERUSER,
-          //       },
-          //     },
-          //   ],
           lastActive: {
             gt: new Date(currentDatetime.toISOString().substring(0, 10)), // Current month data
           },
         },
         orderBy: {
-          points: "desc", // Sort points in descending order
+          points: "desc",
         },
         select: {
           id: true,

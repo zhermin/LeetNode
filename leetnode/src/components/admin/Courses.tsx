@@ -635,7 +635,7 @@ const Courses = () => {
                               </Accordion.Control>
                               <Accordion.Panel>
                                 <div
-                                  className="rawhtml rawhtml-lg-img"
+                                  className="rawhtml"
                                   dangerouslySetInnerHTML={{
                                     __html: DOMPurify.sanitize(
                                       question.questionContent,
@@ -823,7 +823,7 @@ const Courses = () => {
                               </Accordion.Control>
                               <Accordion.Panel>
                                 <div
-                                  className="rawhtml rawhtml-lg-img"
+                                  className="rawhtml"
                                   dangerouslySetInnerHTML={{
                                     __html: DOMPurify.sanitize(
                                       question.questionContent,

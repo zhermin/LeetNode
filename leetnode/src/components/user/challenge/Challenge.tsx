@@ -1,12 +1,14 @@
-import { useState } from "react";
-
 import { ScrollArea, SegmentedControl } from "@mantine/core";
+import { useSessionStorage } from "@mantine/hooks";
 
 import Overall from "./Overall";
 import Personal from "./Personal";
 
 export default function Challenge() {
-  const [view, setView] = useState("personal");
+  const [view, setView] = useSessionStorage({
+    key: "challengeTab",
+    defaultValue: "personal",
+  });
 
   return (
     <ScrollArea>

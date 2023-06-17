@@ -3,9 +3,12 @@ import DOMPurify from "dompurify";
 
 import { QuestionDataType } from "@/types/question-types";
 import {
+  Accordion,
   Badge,
+  Box,
   Center,
   createStyles,
+  Divider,
   Flex,
   Group,
   Loader,
@@ -14,6 +17,7 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import {
   Attempt,
@@ -22,7 +26,7 @@ import {
   QuestionWithAddedTime,
   Topic,
 } from "@prisma/client";
-import { IconCheck, IconX } from "@tabler/icons";
+import { IconCheck, IconHelp, IconX } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import VariablesBox from "../editor/VariablesBox";
@@ -86,10 +90,10 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
 
   return (
     <>
-      <Paper withBorder radius="lg" mr="lg" mb="lg">
+      <Paper withBorder radius="lg" mb="lg">
         <Stack align="center" mt="sm">
           <Title order={1}>Attempt History</Title>
-          <Text size="lg" color="dimmed">
+          <Text size="lg" color="dimmed" px="md" align="center">
             Keep practising to achieve mastery in all topics!
           </Text>
           <RingProgress
@@ -134,12 +138,16 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
                     },
                   ]}
                   label={
-                    <Text weight={700} size="xl" align="center">
-                      {numCorrectAttempts}{" "}
-                      <Text span color="dimmed">
-                        / {attempts.data.length}
+                    <Tooltip
+                      label={`${numCorrectAttempts} Correct out of ${attempts.data.length} Total Attempts`}
+                    >
+                      <Text weight={700} size="xl" align="center">
+                        {numCorrectAttempts}{" "}
+                        <Text span color="dimmed">
+                          / {attempts.data.length}
+                        </Text>
                       </Text>
-                    </Text>
+                    </Tooltip>
                   }
                 />
               </Center>
@@ -154,11 +162,10 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
           className={`${classes.card} ${
             attempt.isCorrect ? classes.correct : classes.wrong
           }`}
-          mr="lg"
           mb="xl"
           key={attempt.attemptId}
         >
-          <Group>
+          <Group w="70vw">
             <QuestionDifficultyBadge
               questionDifficulty={
                 attempt.questionWithAddedTime.question.questionDifficulty
@@ -179,7 +186,7 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
             })}
           </Text>
           <div
-            className="rawhtml rawhtml-sm-img py-4"
+            className="rawhtml py-4"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(
                 attempt.questionWithAddedTime.question.questionContent,
@@ -224,6 +231,61 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
                 )}
               </Flex>
             )
+          )}
+
+          {(
+            attempt.questionWithAddedTime.question
+              .questionData as QuestionDataType
+          ).methods && (
+            <>
+              <Divider my="xl" variant="dashed" />
+              <Accordion variant="contained" radius="md">
+                <Accordion.Item value="solution">
+                  <Accordion.Control>Solution</Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack>
+                      {(
+                        attempt.questionWithAddedTime.question
+                          .questionData as QuestionDataType
+                      ).methods.map((method, index) => (
+                        <Stack
+                          key={index}
+                          spacing="md"
+                          p="md"
+                          className={
+                            theme.colorScheme === "dark"
+                              ? "rounded-md bg-gray-700"
+                              : "rounded-md bg-gray-100"
+                          }
+                        >
+                          <Flex gap="md" align="center">
+                            <Text color="dimmed">#{index + 1}</Text>
+                            <Box
+                              sx={{ flex: 2, alignSelf: "stretch" }}
+                              className={`flex items-center justify-center rounded-md border border-solid ${
+                                theme.colorScheme === "dark"
+                                  ? "border-slate-800 bg-slate-800"
+                                  : "border-slate-300 bg-slate-200"
+                              } py-1.5`}
+                            >
+                              <Latex>{`$$ ${method.expr} $$`}</Latex>
+                            </Box>
+                          </Flex>
+                          {method.explanation !== undefined && (
+                            <Flex gap="md" align="center">
+                              <IconHelp stroke={1.5} size={20} />
+                              <Text sx={{ flex: 1 }} fz="sm">
+                                {method.explanation}
+                              </Text>
+                            </Flex>
+                          )}
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </>
           )}
         </Paper>
       ))}

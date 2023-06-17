@@ -49,13 +49,20 @@
     @apply rounded-md;
     @apply my-4;
   }
-
-  .rawhtml-lg-img img {
-    @apply max-w-lg;
+  @screen sm {
+    .rawhtml img {
+      @apply max-w-xs;
+    }
   }
-
-  .rawhtml-sm-img img {
-    @apply max-w-sm;
+  @screen md {
+    .rawhtml img {
+      @apply max-w-sm;
+    }
+  }
+  @screen lg {
+    .rawhtml img {
+      @apply max-w-lg;
+    }
   }
 
   .ql-video iframe {

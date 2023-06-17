@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
+import { UserData } from "@/components/Header";
+import { RoleBadge } from "@/components/misc/Badges";
 import {
   ActionIcon,
   Box,
@@ -34,9 +36,6 @@ import {
   IconSun,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
-
-import { UserData } from "./Header";
-import { RoleBadge } from "./misc/Badges";
 
 const HEADER_HEIGHT = 80;
 

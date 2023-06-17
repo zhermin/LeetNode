@@ -5,22 +5,22 @@ import { useEffect, useRef, useState } from "react";
 
 import { AllQuestionsType, QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   ActionIcon,
   Button,
-  Center,
   Container,
   createStyles,
+  Divider,
+  Flex,
   Modal,
-  Stack,
   TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import { randomId, useDebouncedValue, useMediaQuery } from "@mantine/hooks";
 import { QuestionDifficulty } from "@prisma/client";
-import { IconEye, IconSearch } from "@tabler/icons";
-import { useQuery } from "@tanstack/react-query";
+import { IconEye, IconRefresh, IconSearch } from "@tabler/icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import QuestionEditor from "./QuestionEditor";
 import VariablesBox from "./VariablesBox";
@@ -34,6 +34,7 @@ enum QuestionDifficultyEnum {
 export default function QuestionViewer() {
   const { theme, classes } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const queryClient = useQueryClient();
 
   const editorHtml = useRef("");
   const currentQuestion = useRef<AllQuestionsType[number]>();
@@ -46,7 +47,6 @@ export default function QuestionViewer() {
     queryFn: () => axios.get<AllQuestionsType>("/api/question/admin"),
   });
 
-  const [bodyRef] = useAutoAnimate<HTMLTableSectionElement>();
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState(questions?.data.slice(0, PAGE_SIZE));
@@ -108,13 +108,17 @@ export default function QuestionViewer() {
 
   return (
     <Container size="lg" py={!mobile ? "xl" : undefined}>
-      <Center>
-        <Stack align="center" mb="md">
-          <Title order={2} className={classes.title} align="center">
-            All Questions
-          </Title>
-        </Stack>
-      </Center>
+      <Title order={2} className={classes.title} align="center" mb="sm">
+        All Questions
+      </Title>
+      <Divider
+        size="md"
+        w={45}
+        mb="xl"
+        mx="auto"
+        color={theme.fn.primaryColor()}
+      />
+
       <Button
         fullWidth
         variant="default"
@@ -129,16 +133,30 @@ export default function QuestionViewer() {
         + Add New Question
       </Button>
 
-      <TextInput
-        placeholder="Search Question..."
-        icon={<IconSearch size={16} />}
-        value={query}
-        onChange={(e) => {
-          setQuery(e.currentTarget.value);
-          setPage(1);
-        }}
-        mb="xs"
-      />
+      <Flex mb="xs" align="center" gap="md">
+        <TextInput
+          placeholder="Search Question..."
+          icon={<IconSearch size={16} />}
+          sx={{ flex: 1 }}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.currentTarget.value);
+            setPage(1);
+          }}
+        />
+        <Tooltip label="Refresh Table" withArrow>
+          <ActionIcon
+            onClick={() => {
+              queryClient.invalidateQueries(["all-questions"]);
+            }}
+            variant="default"
+            className="rounded-full"
+            disabled={isFetching}
+          >
+            <IconRefresh size={16} stroke={1.5} color="gray" />
+          </ActionIcon>
+        </Tooltip>
+      </Flex>
 
       <DataTable
         idAccessor="questionTitle"
@@ -237,7 +255,6 @@ export default function QuestionViewer() {
         }}
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
-        bodyRef={bodyRef}
       />
 
       {/* Question Adder Modal */}
@@ -337,7 +354,7 @@ export default function QuestionViewer() {
           onClose={() => setQuestionViewOpened(false)}
         >
           <div
-            className="rawhtml rawhtml-lg-img"
+            className="rawhtml"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(
                 currentQuestion.current.questionContent,
@@ -403,16 +420,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 900,
     [theme.fn.smallerThan("sm")]: {
       fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
     },
   },
 

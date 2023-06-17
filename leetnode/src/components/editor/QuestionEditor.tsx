@@ -17,6 +17,7 @@ import { CustomMath } from "@/utils/CustomMath";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
   ActionIcon,
+  Affix,
   Badge,
   Box,
   Button,
@@ -134,9 +135,22 @@ export default function QuestionEditor({
           .trim()
           .min(5, { message: "Title is too short" })
           .max(150, { message: "Title is too long" })
-          .refine((title) => !titles.includes(title), {
-            message: "Title already exists",
-          }),
+          .refine(
+            (title) =>
+              !titles
+                .filter((t) =>
+                  currQuestionId
+                    ? t !==
+                      questions?.data.find(
+                        (q) => q.questionId === currQuestionId
+                      )?.questionTitle
+                    : t
+                )
+                .includes(title),
+            {
+              message: "Title already exists",
+            }
+          ),
         topic: z.string().min(1, { message: "Please pick a topic" }),
         difficulty: z.nativeEnum(QuestionDifficulty, {
           errorMap: () => ({ message: "Please pick a difficulty" }),
@@ -1541,6 +1555,22 @@ export default function QuestionEditor({
           {JSON.stringify(form.values, null, 2)}
         </Prism>
       </Modal>
+
+      {/* Floating Cancel Affix Button */}
+      <Affix position={{ bottom: 20, right: 20 }}>
+        <Button
+          compact
+          color="red"
+          opacity={0.75}
+          leftIcon={<IconX size={16} />}
+          onClick={() => {
+            setQuestionAddOpened(false);
+            setQuestionEditOpened(false);
+          }}
+        >
+          Cancel
+        </Button>
+      </Affix>
     </form>
   );
 }

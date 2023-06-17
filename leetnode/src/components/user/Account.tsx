@@ -37,9 +37,9 @@ export default function Account({ userInfo }: AccountProps) {
         userName: z
           .string()
           .trim()
-          .regex(/^(\w+)$/, "Only letters, numbers and underscores are allowed")
+          .regex(/^([\w.@]+)$/, "No special characters allowed")
           .min(5, "Minimum 5 characters")
-          .max(20, "Maximum 20 characters")
+          .max(30, "Maximum 30 characters")
           .or(z.literal(null))
           .or(z.literal("")),
         userNusnetId: z
@@ -113,7 +113,7 @@ export default function Account({ userInfo }: AccountProps) {
 
   return (
     <>
-      <h1 className="text-center">Account Settings</h1>
+      <h1 className="text-center">My Profile</h1>
       <hr className="my-4 h-px border-0 bg-gray-200" />
       <form
         onSubmit={form.onSubmit(

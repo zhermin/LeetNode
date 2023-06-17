@@ -26,7 +26,6 @@ export default function Overview({ data }: OverviewProps) {
       <div className="my-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Paper
           withBorder
-          shadow="sm"
           radius="md"
           p="xs"
           key="highestMastery"
@@ -62,7 +61,6 @@ export default function Overview({ data }: OverviewProps) {
 
         <Paper
           withBorder
-          shadow="lg"
           radius="md"
           p="xs"
           key="lowestMastery"

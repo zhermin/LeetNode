@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@/server/db/client";
 
-import { sendConsentEmail } from "../sendConsentEmails";
+import { sendRecruitmentEmail } from "./sendRecruitmentEmails";
 
 export default async function handler(
   req: NextApiRequest,
@@ -39,17 +39,17 @@ export default async function handler(
       skipDuplicates: true,
     });
 
-    // Send consent emails
-    await sendConsentEmail(emails);
+    // Send recruiment emails
+    await sendRecruitmentEmail(emails);
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ message: "Error creating users or sending consent emails" });
+      .json({ message: "Error creating users or sending recruitment emails" });
   }
 
   res.status(200).json({
     message:
-      "New users added and consent emails sent successfully (duplicates ignored)",
+      "New users added and recruitment emails sent successfully (duplicates ignored)",
   });
 }

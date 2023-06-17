@@ -6,6 +6,7 @@ import { CustomMath } from "@/utils/CustomMath";
 import {
   Box,
   Center,
+  Flex,
   Group,
   Loader,
   Paper,
@@ -46,14 +47,14 @@ export default function ShowResults() {
         !mastery ? (
           <Box py="xs" key={topic.topicSlug}>
             <Group position="apart">
-              <Skeleton height={24} width={300} />
+              <Skeleton height={24} width={200} />
               <Skeleton height={26} width={50} />
             </Group>
             <Skeleton mt="md" radius="xl" height={12} width="100%" />
           </Box>
         ) : (
           <Box py="xs" key={topic.topicSlug}>
-            <Group position="apart">
+            <Flex gap="md" align="center" justify="space-between">
               <Text>{topic.topicName}</Text>
               <Title order={4}>
                 {CustomMath.round(
@@ -62,7 +63,7 @@ export default function ShowResults() {
                 )}
                 %
               </Title>
-            </Group>
+            </Flex>
             <Progress
               mt="md"
               color="cyan"
