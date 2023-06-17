@@ -174,7 +174,7 @@ const ForumPost = ({
 
   return (
     <>
-      <Paper withBorder p="sm">
+      <Paper withBorder p="md">
         <Flex align="center" gap="xl" mb="xl">
           <ActionIcon
             onClick={() => {
@@ -265,15 +265,15 @@ const ForumPost = ({
             />
           </TypographyStylesProvider>
         )}
-        <Group position="apart" mt="4vw">
-          <Group>
+        <Group position="apart" mt="xl">
+          <Flex gap="xs" align="center">
             <ActionIcon
               onClick={voted === 1 ? handleVote(0) : handleVote(1)}
-              color={voted === 1 ? "blue" : "gray"}
+              color={voted === 1 ? "cyan" : "gray"}
             >
               <IconThumbUp />
             </ActionIcon>
-            <Text size="sm">{displayLikes}</Text>
+            <Title size="sm">{displayLikes}</Title>
             <ActionIcon
               onClick={voted === -1 ? handleVote(0) : handleVote(-1)}
               color={voted === -1 ? "red" : "gray"}
@@ -288,7 +288,7 @@ const ForumPost = ({
                 </Text>
               </>
             )}
-          </Group>
+          </Flex>
           <Flex justify="flex-end" align="flex-end" direction="column">
             <Group>
               <Avatar

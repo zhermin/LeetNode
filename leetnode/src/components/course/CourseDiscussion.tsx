@@ -35,6 +35,7 @@ import {
   PostType,
   Topic,
 } from "@prisma/client";
+import { IconFilter, IconPlus } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 import DateDiffCalc from "./DateDiffCalc";
@@ -315,10 +316,25 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
             />
           </Group>
         </Modal>
-        <Group position="apart" mb="md">
-          <Button onClick={() => setOpenedPosting(true)}>+ New Thread</Button>
-          <Button onClick={() => setOpenedFilter(true)}>Filter Posts</Button>
-        </Group>
+        <Flex gap="md" mb="lg">
+          <Button
+            fullWidth
+            variant="light"
+            color="green"
+            leftIcon={<IconPlus stroke={1.5} />}
+            onClick={() => setOpenedPosting(true)}
+          >
+            New Thread
+          </Button>
+          <Button
+            fullWidth
+            variant="light"
+            leftIcon={<IconFilter stroke={1.5} />}
+            onClick={() => setOpenedFilter(true)}
+          >
+            Filter Posts
+          </Button>
+        </Flex>
 
         <Table>
           <thead>

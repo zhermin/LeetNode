@@ -74,10 +74,9 @@ export default function Personal() {
   lastActive.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
 
   return (
-    <div>
+    <>
       <Paper
         withBorder
-        shadow="lg"
         radius="md"
         p="xs"
         key="userInfo"
@@ -86,8 +85,7 @@ export default function Personal() {
         <div className="flex flex-row items-center justify-center text-center">
           <RingProgress
             size={80}
-            roundCaps
-            thickness={8}
+            thickness={5}
             sections={[
               {
                 // streak / days in entire (current) month
@@ -99,7 +97,7 @@ export default function Personal() {
                       0
                     ).getDate()) *
                   100,
-                color: "orange",
+                color: "yellow",
               },
             ]}
             label={
@@ -164,9 +162,6 @@ export default function Personal() {
       <Group position="center">
         <Calendar
           size="md"
-          onChange={() => {
-            return null; // Do nothing
-          }}
           renderDay={(date) => {
             const day = date.getDate();
 
@@ -188,6 +183,6 @@ export default function Personal() {
           }}
         />
       </Group>
-    </div>
+    </>
   );
 }

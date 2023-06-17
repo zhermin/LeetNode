@@ -354,7 +354,7 @@ export default function QuestionViewer() {
           onClose={() => setQuestionViewOpened(false)}
         >
           <div
-            className="rawhtml rawhtml-lg-img"
+            className="rawhtml"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(
                 currentQuestion.current.questionContent,

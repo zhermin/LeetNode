@@ -226,7 +226,7 @@ export default function PracticeQuestion() {
           {...{ radius: "lg", size: "md" }}
         />
         <div
-          className="rawhtml rawhtml-lg-img mt-4"
+          className="rawhtml mt-4"
           dangerouslySetInnerHTML={{
             __html: DOMPurify.sanitize(UCQAT.data.question.questionContent, {
               ADD_TAGS: ["iframe"],

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Avatar,
   Center,
-  Group,
+  Flex,
   Loader,
   ScrollArea,
   Text,
@@ -80,7 +80,7 @@ export default function Overall() {
     <ScrollArea>
       <TextInput
         sx={{ flexBasis: "60%" }}
-        placeholder="Search by user"
+        placeholder="Search User..."
         icon={<IconSearch size={16} />}
         value={query}
         onChange={(e) => setQuery(e.currentTarget.value)}
@@ -104,7 +104,7 @@ export default function Overall() {
                   <IconCrown color="black" className="fill-amber-500" />
                 </Center>
               ) : (
-                <Text size="md" weight={500}>
+                <Text size="sm" weight={500}>
                   {(allUsers?.indexOf(record) ?? 0) + 1}
                 </Text>
               );
@@ -115,12 +115,12 @@ export default function Overall() {
             width: "65%",
             render: (record) => {
               return (
-                <Group spacing="sm">
-                  <Avatar size={26} src={record.image} radius={26} />
-                  <Text size="md" weight={500} className="whitespace-pre-wrap">
+                <Flex gap="xs" align="center">
+                  <Avatar size={18} src={record.image} radius={18} />
+                  <Text size="sm" weight={500} className="whitespace-pre-wrap">
                     {record.username}
                   </Text>
-                </Group>
+                </Flex>
               );
             },
           },
@@ -129,8 +129,8 @@ export default function Overall() {
             width: "25%",
             textAlignment: "right",
             render: (record) => (
-              <Text size="md" weight={500}>
-                {record.points} ⚡
+              <Text size="sm" weight={500}>
+                {record.points}⚡
               </Text>
             ),
           },

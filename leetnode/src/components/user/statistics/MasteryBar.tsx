@@ -146,7 +146,7 @@ export default function MasteryBar({ data }: TableSortProps) {
     <ScrollArea>
       <TextInput
         className="mt-4"
-        placeholder="Filter by Topic or Mastery Level"
+        placeholder="Search Topic or Mastery..."
         mb="md"
         icon={<IconSearch size={14} stroke={1.5} />}
         value={search}
@@ -173,7 +173,7 @@ export default function MasteryBar({ data }: TableSortProps) {
               reversed={reverseSortDirection}
               onSort={() => setSorting("masteryLevel")}
             >
-              Mastery Level
+              Mastery
             </Th>
           </tr>
         </thead>
