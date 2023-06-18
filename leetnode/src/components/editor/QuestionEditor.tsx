@@ -56,6 +56,7 @@ import {
   IconCircleX,
   IconCode,
   IconDice3,
+  IconEraser,
   IconGripVertical,
   IconHelp,
   IconMathFunction,
@@ -231,10 +232,13 @@ export default function QuestionEditor({
     ),
   });
 
-  const [preview, setPreview] = useState("\\text{Refresh to View Variables}");
+  const previewMessage = "\\text{Refresh to View Variables}";
+  const previewFinalAnsMessage = "\\text{Refresh to View Final Answers}";
+  const [preview, setPreview] = useState(previewMessage);
   const [finalAnsPreview, setFinalAnsPreview] = useState(
-    "\\text{Refresh to View Final Answers}"
+    previewFinalAnsMessage
   );
+
   const invalidMessage = "\\text{Invalid Variables or Methods}";
   const handlePreviewChange = (toRandomize: boolean) => {
     form.clearErrors();
@@ -1614,7 +1618,32 @@ export default function QuestionEditor({
         </Prism>
       </Modal>
 
-      {/* Floating Cancel Affix Button */}
+      {/* Floating Affix Buttons */}
+      <Affix position={{ bottom: 50, right: 20 }}>
+        <Button
+          compact
+          color="orange"
+          opacity={0.75}
+          leftIcon={<IconEraser size={16} />}
+          onClick={() => {
+            form.setFieldValue("baseQuestionId", undefined);
+            form.setFieldValue("title", "");
+            form.setFieldValue("difficulty", undefined);
+            form.setFieldValue("topic", "");
+            setFilteredCourses([]);
+            editorHtml.current = "";
+            form.setFieldValue("variables", undefined);
+            form.setFieldValue("methods", undefined);
+            form.setFieldValue("answers", undefined);
+            form.setFieldValue("variables", undefined);
+            form.setFieldValue("hints", undefined);
+            setPreview(previewMessage);
+            setFinalAnsPreview(previewFinalAnsMessage);
+          }}
+        >
+          Clear All
+        </Button>
+      </Affix>
       <Affix position={{ bottom: 20, right: 20 }}>
         <Button
           compact
