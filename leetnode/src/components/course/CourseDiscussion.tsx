@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import ForumPost from "@/components/course/ForumPost";
 import { CourseTypeBadge, PostTypeBadge } from "@/components/misc/Badges";
+import { DateDiffCalc } from "@/utils/DateDiffCalc";
 import {
   Anchor,
   Avatar,
@@ -37,8 +38,6 @@ import {
 } from "@prisma/client";
 import { IconFilter, IconPlus } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
-
-import DateDiffCalc from "./DateDiffCalc";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,

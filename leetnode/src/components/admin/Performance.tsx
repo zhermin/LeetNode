@@ -14,6 +14,7 @@ import { Bar } from "react-chartjs-2";
 import toast from "react-hot-toast";
 
 import { UsersWithMasteriesAndAttemptsType } from "@/pages/admin";
+import { DateDiffCalc } from "@/utils/DateDiffCalc";
 import {
   Accordion,
   Anchor,
@@ -47,8 +48,6 @@ import {
   IconMoodSmile,
 } from "@tabler/icons";
 import { useQueries } from "@tanstack/react-query";
-
-import DateDiffCalc from "../course/DateDiffCalc";
 
 ChartJS.register(
   CategoryScale,
