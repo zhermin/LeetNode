@@ -296,9 +296,9 @@ export default function CourseMainPage({
                   <ActionIcon
                     variant="default"
                     className="rounded-full p-1"
-                    onClick={() => {
-                      window.open(media.courseMediaURL);
-                    }}
+                    component="a"
+                    href={media.courseMediaURL}
+                    target="_blank"
                   >
                     <IconDownload size={16} stroke={1.5} />
                   </ActionIcon>
