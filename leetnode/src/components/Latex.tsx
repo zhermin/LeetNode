@@ -12,14 +12,13 @@ export default function Latex({
 }> &
   DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
   return (
-    <div {...props}>
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeRaw]}
-        className="text-gray-800 dark:text-gray-200"
-      >
-        {children}
-      </ReactMarkdown>
-    </div>
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex, rehypeRaw]}
+      className="md:text-md self-center px-3 text-xs text-gray-800 dark:text-gray-200 sm:text-sm"
+      {...props}
+    >
+      {children}
+    </ReactMarkdown>
   );
 }

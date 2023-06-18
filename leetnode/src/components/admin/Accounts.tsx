@@ -482,7 +482,7 @@ export default function Accounts() {
         />
 
         {selectedRecords.length > 0 && (
-          <Flex gap="md" justify="stretch" mt="xs">
+          <Flex gap="sm" mt="xs" direction={{ base: "column", sm: "row" }}>
             <Button
               fullWidth
               color="cyan"

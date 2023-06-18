@@ -174,7 +174,10 @@ export default function Navbar({
             transition="pop-top-right"
             classNames={classes}
             onClose={() => setUserMenuOpened(false)}
-            onOpen={() => setUserMenuOpened(true)}
+            onOpen={() => {
+              mobile && setSidebarOpened && setSidebarOpened(false);
+              setUserMenuOpened(true);
+            }}
           >
             <Menu.Target>
               <UnstyledButton

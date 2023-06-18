@@ -40,7 +40,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
-import { randomId } from "@mantine/hooks";
+import { randomId, useMediaQuery } from "@mantine/hooks";
 import { Prism } from "@mantine/prism";
 import {
   CourseType,
@@ -95,6 +95,7 @@ export default function QuestionEditor({
     initialValues.variationId === 0 ? "dynamic" : "static"
   );
   const { theme } = useStyles();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
 
   const [rawDataOpened, setRawDataOpened] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState<CourseNamesType[]>([]);
@@ -315,7 +316,7 @@ export default function QuestionEditor({
         toast(
           (t) => (
             <Stack ml="md" className="w-full max-w-max">
-              <Flex gap="md">
+              <Flex gap="sm">
                 <IconCircleX
                   color="white"
                   fill="red"
@@ -371,22 +372,31 @@ export default function QuestionEditor({
       {(provided) => (
         <Stack
           p="md"
+          pr={"2.5rem"}
           my="md"
-          className={
+          className={`relative ${
             theme.colorScheme === "dark"
               ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
               : "rounded-md odd:bg-gray-100 even:bg-gray-200"
-          }
+          }`}
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
-          <Flex gap="md" align="center">
+          <ActionIcon
+            className="absolute right-1.5 top-1/3"
+            variant="transparent"
+            onClick={() => form.removeListItem("variables", index)}
+          >
+            <IconTrash size={mobile ? 12 : 16} />
+          </ActionIcon>
+          <Flex gap="sm" align="center" wrap="wrap">
             <ActionIcon variant="transparent" {...provided.dragHandleProps}>
-              <IconGripVertical size={18} />
+              <IconGripVertical size={mobile ? 14 : 18} />
             </ActionIcon>
             <Stack align="center" spacing="xs" ml={-10}>
               <Tooltip label="Set Final Answer" withArrow>
                 <ActionIcon
+                  size={mobile ? "xs" : "md"}
                   variant="default"
                   radius="xl"
                   className={
@@ -419,7 +429,7 @@ export default function QuestionEditor({
                   }}
                 >
                   <IconChecks
-                    size={16}
+                    size={mobile ? 12 : 16}
                     className={item.isFinalAnswer ? "stroke-red-600" : ""}
                   />
                 </ActionIcon>
@@ -427,6 +437,7 @@ export default function QuestionEditor({
               {questionType === "dynamic" && (
                 <Tooltip label="Randomize" withArrow>
                   <ActionIcon
+                    size={mobile ? "xs" : "md"}
                     variant="default"
                     radius="xl"
                     disabled={item.isFinalAnswer}
@@ -443,7 +454,7 @@ export default function QuestionEditor({
                     }}
                   >
                     <IconDice3
-                      size={16}
+                      size={mobile ? 12 : 16}
                       className={item.randomize ? "stroke-fuchsia-600" : ""}
                     />
                   </ActionIcon>
@@ -453,35 +464,44 @@ export default function QuestionEditor({
             <TextInput
               label="Name"
               required
+              miw="15%"
               sx={{ flex: 1 }}
+              size={mobile ? "xs" : "sm"}
               {...form.getInputProps(`variables.${index}.name`)}
             />
             <TextInput
               label="Unit"
+              miw="15%"
               sx={{ flex: 1 }}
+              size={mobile ? "xs" : "sm"}
               {...form.getInputProps(`variables.${index}.unit`)}
             />
             {form.values.variables &&
               (!form.values.variables[index]?.isFinalAnswer ? (
                 <TextInput
                   label="Default"
+                  miw="15%"
                   sx={{ flex: 1 }}
+                  size={mobile ? "xs" : "sm"}
                   required={!form.values.variables[index]?.isFinalAnswer}
                   {...form.getInputProps(`variables.${index}.default`)}
                 />
               ) : (
                 questionType === "dynamic" && (
                   <NumberInput
-                    label="Decimal Places"
+                    label={mobile ? "DP" : "Decimal Places"}
+                    miw="15%"
                     sx={{ flex: 1 }}
+                    size={mobile ? "xs" : "sm"}
                     required={form.values.variables[index]?.isFinalAnswer}
                     {...form.getInputProps(`variables.${index}.decimalPlaces`)}
                   />
                 )
               ))}
             <Box
-              sx={{ flex: 2, alignSelf: "stretch" }}
-              className={`flex items-center justify-center rounded-md border border-solid ${
+              mih="2rem"
+              sx={{ flex: 3, alignSelf: "stretch" }}
+              className={`flex items-center justify-center rounded-md border border-solid p-1 ${
                 theme.colorScheme === "dark"
                   ? "border-slate-800 bg-slate-800"
                   : "border-slate-300 bg-slate-200"
@@ -493,19 +513,17 @@ export default function QuestionEditor({
                 item.default !== undefined ? "=" + item.default : ""
               }$$`}</Latex>
             </Box>
-            <ActionIcon
-              variant="transparent"
-              onClick={() => form.removeListItem("variables", index)}
-            >
-              <IconTrash size={16} />
-            </ActionIcon>
           </Flex>
           {form.values.variables && item.randomize && !item.isFinalAnswer && (
-            <Flex gap="md" align="center">
-              <Text fw={500} fz="sm">
-                Min <span className="text-red-500">*</span>
-              </Text>
+            <Flex gap="sm" align="center">
+              {!mobile && (
+                <Text fw={500} fz={mobile ? "xs" : "sm"}>
+                  Min <span className="text-red-500">*</span>
+                </Text>
+              )}
               <NumberInput
+                label={mobile ? "Min" : ""}
+                size="xs"
                 sx={{ flex: 1 }}
                 required={item.randomize}
                 precision={CustomMath.getDecimalPlaces(
@@ -514,10 +532,14 @@ export default function QuestionEditor({
                 hideControls
                 {...form.getInputProps(`variables.${index}.min`)}
               />
-              <Text fw={500} fz="sm">
-                Max <span className="text-red-500">*</span>
-              </Text>
+              {!mobile && (
+                <Text fw={500} fz={mobile ? "xs" : "sm"}>
+                  Max <span className="text-red-500">*</span>
+                </Text>
+              )}
               <NumberInput
+                label={mobile ? "Max" : ""}
+                size="xs"
                 sx={{ flex: 1 }}
                 required={item.randomize}
                 precision={CustomMath.getDecimalPlaces(
@@ -526,10 +548,14 @@ export default function QuestionEditor({
                 hideControls
                 {...form.getInputProps(`variables.${index}.max`)}
               />
-              <Text fw={500} fz="sm">
-                Decimal Places <span className="text-red-500">*</span>
-              </Text>
+              {!mobile && (
+                <Text fw={500} fz={mobile ? "xs" : "sm"}>
+                  Decimal Places <span className="text-red-500">*</span>
+                </Text>
+              )}
               <NumberInput
+                label={mobile ? "DP" : ""}
+                size="xs"
                 sx={{ flex: 1 }}
                 required={item.randomize}
                 {...form.getInputProps(`variables.${index}.decimalPlaces`)}
@@ -539,11 +565,15 @@ export default function QuestionEditor({
           {form.values.variables &&
             item.isFinalAnswer &&
             questionType === "dynamic" && (
-              <Flex gap="md" align="center">
-                <Text fw={500} fz="sm">
-                  Min % <span className="text-red-500">*</span>
-                </Text>
+              <Flex gap="sm" align="center">
+                {!mobile && (
+                  <Text fw={500} fz="sm">
+                    Min % <span className="text-red-500">*</span>
+                  </Text>
+                )}
                 <NumberInput
+                  label={mobile ? "Min %" : ""}
+                  size="xs"
                   sx={{ flex: 1 }}
                   required={item.isFinalAnswer}
                   precision={CustomMath.getDecimalPlaces(
@@ -553,10 +583,14 @@ export default function QuestionEditor({
                   placeholder="-90"
                   {...form.getInputProps(`variables.${index}.min`)}
                 />
-                <Text fw={500} fz="sm">
-                  Max % <span className="text-red-500">*</span>
-                </Text>
+                {!mobile && (
+                  <Text fw={500} fz="sm">
+                    Max % <span className="text-red-500">*</span>
+                  </Text>
+                )}
                 <NumberInput
+                  label={mobile ? "Max %" : ""}
+                  size="xs"
                   sx={{ flex: 1 }}
                   required={item.isFinalAnswer}
                   precision={CustomMath.getDecimalPlaces(
@@ -566,10 +600,14 @@ export default function QuestionEditor({
                   placeholder="90"
                   {...form.getInputProps(`variables.${index}.max`)}
                 />
-                <Text fw={500} fz="sm">
-                  % Step Size <span className="text-red-500">*</span>
-                </Text>
+                {!mobile && (
+                  <Text fw={500} fz="sm">
+                    % Step Size <span className="text-red-500">*</span>
+                  </Text>
+                )}
                 <NumberInput
+                  label={mobile ? "% Step Size" : ""}
+                  size="xs"
                   sx={{ flex: 1 }}
                   required={item.isFinalAnswer}
                   precision={CustomMath.getDecimalPlaces(
@@ -611,18 +649,23 @@ export default function QuestionEditor({
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
-          <Flex gap="md" align="center">
+          <Flex gap="sm" align="center" wrap="wrap">
             <ActionIcon variant="transparent" {...provided.dragHandleProps}>
-              <IconGripVertical size={18} />
+              <IconGripVertical size={mobile ? 14 : 18} />
             </ActionIcon>
-            <Text color="dimmed">#{index + 1}</Text>
+            <Text color="dimmed" fz={mobile ? "xs" : "md"}>
+              #{index + 1}
+            </Text>
             <TextInput
+              miw="10rem"
               sx={{ flex: 1 }}
               {...form.getInputProps(`methods.${index}.expr`)}
             />
             <Box
-              sx={{ flex: 2, alignSelf: "stretch" }}
-              className={`flex items-center justify-center rounded-md border border-solid ${
+              miw="10rem"
+              mih="2rem"
+              sx={{ flex: 1, alignSelf: "stretch" }}
+              className={`flex items-center justify-center rounded-md border border-solid p-1 ${
                 theme.colorScheme === "dark"
                   ? "border-slate-800 bg-slate-800"
                   : "border-slate-300 bg-slate-200"
@@ -632,6 +675,7 @@ export default function QuestionEditor({
             </Box>
             <Tooltip label="Add Explanation" withArrow>
               <ActionIcon
+                size={mobile ? "xs" : "md"}
                 variant="default"
                 radius="xl"
                 className={
@@ -647,7 +691,7 @@ export default function QuestionEditor({
                 }}
               >
                 <IconBulb
-                  size={16}
+                  size={mobile ? 12 : 16}
                   className={
                     item.explanation !== undefined ? "stroke-yellow-600" : ""
                   }
@@ -655,15 +699,16 @@ export default function QuestionEditor({
               </ActionIcon>
             </Tooltip>
             <ActionIcon
+              size={mobile ? "xs" : "md"}
               variant="transparent"
               onClick={() => form.removeListItem("methods", index)}
             >
-              <IconTrash size={16} />
+              <IconTrash size={mobile ? 12 : 16} />
             </ActionIcon>
           </Flex>
           {item.explanation !== undefined && (
-            <Flex gap="md" align="center">
-              <Text fw={500} fz="sm">
+            <Flex gap="sm" align="center">
+              <Text fw={500} fz={mobile ? "xs" : "sm"}>
                 Explanation <span className="text-red-500">*</span>
               </Text>
               <Textarea
@@ -690,10 +735,11 @@ export default function QuestionEditor({
     <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Flex
-          gap="md"
+          gap="sm"
           align="center"
           p="md"
           my="md"
+          wrap="wrap"
           className={
             theme.colorScheme === "dark"
               ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
@@ -703,9 +749,11 @@ export default function QuestionEditor({
           {...provided.draggableProps}
         >
           <ActionIcon variant="transparent" {...provided.dragHandleProps}>
-            <IconGripVertical size={18} />
+            <IconGripVertical size={mobile ? 14 : 18} />
           </ActionIcon>
-          <Text color="dimmed">#{index + 1}</Text>
+          <Text color="dimmed" fz={mobile ? "xs" : "md"}>
+            #{index + 1}
+          </Text>
           <Textarea
             sx={{ flex: 1 }}
             required
@@ -715,7 +763,7 @@ export default function QuestionEditor({
             variant="transparent"
             onClick={() => form.removeListItem("hints", index)}
           >
-            <IconTrash size={16} />
+            <IconTrash size={mobile ? 12 : 16} />
           </ActionIcon>
         </Flex>
       )}
@@ -734,10 +782,11 @@ export default function QuestionEditor({
     <Draggable key={item.key} index={index} draggableId={item.key}>
       {(provided) => (
         <Flex
-          gap="md"
+          gap="sm"
           align="center"
           p="md"
           my="md"
+          wrap="wrap"
           className={
             theme.colorScheme === "dark"
               ? "rounded-md odd:bg-gray-600 even:bg-gray-700"
@@ -747,11 +796,12 @@ export default function QuestionEditor({
           {...provided.draggableProps}
         >
           <ActionIcon variant="transparent" {...provided.dragHandleProps}>
-            <IconGripVertical size={18} />
+            <IconGripVertical size={mobile ? 14 : 18} />
           </ActionIcon>
           <Stack align="center" spacing="xs" ml={-10}>
             <Tooltip label="Set Correct Answer" withArrow>
               <ActionIcon
+                size={mobile ? "xs" : "md"}
                 variant="default"
                 radius="xl"
                 className={
@@ -767,14 +817,18 @@ export default function QuestionEditor({
                 }}
               >
                 {item.isCorrect ? (
-                  <IconCheck size={16} className="stroke-green-600" />
+                  <IconCheck
+                    size={mobile ? 12 : 16}
+                    className="stroke-green-600"
+                  />
                 ) : (
-                  <IconX size={16} className="stroke-red-600" />
+                  <IconX size={mobile ? 12 : 16} className="stroke-red-600" />
                 )}
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Display as LaTeX" withArrow>
               <ActionIcon
+                size={mobile ? "xs" : "md"}
                 variant="default"
                 radius="xl"
                 className={
@@ -785,37 +839,41 @@ export default function QuestionEditor({
                 }}
               >
                 <IconMathFunction
-                  size={16}
+                  size={mobile ? 12 : 16}
                   className={item.isLatex ? "stroke-sky-600" : ""}
                 />
               </ActionIcon>
             </Tooltip>
           </Stack>
-          <Text color="dimmed">#{index + 1}</Text>
+          <Text color="dimmed" fz={mobile ? "xs" : "md"}>
+            #{index + 1}
+          </Text>
           <Textarea
+            miw="10rem"
             sx={{ flex: 1 }}
             required
             {...form.getInputProps(`answers.${index}.answerContent`)}
           />
           <Box
+            miw="10rem"
             sx={{ flex: 1, alignSelf: "stretch" }}
             className={`flex items-center justify-center rounded-md border border-solid ${
               theme.colorScheme === "dark"
                 ? "border-slate-800 bg-slate-800"
                 : "border-slate-300 bg-slate-200"
-            } pt-4 pb-2`}
+            } py-4`}
           >
             {item.isLatex ? (
               <Latex>{`$$ ${item.answerContent} $$`}</Latex>
             ) : (
-              <Text>{item.answerContent}</Text>
+              <Text fz={mobile ? "xs" : "md"}>{item.answerContent}</Text>
             )}
           </Box>
           <ActionIcon
             variant="transparent"
             onClick={() => form.removeListItem("answers", index)}
           >
-            <IconTrash size={16} />
+            <IconTrash size={mobile ? 12 : 16} />
           </ActionIcon>
         </Flex>
       )}
@@ -1545,7 +1603,7 @@ export default function QuestionEditor({
 
       {/* Raw Data Modal */}
       <Modal
-        size="xl"
+        size={mobile ? "95%" : "xl"}
         title="Raw Data"
         opened={rawDataOpened}
         onClose={() => setRawDataOpened(false)}
