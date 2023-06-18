@@ -23,6 +23,7 @@ import {
   Center,
   Container,
   createStyles,
+  Divider,
   Flex,
   Header,
   Loader,
@@ -234,9 +235,7 @@ export default function CourseMainPage({
 
             <Sidebar.Section mt="xl" grow>
               {links}
-            </Sidebar.Section>
-
-            <Sidebar.Section className={classes.sidebarFooter}>
+              <Divider my="sm" variant="dotted" />
               <a
                 className={cx(classes.link, {
                   [classes.linkActive]: "Course Discussion" === active,
@@ -297,9 +296,9 @@ export default function CourseMainPage({
                   <ActionIcon
                     variant="default"
                     className="rounded-full p-1"
-                    onClick={() => {
-                      window.open(media.courseMediaURL);
-                    }}
+                    component="a"
+                    href={media.courseMediaURL}
+                    target="_blank"
                   >
                     <IconDownload size={16} stroke={1.5} />
                   </ActionIcon>
@@ -494,10 +493,6 @@ const useStyles = createStyles((theme, _params, getRef) => {
       alignItems: "center",
       textDecoration: "none",
       fontSize: theme.fontSizes.sm,
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[1]
-          : theme.colors.gray[7],
       padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
       borderRadius: theme.radius.sm,
       fontWeight: 500,
@@ -540,15 +535,6 @@ const useStyles = createStyles((theme, _params, getRef) => {
           }).color,
         },
       },
-    },
-
-    sidebarFooter: {
-      borderTop: `1px solid ${
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[4]
-          : theme.colors.gray[3]
-      }`,
-      paddingTop: theme.spacing.sm,
     },
   };
 });

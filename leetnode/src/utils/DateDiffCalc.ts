@@ -69,7 +69,7 @@ const DateDiff = {
   },
 };
 
-function DateDiffCalc(comparedDate: Date) {
+export function DateDiffCalc(comparedDate: Date) {
   if (
     Math.round(
       DateDiff.inMinutes(new Date(comparedDate as Date), new Date())
@@ -150,5 +150,3 @@ function DateDiffCalc(comparedDate: Date) {
     );
   }
 }
-
-export default DateDiffCalc;
