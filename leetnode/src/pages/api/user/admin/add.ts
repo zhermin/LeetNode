@@ -9,6 +9,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   let emails: string[] = req.body.emails;
+  const toSendRecruitmentEmails: boolean = req.body.toSendRecruitmentEmails;
 
   try {
     const allUsers = await prisma.user.findMany({
@@ -39,17 +40,28 @@ export default async function handler(
       skipDuplicates: true,
     });
 
+    // Remove users from waitlist if they were on it
+    await prisma.waitlist.deleteMany({
+      where: {
+        email: {
+          in: emails,
+        },
+      },
+    });
+
     // Send recruiment emails
-    await sendRecruitmentEmail(emails);
+    if (toSendRecruitmentEmails) {
+      await sendRecruitmentEmail(emails);
+    }
+
+    res.status(200).json({
+      message:
+        "New users added and recruitment emails sent successfully (duplicates ignored)",
+    });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
       .json({ message: "Error creating users or sending recruitment emails" });
   }
-
-  res.status(200).json({
-    message:
-      "New users added and recruitment emails sent successfully (duplicates ignored)",
-  });
 }

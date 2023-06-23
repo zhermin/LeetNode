@@ -1,8 +1,9 @@
 import axios from "axios";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useRouter } from "next/router";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { UserData } from "@/components/Header";
@@ -28,14 +29,18 @@ import { useMediaQuery } from "@mantine/hooks";
 import { Role } from "@prisma/client";
 import {
   IconBook,
+  IconCheckupList,
   IconChevronDown,
   IconGauge,
+  IconLicense,
   IconLock,
   IconLogout,
   IconMoon,
   IconSun,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
+
+import Login from "./auth/Login";
 
 const HEADER_HEIGHT = 80;
 
@@ -75,20 +80,71 @@ export default function Navbar({
   withBorder?: boolean;
 }) {
   const session = useSession();
+  const router = useRouter();
 
   const { classes, theme, cx } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+
+  const [loginMenuOpened, setLoginMenuOpened] = useState(false);
   const [userMenuOpened, setUserMenuOpened] = useState(false);
+
+  useEffect(() => {
+    if (router.query.callbackUrl && session.status === "authenticated") {
+      router.replace(
+        !Array.isArray(router.query.callbackUrl)
+          ? router.query.callbackUrl
+          : (router.query.callbackUrl[0] as string)
+      );
+      toast.success("Successfully logged in!", { id: "loginSuccess" });
+      return;
+    }
+
+    if (router.query.error) {
+      let errorMessage = "";
+      const errorToastId = "authError";
+      switch (router.query.error) {
+        case "AccessDenied":
+          errorMessage =
+            "Unfortunately you are not authorized to access LeetNode without a valid invite. \n\nIn the meantime, you may join our waitlist or if you think this is a mistake, please contact support.";
+          break;
+        case "Verification":
+          errorMessage =
+            "Your invite link has been used before or has expired. Please contact support to get a new invite.";
+          break;
+        case "OAuthAccountNotLinked":
+          errorMessage = "Please use the same login method as before.";
+          break;
+        default:
+          console.error("[AUTH UNCAUGHT ERROR]", router.query.error);
+          errorMessage =
+            "An error occurred while trying to log in. Please contact support if this persist";
+      }
+      toast.error(errorMessage, { id: errorToastId });
+      router.replace(router.pathname, undefined, { shallow: true });
+      setTimeout(() => {
+        setLoginMenuOpened(true);
+      }, 1000);
+    } else if (router.query.callbackUrl && session.status !== "loading") {
+      toast("Please log in to continue.", {
+        id: "callbackUrl",
+        icon: "🔒",
+        duration: 2000,
+      });
+      setTimeout(() => {
+        setLoginMenuOpened(true);
+      }, 1000);
+    }
+  }, [router, session]);
 
   const {
     data: userInfo,
     isLoading,
     isError,
-  } = useQuery<UserData>({
+  } = useQuery({
     queryKey: ["userInfo", session?.data?.user?.id],
     queryFn: async () => {
-      const res = await axios.post("/api/user", {
+      const res = await axios.post<UserData>("/api/user", {
         id: session?.data?.user?.id,
       });
       return res?.data;
@@ -113,7 +169,7 @@ export default function Navbar({
     toast.success(
       value === "dark" ? "Dark mode enabled" : "Light mode enabled",
       {
-        position: mobile ? "bottom-right" : "top-right",
+        position: "bottom-right",
         duration: 3000,
         style: {
           background: value === "dark" ? theme.colors.dark[9] : "",
@@ -149,25 +205,43 @@ export default function Navbar({
 
         {session.status === "unauthenticated" && (
           <Center>
-            <ActionIcon mr="xl" onClick={() => handleColorSchemeChange()}>
+            <ActionIcon radius="xl" mr="xl" onClick={handleColorSchemeChange}>
               {colorScheme === "dark" ? (
                 <IconSun size={18} stroke={1.5} />
               ) : (
                 <IconMoon size={18} stroke={1.5} />
               )}
             </ActionIcon>
-            <Button
-              color="cyan"
-              onClick={() => signIn()}
-              className={classes.control}
+            <Menu
+              shadow="xl"
+              width={320}
+              radius="md"
+              position="bottom-end"
+              transition="skew-up"
+              onOpen={() => {
+                mobile && setSidebarOpened?.(false);
+              }}
+              opened={loginMenuOpened}
+              onClose={() => setLoginMenuOpened(false)}
             >
-              Log In
-            </Button>
+              <Menu.Target>
+                <Button
+                  onClick={() => setLoginMenuOpened(true)}
+                  className={classes.control}
+                >
+                  Log In
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Login setLoginMenuOpened={setLoginMenuOpened} />
+              </Menu.Dropdown>
+            </Menu>
           </Center>
         )}
 
         {session.status === "authenticated" && (
           <Menu
+            shadow="lg"
             width={260}
             radius="md"
             position="bottom-end"
@@ -175,7 +249,7 @@ export default function Navbar({
             classNames={classes}
             onClose={() => setUserMenuOpened(false)}
             onOpen={() => {
-              mobile && setSidebarOpened && setSidebarOpened(false);
+              mobile && setSidebarOpened?.(false);
               setUserMenuOpened(true);
             }}
           >
@@ -262,10 +336,12 @@ export default function Navbar({
 
               <Menu.Divider />
 
+              <Menu.Label c="cyan">Personal</Menu.Label>
               <Menu.Item
                 component={Link}
                 href="/dashboard"
                 icon={<IconGauge size={14} stroke={1.5} />}
+                color="cyan"
               >
                 Dashboard
               </Menu.Item>
@@ -273,8 +349,28 @@ export default function Navbar({
                 component={Link}
                 href="/courses"
                 icon={<IconBook size={14} stroke={1.5} />}
+                color="cyan"
               >
                 Learn
+              </Menu.Item>
+
+              <Menu.Label c="yellow">NUS</Menu.Label>
+              <Menu.Item
+                component={Link}
+                href="/welcome"
+                icon={<IconLicense size={14} stroke={1.5} />}
+                color="yellow"
+              >
+                Consent Form
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                href="https://forms.gle/XCwZF28MKbaDnwGF9"
+                target="_blank"
+                icon={<IconCheckupList size={14} stroke={1.5} />}
+                color="yellow"
+              >
+                Usage Survey
               </Menu.Item>
 
               <Menu.Divider />
@@ -285,7 +381,7 @@ export default function Navbar({
                   component={Link}
                   href="/admin"
                   icon={<IconLock size={14} stroke={1.5} />}
-                  color={theme.colors.red[6]}
+                  color="red"
                 >
                   Admin Panel
                 </Menu.Item>
@@ -325,12 +421,7 @@ const useStyles = createStyles((theme) => ({
     },
   },
 
-  item: {
-    "&[data-hovered]": {
-      backgroundColor: theme.colors.cyan[0],
-      color: theme.colors.cyan[7],
-    },
-  },
+  item: {},
 
   user: {
     color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,

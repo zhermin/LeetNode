@@ -468,7 +468,7 @@ const Settings = () => {
 
 export default Settings;
 
-const useStyles = createStyles((_theme, _params, getRef) => ({
+const useStyles = createStyles((theme, _params, getRef) => ({
   controls: {
     ref: getRef("controls"),
     transition: "opacity 150ms ease",
@@ -485,20 +485,20 @@ const useStyles = createStyles((_theme, _params, getRef) => ({
 
   control: {
     backgroundColor:
-      _theme.colorScheme === "dark"
-        ? _theme.fn.variant({
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({
             variant: "light",
-            color: _theme.primaryColor,
+            color: theme.primaryColor,
           }).background
-        : _theme.fn.variant({
+        : theme.fn.variant({
             variant: "filled",
-            color: _theme.primaryColor,
+            color: theme.primaryColor,
           }).background,
     color:
-      _theme.colorScheme === "dark"
-        ? _theme.fn.variant({ variant: "light", color: _theme.primaryColor })
+      theme.colorScheme === "dark"
+        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
             .color
-        : _theme.fn.variant({ variant: "filled", color: _theme.primaryColor })
+        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
             .color,
   },
 }));

@@ -26,7 +26,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn(request) {
-      // Return false for default error message or return redirect URL, eg. return '/unauthorized'
+      // Callback runs before and after email sign in (verification and after magic link)
       if (!request.user.email) {
         return false;
       }
@@ -35,7 +35,6 @@ export const authOptions: NextAuthOptions = {
       const allowedUsers = await prisma.user.findMany({
         select: {
           email: true,
-          username: true,
           isNewUser: true,
         },
       });
@@ -46,27 +45,27 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      // Initialize info for first login, then redirect to /welcome page
+      // Initialize other info only for non-email sign in methods
       const user = allowedUsers.find(
         (user) => user.email === request.user.email
       );
-      if (user && user.isNewUser) {
-        const username = !allowedUsers.some(
-          (user) => user.username === request.user.email?.split("@")[0]
-        )
-          ? request.user.email.split("@")[0]
-          : request.user.email;
+      if (request.account?.provider !== "email" && user?.isNewUser) {
+        const username =
+          request.user.username ??
+          request.user.email.split("@")[0] ??
+          request.user.email;
         await prisma.user.update({
           where: {
             email: request.user.email,
           },
           data: {
             username,
-            image: `https://api.dicebear.com/6.x/fun-emoji/png?seed=${username}`,
+            image:
+              request.user.image ??
+              `https://api.dicebear.com/6.x/fun-emoji/png?seed=${username}`,
             isNewUser: false,
           },
         });
-        return "/welcome";
       }
 
       // Successful login
@@ -86,6 +85,11 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   pages: {
+    // Custom redirect all auth to homepage and send notifications instead
+    signIn: "/",
+    error: "/",
+    verifyRequest: "/",
+    // New user redirect doesn't work for email provider as we add whitelisted emails into the User table, causing the new users to not be counted as new users
     newUser: "/welcome",
   },
   session: {

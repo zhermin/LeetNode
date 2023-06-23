@@ -13,11 +13,12 @@ import {
   Divider,
   Flex,
   Modal,
+  Text,
   TextInput,
   Title,
   Tooltip,
 } from "@mantine/core";
-import { randomId, useDebouncedValue, useMediaQuery } from "@mantine/hooks";
+import { randomId, useDebouncedValue } from "@mantine/hooks";
 import { QuestionDifficulty } from "@prisma/client";
 import { IconEye, IconRefresh, IconSearch } from "@tabler/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +34,6 @@ enum QuestionDifficultyEnum {
 
 export default function QuestionViewer() {
   const { theme, classes } = useStyles();
-  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const queryClient = useQueryClient();
 
   const editorHtml = useRef("");
@@ -107,7 +107,7 @@ export default function QuestionViewer() {
   }, [page, questions, sortStatus, debouncedQuery]);
 
   return (
-    <Container size="lg" py={!mobile ? "xl" : undefined}>
+    <Container size="lg">
       <Title order={2} className={classes.title} align="center" mb="sm">
         All Questions
       </Title>
@@ -122,7 +122,6 @@ export default function QuestionViewer() {
       <Button
         fullWidth
         variant="default"
-        color="gray"
         radius="sm"
         mb="lg"
         onClick={() => {
@@ -130,7 +129,9 @@ export default function QuestionViewer() {
           editorHtml.current = "";
         }}
       >
-        + Add New Question
+        <Text className="text-gray-800 dark:text-gray-300">
+          + Add New Question
+        </Text>
       </Button>
 
       <Flex mb="xs" align="center" gap="md">
@@ -160,7 +161,7 @@ export default function QuestionViewer() {
 
       <DataTable
         idAccessor="questionTitle"
-        height={320}
+        height="calc(100vh - 380px)"
         withBorder
         highlightOnHover
         borderRadius="sm"

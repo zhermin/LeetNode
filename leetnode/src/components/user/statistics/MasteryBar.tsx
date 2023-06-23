@@ -197,7 +197,7 @@ export default function MasteryBar({ data }: TableSortProps) {
 
 const useStyles = createStyles((theme) => ({
   th: {
-    padding: "0 !important",
+    padding: "0",
   },
 
   control: {

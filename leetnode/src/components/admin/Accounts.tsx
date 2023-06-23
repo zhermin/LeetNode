@@ -12,6 +12,7 @@ import {
   Accordion,
   ActionIcon,
   Button,
+  Checkbox,
   Code,
   Container,
   createStyles,
@@ -27,7 +28,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
-import { randomId, useDebouncedValue, useMediaQuery } from "@mantine/hooks";
+import { randomId, useDebouncedValue } from "@mantine/hooks";
 import { Role } from "@prisma/client";
 import {
   IconCheck,
@@ -43,7 +44,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Accounts() {
   const { theme, classes } = useStyles();
-  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const queryClient = useQueryClient();
   const session = useSession();
 
@@ -115,6 +115,12 @@ export default function Accounts() {
         } else {
           return b.isNewUser ? -1 : 1;
         }
+      } else if (sortStatus.columnAccessor === "consentDate") {
+        if (sortStatus.direction === "asc") {
+          return a.consentDate ? -1 : 1;
+        } else {
+          return b.consentDate ? -1 : 1;
+        }
       } else if (sortStatus.columnAccessor === "points") {
         return sortStatus.direction === "asc"
           ? a.points - b.points
@@ -138,6 +144,7 @@ export default function Accounts() {
           value: "",
         },
       ],
+      toSendRecruitmentEmails: true,
     },
     validateInputOnBlur: true,
     validate: zodResolver(
@@ -150,6 +157,7 @@ export default function Accounts() {
             })
           )
           .nonempty(),
+        toSendRecruitmentEmails: z.boolean(),
       })
     ),
   });
@@ -158,11 +166,13 @@ export default function Accounts() {
     username: string;
     role: Role;
     points: string;
+    revokeConsent: boolean;
   }>({
     initialValues: {
       username: "",
       role: Role.USER,
       points: "",
+      revokeConsent: false,
     },
     validateInputOnBlur: true,
     validate: zodResolver(
@@ -178,15 +188,23 @@ export default function Accounts() {
           .string()
           .nonempty("Cannot be empty")
           .pipe(z.coerce.number().int("Must be a whole number").min(0)),
+        revokeConsent: z.boolean(),
       })
     ),
   });
 
   const { mutate: addUsers, status: addUsersStatus } = useMutation({
-    mutationFn: (emails: string[]) =>
-      axios.post("/api/user/admin/add", { emails }),
+    mutationFn: ({
+      emails,
+      toSendRecruitmentEmails,
+    }: {
+      emails: string[];
+      toSendRecruitmentEmails: boolean;
+    }) =>
+      axios.post("/api/user/admin/add", { emails, toSendRecruitmentEmails }),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-users"]);
+      addUsersForm.reset();
     },
   });
 
@@ -211,6 +229,7 @@ export default function Accounts() {
     onSuccess: () => {
       queryClient.invalidateQueries(["all-users"]);
       setUserEditOpened(false);
+      editUserForm.reset();
     },
   });
 
@@ -233,7 +252,7 @@ export default function Accounts() {
 
   return (
     <>
-      <Container size="lg" py={!mobile ? "xl" : undefined}>
+      <Container size="lg">
         <Title order={2} className={classes.title} align="center" mb="sm">
           All Accounts
         </Title>
@@ -287,7 +306,10 @@ export default function Accounts() {
               <form
                 onSubmit={addUsersForm.onSubmit(
                   (values) => {
-                    addUsers(values.emails.map((email) => email.value));
+                    addUsers({
+                      emails: values.emails.map((email) => email.value),
+                      toSendRecruitmentEmails: values.toSendRecruitmentEmails,
+                    });
                   },
                   (errors) => {
                     Object.keys(errors).forEach((key) => {
@@ -332,10 +354,13 @@ export default function Accounts() {
                   >
                     <IconPlus size={16} />
                   </Button>
-                  <Text fz="sm" fs="italic">
-                    Note: This will send them a recruitment email, likely to
-                    their junk mail
-                  </Text>
+                  <Checkbox
+                    fz="sm"
+                    label="Auto-send recruitment emails, likely to their junk mail"
+                    {...addUsersForm.getInputProps("toSendRecruitmentEmails", {
+                      type: "checkbox",
+                    })}
+                  />
                   <Button type="submit" loading={addUsersStatus === "loading"}>
                     Whitelist Emails
                   </Button>
@@ -373,7 +398,7 @@ export default function Accounts() {
 
         <DataTable
           idAccessor="id"
-          height={320}
+          height="calc(100vh - 400px)"
           withBorder
           highlightOnHover
           borderRadius="sm"
@@ -422,6 +447,17 @@ export default function Accounts() {
                   <IconX color="red" />
                 ) : (
                   <IconCheck color="green" />
+                ),
+              sortable: true,
+            },
+            {
+              accessor: "consentDate",
+              title: "Consented",
+              render: (record) =>
+                record.consentDate ? (
+                  <IconCheck color="green" />
+                ) : (
+                  <IconX color="red" />
                 ),
               sortable: true,
             },
@@ -567,6 +603,13 @@ export default function Accounts() {
               label="Points"
               type="number"
               {...editUserForm.getInputProps("points")}
+            />
+            <Checkbox
+              label="Revoke Consent"
+              disabled={currentUser.current?.consentDate === null}
+              {...editUserForm.getInputProps("revokeConsent", {
+                type: "checkbox",
+              })}
             />
             <Button
               type="submit"

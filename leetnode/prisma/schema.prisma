@@ -49,13 +49,15 @@ model VerificationToken {
 
 model User {
   id                     String                  @id @default(cuid())
-  nusnetId               String?                 @unique
   username               String                  @unique @default(cuid())
   email                  String                  @unique
   emailVerified          DateTime?
   isNewUser              Boolean                 @default(true)
   image                  String?
   role                   Role                    @default(USER)
+  name                   String?
+  nusnetId               String?
+  consentDate            DateTime?
   lastActive             DateTime                @default(now())
   loginStreak            Int                     @default(1)
   points                 Int                     @default(1)
@@ -82,6 +84,12 @@ enum Frequency {
   Fortnightly
   Monthly
   Never
+}
+
+model Waitlist {
+  email        String   @id
+  subscribed   Boolean? @default(true)
+  subscribedAt DateTime @default(now())
 }
 
 model Attempt {

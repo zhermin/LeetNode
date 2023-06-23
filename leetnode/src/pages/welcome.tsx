@@ -1,78 +1,71 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 import Footer from "@/components/Footer";
+import Consent from "@/components/forms/Consent";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import {
   Button,
   Center,
-  Container,
-  createStyles,
+  Divider,
+  Flex,
   Loader,
+  LoadingOverlay,
   Paper,
+  ScrollArea,
+  Stack,
   Text,
   TextInput,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
+import { DatePicker } from "@mantine/dates";
+import { useMediaQuery } from "@mantine/hooks";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export default function WelcomePage() {
-  const { classes } = useStyles();
+  const theme = useMantineTheme();
+  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+
   const router = useRouter();
 
-  // States to avoid flash before redirect and to push only once
-  const [loaded, setLoaded] = useState(false);
-  const [calledPush, setCalledPush] = useState(false);
-
-  // If user is already initialized, redirect to courses page
-  const { data: getNusnetId } = useQuery<{ nusnetId: string }>({
-    queryKey: ["is-user-initialized"],
-    queryFn: () => axios.get("/api/init"),
+  const { data: user } = useQuery({
+    queryKey: ["user-consent"],
+    queryFn: () =>
+      axios.get<{
+        name?: string;
+        nusnetId?: string;
+        consentDate?: Date;
+        isNewUser: boolean;
+      }>("/api/init"),
   });
 
-  useEffect(() => {
-    if (getNusnetId?.nusnetId != null) {
-      // If user already initialized, redirect only once to courses
-      // https://stackoverflow.com/a/73344411/10928890
-      let calledPushLatest;
-      setCalledPush((latest) => {
-        calledPushLatest = latest;
-        return latest;
-      });
-      if (calledPushLatest || calledPush) return;
-      setCalledPush(true);
-
-      router.push("/courses");
-    } else if (getNusnetId !== undefined) {
-      // If user not initialized, load the page after data is fetched
-      // https://stackoverflow.com/a/58182678/10928890
-      setLoaded(true);
-    }
-  }, [router, getNusnetId, calledPush]);
-
-  // Else, initialize user with form submission
-  const { mutate, isLoading: mutationIsLoading } = useMutation({
-    mutationFn: (nusnetId: string) => axios.post("/api/init", { nusnetId }),
+  const { mutate: getUserConsent, isLoading: mutationIsLoading } = useMutation({
+    mutationFn: ({ name, nusnetId }: { name?: string; nusnetId?: string }) =>
+      axios.post("/api/init", { name, nusnetId }),
     onSuccess: () => {
-      setLoaded(false);
       router.push("/courses");
     },
   });
 
+  const [fullname, setFullname] = useState("");
   const [nusnetId, setNusnetId] = useState("");
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (nusnetId.trim() === "") {
-      setLoaded(false);
-      router.push("/courses");
-    } else {
-      mutate(nusnetId);
+    const name = user?.data.name ?? fullname.trim();
+    if (name.length < 4 || nusnetId.trim().length !== 9) {
+      toast.error(
+        "Please enter your fullname and NUSNET ID if you wish to consent to the study."
+      );
+      return;
     }
+    getUserConsent({ name, nusnetId });
   };
 
-  if (!loaded) {
+  if (!user) {
     return (
       <Center className="h-screen">
         <Loader />
@@ -84,26 +77,75 @@ export default function WelcomePage() {
     <>
       <Header />
       <Navbar />
-      <Center className={classes.mainWrapper}>
-        <Container>
-          <form onSubmit={handleSubmit}>
-            <Title
-              align="center"
-              sx={(theme) => ({
-                fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-                fontWeight: 800,
-              })}
+      <form onSubmit={handleSubmit}>
+        <Stack
+          align="center"
+          justify="center"
+          px="sm"
+          h="calc(100vh - 150px)"
+          bg={
+            theme.colorScheme === "dark"
+              ? theme.colors.dark[7]
+              : theme.colors.gray[0]
+          }
+        >
+          <Title align="center" order={2} fw={700}>
+            {user?.data.isNewUser
+              ? "Welcome to LeetNode!"
+              : "NUS Data Consent Form"}
+          </Title>
+          <Text
+            mx="auto"
+            color="dimmed"
+            align="center"
+            w={mobile ? "90%" : "60%"}
+            size={mobile ? "xs" : "md"}
+          >
+            Please read the following consent request and enter your student
+            details if you agree. You may also choose to remain anonymous and
+            continue using LeetNode.
+          </Text>
+          <Paper
+            withBorder
+            shadow="md"
+            mt="sm"
+            radius="md"
+            w={mobile ? "90%" : "70%"}
+            className="relative"
+          >
+            <LoadingOverlay visible={mutationIsLoading} overlayBlur={1} />
+            <ScrollArea
+              py="md"
+              px="xl"
+              h="calc(100vh - 320px)"
+              className="text-justify"
             >
-              Welcome to LeetNode!
-            </Title>
-            <Text color="dimmed" size="md" align="center" mt={5}>
-              Please enter your NUSNET ID if you are an NUS student
-            </Text>
-            <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+              <Consent />
+              <Divider my="xl" variant="dotted" />
+              <Text fw={500} mb="md">
+                Please type the following information in full:
+              </Text>
               <TextInput
-                label="NUSNET ID"
+                mt="xs"
+                label="Full Name"
+                placeholder="Alice Tan"
+                type="text"
+                disabled={user?.data.consentDate !== null}
+                value={user?.data.name ?? fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                error={
+                  fullname.trim().length > 0 &&
+                  fullname.trim().length < 4 &&
+                  "Please enter your name as per NRIC"
+                }
+              />
+              <TextInput
+                mt="xs"
+                label="Student Number"
                 placeholder="A0123456Z"
-                value={nusnetId}
+                type="text"
+                disabled={user?.data.consentDate !== null}
+                value={user?.data.nusnetId ?? nusnetId}
                 onChange={(e) => setNusnetId(e.target.value.toUpperCase())}
                 error={
                   nusnetId.trim().length > 0 &&
@@ -111,57 +153,45 @@ export default function WelcomePage() {
                   "Invalid NUSNET ID"
                 }
               />
-              <Button
-                fullWidth
-                mt="xl"
-                type="submit"
-                className={classes.control}
-                loading={mutationIsLoading}
-              >
-                {mutationIsLoading
-                  ? "Submitting..."
-                  : nusnetId.trim() !== ""
-                  ? "Submit"
-                  : "Skip"}
-              </Button>
-            </Paper>
-          </form>
-        </Container>
-      </Center>
+              <DatePicker
+                mt="xs"
+                label="Date of Consent"
+                value={new Date(user?.data.consentDate ?? Date.now())}
+                disabled
+              />
+              {!user?.data.consentDate && (
+                <Flex
+                  align="center"
+                  gap="sm"
+                  mt="xl"
+                  direction={mobile ? "column" : "row"}
+                >
+                  <Button
+                    fullWidth
+                    color="green"
+                    type="submit"
+                    loading={mutationIsLoading}
+                  >
+                    {mutationIsLoading ? "Submitting..." : "Submit and Consent"}
+                  </Button>
+                  <Button
+                    fullWidth
+                    color="red"
+                    loading={mutationIsLoading}
+                    onClick={() => {
+                      getUserConsent({});
+                      router.push("/courses");
+                    }}
+                  >
+                    I wish to remain anonymous
+                  </Button>
+                </Flex>
+              )}
+            </ScrollArea>
+          </Paper>
+        </Stack>
+      </form>
       <Footer />
     </>
   );
 }
-
-const useStyles = createStyles((theme) => ({
-  mainWrapper: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[7]
-        : theme.colors.gray[0],
-    height: "calc(100vh - 150px)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  control: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.variant({
-            variant: "light",
-            color: theme.primaryColor,
-          }).background
-        : theme.fn.variant({
-            variant: "filled",
-            color: theme.primaryColor,
-          }).background,
-    color:
-      theme.colorScheme === "dark"
-        ? theme.fn.variant({ variant: "light", color: theme.primaryColor })
-            .color
-        : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
-            .color,
-  },
-}));

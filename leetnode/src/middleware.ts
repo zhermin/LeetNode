@@ -3,16 +3,26 @@ import { NextResponse } from "next/server";
 
 import { Role } from "@prisma/client";
 
-export default withAuth(function middleware(req) {
-  // Redirect if they don't have the allowed role
-  if (
-    req.nextUrl.pathname.includes("admin") &&
-    req.nextauth.token?.role !== Role.SUPERUSER &&
-    req.nextauth.token?.role !== Role.ADMIN
-  ) {
-    return NextResponse.redirect(new URL("/403", req.url));
+export default withAuth(
+  function middleware(req) {
+    // Redirect if they don't have the allowed role
+    if (
+      req.nextUrl.pathname.includes("admin") &&
+      req.nextauth.token?.role !== Role.SUPERUSER &&
+      req.nextauth.token?.role !== Role.ADMIN
+    ) {
+      return NextResponse.redirect(new URL("/403", req.url));
+    }
+  },
+  {
+    pages: {
+      // Custom redirect all auth to homepage and send notifications instead
+      signIn: "/",
+      error: "/",
+      verifyRequest: "/",
+    },
   }
-});
+);
 
 export const config = {
   matcher: [
