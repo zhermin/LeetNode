@@ -90,7 +90,7 @@ export const authOptions: NextAuthOptions = {
     error: "/",
     verifyRequest: "/",
     // New user redirect doesn't work for email provider as we add whitelisted emails into the User table, causing the new users to not be counted as new users
-    newUser: "/welcome",
+    newUser: "/consent",
   },
   session: {
     strategy: "jwt",

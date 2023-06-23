@@ -26,7 +26,7 @@ import { DatePicker } from "@mantine/dates";
 import { useMediaQuery } from "@mantine/hooks";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-export default function WelcomePage() {
+export default function ConsentPage() {
   const theme = useMantineTheme();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
 

@@ -357,7 +357,7 @@ export default function Navbar({
               <Menu.Label c="yellow">NUS</Menu.Label>
               <Menu.Item
                 component={Link}
-                href="/welcome"
+                href="/consent"
                 icon={<IconLicense size={14} stroke={1.5} />}
                 color="yellow"
               >
