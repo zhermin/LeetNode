@@ -59,7 +59,7 @@ const tabs = {
   ],
 };
 
-export default function Test() {
+export default function TestPage() {
   const { theme, classes, cx } = useStyles();
   const [section, setSection] = useState<"account" | "general">("account");
   const [active, setActive] = useState("Editor");

@@ -15,7 +15,7 @@ import {
   Title,
 } from "@mantine/core";
 
-export default function Home() {
+export default function HomePage() {
   const { classes, theme } = useStyles();
 
   return (

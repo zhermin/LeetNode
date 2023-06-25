@@ -328,7 +328,7 @@ const Courses = () => {
 
   return (
     <>
-      <Container size="lg" py={!mobile ? "xl" : undefined}>
+      <Container size="lg">
         <Title order={2} align="center" mb="lg" className={classes.title}>
           Courses Details
         </Title>
@@ -356,11 +356,11 @@ const Courses = () => {
               },
 
               control: {
-                border: "0 !important",
+                border: "0",
               },
 
               labelActive: {
-                color: `${theme.white} !important`,
+                color: `${theme.white}`,
               },
             })}
             size={mobile ? "xs" : "md"}

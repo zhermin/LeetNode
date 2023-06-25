@@ -36,7 +36,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import { Mastery, Topic } from "@prisma/client";
 import {
   IconChevronsDown,
@@ -62,8 +61,7 @@ ChartJS.register(
 ChartJS.defaults.font.size = 16;
 
 const Performance = () => {
-  const { theme, classes } = useStyles();
-  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
+  const { classes } = useStyles();
 
   const [active, setActive] = useState("");
   const [userData, setUserData] = useState<UsersWithMasteriesAndAttemptsType>(
@@ -233,7 +231,7 @@ const Performance = () => {
 
   return (
     <ScrollArea>
-      <Container size="lg" py={!mobile ? "xl" : undefined}>
+      <Container size="lg">
         <Title order={2} align="center" mb="lg" className={classes.title}>
           User Performance
         </Title>

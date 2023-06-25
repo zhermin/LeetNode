@@ -10,37 +10,63 @@ export default async function handler(
 ) {
   const session = await getServerSession(req, res, authOptions);
 
-  // TODO: NUSNET ID must be unique, also allow add nickname
-  // GET request to check if the user has already been initialized
+  // GET request to check if the user has already consented
   if (req.method === "GET") {
-    const nusnetId = await prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         id: session?.user?.id,
       },
       select: {
+        name: true,
         nusnetId: true,
+        consentDate: true,
+        isNewUser: true,
       },
     });
 
-    res.status(200).json({
-      message: "User already initialized",
-      nusnetId: nusnetId?.nusnetId,
-    });
+    res.status(200).json(user);
   }
 
-  // POST request to add nusnetId and nickname for user
+  // POST request to add consented info from user
   if (req.method === "POST") {
-    const nusnetId = req.body.nusnetId;
+    const {
+      name,
+      nusnetId,
+    }: {
+      name?: string;
+      nusnetId?: string;
+    } = req.body;
 
-    // Update user with nusnetId
-    await prisma.user.update({
-      where: {
-        id: session?.user?.id,
-      },
-      data: {
-        nusnetId: nusnetId,
-      },
-    });
+    console.log(req.body);
+
+    if (!name || !nusnetId) {
+      // User chooses to remain anonymous
+      await prisma.user.update({
+        where: {
+          id: session?.user?.id,
+        },
+        data: {
+          isNewUser: false,
+        },
+      });
+    } else {
+      // User consents to share their info
+      if (!(name.length > 0 && nusnetId.length === 9)) {
+        res.status(400).json({ message: "Missing name or nusnetId" });
+      }
+
+      await prisma.user.update({
+        where: {
+          id: session?.user?.id,
+        },
+        data: {
+          name,
+          nusnetId,
+          consentDate: new Date(),
+          isNewUser: false,
+        },
+      });
+    }
 
     res.status(200).json({ message: "Welcome to LeetNode!" });
   }

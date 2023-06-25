@@ -33,11 +33,20 @@ export default async function handler(
       where: {
         email: req.query.email as string,
       },
-      data: {
-        username: req.body.username,
-        role: req.body.role,
-        points: parseInt(req.body.points),
-      },
+      data: req.body.revokeConsent
+        ? {
+            username: req.body.username,
+            role: req.body.role,
+            points: parseInt(req.body.points),
+            consentDate: null,
+            name: null,
+            nusnetId: null,
+          }
+        : {
+            username: req.body.username,
+            role: req.body.role,
+            points: parseInt(req.body.points),
+          },
     });
   } catch (error) {
     console.error(error);
