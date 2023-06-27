@@ -8,7 +8,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  let emails: string[] = req.body.emails;
+  const emails: string[] = req.body.emails;
   const toSendRecruitmentEmails: boolean = req.body.toSendRecruitmentEmails;
 
   try {
@@ -20,13 +20,13 @@ export default async function handler(
     });
 
     // Filter out emails that already exist in the database
-    emails = emails.filter(
-      (email) => !allUsers.some((user) => user.email === email)
-    );
+    const filteredEmails = emails
+      .map((email) => email.trim())
+      .filter((email) => !allUsers.some((user) => user.email.trim() === email));
 
     // Create new users with the filtered emails
     await prisma.user.createMany({
-      data: emails.map((email) => {
+      data: filteredEmails.map((email) => {
         let username = email.split("@")[0] ?? email;
         if (allUsers.some((user) => user.username === username)) {
           username = email;
@@ -44,14 +44,14 @@ export default async function handler(
     await prisma.waitlist.deleteMany({
       where: {
         email: {
-          in: emails,
+          in: filteredEmails,
         },
       },
     });
 
     // Send recruiment emails
     if (toSendRecruitmentEmails) {
-      await sendRecruitmentEmail(emails);
+      await sendRecruitmentEmail(filteredEmails);
     }
 
     res.status(200).json({

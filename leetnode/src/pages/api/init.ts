@@ -37,8 +37,6 @@ export default async function handler(
       nusnetId?: string;
     } = req.body;
 
-    console.log(req.body);
-
     if (!name || !nusnetId) {
       // User chooses to remain anonymous
       await prisma.user.update({

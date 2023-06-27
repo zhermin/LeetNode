@@ -358,17 +358,18 @@ export default function Accounts() {
                               "Only Comma-Separated Values (CSVs) allowed"
                             );
                           } else {
+                            addUsersForm.clearErrors();
                             const reader = new FileReader();
                             reader.onload = (e) => {
                               const text = e.target?.result as string;
                               const emails = text
-                                .split("\n")
+                                .split(/[,;\n\r\t]/)
                                 .filter((email) => email.includes("@"));
                               addUsersForm.setFieldValue(
                                 "emails",
                                 emails.map((email) => ({
                                   id: randomId(),
-                                  value: email,
+                                  value: email.trim(),
                                 }))
                               );
                             };

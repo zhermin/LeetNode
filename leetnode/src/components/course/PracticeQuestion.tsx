@@ -45,8 +45,10 @@ export type UCQATAnswersType = {
 export default function PracticeQuestion() {
   const session = useSession();
   const theme = useMantineTheme();
+
   const router = useRouter();
   const currentCourseSlug = router.query.courseSlug as string;
+
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [hintsOpened, setHintsOpened] = useState<boolean>(false);
 
