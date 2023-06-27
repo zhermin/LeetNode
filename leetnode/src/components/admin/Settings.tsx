@@ -24,7 +24,6 @@ import {
   Table,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { Frequency, Role, Topic } from "@prisma/client";
 import { IconClick, IconEdit } from "@tabler/icons";
@@ -245,6 +244,94 @@ const Settings = () => {
 
   return (
     <Container>
+      <Divider
+        my="md"
+        label={
+          <Text size="lg" fw={600}>
+            General
+          </Text>
+        }
+      />
+      <Select
+        my="sm"
+        label="Edit Your Email Alert Frequency"
+        placeholder="Choose your alert frequency"
+        data={Object.keys(Frequency).map((key) => ({
+          label: Frequency[key as keyof typeof Frequency],
+          value: key,
+        }))}
+        value={selfEmailFreq}
+        onChange={setSelfEmailFreq}
+        w={250}
+      />
+      <Divider
+        my="md"
+        label={
+          <Text size="lg" fw={600}>
+            Course Attempts
+          </Text>
+        }
+      />
+      <Checkbox
+        my="sm"
+        label="Reset All Attempts"
+        checked={allAttemptsReset}
+        disabled={selectedAttemptsResetChecked}
+        onChange={(event) => setAllAttemptsReset(event.currentTarget.checked)}
+      />
+      <Checkbox
+        my="sm"
+        label="Reset All Attempts for Selected Topics"
+        checked={selectedAttemptsResetChecked}
+        disabled={allAttemptsReset}
+        onChange={(event) =>
+          setSelectedAttemptsResetChecked(event.currentTarget.checked)
+        }
+      />
+      <MultiSelect
+        my="sm"
+        disabled={!selectedAttemptsResetChecked}
+        placeholder="Scroll to see all options"
+        data={transformedTopics}
+        value={topicReset}
+        searchable
+        onChange={setTopicReset}
+        maxDropdownHeight={160}
+        w={250}
+      />
+      <Divider
+        my="md"
+        label={
+          <Text size="lg" fw={600}>
+            User Attempts
+          </Text>
+        }
+      />
+      <Group>
+        <SegmentedControl
+          data={[
+            { value: "adminView", label: "Admins" },
+            { value: "userView", label: "Users" },
+          ]}
+          value={roleView}
+          onChange={setRoleView}
+        />
+
+        <ActionIcon variant="filled" color="blue">
+          <IconEdit size="1rem" />
+        </ActionIcon>
+        <Text fw={500}>- To be Edited</Text>
+      </Group>
+      {roleView === "adminView" ? (
+        <Carousel mx="auto" withIndicators height={280} classNames={classes}>
+          {adminSlides}
+        </Carousel>
+      ) : (
+        <Carousel mx="auto" withIndicators height={280} classNames={classes}>
+          {userSlides}
+        </Carousel>
+      )}
+
       <Modal
         opened={confirmPopup}
         onClose={() => {
@@ -269,6 +356,7 @@ const Settings = () => {
           </Button>
         </Group>
       </Modal>
+
       <Modal
         opened={editOpened}
         onClose={() => {
@@ -353,6 +441,7 @@ const Settings = () => {
           Cancel Edits
         </Button>
       </Modal>
+
       <Affix position={{ bottom: 75, right: 40 }}>
         <Button
           leftIcon={<IconClick size={20} />}
@@ -362,106 +451,6 @@ const Settings = () => {
           Confirm Changes
         </Button>
       </Affix>
-      <Title order={2}> Settings Panel</Title>
-      <Divider
-        my="md"
-        label={
-          <Text size="lg" fw={600}>
-            General
-          </Text>
-        }
-      />
-      <Select
-        my="sm"
-        label="Edit Your Email Alert Frequency"
-        placeholder="Choose your alert frequency"
-        data={Object.keys(Frequency).map((key) => ({
-          label: Frequency[key as keyof typeof Frequency],
-          value: key,
-        }))}
-        value={selfEmailFreq}
-        onChange={setSelfEmailFreq}
-        w={250}
-      />
-      <Divider
-        my="md"
-        label={
-          <Text size="lg" fw={600}>
-            Course Attempts
-          </Text>
-        }
-      />
-      <Checkbox
-        my="sm"
-        label="Reset All Attempts"
-        checked={allAttemptsReset}
-        disabled={selectedAttemptsResetChecked}
-        onChange={(event) => setAllAttemptsReset(event.currentTarget.checked)}
-      />
-      <Checkbox
-        my="sm"
-        label="Reset All Attempts for Selected Topics"
-        checked={selectedAttemptsResetChecked}
-        disabled={allAttemptsReset}
-        onChange={(event) =>
-          setSelectedAttemptsResetChecked(event.currentTarget.checked)
-        }
-      />
-      <MultiSelect
-        my="sm"
-        disabled={!selectedAttemptsResetChecked}
-        placeholder="Scroll to see all options"
-        data={transformedTopics}
-        value={topicReset}
-        searchable
-        onChange={setTopicReset}
-        maxDropdownHeight={160}
-        w={250}
-      />
-      <Divider
-        my="md"
-        label={
-          <Text size="lg" fw={600}>
-            User Attempts
-          </Text>
-        }
-      />
-      <Group>
-        <SegmentedControl
-          data={[
-            { value: "adminView", label: "Admins" },
-            { value: "userView", label: "Users" },
-          ]}
-          value={roleView}
-          onChange={setRoleView}
-        />
-
-        <ActionIcon variant="filled" color="blue">
-          <IconEdit size="1rem" />
-        </ActionIcon>
-        <Text fw={500}>- To be Edited</Text>
-      </Group>
-      {roleView === "adminView" ? (
-        <Carousel
-          mx="auto"
-          withIndicators
-          height={300}
-          classNames={classes}
-          mb={80}
-        >
-          {adminSlides}
-        </Carousel>
-      ) : (
-        <Carousel
-          mx="auto"
-          withIndicators
-          height={300}
-          classNames={classes}
-          mb={80}
-        >
-          {userSlides}
-        </Carousel>
-      )}
     </Container>
   );
 };
@@ -480,6 +469,20 @@ const useStyles = createStyles((theme, _params, getRef) => ({
       [`& .${getRef("controls")}`]: {
         opacity: 1,
       },
+    },
+  },
+
+  indicator: {
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.cyan[8]
+        : theme.colors.cyan[5],
+    width: 12,
+    height: 8,
+    transition: "width 250ms ease",
+
+    "&[data-active]": {
+      width: 40,
     },
   },
 

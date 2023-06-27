@@ -16,7 +16,6 @@ import {
   Code,
   Container,
   createStyles,
-  Divider,
   Flex,
   Group,
   Modal,
@@ -24,7 +23,6 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
   Tooltip,
 } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
@@ -43,7 +41,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Accounts() {
-  const { theme, classes } = useStyles();
+  const { theme } = useStyles();
   const queryClient = useQueryClient();
   const session = useSession();
 
@@ -253,17 +251,6 @@ export default function Accounts() {
   return (
     <>
       <Container size="lg">
-        <Title order={2} className={classes.title} align="center" mb="sm">
-          All Accounts
-        </Title>
-        <Divider
-          size="md"
-          w={45}
-          mb="xl"
-          mx="auto"
-          color={theme.fn.primaryColor()}
-        />
-
         <Accordion
           variant="contained"
           mb="xl"
@@ -398,7 +385,7 @@ export default function Accounts() {
 
         <DataTable
           idAccessor="id"
-          height="calc(100vh - 400px)"
+          height="calc(100vh - 294px)"
           withBorder
           highlightOnHover
           borderRadius="sm"
@@ -665,14 +652,6 @@ export default function Accounts() {
 }
 
 const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-  },
-
   modalHeader: {
     borderBottom: `1px solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]
