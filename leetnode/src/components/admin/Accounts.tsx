@@ -16,6 +16,7 @@ import {
   Code,
   Container,
   createStyles,
+  FileButton,
   Flex,
   Group,
   Modal,
@@ -30,6 +31,7 @@ import { randomId, useDebouncedValue } from "@mantine/hooks";
 import { Role } from "@prisma/client";
 import {
   IconCheck,
+  IconFileUpload,
   IconMail,
   IconMinus,
   IconPlus,
@@ -44,6 +46,8 @@ export default function Accounts() {
   const { theme } = useStyles();
   const queryClient = useQueryClient();
   const session = useSession();
+
+  const resetCsvFileRef = useRef<() => void>(null);
 
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
   const [userEditOpened, setUserEditOpened] = useState(false);
@@ -324,23 +328,77 @@ export default function Accounts() {
                       </ActionIcon>
                     </Flex>
                   ))}
-                  <Button
-                    variant="light"
-                    color="gray"
-                    className={
-                      theme.colorScheme === "dark"
-                        ? "bg-zinc-800 hover:bg-zinc-700"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }
-                    onClick={() => {
-                      addUsersForm.insertListItem("emails", {
-                        id: randomId(),
-                        value: "",
-                      });
-                    }}
-                  >
-                    <IconPlus size={16} />
-                  </Button>
+                  <Flex gap="sm" direction={{ base: "column", sm: "row" }}>
+                    <Button
+                      fullWidth
+                      variant="light"
+                      color="gray"
+                      className={
+                        theme.colorScheme === "dark"
+                          ? "bg-zinc-800 hover:bg-zinc-700"
+                          : "bg-gray-200 hover:bg-gray-300"
+                      }
+                      onClick={() => {
+                        addUsersForm.insertListItem("emails", {
+                          id: randomId(),
+                          value: "",
+                        });
+                      }}
+                      leftIcon={<IconPlus size={16} />}
+                    >
+                      Add Manually
+                    </Button>
+                    <FileButton
+                      accept="text/csv"
+                      resetRef={resetCsvFileRef}
+                      onChange={(file) => {
+                        if (file) {
+                          if (file.type !== "text/csv") {
+                            toast.error(
+                              "Only Comma-Separated Values (CSVs) allowed"
+                            );
+                          } else {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const text = e.target?.result as string;
+                              const emails = text
+                                .split("\n")
+                                .filter((email) => email.includes("@"));
+                              addUsersForm.setFieldValue(
+                                "emails",
+                                emails.map((email) => ({
+                                  id: randomId(),
+                                  value: email,
+                                }))
+                              );
+                            };
+                            reader.readAsText(file);
+                            toast.success(
+                              "CSV file uploaded\n(lines without @ ignored)"
+                            );
+                          }
+                        }
+                        resetCsvFileRef.current?.();
+                      }}
+                    >
+                      {(props) => (
+                        <Button
+                          {...props}
+                          fullWidth
+                          variant="light"
+                          color="gray"
+                          className={
+                            theme.colorScheme === "dark"
+                              ? "bg-slate-800 hover:bg-slate-700"
+                              : "bg-slate-200 hover:bg-slate-300"
+                          }
+                          leftIcon={<IconFileUpload size={16} />}
+                        >
+                          Import from CSV
+                        </Button>
+                      )}
+                    </FileButton>
+                  </Flex>
                   <Checkbox
                     fz="sm"
                     label="Auto-send recruitment emails, likely to their junk mail"
