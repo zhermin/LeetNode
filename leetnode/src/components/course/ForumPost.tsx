@@ -34,7 +34,7 @@ import {
   IconThumbUp,
   IconX,
 } from "@tabler/icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { PostTypeBadge } from "../misc/Badges";
 import { PostFullType } from "./CourseDiscussion";
@@ -45,13 +45,11 @@ const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
 });
 
 const ForumPost = ({
-  postId,
+  post,
   setRedirect,
-  users,
 }: {
-  postId: string;
+  post?: PostFullType;
   setRedirect: Dispatch<SetStateAction<boolean>>;
-  users: { id: string; image: string; value: string }[];
 }) => {
   const session = useSession();
   const queryClient = useQueryClient();
@@ -76,40 +74,22 @@ const ForumPost = ({
     return () => clearTimeout(timer); // Clear the timer when the component unmounts
   }, [goToComment]);
 
-  function formatIsoDateTime(isoDateTime: string): string {
-    const date = new Date(isoDateTime);
-    const formattedDate = date.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "numeric",
-      year: "numeric",
-    });
-    const formattedTime = date.toLocaleTimeString("en-GB", {
-      hour: "numeric",
-      minute: "numeric",
-    });
-    return `${formattedDate} ${formattedTime}`;
-  }
-  const { data: posts } = useQuery({
-    queryKey: ["all-posts"],
-    queryFn: () => axios.get<PostFullType[]>("/api/forum/getAllPosts"),
-  });
-
-  const post = posts?.data.find((post) => post?.postId === postId);
-
   useEffect(() => {
+    if (!post) return;
+
     if (
-      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
+      post.postLikes.find((user) => user.userId === session.data?.user?.id)
         ?.likes === 1
     ) {
       setVoted(1);
     } else if (
-      post?.postLikes.find((user) => user.userId === session.data?.user?.id)
+      post.postLikes.find((user) => user.userId === session.data?.user?.id)
         ?.likes === -1
     ) {
       setVoted(-1);
     }
 
-    setDisplayLikes(post?.postLikes.reduce((acc, user) => acc + user.likes, 0));
+    setDisplayLikes(post.postLikes.reduce((acc, user) => acc + user.likes, 0));
   }, [post, session.data?.user?.id]);
 
   const addMutation = useMutation<
@@ -172,6 +152,11 @@ const ForumPost = ({
     };
   }
 
+  if (!post) {
+    setRedirect(false);
+    return null;
+  }
+
   return (
     <>
       <Paper withBorder p="md">
@@ -185,14 +170,20 @@ const ForumPost = ({
           >
             <IconChevronLeft size={68} />
           </ActionIcon>
-          <Title order={2}>{post?.title}</Title>
+          <Title order={2}>{post.title}</Title>
         </Flex>
         <Group position="apart">
           <Group>
             <Text size="xs" color="dimmed">
-              {formatIsoDateTime(post?.createdAt.toString() as string)}
+              {new Date(post.createdAt).toLocaleString("en-GB", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+              })}
             </Text>
-            <PostTypeBadge postType={post?.postType} />
+            <PostTypeBadge postType={post.postType} />
           </Group>
           <Popover
             width={100}
@@ -211,17 +202,17 @@ const ForumPost = ({
               <NavLink
                 label="Edit"
                 onClick={() => {
-                  setEdit(post?.postId as string);
-                  setMessage(post?.message as string);
+                  setEdit(post.postId as string);
+                  setMessage(post.message as string);
                   setPostOpened(false);
                 }}
-                disabled={session?.data?.user?.id !== post?.userId}
+                disabled={session?.data?.user?.id !== post.userId}
               />
             </Popover.Dropdown>
           </Popover>
         </Group>
         <Divider my="sm" />
-        {edit === post?.postId ? (
+        {edit === post.postId ? (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -249,10 +240,10 @@ const ForumPost = ({
             </Group>
           </form>
         ) : (
-          <TypographyStylesProvider key={post?.postId}>
+          <TypographyStylesProvider key={post.postId}>
             <div
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(`${post?.message}`, {
+                __html: DOMPurify.sanitize(`${post.message}`, {
                   ADD_TAGS: ["iframe"],
                   ADD_ATTR: [
                     "allow",
@@ -280,11 +271,11 @@ const ForumPost = ({
             >
               <IconThumbDown />
             </ActionIcon>
-            {post?.createdAt !== post?.updatedAt && (
+            {post.createdAt !== post.updatedAt && (
               <>
                 <Divider orientation="vertical" />
                 <Text size="sm" color="dimmed">
-                  Updated {DateDiffCalc(post?.updatedAt as Date)}
+                  Updated {DateDiffCalc(post.updatedAt as Date)}
                 </Text>
               </>
             )}
@@ -292,20 +283,12 @@ const ForumPost = ({
           <Flex justify="flex-end" align="flex-end" direction="column">
             <Group>
               <Avatar
-                src={
-                  users.find((user: { id: string }) => user.id === post?.userId)
-                    ?.image
-                }
-                alt={post?.userId}
+                src={post.user.image}
+                alt={post.userId}
                 radius="lg"
                 size="sm"
               />
-              <Text size="sm">
-                {
-                  users.find((user: { id: string }) => user.id === post?.userId)
-                    ?.value
-                }
-              </Text>
+              <Text size="sm">{post.user.username}</Text>
             </Group>
           </Flex>
         </Group>
@@ -324,33 +307,25 @@ const ForumPost = ({
               ]}
               onChange={(value) => {
                 setSort(value);
-                post?.comment.reverse();
+                post.comment.reverse();
               }}
             />
           </Group>
         </Group>
-        {post?.comment
+        {post.comment
           .map((comment) => (
             <Box key={comment.commentId} id={comment.commentId} mt={4}>
               <Divider my="sm" />
               <Group position="apart">
                 <Group mb="md">
                   <Avatar
-                    src={
-                      users.find(
-                        (user: { id: string }) => user.id === comment.userId
-                      )?.image
-                    }
-                    alt={comment.userId}
+                    src={comment.user.image}
+                    alt={comment.user.username}
                     radius="lg"
                     size="sm"
                   />
                   <Title size="sm" fw={500}>
-                    {
-                      users.find(
-                        (user: { id: string }) => user.id === comment.userId
-                      )?.value
-                    }
+                    {comment.user.username}
                   </Title>
                 </Group>
                 <Popover
@@ -447,16 +422,9 @@ const ForumPost = ({
                       })}
                     >
                       {
-                        users.find(
-                          (user) =>
-                            user["id"] ===
-                            post?.comment?.find(
-                              (e: {
-                                commentId: string;
-                                reply: string | null;
-                              }) => e.commentId === comment.reply
-                            )?.userId
-                        )?.value
+                        post.comment.find(
+                          ({ commentId }) => commentId === comment.reply
+                        )?.user.username
                       }
                     </Text>
                     <Blockquote
@@ -485,7 +453,7 @@ const ForumPost = ({
                               ? {
                                   __html: DOMPurify.sanitize(
                                     `${
-                                      post?.comment.find(
+                                      post.comment.find(
                                         (e: {
                                           commentId: string;
                                           reply: string | null;
@@ -562,7 +530,13 @@ const ForumPost = ({
               )}
               <Group mt="md">
                 <Text size="xs" color="dimmed">
-                  {formatIsoDateTime(comment?.createdAt.toString() as string)}
+                  {new Date(comment?.createdAt).toLocaleString("en-GB", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                  })}
                 </Text>
                 {comment?.createdAt < comment?.updatedAt && (
                   <Divider orientation="vertical" />
@@ -581,7 +555,7 @@ const ForumPost = ({
           onSubmit={(e) => {
             e.preventDefault();
             addMutation.mutate({
-              postId: post?.postId as string,
+              postId: post.postId as string,
               userId: session?.data?.user?.id as string,
               message: message,
               reply: (replying as string) || null,
@@ -600,13 +574,8 @@ const ForumPost = ({
                 <Text c="grey" fw={500}>
                   Replying to{" "}
                   {
-                    users.find(
-                      (user) =>
-                        user["id"] ===
-                        (post?.comment.find(
-                          (comment) => comment["commentId"] === replying
-                        )?.["userId"] as string)
-                    )?.["value"]
+                    post.comment.find(({ commentId }) => commentId === replying)
+                      ?.user.username
                   }
                 </Text>
               </Group>
@@ -620,7 +589,7 @@ const ForumPost = ({
                 onChange={setMessage}
               />
               <Group position="center" mt="xl">
-                <Button fullWidth type="submit" size="md">
+                <Button fullWidth type="submit" size="sm" variant="light">
                   Upload Comment
                 </Button>
               </Group>
