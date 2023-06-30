@@ -34,7 +34,6 @@ import {
   Select,
   Table,
   Text,
-  Title,
 } from "@mantine/core";
 import { Mastery, Topic } from "@prisma/client";
 import {
@@ -232,9 +231,6 @@ const Performance = () => {
   return (
     <ScrollArea>
       <Container size="lg">
-        <Title order={2} align="center" mb="lg" className={classes.title}>
-          User Performance
-        </Title>
         <Flex
           align="center"
           justify="space-between"
@@ -540,24 +536,6 @@ const Performance = () => {
 export default Performance;
 
 const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
-    },
-  },
-
   item: {
     borderRadius: theme.radius.md,
     marginBottom: theme.spacing.lg,

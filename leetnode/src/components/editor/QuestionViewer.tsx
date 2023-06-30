@@ -10,12 +10,10 @@ import {
   Button,
   Container,
   createStyles,
-  Divider,
   Flex,
   Modal,
   Text,
   TextInput,
-  Title,
   Tooltip,
 } from "@mantine/core";
 import { randomId, useDebouncedValue } from "@mantine/hooks";
@@ -33,7 +31,7 @@ enum QuestionDifficultyEnum {
 }
 
 export default function QuestionViewer() {
-  const { theme, classes } = useStyles();
+  const { theme } = useStyles();
   const queryClient = useQueryClient();
 
   const editorHtml = useRef("");
@@ -108,17 +106,6 @@ export default function QuestionViewer() {
 
   return (
     <Container size="lg">
-      <Title order={2} className={classes.title} align="center" mb="sm">
-        All Questions
-      </Title>
-      <Divider
-        size="md"
-        w={45}
-        mb="xl"
-        mx="auto"
-        color={theme.fn.primaryColor()}
-      />
-
       <Button
         fullWidth
         variant="default"
@@ -161,7 +148,7 @@ export default function QuestionViewer() {
 
       <DataTable
         idAccessor="questionTitle"
-        height="calc(100vh - 380px)"
+        height="calc(100vh - 276px)"
         withBorder
         highlightOnHover
         borderRadius="sm"
@@ -416,14 +403,6 @@ export default function QuestionViewer() {
 }
 
 const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-  },
-
   modalHeader: {
     borderBottom: `1px solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]

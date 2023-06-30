@@ -1,8 +1,7 @@
+import Latex from "@/components/Latex";
 import { QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
 import { Box, useMantineTheme } from "@mantine/core";
-
-import Latex from "../Latex";
 
 export default function VariablesBox({
   variables,

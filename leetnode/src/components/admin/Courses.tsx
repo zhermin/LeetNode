@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -14,6 +14,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import VariablesBox from "@/components/editor/VariablesBox";
+import Latex from "@/components/Latex";
 import {
   AttemptsInfoType,
   UsersWithMasteriesAndAttemptsType,
@@ -65,9 +67,6 @@ import {
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
-import VariablesBox from "../editor/VariablesBox";
-import Latex from "../Latex";
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -94,10 +93,8 @@ const Courses = () => {
   const [details, setDetails] = useState<CourseWithMediaAndTopicType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
-  const editMutation = useMutation<
-    Response,
-    AxiosError,
-    {
+  const editMutation = useMutation({
+    mutationFn: async (editCourse: {
       courseSlug: string;
       content: {
         overview: string;
@@ -105,11 +102,7 @@ const Courses = () => {
         video: string;
         additional: string;
       };
-    },
-    () => void
-  >({
-    mutationFn: async (editCourse) => {
-      console.log(editCourse);
+    }) => {
       const res = await axios.post("/api/course/editCourse", editCourse);
       return res.data;
     },
@@ -329,9 +322,6 @@ const Courses = () => {
   return (
     <>
       <Container size="lg">
-        <Title order={2} align="center" mb="lg" className={classes.title}>
-          Courses Details
-        </Title>
         <Center>
           <SegmentedControl
             sx={(theme) => ({
@@ -1018,24 +1008,6 @@ const Courses = () => {
 export default Courses;
 
 const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-    "&::after": {
-      content: '""',
-      display: "block",
-      backgroundColor: theme.fn.primaryColor(),
-      width: 45,
-      height: 2,
-      marginTop: theme.spacing.sm,
-      marginLeft: "auto",
-      marginRight: "auto",
-    },
-  },
-
   card: {
     border: `1px solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[1]

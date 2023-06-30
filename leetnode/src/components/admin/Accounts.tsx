@@ -16,7 +16,7 @@ import {
   Code,
   Container,
   createStyles,
-  Divider,
+  FileButton,
   Flex,
   Group,
   Modal,
@@ -24,7 +24,6 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
   Tooltip,
 } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
@@ -32,22 +31,27 @@ import { randomId, useDebouncedValue } from "@mantine/hooks";
 import { Role } from "@prisma/client";
 import {
   IconCheck,
+  IconFileUpload,
   IconMail,
   IconMinus,
   IconPlus,
   IconRefresh,
   IconSearch,
+  IconSpeakerphone,
   IconTrash,
   IconX,
 } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Accounts() {
-  const { theme, classes } = useStyles();
+  const { theme } = useStyles();
   const queryClient = useQueryClient();
   const session = useSession();
 
+  const resetCsvFileRef = useRef<() => void>(null);
+
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
+  const [waitlistOpened, setWaitlistOpened] = useState(false);
   const [userEditOpened, setUserEditOpened] = useState(false);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
@@ -55,6 +59,14 @@ export default function Accounts() {
     queryKey: ["all-users"],
     queryFn: () =>
       axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: waitlist } = useQuery({
+    queryKey: ["waitlisted-users"],
+    queryFn: () =>
+      axios.get<{ email: string }[]>("/api/user/admin/getWaitlist"),
+    refetchOnWindowFocus: true,
   });
 
   const PAGE_SIZE = 10;
@@ -253,17 +265,6 @@ export default function Accounts() {
   return (
     <>
       <Container size="lg">
-        <Title order={2} className={classes.title} align="center" mb="sm">
-          All Accounts
-        </Title>
-        <Divider
-          size="md"
-          w={45}
-          mb="xl"
-          mx="auto"
-          color={theme.fn.primaryColor()}
-        />
-
         <Accordion
           variant="contained"
           mb="xl"
@@ -328,7 +329,7 @@ export default function Accounts() {
                         {...addUsersForm.getInputProps(`emails.${index}.value`)}
                       />
                       <ActionIcon
-                        className="rounded-full"
+                        radius="xl"
                         onClick={() => {
                           addUsersForm.removeListItem("emails", index);
                         }}
@@ -337,23 +338,78 @@ export default function Accounts() {
                       </ActionIcon>
                     </Flex>
                   ))}
-                  <Button
-                    variant="light"
-                    color="gray"
-                    className={
-                      theme.colorScheme === "dark"
-                        ? "bg-zinc-800 hover:bg-zinc-700"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }
-                    onClick={() => {
-                      addUsersForm.insertListItem("emails", {
-                        id: randomId(),
-                        value: "",
-                      });
-                    }}
-                  >
-                    <IconPlus size={16} />
-                  </Button>
+                  <Flex gap="sm" direction={{ base: "column", sm: "row" }}>
+                    <Button
+                      fullWidth
+                      variant="light"
+                      color="gray"
+                      className={
+                        theme.colorScheme === "dark"
+                          ? "bg-zinc-800 hover:bg-zinc-700"
+                          : "bg-gray-200 hover:bg-gray-300"
+                      }
+                      onClick={() => {
+                        addUsersForm.insertListItem("emails", {
+                          id: randomId(),
+                          value: "",
+                        });
+                      }}
+                      leftIcon={<IconPlus size={16} />}
+                    >
+                      Add Manually
+                    </Button>
+                    <FileButton
+                      accept="text/csv"
+                      resetRef={resetCsvFileRef}
+                      onChange={(file) => {
+                        if (file) {
+                          if (file.type !== "text/csv") {
+                            toast.error(
+                              "Only Comma-Separated Values (CSVs) allowed"
+                            );
+                          } else {
+                            addUsersForm.clearErrors();
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const text = e.target?.result as string;
+                              const emails = text
+                                .split(/[,;\n\r\t]/)
+                                .filter((email) => email.includes("@"));
+                              addUsersForm.setFieldValue(
+                                "emails",
+                                emails.map((email) => ({
+                                  id: randomId(),
+                                  value: email.trim(),
+                                }))
+                              );
+                            };
+                            reader.readAsText(file);
+                            toast.success(
+                              "CSV file uploaded\n(lines without @ ignored)"
+                            );
+                          }
+                        }
+                        resetCsvFileRef.current?.();
+                      }}
+                    >
+                      {(props) => (
+                        <Button
+                          {...props}
+                          fullWidth
+                          variant="light"
+                          color="gray"
+                          className={
+                            theme.colorScheme === "dark"
+                              ? "bg-slate-800 hover:bg-slate-700"
+                              : "bg-slate-200 hover:bg-slate-300"
+                          }
+                          leftIcon={<IconFileUpload size={16} />}
+                        >
+                          Import from CSV
+                        </Button>
+                      )}
+                    </FileButton>
+                  </Flex>
                   <Checkbox
                     fz="sm"
                     label="Auto-send recruitment emails, likely to their junk mail"
@@ -361,14 +417,53 @@ export default function Accounts() {
                       type: "checkbox",
                     })}
                   />
-                  <Button type="submit" loading={addUsersStatus === "loading"}>
-                    Whitelist Emails
-                  </Button>
+                  <Flex gap="sm" align="center">
+                    <Button
+                      fullWidth
+                      type="submit"
+                      loading={addUsersStatus === "loading"}
+                    >
+                      Whitelist Emails
+                    </Button>
+                    {waitlist && waitlist.data.length > 0 && (
+                      <Tooltip label="View Waitlist" withArrow>
+                        <ActionIcon
+                          radius="xl"
+                          variant="default"
+                          onClick={() => {
+                            setWaitlistOpened(true);
+                          }}
+                        >
+                          <IconSpeakerphone
+                            size={16}
+                            stroke={1.5}
+                            color="gray"
+                          />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                  </Flex>
                 </Stack>
               </form>
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
+        {/* View Waitlist Modal */}
+        <Modal
+          opened={waitlistOpened}
+          onClose={() => {
+            setWaitlistOpened(false);
+          }}
+          title="Waitlist"
+          size="auto"
+          centered
+        >
+          <Stack>
+            {waitlist?.data.map(({ email }) => (
+              <Code key={email}>{email}</Code>
+            ))}
+          </Stack>
+        </Modal>
 
         <Flex mb="xs" align="center" gap="md">
           <TextInput
@@ -388,7 +483,7 @@ export default function Accounts() {
                 setSelectedRecords([]);
               }}
               variant="default"
-              className="rounded-full"
+              radius="xl"
               disabled={isFetching}
             >
               <IconRefresh size={16} stroke={1.5} color="gray" />
@@ -398,7 +493,7 @@ export default function Accounts() {
 
         <DataTable
           idAccessor="id"
-          height="calc(100vh - 400px)"
+          height="calc(100vh - 294px)"
           withBorder
           highlightOnHover
           borderRadius="sm"
@@ -665,14 +760,6 @@ export default function Accounts() {
 }
 
 const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 34,
-    fontWeight: 900,
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: 24,
-    },
-  },
-
   modalHeader: {
     borderBottom: `1px solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]

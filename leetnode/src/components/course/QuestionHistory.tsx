@@ -1,6 +1,10 @@
 import axios from "axios";
 import DOMPurify from "dompurify";
 
+import { UCQATAnswersType } from "@/components/course/PracticeQuestion";
+import VariablesBox from "@/components/editor/VariablesBox";
+import Latex from "@/components/Latex";
+import { QuestionDifficultyBadge } from "@/components/misc/Badges";
 import { QuestionDataType } from "@/types/question-types";
 import {
   Accordion,
@@ -28,11 +32,6 @@ import {
 } from "@prisma/client";
 import { IconCheck, IconHelp, IconX } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
-
-import VariablesBox from "../editor/VariablesBox";
-import Latex from "../Latex";
-import { QuestionDifficultyBadge } from "../misc/Badges";
-import { UCQATAnswersType } from "./PracticeQuestion";
 
 const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
   const { theme, classes } = useStyles();

@@ -14,6 +14,7 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader from "@/components/Header";
 import Latex from "@/components/Latex";
 import LeetNodeNavbar from "@/components/Navbar";
+import { getCourseDetails } from "@/pages/api/course/[courseSlug]";
 import { prisma } from "@/server/db/client";
 import {
   ActionIcon,
@@ -59,8 +60,6 @@ import {
   IconZoomQuestion,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
-
-import { getCourseDetails } from "../api/course/[courseSlug]";
 
 export type CourseInfoType = {
   topics: (Topic & {

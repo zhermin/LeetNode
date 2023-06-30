@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import Login from "@/components/auth/Login";
 import { UserData } from "@/components/Header";
 import { RoleBadge } from "@/components/misc/Badges";
 import {
@@ -39,8 +40,6 @@ import {
   IconSun,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
-
-import Login from "./auth/Login";
 
 const HEADER_HEIGHT = 80;
 
@@ -199,6 +198,13 @@ export default function Navbar({
 
         {session.status === "loading" && (
           <Center>
+            <ActionIcon radius="xl" mr="xl" onClick={handleColorSchemeChange}>
+              {colorScheme === "dark" ? (
+                <IconSun size={18} stroke={1.5} />
+              ) : (
+                <IconMoon size={18} stroke={1.5} />
+              )}
+            </ActionIcon>
             <Loader />
           </Center>
         )}
