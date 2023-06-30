@@ -8,16 +8,15 @@ import { CourseTypeBadge, PostTypeBadge } from "@/components/misc/Badges";
 import { DateDiffCalc } from "@/utils/DateDiffCalc";
 import {
   Button,
-  Center,
   Divider,
   Flex,
   Group,
-  Loader,
   Modal,
   Pagination,
   Paper,
   Select,
   SimpleGrid,
+  Skeleton,
   Stack,
   Text,
   TextInput,
@@ -180,11 +179,42 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
     return <div>Something went wrong!</div>;
   }
 
-  if (!posts || !courses || !topics) {
+  if (!posts || !courses || !topics || statusPosts === "loading") {
     return (
-      <Center className="h-[calc(100vh-180px)]">
-        <Loader />
-      </Center>
+      <Stack spacing="lg">
+        {[...Array(3)].map((_, index) => (
+          <Paper
+            key={index}
+            withBorder
+            radius="md"
+            p="md"
+            className="cursor-pointer transition-shadow duration-300 hover:shadow-lg"
+          >
+            <Flex gap="sm">
+              <Skeleton height={16} width="15%" radius="xl" />
+              <Skeleton height={16} width="10%" radius="xl" />
+            </Flex>
+            <Skeleton height={32} width="90%" mt="sm" mb="lg" />
+            <Flex gap="sm" align="center" justify="space-between">
+              <Flex align="center" gap="sm">
+                <Skeleton circle height={32} />
+                <Skeleton height={20} width={120} radius="xl" />
+              </Flex>
+              <Skeleton height={16} width="10%" radius="xl" />
+            </Flex>
+            <Divider mt="lg" mb="sm" variant="dotted" />
+            <Flex align="center" justify="space-between">
+              <Flex gap="xs" align="center">
+                <IconMessage stroke={1.5} />
+                <Skeleton height={16} width={30} radius="xl" />
+                <IconHeart stroke={1.5} className="ml-2" color="red" />
+                <Skeleton height={16} width={30} radius="xl" />
+              </Flex>
+              <Skeleton height={16} width="10%" radius="xl" />
+            </Flex>
+          </Paper>
+        ))}
+      </Stack>
     );
   }
 
@@ -210,68 +240,69 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
   ) : (
     <>
       <Stack spacing="lg">
-        {slicedPosts.map((post) => (
-          <Paper
-            key={post.postId}
-            withBorder
-            radius="md"
-            p="md"
-            className="cursor-pointer transition-shadow duration-300 hover:shadow-lg"
-            onClick={() => {
-              setRedirect(true);
-              setPostData(post);
-            }}
-          >
-            <Flex gap="sm">
-              <CourseTypeBadge course={post.course} />
-              <PostTypeBadge postType={post.postType} />
-            </Flex>
-            <Title order={3} weight={500} pt="sm" pb="lg">
-              {post.title}
-            </Title>
-            <Flex gap="sm" align="center" justify="space-between">
-              <Flex align="center" gap="sm" pr="sm">
-                <Image
-                  src={post.user.image}
-                  alt={post.user.username}
-                  className="rounded-full"
-                  width={30}
-                  height={30}
-                />
-                <Text sx={{ lineHeight: 1 }} mr="xs">
-                  {post.user.username}
-                </Text>
+        {slicedPosts.length > 0 &&
+          slicedPosts.map((post) => (
+            <Paper
+              key={post.postId}
+              withBorder
+              radius="md"
+              p="md"
+              className="cursor-pointer transition-shadow duration-300 hover:shadow-lg"
+              onClick={() => {
+                setRedirect(true);
+                setPostData(post);
+              }}
+            >
+              <Flex gap="sm">
+                <CourseTypeBadge course={post.course} />
+                <PostTypeBadge postType={post.postType} />
               </Flex>
-              <Flex gap="xs" align="center">
-                <IconUrgent stroke={1} size={16} />
-                <Text size="sm" color="dimmed" fz="xs">
-                  {DateDiffCalc(post?.updatedAt as Date)}
-                </Text>
+              <Title order={3} weight={500} mt="sm" mb="lg">
+                {post.title}
+              </Title>
+              <Flex gap="sm" align="center" justify="space-between">
+                <Flex align="center" gap="sm" pr="sm">
+                  <Image
+                    src={post.user.image}
+                    alt={post.user.username}
+                    className="rounded-full"
+                    width={30}
+                    height={30}
+                  />
+                  <Text sx={{ lineHeight: 1 }} mr="xs">
+                    {post.user.username}
+                  </Text>
+                </Flex>
+                <Flex gap="xs" align="center">
+                  <IconUrgent stroke={1} size={16} />
+                  <Text size="sm" color="dimmed" fz="xs">
+                    {DateDiffCalc(post?.updatedAt as Date)}
+                  </Text>
+                </Flex>
               </Flex>
-            </Flex>
-            <Divider mt="lg" mb="sm" variant="dotted" />
-            <Flex align="center" justify="space-between">
-              <Flex gap="xs" align="center">
-                <IconMessage stroke={1.5} />
-                <Text size="sm">{post.comment.length}</Text>
-                <IconHeart stroke={1.5} className="ml-2" color="red" />
-                <Text size="sm">{post.likes}</Text>
+              <Divider mt="lg" mb="sm" variant="dotted" />
+              <Flex align="center" justify="space-between">
+                <Flex gap="xs" align="center">
+                  <IconMessage stroke={1.5} />
+                  <Text size="sm">{post.comment.length}</Text>
+                  <IconHeart stroke={1.5} className="ml-2" color="red" />
+                  <Text size="sm">{post.likes}</Text>
+                </Flex>
+                <Flex gap="xs" align="center">
+                  <IconHourglassHigh stroke={1} size={16} />
+                  <Text size="sm" color="dimmed" fz="xs">
+                    {new Date(post.createdAt).toLocaleString("en-GB", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                    })}
+                  </Text>
+                </Flex>
               </Flex>
-              <Flex gap="xs" align="center">
-                <IconHourglassHigh stroke={1} size={16} />
-                <Text size="sm" color="dimmed" fz="xs">
-                  {new Date(post.createdAt).toLocaleString("en-GB", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
-                </Text>
-              </Flex>
-            </Flex>
-          </Paper>
-        ))}
+            </Paper>
+          ))}
       </Stack>
 
       <Group position="center" mt="xl">

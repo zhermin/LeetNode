@@ -120,7 +120,7 @@ export default function PracticeQuestion() {
 
   const { submitAnswer, submitAnswerStatus } = useSubmitAnswer();
 
-  // For checking if first question attempted
+  // Check if first question attempted
   const { data: userInfo } = useQuery<UserData>({
     queryKey: ["userInfo", session?.data?.user?.id],
     queryFn: async () => {

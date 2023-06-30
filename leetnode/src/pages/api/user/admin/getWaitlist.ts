@@ -6,12 +6,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const allUsersMasteriesAndAttempts = await prisma.user.findMany({
-    include: {
-      masteries: true,
-      attempts: true,
+  const waitlist = await prisma.waitlist.findMany({
+    select: {
+      email: true,
     },
   });
 
-  res.status(200).json(allUsersMasteriesAndAttempts);
+  res.status(200).json(waitlist);
 }

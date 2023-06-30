@@ -37,6 +37,7 @@ import {
   IconPlus,
   IconRefresh,
   IconSearch,
+  IconSpeakerphone,
   IconTrash,
   IconX,
 } from "@tabler/icons";
@@ -50,6 +51,7 @@ export default function Accounts() {
   const resetCsvFileRef = useRef<() => void>(null);
 
   const currentUser = useRef<UsersWithMasteriesAndAttemptsType[number]>();
+  const [waitlistOpened, setWaitlistOpened] = useState(false);
   const [userEditOpened, setUserEditOpened] = useState(false);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
 
@@ -57,6 +59,13 @@ export default function Accounts() {
     queryKey: ["all-users"],
     queryFn: () =>
       axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: waitlist } = useQuery({
+    queryKey: ["waitlisted-users"],
+    queryFn: () =>
+      axios.get<{ email: string }[]>("/api/user/admin/getWaitlist"),
     refetchOnWindowFocus: true,
   });
 
@@ -320,7 +329,7 @@ export default function Accounts() {
                         {...addUsersForm.getInputProps(`emails.${index}.value`)}
                       />
                       <ActionIcon
-                        className="rounded-full"
+                        radius="xl"
                         onClick={() => {
                           addUsersForm.removeListItem("emails", index);
                         }}
@@ -408,14 +417,53 @@ export default function Accounts() {
                       type: "checkbox",
                     })}
                   />
-                  <Button type="submit" loading={addUsersStatus === "loading"}>
-                    Whitelist Emails
-                  </Button>
+                  <Flex gap="sm" align="center">
+                    <Button
+                      fullWidth
+                      type="submit"
+                      loading={addUsersStatus === "loading"}
+                    >
+                      Whitelist Emails
+                    </Button>
+                    {waitlist && waitlist.data.length > 0 && (
+                      <Tooltip label="View Waitlist" withArrow>
+                        <ActionIcon
+                          radius="xl"
+                          variant="default"
+                          onClick={() => {
+                            setWaitlistOpened(true);
+                          }}
+                        >
+                          <IconSpeakerphone
+                            size={16}
+                            stroke={1.5}
+                            color="gray"
+                          />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                  </Flex>
                 </Stack>
               </form>
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
+        {/* View Waitlist Modal */}
+        <Modal
+          opened={waitlistOpened}
+          onClose={() => {
+            setWaitlistOpened(false);
+          }}
+          title="Waitlist"
+          size="auto"
+          centered
+        >
+          <Stack>
+            {waitlist?.data.map(({ email }) => (
+              <Code key={email}>{email}</Code>
+            ))}
+          </Stack>
+        </Modal>
 
         <Flex mb="xs" align="center" gap="md">
           <TextInput
@@ -435,7 +483,7 @@ export default function Accounts() {
                 setSelectedRecords([]);
               }}
               variant="default"
-              className="rounded-full"
+              radius="xl"
               disabled={isFetching}
             >
               <IconRefresh size={16} stroke={1.5} color="gray" />
