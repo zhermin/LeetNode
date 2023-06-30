@@ -11,6 +11,9 @@ import {
 import toast from "react-hot-toast";
 import { z } from "zod";
 
+import { CourseNamesType } from "@/components/course/CourseDiscussion";
+import Latex from "@/components/Latex";
+import { CourseTypeBadge } from "@/components/misc/Badges";
 import { AllQuestionsType, QuestionFormFullType } from "@/types/question-types";
 import { CustomEval } from "@/utils/CustomEval";
 import { CustomMath } from "@/utils/CustomMath";
@@ -67,10 +70,6 @@ import {
   IconX,
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
-
-import { CourseNamesType } from "../course/CourseDiscussion";
-import Latex from "../Latex";
-import { CourseTypeBadge } from "../misc/Badges";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,

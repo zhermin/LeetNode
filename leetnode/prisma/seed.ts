@@ -1,8 +1,8 @@
 import { QuestionDataType } from "@/types/question-types";
+import { CustomEval } from "@/utils/CustomEval";
+import { CustomMath } from "@/utils/CustomMath";
 import { PrismaClient, QuestionDifficulty } from "@prisma/client";
 
-import { CustomEval } from "../src/utils/CustomEval";
-import { CustomMath } from "../src/utils/CustomMath";
 import { Courses, Questions, Topics } from "./seed_data";
 
 const prisma = new PrismaClient();

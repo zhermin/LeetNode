@@ -14,6 +14,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import VariablesBox from "@/components/editor/VariablesBox";
+import Latex from "@/components/Latex";
 import {
   AttemptsInfoType,
   UsersWithMasteriesAndAttemptsType,
@@ -64,9 +66,6 @@ import {
   IconZoomQuestion,
 } from "@tabler/icons";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
-
-import VariablesBox from "../editor/VariablesBox";
-import Latex from "../Latex";
 
 ChartJS.register(
   CategoryScale,

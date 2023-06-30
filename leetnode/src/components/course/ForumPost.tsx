@@ -4,6 +4,8 @@ import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
+import { PostFullType } from "@/components/course/CourseDiscussion";
+import { PostTypeBadge } from "@/components/misc/Badges";
 import { DateDiffCalc } from "@/utils/DateDiffCalc";
 import {
   ActionIcon,
@@ -35,9 +37,6 @@ import {
   IconX,
 } from "@tabler/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { PostTypeBadge } from "../misc/Badges";
-import { PostFullType } from "./CourseDiscussion";
 
 const Editor = dynamic(import("@/components/editor/CustomRichTextEditor"), {
   ssr: false,

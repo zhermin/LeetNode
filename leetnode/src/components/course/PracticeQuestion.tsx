@@ -5,6 +5,9 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
+import VariablesBox from "@/components/editor/VariablesBox";
+import Latex from "@/components/Latex";
+import { QuestionDifficultyBadge } from "@/components/misc/Badges";
 import { QuestionDataType } from "@/types/question-types";
 import { CustomMath } from "@/utils/CustomMath";
 import {
@@ -26,10 +29,6 @@ import {
 import { Question, QuestionWithAddedTime, User } from "@prisma/client";
 import { IconBulb } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import VariablesBox from "../editor/VariablesBox";
-import Latex from "../Latex";
-import { QuestionDifficultyBadge } from "../misc/Badges";
 
 interface UserData extends User {
   attempts: { [timestamp: string]: number };
