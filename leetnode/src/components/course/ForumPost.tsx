@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import DOMPurify from "dompurify";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
@@ -77,28 +77,21 @@ const ForumPost = ({
   useEffect(() => {
     if (!post) return;
 
-    if (
-      post.postLikes.find((user) => user.userId === session.data?.user?.id)
-        ?.likes === 1
-    ) {
-      setVoted(1);
-    } else if (
-      post.postLikes.find((user) => user.userId === session.data?.user?.id)
-        ?.likes === -1
-    ) {
-      setVoted(-1);
-    }
+    const userVote = post.postLikes.find(
+      (user) => user.userId === session.data?.user?.id
+    )?.likes;
+    setVoted(userVote === 1 ? 1 : userVote === -1 ? -1 : 0);
 
     setDisplayLikes(post.postLikes.reduce((acc, user) => acc + user.likes, 0));
   }, [post, session.data?.user?.id]);
 
-  const addMutation = useMutation<
-    Response,
-    AxiosError,
-    { postId: string; userId: string; message: string; reply: unknown },
-    () => void
-  >({
-    mutationFn: (newComment) => axios.post("/api/forum/addComment", newComment),
+  const addMutation = useMutation({
+    mutationFn: (newComment: {
+      postId: string;
+      userId: string;
+      message: string;
+      reply: unknown;
+    }) => axios.post("/api/forum/addComment", newComment),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
       setMessage("");
@@ -106,13 +99,8 @@ const ForumPost = ({
     },
   });
 
-  const editCommentMutation = useMutation<
-    Response,
-    AxiosError,
-    { commentId: string; message: string },
-    () => void
-  >({
-    mutationFn: (editComment) =>
+  const editCommentMutation = useMutation({
+    mutationFn: (editComment: { commentId: string; message: string }) =>
       axios.post("/api/forum/editComment", editComment),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
@@ -122,13 +110,9 @@ const ForumPost = ({
     },
   });
 
-  const editPostMutation = useMutation<
-    Response,
-    AxiosError,
-    { postId: string; message: string },
-    () => void
-  >({
-    mutationFn: (editPost) => axios.post("/api/forum/editPost", editPost),
+  const editPostMutation = useMutation({
+    mutationFn: (editPost: { postId: string; message: string }) =>
+      axios.post("/api/forum/editPost", editPost),
     onSuccess: () => {
       queryClient.invalidateQueries(["all-posts"]);
       setMessage("");

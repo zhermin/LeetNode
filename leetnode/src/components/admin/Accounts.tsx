@@ -57,6 +57,7 @@ export default function Accounts() {
     queryKey: ["all-users"],
     queryFn: () =>
       axios.get<UsersWithMasteriesAndAttemptsType>("/api/user/admin"),
+    refetchOnWindowFocus: true,
   });
 
   const PAGE_SIZE = 10;

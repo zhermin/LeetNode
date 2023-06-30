@@ -125,6 +125,7 @@ const CourseDiscussion = ({ courseName }: { courseName: string }) => {
       {
         queryKey: ["all-posts"],
         queryFn: () => axios.get<PostFullType[]>("/api/forum/getAllPosts"),
+        refetchOnWindowFocus: true,
       },
       {
         queryKey: ["all-course-names"],

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -94,10 +94,8 @@ const Courses = () => {
   const [details, setDetails] = useState<CourseWithMediaAndTopicType | null>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
-  const editMutation = useMutation<
-    Response,
-    AxiosError,
-    {
+  const editMutation = useMutation({
+    mutationFn: async (editCourse: {
       courseSlug: string;
       content: {
         overview: string;
@@ -105,11 +103,7 @@ const Courses = () => {
         video: string;
         additional: string;
       };
-    },
-    () => void
-  >({
-    mutationFn: async (editCourse) => {
-      console.log(editCourse);
+    }) => {
       const res = await axios.post("/api/course/editCourse", editCourse);
       return res.data;
     },
