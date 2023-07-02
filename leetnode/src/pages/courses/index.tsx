@@ -116,27 +116,7 @@ export default function CoursesPage() {
         sx={{ flex: 1 }}
         pb="xl"
         withIndicators
-        styles={{
-          control: {
-            "&[data-inactive]": {
-              opacity: 0,
-              cursor: "default",
-            },
-          },
-          indicator: {
-            backgroundColor:
-              theme.colorScheme === "dark"
-                ? theme.colors.cyan[8]
-                : theme.colors.cyan[3],
-            width: 12,
-            height: 8,
-            transition: "width 250ms ease",
-
-            "&[data-active]": {
-              width: 40,
-            },
-          },
-        }}
+        classNames={classes}
       >
         {children}
       </Carousel>
@@ -311,7 +291,7 @@ export default function CoursesPage() {
   );
 }
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles((theme, _params, getRef) => ({
   wrapper: {
     position: "relative",
     paddingTop: 40,
@@ -404,5 +384,39 @@ const useStyles = createStyles((theme) => ({
     textTransform: "uppercase",
     fontSize: theme.fontSizes.xs,
     fontWeight: 700,
+  },
+
+  controls: {
+    ref: getRef("controls"),
+    transition: "opacity 300ms ease",
+    opacity: 0,
+  },
+
+  root: {
+    "&:hover": {
+      [`& .${getRef("controls")}`]: {
+        opacity: 1,
+      },
+    },
+  },
+
+  control: {
+    border: 0,
+    backgroundColor: theme.colors.gray[5],
+    "&[data-inactive]": {
+      opacity: 0,
+      cursor: "default",
+    },
+  },
+
+  indicator: {
+    backgroundColor: theme.colors.gray[5],
+    width: 12,
+    height: 8,
+    transition: "width 250ms ease",
+
+    "&[data-active]": {
+      width: 40,
+    },
   },
 }));

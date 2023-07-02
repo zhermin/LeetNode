@@ -487,6 +487,7 @@ const useStyles = createStyles((theme, _params, getRef) => ({
   },
 
   control: {
+    border: 0,
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.fn.variant({
