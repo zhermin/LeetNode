@@ -26,105 +26,122 @@ export type CourseWithMediaAndTopicType = Course & {
   topics: Topic[];
 };
 
-interface BadgeCardProps {
-  slug: string;
-  image: string;
-  title: string;
-  category: string;
-  description: string;
-  badges: string[];
-}
-
-function BadgeCard({
-  slug,
-  image,
-  title,
-  description,
-  category,
-  badges,
-}: BadgeCardProps) {
-  const { theme, classes } = useStyles();
-
-  const features = badges.map((badge) => (
-    <Badge color="gray" key={badge} leftSection="#" size="sm" variant="filled">
-      {badge}
-    </Badge>
-  ));
-
-  return (
-    <Card withBorder radius="md" m="md" p={0} className={classes.card}>
-      <Link
-        href={`/courses/${slug}`}
-        passHref
-        className={`${
-          theme.colorScheme === "dark" ? "text-white" : "text-black"
-        }`}
-      >
-        <Card.Section>
-          <Box
-            sx={{
-              backgroundImage: `url(${image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              height: 200,
-            }}
-          >
-            <Badge size="sm" className="absolute top-3 right-3">
-              {category}
-            </Badge>
-          </Box>
-        </Card.Section>
-        <Card.Section className={classes.section} mt="md">
-          <Text size="lg" weight={500}>
-            {title}
-          </Text>
-          <Text size="sm" mt="xs">
-            {description}
-          </Text>
-        </Card.Section>
-        <Card.Section className={classes.section}>
-          <Text mt="md" className={classes.label} color="dimmed">
-            Topics
-          </Text>
-          <Group spacing={7} mt={5}>
-            {features}
-          </Group>
-        </Card.Section>
-      </Link>
-    </Card>
-  );
-}
-
-function CarouselWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <Carousel
-      slideSize="40%"
-      breakpoints={[
-        { maxWidth: "md", slideSize: "50%", slideGap: "sm" },
-        { maxWidth: "sm", slideSize: "100%" },
-      ]}
-      align="start"
-      slideGap="md"
-      controlsOffset={-20}
-      controlSize={30}
-      height="100%"
-      sx={{ flex: 1 }}
-      styles={{
-        control: {
-          "&[data-inactive]": {
-            opacity: 0,
-            cursor: "default",
-          },
-        },
-      }}
-    >
-      {children}
-    </Carousel>
-  );
-}
-
 export default function CoursesPage() {
-  const { classes } = useStyles();
+  const { classes, theme } = useStyles();
+
+  function BadgeCard({
+    slug,
+    image,
+    title,
+    description,
+    category,
+    badges,
+  }: {
+    slug: string;
+    image: string;
+    title: string;
+    category: string;
+    description: string;
+    badges: string[];
+  }) {
+    const features = badges.map((badge) => (
+      <Badge
+        color="gray"
+        key={badge}
+        leftSection="#"
+        size="sm"
+        variant="filled"
+      >
+        {badge}
+      </Badge>
+    ));
+
+    return (
+      <Card withBorder radius="md" m="md" p={0} className={classes.card}>
+        <Link
+          href={`/courses/${slug}`}
+          passHref
+          className={`${
+            theme.colorScheme === "dark" ? "text-white" : "text-black"
+          }`}
+        >
+          <Card.Section>
+            <Box
+              sx={{
+                backgroundImage: `url(${image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                height: 200,
+              }}
+            >
+              <Badge size="sm" className="absolute top-3 right-3">
+                {category}
+              </Badge>
+            </Box>
+          </Card.Section>
+          <Card.Section className={classes.section} mt="md">
+            <Text size="lg" weight={500}>
+              {title}
+            </Text>
+            <Text size="sm" mt="xs">
+              {description}
+            </Text>
+          </Card.Section>
+          <Card.Section className={classes.section}>
+            <Text mt="md" className={classes.label} color="dimmed">
+              Topics
+            </Text>
+            <Group spacing={7} mt={5}>
+              {features}
+            </Group>
+          </Card.Section>
+        </Link>
+      </Card>
+    );
+  }
+
+  function CarouselWrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <Carousel
+        slideSize="40%"
+        breakpoints={[
+          { maxWidth: "md", slideSize: "50%", slideGap: "sm" },
+          { maxWidth: "sm", slideSize: "100%" },
+        ]}
+        align="start"
+        slideGap="md"
+        controlsOffset={-20}
+        controlSize={30}
+        height="100%"
+        sx={{ flex: 1 }}
+        pb="xl"
+        withIndicators
+        styles={{
+          control: {
+            "&[data-inactive]": {
+              opacity: 0,
+              cursor: "default",
+            },
+          },
+          indicator: {
+            backgroundColor:
+              theme.colorScheme === "dark"
+                ? theme.colors.cyan[8]
+                : theme.colors.cyan[3],
+            width: 12,
+            height: 8,
+            transition: "width 250ms ease",
+
+            "&[data-active]": {
+              width: 40,
+            },
+          },
+        }}
+      >
+        {children}
+      </Carousel>
+    );
+  }
 
   const { data: courses } = useQuery({
     queryKey: ["all-courses"],

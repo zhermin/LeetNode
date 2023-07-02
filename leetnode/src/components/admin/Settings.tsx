@@ -476,7 +476,7 @@ const useStyles = createStyles((theme, _params, getRef) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.colors.cyan[8]
-        : theme.colors.cyan[5],
+        : theme.colors.cyan[3],
     width: 12,
     height: 8,
     transition: "width 250ms ease",
