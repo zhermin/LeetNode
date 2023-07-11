@@ -189,8 +189,7 @@ export const Courses: {
     courseName: "Welcome Quiz",
     courseDescription:
       "Welcome to CG1111A! Take this quiz to help us get to know you better and recommend suitable questions.",
-    courseImage:
-      "https://images.unsplash.com/photo-1547521420-4328f6f9b272?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjYyNjE&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/afif-ramdhasuma-RjqCk9MqhNg-unsplash.jpg",
     courseLevel: Level.Foundational,
     type: CourseType.Quiz,
     topics: [
@@ -214,8 +213,7 @@ export const Courses: {
     courseName: "Fundamentals of Electricity",
     courseDescription:
       "Learn the fundamentals of electricity such as electric charge and current, power, voltage and resistance.",
-    courseImage:
-      "https://images.unsplash.com/photo-1510761047613-a5c1d008d780?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY0Mjk&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/nikola-johnny-mirkovic-Z_dnvde5wxc-unsplash.jpg",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     video:
@@ -241,8 +239,7 @@ export const Courses: {
     courseName: "Electrical Circuit Principles",
     courseDescription:
       "Learn the principles of electrical circuits such as Kirchhoff's Laws, equivalent resistances and voltage and current division principles.",
-    courseImage:
-      "https://images.unsplash.com/photo-1619345371662-fccc15cc4814?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY3MTY&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/nekhil-r-g8Pr-LbVbjU-unsplash.jpg",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     video:
@@ -274,8 +271,7 @@ export const Courses: {
     courseName: "Thevenin Equivalent Circuit",
     courseDescription:
       "Learn how to find the Thevenin equivalent circuit to simplify the analysis of electrical circuits.",
-    courseImage:
-      "https://images.unsplash.com/photo-1632571401005-458e9d244591?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjY4Nzk&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/anoushka-puri-f1YfrZ1o2r8-unsplash.jpg",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     video:
@@ -301,8 +297,7 @@ export const Courses: {
     courseName: "Circuit Analysis Techniques",
     courseDescription:
       "Learn the techniques of circuit analysis such as superposition, node and mesh analysis.",
-    courseImage:
-      "https://images.unsplash.com/photo-1586256053828-a36b572ab01d?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcwNjc&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/jorge-ramirez-988-7dFbNlo-unsplash.jpg",
     courseLevel: Level.Foundational,
     type: CourseType.Content,
     video:
@@ -328,8 +323,7 @@ export const Courses: {
     courseName: "Principles of Capacitors",
     courseDescription:
       "Learn the principles of capacitors such as capacitance, charging and discharging of capacitors.",
-    courseImage:
-      "https://images.unsplash.com/photo-1598048145816-4d54a3af68fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2NzM5MDM&ixlib=rb-4.0.3&q=80&w=400",
+    courseImage: "courses/danilo-alvesd-w1p05F4gyNg-unsplash.jpg",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
     video:
@@ -358,8 +352,7 @@ export const Courses: {
     courseName: "DC Transient Behaviour of Capacitors",
     courseDescription:
       "Learn the DC transient behaviour of capacitors such as charging and discharging of capacitors.",
-    courseImage:
-      "https://images.unsplash.com/photo-1625480860249-be231806e6ed?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcyMzE&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/saif71-com-XWjWtI8B-qo-unsplash.jpg",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
     video:
@@ -386,8 +379,7 @@ export const Courses: {
     courseName: "Principles of Inductors",
     courseDescription:
       "Learn the principles of inductors such as inductance, energy stored in inductors and steady and transient analysis of RL circuits.",
-    courseImage:
-      "https://images.unsplash.com/photo-1583199873815-b58ce30591ea?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjcxNTA&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/harrison-broadbent-FdjVf8XFiR0-unsplash.jpg",
     courseLevel: Level.Intermediate,
     type: CourseType.Content,
     video:
@@ -417,8 +409,7 @@ export const Courses: {
     courseName: "Basics of Operational Amplifiers",
     courseDescription:
       "Learn the basics of operational amplifiers (opamps) such as ideal and non-ideal opamps, opamp circuit analysis and the opamp golden rules.",
-    courseImage:
-      "https://images.unsplash.com/photo-1611759386165-ed9beec7b14f?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2MjczMzE&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/vishnu-mohanan-WBPubyEFNXw-unsplash.jpg",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
     video:
@@ -449,8 +440,7 @@ export const Courses: {
     courseName: "Op-Amp Comparators & Filters",
     courseDescription:
       "Learn the applications of operational amplifiers (opamps) such as comparators and filters.",
-    courseImage:
-      "https://images.unsplash.com/photo-1510746001195-0db09655b6db?ixid=MnwzNzQ4MTR8MHwxfGFsbHx8fHx8fHx8fDE2NjY2Mjc0NDU&ixlib=rb-4.0.3&q=50w=300",
+    courseImage: "courses/jonas-svidras-e28-krnIVmo-unsplash.jpg",
     courseLevel: Level.Advanced,
     type: CourseType.Content,
     video:
