@@ -103,7 +103,7 @@ export default function Personal() {
             label={
               <Center>
                 <IconFlame
-                  className="animate-bounce fill-amber-500 text-orange-500"
+                  className="animate-bounce fill-amber-500 stroke-orange-500"
                   size="2rem"
                 />
               </Center>
