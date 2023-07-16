@@ -51,6 +51,7 @@ specifiers:
   prettier-plugin-tailwindcss: ^0.2.5
   prisma: ^4.11.0
   quill: ^1.3.7
+  quill-mention: ^3.0.8
   react: 18.2.0
   react-chartjs-2: ^5.2.0
   react-dom: 18.2.0
@@ -100,6 +101,7 @@ dependencies:
   next-superjson-plugin: 0.5.6_ovgumwd3zbyd7gvuafkrruued4
   nodemailer: 6.9.1
   quill: 1.3.7
+  quill-mention: 3.2.0
   react: 18.2.0
   react-chartjs-2: 5.2.0_t5yjg6ab35jnsudnh2qdighszm
   react-dom: 18.2.0_react@18.2.0
