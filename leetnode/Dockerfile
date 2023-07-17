@@ -12,7 +12,7 @@ COPY /src/packages/mantine-rte /app/src/packages/mantine-rte
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --no-frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm@7.23.0 && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
