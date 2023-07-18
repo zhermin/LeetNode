@@ -31,6 +31,9 @@ RUN yarn build
 FROM base AS runner
 WORKDIR /app
 
+# Install PM2 globally in production
+RUN yarn global add pm2
+
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -46,8 +49,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
-
-ENV PORT 3000
-
-CMD ["node", "server.js"]
+CMD ["pm2-runtime", "server.js"]
