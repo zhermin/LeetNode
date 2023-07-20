@@ -1,3 +1,6 @@
+# Guide for Next.js Docker deployment
+# https://nextjs.org/docs/pages/building-your-application/deploying
+
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed

@@ -5,13 +5,13 @@ services:
     build: .
     restart: unless-stopped
   nginx:
-    image: jonasal/nginx-certbot:latest
+    image: jonasal/nginx-certbot:4.3.0
     restart: unless-stopped
     ports:
       - 80:80
       - 443:443
     environment:
-      - CERTBOT_EMAIL=tamzhermin@gmail.com
+      - CERTBOT_EMAIL=contact.leetnode@gmail.com
     volumes:
       - ./nginx:/etc/nginx/user_conf.d
       - nginx_secrets:/etc/letsencrypt
