@@ -9,6 +9,7 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY /src/packages/mantine-rte /app/src/packages/mantine-rte
+COPY /prisma /app/prisma
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -24,15 +25,11 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN npx prisma generate
 RUN yarn build
 
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
-
-# Install PM2 globally in production
-RUN yarn global add pm2
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
@@ -49,4 +46,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-CMD ["pm2-runtime", "server.js"]
+CMD ["node", "server.js"]
