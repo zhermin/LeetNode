@@ -58,23 +58,23 @@ Ensure that you have a database set up. We used PlanetScale, which offers a free
 
 ```bash
 pscale auth login
-pscale connect my-planetscale-database-name my-branch-name --port 3309
+pscale connect my-planetscale-database-name my-branch-name
 
 # example
-pscale connect leetnode main --port 3309  # or: pnpm pscale
+pscale connect leetnode main  # or: pnpm pscale
 ```
 
-Starts a connection to your local or hosted database on port `3309`.
+Starts a connection to your local or hosted database on port `3306`.
 
 ### Schema Changes (Terminal 3)
 
 Prisma, an ORM, is used to easily manage the database including schema changes. An initial seed file to quickly populate the database can also be used.
 
-Assumes schema changes are made to non-protected branches and a database connection to the database on `port=3309` has been started.
+Assumes schema changes are made to non-protected branches and a database connection to the database on `port=3306` has been started.
 
 ```bash
-npx prisma db push  # push schema changes to the database
-npx prisma db seed  # initialize database with seed data
+pnpm prisma db push  # push schema changes to the database
+pnpm prisma db seed  # initialize database with seed data
 ```
 
 ### Interactive Database Management (Terminal 4)

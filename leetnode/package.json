@@ -9,7 +9,7 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "studio": "prisma studio",
-    "pscale": "pscale connect leetnode main --port 3309"
+    "pscale": "pscale connect leetnode main"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
