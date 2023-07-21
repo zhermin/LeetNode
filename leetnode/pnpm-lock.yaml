@@ -83,6 +83,7 @@ dependencies:
   '@mantine/rte': file:src/packages/mantine-rte_7l7cohgiq6l4ncfy2pvlz3brzy
   '@mantine/utils': 5.10.5_react@18.2.0
   '@next-auth/prisma-adapter': 1.0.5_otzspqripoidjvrm2kfcva4nk4
+  '@prisma/client': 4.11.0_prisma@4.11.0
   '@tabler/icons': 1.119.0_biqbaboplfbrettd7655fr4n2y
   '@tanstack/react-query': 4.28.0_biqbaboplfbrettd7655fr4n2y
   '@types/dompurify': 2.4.0
@@ -100,6 +101,7 @@ dependencies:
   next-auth: 4.22.1_d3p5al2th6e2b23icmyi25lzsm
   next-superjson-plugin: 0.5.6_ovgumwd3zbyd7gvuafkrruued4
   nodemailer: 6.9.1
+  prisma: 4.11.0
   quill: 1.3.7
   quill-mention: 3.2.0
   react: 18.2.0
@@ -116,7 +118,6 @@ dependencies:
   zod: 3.21.4
 
 devDependencies:
-  '@prisma/client': 4.11.0_prisma@4.11.0
   '@tailwindcss/typography': 0.5.9_tailwindcss@3.2.7
   '@tanstack/react-query-devtools': 4.28.0_q4teel2yjbizrm4naiaqcdpjum
   '@types/katex': 0.16.0
@@ -133,7 +134,6 @@ devDependencies:
   postcss: 8.4.21
   prettier: 2.8.7
   prettier-plugin-tailwindcss: 0.2.5_prettier@2.8.7
-  prisma: 4.11.0
   tailwindcss: 3.2.7_aesdjsunmf4wiehhujt67my7tu
   ts-node: 10.9.1_moeqx3xmzxqxagf2sz6mqkbb7m
   typescript: 4.9.4
@@ -776,13 +776,16 @@ packages:
     dependencies:
       '@prisma/engines-version': 4.11.0-57.8fde8fef4033376662cad983758335009d522acb
       prisma: 4.11.0
+    dev: false
 
   /@prisma/engines-version/4.11.0-57.8fde8fef4033376662cad983758335009d522acb:
     resolution: {integrity: sha512-3Vd8Qq06d5xD8Ch5WauWcUUrsVPdMC6Ge8ILji8RFfyhUpqon6qSyGM0apvr1O8n8qH8cKkEFqRPsYjuz5r83g==}
+    dev: false
 
   /@prisma/engines/4.11.0:
     resolution: {integrity: sha512-0AEBi2HXGV02cf6ASsBPhfsVIbVSDC9nbQed4iiY5eHttW9ZtMxHThuKZE1pnESbr8HRdgmFSa/Kn4OSNYuibg==}
     requiresBuild: true
+    dev: false
 
   /@radix-ui/number/1.0.0:
     resolution: {integrity: sha512-Ofwh/1HX69ZfJRiRBMTy7rgjAzHmwe4kW9C9Y99HTRUcYLUuVT0KESFj15rPjRgKJs20GPq8Bm5aEDJ8DuA3vA==}
@@ -4733,6 +4736,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@prisma/engines': 4.11.0
+    dev: false
 
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
