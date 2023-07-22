@@ -28,4 +28,5 @@ export default defineNextConfig({
       "api.dicebear.com",
     ],
   },
+  output: "standalone",
 });

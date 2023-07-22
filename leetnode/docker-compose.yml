@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  # Development: $ docker-compose --profile dev up --build --force-recreate
+  nextjs-dev:
+    profiles: [ "dev" ]
+    build:
+      context: .
+      target: base
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXTAUTH_URL=http://localhost:3000
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - 3000:3000
+    command:
+      - /bin/sh
+      - -c
+      - |
+        yarn global add pnpm@7.23.0
+        pnpm install
+        pnpm dev
+
+  # Production: $ docker-compose up -d
+  nextjs:
+    profiles: [ "prod" ]
+    build: .
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+  nginx:
+    profiles: [ "prod" ]
+    image: jonasal/nginx-certbot:4.3.0
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - CERTBOT_EMAIL=contact.leetnode@gmail.com
+    volumes:
+      - ./nginx:/etc/nginx/user_conf.d
+      - nginx_secrets:/etc/letsencrypt
+
+volumes:
+  nginx_secrets:
