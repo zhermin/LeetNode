@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  # Development: $ docker-compose --profile dev up --build --force-recreate
+  # Development: $ docker compose --profile dev up --build --force-recreate
   nextjs-dev:
     profiles: [ "dev" ]
     build:
@@ -25,7 +25,7 @@ services:
         pnpm install
         pnpm dev
 
-  # Production: $ docker-compose up -d
+  # Production: $ docker compose up -d
   nextjs:
     profiles: [ "prod" ]
     build: .
@@ -44,6 +44,17 @@ services:
     volumes:
       - ./nginx:/etc/nginx/user_conf.d
       - nginx_secrets:/etc/letsencrypt
+
+  # Development and Production
+  recommender:
+    build:
+      context: ..
+      dockerfile: recommender/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
 
 volumes:
   nginx_secrets:
