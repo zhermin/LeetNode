@@ -12,4 +12,4 @@ COPY --link leetnode/prisma/seed_data.ts ./
 COPY --link recommender/model.pkl ./
 COPY --link recommender/main.py ./
 
-CMD ["uvicorn", "main:app"]
+CMD ["uvicorn", "main:app", "--port", "8000", "--host", "0.0.0.0", "--root-path", "/recommender"]

@@ -19,7 +19,7 @@ api_key_header = APIKeyHeader(name="access_token", auto_error=False)
 async def get_api_key(
     api_key_header: str = Security(api_key_header),
 ) -> str:
-    if api_key_header == os.environ.get("FASTAPI_API_KEY"):
+    if api_key_header == os.environ.get("RECOMMENDER_API_KEY"):
         return api_key_header
     else:
         raise HTTPException(
