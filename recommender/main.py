@@ -1,16 +1,16 @@
 from pyBKT.models import Model, Roster
 from dotenv import load_dotenv
-from urllib.parse import urlparse, ParseResult
 from fastapi import FastAPI, status, Security, HTTPException, Depends
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
+from upstash_redis import Redis
 
 import numpy as np
-import re, pickle, os, multiprocessing
+import re, pickle, os, multiprocessing, base64
 import pyrebase
-import redis
 
-load_dotenv("../leetnode/.env")  # Only for local development
+# Load .env file during local development
+load_dotenv("../leetnode/.env")
 
 # Middleware to require a valid API key
 api_key_header = APIKeyHeader(name="access_token", auto_error=False)
@@ -28,17 +28,20 @@ async def get_api_key(
         )
 
 
-# Redis cache configurations
-url = urlparse(os.environ.get("REDIS_URL"))
-if type(url) != ParseResult:
-    raise Exception("REDIS_URL is being parsed as raw bytes")
-r = redis.Redis(
-    host=url.hostname if url.hostname else "localhost",
-    port=url.port if url.port else 6379,
-    password=url.password,
-    ssl=True,
-    ssl_cert_reqs=None,
+# Upstash Redis cache configurations
+UPSTASH_REDIS_REST_URL = os.environ.get("UPSTASH_REDIS_REST_URL")
+UPSTASH_REDIS_REST_TOKEN = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+if UPSTASH_REDIS_REST_URL is None or UPSTASH_REDIS_REST_TOKEN is None:
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Upstash Redis invalid or missing URL and token",
+    )
+
+r = Redis(
+    url=UPSTASH_REDIS_REST_URL,
+    token=UPSTASH_REDIS_REST_TOKEN,
 )
+
 
 # Firebase persistent storage configurations
 config = {
@@ -117,7 +120,8 @@ async def startup_event():
     Updates Redis cache with the latest model during start up.
     """
 
-    r.set("roster", pickle.dumps(app.state.roster))
+    encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+    r.set("roster", encoded_data)
 
 
 @app.get("/", status_code=status.HTTP_200_OK)
@@ -150,7 +154,7 @@ def add_student(student_ids: str, topic: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
         student_id = student_ids.split(",")
 
         if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
@@ -168,7 +172,8 @@ def add_student(student_ids: str, topic: str) -> dict:
             )
 
         app.state.roster.add_students(topic, student_id)  # Add the students
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {"Created": True}
 
 
@@ -193,7 +198,7 @@ def remove_student(student_ids: str, topic: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
         student_id = student_ids.split(",")
 
         if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
@@ -211,7 +216,8 @@ def remove_student(student_ids: str, topic: str) -> dict:
             )
 
         app.state.roster.remove_students(topic, student_id)  # Remove the students
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {"Deleted": True}
 
 
@@ -235,7 +241,7 @@ def remove_all(student_id: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
 
         for topic in app.state.roster.skill_rosters:
             if (
@@ -245,7 +251,8 @@ def remove_all(student_id: str) -> dict:
                     topic, [student_id]
                 )  # Remove the students
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {"Deleted": True}
 
 
@@ -270,7 +277,7 @@ def get_mastery(student_id: str, topic: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
 
         if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
             raise HTTPException(
@@ -286,7 +293,8 @@ def get_mastery(student_id: str, topic: str) -> dict:
         if mastery == -1:  # Not trained
             mastery = 0  # Set default to 0
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {f"Mastery": mastery}
 
 
@@ -311,7 +319,7 @@ def get_all(student_id: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
         mastery_dict = {}
 
         for topic in app.state.roster.skill_rosters:
@@ -328,7 +336,8 @@ def get_all(student_id: str) -> dict:
             else:
                 mastery_dict[topic] = mastery
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {f"Mastery": mastery_dict}
 
 
@@ -353,7 +362,7 @@ def update_state(student_id: str, topic: str, correct: str) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
 
         if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
             raise HTTPException(
@@ -373,7 +382,8 @@ def update_state(student_id: str, topic: str, correct: str) -> dict:
         app.state.roster.update_state(
             topic, student_id, np.array([int(i) for i in correct])
         )  # Update the student
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {"Updated": True}
 
 
@@ -397,7 +407,7 @@ def update_multiple(student_id: str, topics: Topics) -> dict:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
 
         for topic in topics.topics:
             if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
@@ -421,7 +431,8 @@ def update_multiple(student_id: str, topics: Topics) -> dict:
                 topic, student_id, np.array([int(i) for i in topics.topics[topic]])
             )  # Update the student
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
         return {"Updated": True}
 
 
@@ -439,7 +450,8 @@ def reset_roster() -> None:
     with lock:
         topics = get_all_topics()
         app.state.roster = Roster(students=[], skills=topics, model=app.state.model)
-        r.set("roster", pickle.dumps(app.state.roster))
+        encoded_data = base64.b64encode(pickle.dumps(app.state.roster)).decode("utf-8")
+        r.set("roster", encoded_data)
 
 
 @app.post(
@@ -459,7 +471,7 @@ def save_roster() -> None:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
         with open("roster.pkl", "wb") as handle:
             pickle.dump(app.state.roster, handle, protocol=pickle.HIGHEST_PROTOCOL)
         storage.child("roster.pkl").put("roster.pkl")
@@ -479,7 +491,7 @@ async def shutdown_event():
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Roster not initialised",
             )
-        app.state.roster = pickle.loads(roster_data)
+        app.state.roster = pickle.loads(base64.b64decode(roster_data))
         with open("roster.pkl", "wb") as handle:
             pickle.dump(app.state.roster, handle, protocol=pickle.HIGHEST_PROTOCOL)
         storage.child("roster.pkl").put("roster.pkl")
