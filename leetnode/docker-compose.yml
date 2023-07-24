@@ -8,6 +8,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - RECOMMENDER_URL=https://leetnode.kaiku.io/recommender
   recommender:
     profiles: [ "prod" ]
     build:
@@ -41,6 +42,7 @@ services:
     environment:
       - NODE_ENV=development
       - NEXTAUTH_URL=http://localhost:3000
+      - RECOMMENDER_URL=http://recommender-dev:8000
     env_file:
       - .env
     volumes:

@@ -11,11 +11,13 @@ export default async function handler(
 ) {
   const session = await getServerSession(req, res, authOptions);
 
+  console.log(process.env.RECOMMENDER_URL);
   const { data } = await axios.get<{ Mastery: Record<string, number> }>(
-    `https://pybkt-api-deployment.herokuapp.com/get-all/${session?.user?.id}`,
+    `${process.env.RECOMMENDER_URL}/get-all/${session?.user?.id}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+        Accept: "application/json",
+        access_token: process.env.RECOMMENDER_API_KEY,
       },
     }
   );
