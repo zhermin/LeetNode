@@ -6,6 +6,8 @@ import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db/client";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
+import { CustomSendVerificationRequest } from "./signInEmail";
+
 export const authOptions: NextAuthOptions = {
   callbacks: {
     // Include id and role in session and jwt tokens
@@ -82,6 +84,9 @@ export const authOptions: NextAuthOptions = {
       server: env.EMAIL_SERVER,
       from: env.EMAIL_FROM,
       maxAge: 24 * 60 * 60 * 30, // 30d (Email magic links' valid duration, default 24h)
+      sendVerificationRequest({ identifier, url, provider }) {
+        CustomSendVerificationRequest({ identifier, url, provider });
+      },
     }),
   ],
   pages: {
