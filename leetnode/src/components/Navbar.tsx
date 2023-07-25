@@ -154,17 +154,17 @@ export default function Navbar({
   const handleColorSchemeChange = () => {
     const value = colorScheme === "dark" ? "light" : "dark";
 
-    // change mantine color scheme
+    // Change mantine color scheme
     toggleColorScheme(value);
 
-    // change tailwind color scheme
+    // Change tailwind color scheme
     if (value === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
 
-    // notification for color scheme change
+    // Notification for color scheme change
     toast.success(
       value === "dark" ? "Dark mode enabled" : "Light mode enabled",
       {

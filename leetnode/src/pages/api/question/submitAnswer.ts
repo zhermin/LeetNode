@@ -46,13 +46,14 @@ export default async function handler(
     const { data: pybktUpdate } = await axios.patch<{
       Updated: boolean;
     }>(
-      `https://pybkt-api-deployment.herokuapp.com/update-state/${
+      `${process.env.RECOMMENDER_URL}/update-state/${
         session?.user?.id
       }/${topicSlug}/${isCorrect ? "1" : "0"}`,
       req,
       {
         headers: {
-          Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          Accept: "application/json",
+          access_token: process.env.RECOMMENDER_API_KEY,
         },
       }
     );
@@ -62,10 +63,11 @@ export default async function handler(
     }
 
     const { data: pybktGet } = await axios.get<{ Mastery: number }>(
-      `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${topicSlug}`,
+      `${process.env.RECOMMENDER_URL}/get-mastery/${session?.user?.id}/${topicSlug}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          Accept: "application/json",
+          access_token: process.env.RECOMMENDER_API_KEY,
         },
       }
     );

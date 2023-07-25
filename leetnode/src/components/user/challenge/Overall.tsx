@@ -50,7 +50,6 @@ export default function Overall() {
     const to = from + PAGE_SIZE;
 
     if (!!allUsers && debouncedQuery.trim() !== "") {
-      // Filtering
       setRecords(
         allUsers.filter(({ username }) => {
           if (

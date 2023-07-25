@@ -33,7 +33,7 @@ export default async function handler(
         where: {
           userId: req.body.id,
           submittedAt: {
-            gte: new Date(startDateTime.toISOString().substring(0, 10)), // get all attempts done since begining of streak
+            gte: new Date(startDateTime.toISOString().substring(0, 10)), // Get all attempts done since begining of streak
           },
         },
       });
@@ -49,7 +49,7 @@ export default async function handler(
         }
       });
 
-      res.status(200).json({ ...info, attempts: attemptsPerDay }); // return info and no. of attempts today
+      res.status(200).json({ ...info, attempts: attemptsPerDay }); // Return info and no. of attempts today
     } catch (error) {
       res.status(400).json({ message: "Something went wrong" });
     }

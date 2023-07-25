@@ -10,14 +10,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await getSession({ req });
-  // const initUser = async (input: {
-  //   id: string;
-  // topics: {
-  //   topicSlug: string;
-  //   topicName: string;
-  //   topicLevel: QuestionDifficulty;
-  // }[];
-  // }) => {
   req.body.topics.map(
     async (topic: {
       topicSlug: string;
@@ -25,27 +17,29 @@ export default async function handler(
       topicLevel: QuestionDifficulty;
     }) => {
       console.log(topic.topicSlug);
+
       try {
         const { data } = await axios.post(
-          `https://pybkt-api-deployment.herokuapp.com/add-student/${session?.user?.id}/${topic.topicSlug}/`,
+          `${process.env.RECOMMENDER_URL}/add-student/${session?.user?.id}/${topic.topicSlug}/`,
           {},
           {
             headers: {
-              Authorization: `Bearer ${process.env.HEROKU_API_KEY as string}`,
+              Accept: "application/json",
+              access_token: process.env.RECOMMENDER_API_KEY,
             },
           }
         );
         console.log(data);
+
         if (data.Created) {
           try {
             const { data } = await axios.get(
-              `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${topic.topicSlug}/`,
+              `${process.env.RECOMMENDER_URL}/get-mastery/${session?.user?.id}/${topic.topicSlug}/`,
 
               {
                 headers: {
-                  Authorization: `Bearer ${
-                    process.env.HEROKU_API_KEY as string
-                  }`,
+                  Accept: "application/json",
+                  access_token: process.env.RECOMMENDER_API_KEY,
                 },
               }
             );
@@ -67,7 +61,7 @@ export default async function handler(
         const axiosError = error as AxiosError<{ detail: string }>;
         if (axiosError.response?.data?.detail === "Data already exists") {
           console.log("Already initialised");
-          // check if mastery is in prisma table
+          // Ccheck if mastery is in prisma table
           console.log(session?.user?.id);
           const masteryCheck: Mastery | null = await prisma.mastery.findUnique({
             where: {
@@ -77,17 +71,16 @@ export default async function handler(
               },
             },
           });
-          //if initialised but not in prisma mastery table or masteryLevel === 0, add it in
+          // If initialised but not in prisma mastery table or masteryLevel === 0, add it in
           if (masteryCheck === null) {
             try {
               const { data } = await axios.get(
-                `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${topic.topicSlug}/`,
+                `${process.env.RECOMMENDER_URL}/get-mastery/${session?.user?.id}/${topic.topicSlug}/`,
 
                 {
                   headers: {
-                    Authorization: `Bearer ${
-                      process.env.HEROKU_API_KEY as string
-                    }`,
+                    Accept: "application/json",
+                    access_token: process.env.RECOMMENDER_API_KEY,
                   },
                 }
               );
@@ -116,8 +109,3 @@ export default async function handler(
     res.status(400).json({ message: "Something went wrong" });
   }
 }
-
-// console.log(req.body);
-// const display = initUser(req.body);
-
-// });

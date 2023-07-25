@@ -11,7 +11,6 @@ export default async function handler(
 ) {
   const session = await getServerSession(req, res, authOptions);
 
-  console.log(process.env.RECOMMENDER_URL);
   const { data } = await axios.get<{ Mastery: Record<string, number> }>(
     `${process.env.RECOMMENDER_URL}/get-all/${session?.user?.id}`,
     {
