@@ -1,13 +1,13 @@
-from pyBKT.models import Model, Roster
 from dotenv import load_dotenv
-from urllib.parse import urlparse, ParseResult
-from fastapi import FastAPI, status, Security, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.security import APIKeyHeader
+from pyBKT.models import Model, Roster
 from pydantic import BaseModel
+from urllib.parse import ParseResult, urlparse
 
 import numpy as np
-import re, pickle, os, multiprocessing
 import pyrebase
+import multiprocessing, os, pickle, re
 import redis
 
 # Load .env file during local development
