@@ -73,6 +73,7 @@ export default function Navbar({
   sidebarOpened,
   setSidebarOpened,
   withBorder = true,
+  ...props
 }: {
   sidebarOpened?: boolean;
   setSidebarOpened?: Dispatch<SetStateAction<boolean>>;
@@ -179,7 +180,11 @@ export default function Navbar({
   };
 
   return (
-    <Header height={HEADER_HEIGHT} withBorder={withBorder}>
+    <Header
+      height={HEADER_HEIGHT}
+      withBorder={withBorder}
+      {...props}
+    >
       <Box className={classes.inner}>
         {sidebarOpened !== undefined && setSidebarOpened ? (
           <Flex align="center" gap="xl">

@@ -35,7 +35,6 @@ export default async function handler(
           try {
             const { data } = await axios.get(
               `${process.env.RECOMMENDER_URL}/get-mastery/${session?.user?.id}/${topic.topicSlug}/`,
-
               {
                 headers: {
                   Accept: "application/json",
@@ -61,7 +60,7 @@ export default async function handler(
         const axiosError = error as AxiosError<{ detail: string }>;
         if (axiosError.response?.data?.detail === "Data already exists") {
           console.log("Already initialised");
-          // Ccheck if mastery is in prisma table
+          // Check if mastery is in prisma table
           console.log(session?.user?.id);
           const masteryCheck: Mastery | null = await prisma.mastery.findUnique({
             where: {

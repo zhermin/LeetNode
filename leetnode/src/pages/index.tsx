@@ -1,8 +1,10 @@
 import Image from "next/image";
+import { useCallback } from "react";
+import Particles from "react-particles";
+import { loadSlim } from "tsparticles-slim";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import Dots from "@/components/misc/Dots";
 import Navbar from "@/components/Navbar";
 import {
   Box,
@@ -15,27 +17,33 @@ import {
   Title,
 } from "@mantine/core";
 
+import type {
+  Container as ParticlesContainer,
+  Engine,
+} from "tsparticles-engine";
+
 export default function HomePage() {
   const { classes, theme } = useStyles();
+
+  const particlesInit = useCallback(async (engine: Engine) => {
+    console.log(engine);
+    await loadSlim(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(
+    async (container: ParticlesContainer | undefined) => {
+      await console.log(container);
+    },
+    []
+  );
 
   return (
     <>
       <Header />
       <Container>
-        <Navbar withBorder={false} />
+        <Navbar withBorder={false} {...{ className: "bg-transparent" }} />
       </Container>
       <Container className={classes.wrapper} size={1400} px="xl">
-        <Dots
-          dotPositions={[
-            { left: 20, top: -60 },
-            { left: 200, top: -60 },
-            { left: -20, top: 20 },
-            { left: 100, top: 0 },
-            { left: 60, top: 100 },
-            { right: 20, top: 60 },
-            { right: 60, top: 200 },
-          ]}
-        />
         <Box className={classes.inner}>
           <Title className={classes.title}>
             AI-Powered{" "}
@@ -73,7 +81,7 @@ export default function HomePage() {
           </Box>
         </Box>
       </Container>
-      <Container size={1000} p="xl" mb={100}>
+      <Container size={1000} p="lg" mb={100}>
         <Grid grow>
           <Grid.Col sm={3} pb="lg" className={classes.image}>
             <Image
@@ -88,12 +96,22 @@ export default function HomePage() {
           <Grid.Col sm={1}>
             <Stack justify="flex-start">
               <Title order={3}>The Recommendation Engine</Title>
-              <Text size="md" align="left" color="dimmed">
+              <Text
+                size="md"
+                align="justify"
+                color="dimmed"
+                className="leading-loose"
+              >
                 LeetNode leverages the Machine Learning algorithm known as{" "}
                 <em>Bayesian Knowledge Tracing (BKT)</em> to provide a
                 personalized learning experience.
               </Text>
-              <Text size="md" align="left" color="dimmed">
+              <Text
+                size="md"
+                align="justify"
+                color="dimmed"
+                className="leading-loose"
+              >
                 BKT is a probabilistic model that estimates a student&apos;s
                 mastery of a concept based on their performance on a series of
                 questions. Our model is trained on simulated student
@@ -105,6 +123,76 @@ export default function HomePage() {
         </Grid>
       </Container>
       <Footer />
+
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        loaded={particlesLoaded}
+        options={{
+          fpsLimit: 120,
+          interactivity: {
+            events: {
+              onClick: {
+                enable: true,
+                mode: "repulse",
+              },
+              onHover: {
+                enable: true,
+                mode: "grab",
+              },
+              resize: true,
+            },
+            modes: {
+              repulse: {
+                distance: 200,
+                duration: 1.0,
+              },
+              grab: {
+                distance: 200,
+              },
+            },
+          },
+          particles: {
+            color: {
+              value: "#aaa",
+            },
+            links: {
+              color: "#aaa",
+              distance: 150,
+              enable: true,
+              opacity: 0.5,
+              width: 1,
+            },
+            move: {
+              direction: "none",
+              enable: true,
+              outModes: {
+                default: "bounce",
+              },
+              random: false,
+              speed: 2,
+              straight: false,
+            },
+            number: {
+              density: {
+                enable: true,
+                area: 800,
+              },
+              value: 50,
+            },
+            opacity: {
+              value: 0.5,
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: { min: 1, max: 5 },
+            },
+          },
+          detectRetina: true,
+        }}
+      />
     </>
   );
 }
@@ -118,6 +206,7 @@ const useStyles = createStyles((theme) => ({
     position: "relative",
     paddingTop: 80,
     paddingBottom: 80,
+    zIndex: 1,
 
     "@media (max-width: 755px)": {
       paddingTop: 80,
@@ -158,6 +247,7 @@ const useStyles = createStyles((theme) => ({
 
   description: {
     textAlign: "center",
+    lineHeight: 2.0,
 
     "@media (max-width: 520px)": {
       textAlign: "left",
@@ -176,19 +266,7 @@ const useStyles = createStyles((theme) => ({
   },
 
   control: {
-    "&:not(:first-of-type)": {
-      marginLeft: theme.spacing.md,
-    },
-
-    "@media (max-width: 520px)": {
-      height: 42,
-      fontSize: theme.fontSizes.md,
-
-      "&:not(:first-of-type)": {
-        marginTop: theme.spacing.md,
-        marginLeft: 0,
-      },
-    },
+    zIndex: 1,
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.fn.variant({
@@ -205,5 +283,19 @@ const useStyles = createStyles((theme) => ({
             .color
         : theme.fn.variant({ variant: "filled", color: theme.primaryColor })
             .color,
+
+    "&:not(:first-of-type)": {
+      marginLeft: theme.spacing.md,
+    },
+
+    "@media (max-width: 520px)": {
+      height: 42,
+      fontSize: theme.fontSizes.md,
+
+      "&:not(:first-of-type)": {
+        marginTop: theme.spacing.md,
+        marginLeft: 0,
+      },
+    },
   },
 }));
