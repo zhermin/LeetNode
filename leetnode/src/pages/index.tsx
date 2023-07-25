@@ -250,7 +250,7 @@ const useStyles = createStyles((theme) => ({
     lineHeight: 2.0,
 
     "@media (max-width: 520px)": {
-      textAlign: "left",
+      textAlign: "justify",
       fontSize: theme.fontSizes.md,
     },
   },
