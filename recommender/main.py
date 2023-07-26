@@ -68,7 +68,7 @@ def get_model() -> Model:
     return model
 
 
-def get_roster_model() -> Model:
+def get_roster_model() -> Roster:
     """
     Loads the latest roster file in the persistent storage.
     Updates the roster with the latest training model on startup.
@@ -76,23 +76,24 @@ def get_roster_model() -> Model:
 
     storage.download("roster.pkl", "roster.pkl")
     with open("roster.pkl", "rb") as handle:
-        roster = pickle.load(handle)
+        roster: Roster = pickle.load(handle)
     try:
         # Prevent API from crashing in case the training model doesn't fit the roster model
         roster.set_model(app.state.model)
+    except Exception as e:
+        print(
+            f"[ERROR] Training model did not fit the roster model, defaulting to model in storage.\n{e}"
+        )
     finally:
         return roster
 
 
 def get_all_topics() -> list:
     """
-    Returns list of topics.
+    Returns list of topics by parsing the topicSlugs in the seed_data.ts file.
     """
 
     with open(os.path.dirname(__file__) + "/seed_data.ts", "r") as f:
-        """
-        Get topicSlug from the seed_data.ts
-        """
         text = f.read()
         topics = re.findall(r"topicSlug: .*", text)
         topics = set(topics)  # Remove duplicates
@@ -113,7 +114,7 @@ class Topics(BaseModel):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """
     Updates Redis cache with the latest model during start up.
     """
@@ -467,7 +468,7 @@ def save_roster() -> None:
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """
     Saves the roster file when shutting down.
     Saves the Roster model to disk as a pickle file.

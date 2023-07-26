@@ -308,7 +308,11 @@ function html({ url, host }: { url: string; host: string }) {
                   <br>
                   NUS College of Design and Engineering
                   <br>
-                  9 Engineering Drive 1, #07-26 EA, Singapore 117575
+                  <a href="https://goo.gl/maps/5kZ9gLPyBHiiUph57">
+                    9 Engineering Drive 1, #07-26 EA, Singapore 117575
+                  </a>
+                  <br>
+                  +65 6516 2102
                 </p>
                 <div style="line-height: 40px">&zwnj;</div>
               </td>
