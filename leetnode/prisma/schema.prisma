@@ -184,7 +184,7 @@ model Topic {
 }
 
 model Question {
-  // Generic question, either dynamic or static, no user-specific information //
+  // Generic question, either dynamic or static, no user-specific information
   questionId             Int                     @default(autoincrement())
   variationId            Int                     @default(1)
   topicSlug              String
@@ -208,7 +208,7 @@ enum QuestionDifficulty {
 }
 
 model QuestionWithAddedTime {
-  // Question tagged to a user, and if dynamic, with options generated at runtime //
+  // Question tagged to a user, and if dynamic, with options generated at runtime
   qatId       String    @id @default(cuid())
   questionId  Int
   variationId Int

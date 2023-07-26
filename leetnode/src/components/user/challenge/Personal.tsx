@@ -67,7 +67,7 @@ export default function Personal() {
   }
 
   // Pre-processing to render the calendar
-  const lastActive = new Date(userInfo.lastActive ?? ""); // lastActive
+  const lastActive = new Date(userInfo.lastActive ?? "");
   const startDateTime = new Date(userInfo.lastActive ?? "");
   startDateTime.setDate(lastActive.getDate() - userInfo.loginStreak + 1); // Start of login streak
   startDateTime.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
@@ -88,7 +88,7 @@ export default function Personal() {
             thickness={5}
             sections={[
               {
-                // streak / days in entire (current) month
+                // Streak / days in entire (current) month
                 value:
                   (userInfo.loginStreak /
                     new Date(

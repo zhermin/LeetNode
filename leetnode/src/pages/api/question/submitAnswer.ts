@@ -14,14 +14,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Submit Answer
-  // 1. Update the BKT model and get user's new mastery
-  // 2. Recommended question
-  //   a. Topic: random topic tested in current course
-  //   b. Difficulty: according to new mastery level
-  // 3. Add a new questionWithAddedTime with runtime generated answer options
-  // 4. Add a new attempt
-  // 5. Return the new mastery to fire a custom notification
+  /*
+  Submit Answer Flow
+  1. Update the BKT model and get user's new mastery
+  2. Recommended question
+    a. Topic: random topic tested in current course
+    b. Difficulty: according to new mastery level
+  3. Add a new questionWithAddedTime with runtime generated answer options
+  4. Add a new attempt
+  5. Return the new mastery to fire a custom notification
+  */
 
   const session = await getServerSession(req, res, authOptions);
 

@@ -74,6 +74,7 @@ export default function Account({ userInfo }: AccountProps) {
 
         const [signature, key] = [res.data.signature, res.data.key];
 
+        // TODO: Abstract all of these media upload logic into a separate file
         const formData = new FormData();
         formData.append("file", form.values.file);
         formData.append("api_key", key);

@@ -282,41 +282,22 @@ const Courses = () => {
   };
 
   const handleDeleteFile = async (name: string) => {
-    // Delete the record from files state
     const updatedFiles = files?.filter(
       (slide) => slide.name !== name && slide.name !== name + ".pdf"
     );
     setFiles(updatedFiles);
 
-    // Delete the record from fileDisplay state
     const updatedFileDisplay = fileDisplay?.filter(
       (mediaName) => mediaName !== name && mediaName !== name + ".pdf"
     );
     setFileDisplay(updatedFileDisplay);
 
-    // Delete the record from slidesMessage state
     const updatedSlidesMessage = slidesMessage?.filter(
       (media) => media.mediaName !== name && media.mediaName !== name + ".pdf"
     );
     setSlidesMessage(updatedSlidesMessage);
 
-    // Unsigned presets does not allow delete after 10 mins
-    // try {
-    //   const response = await axios.post(
-    //     `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_NAME}/delete_by_token`,
-    //     {
-    //       public_ids: [media.publicId],
-    //       api_key: process.env.CLOUDINARY_API_KEY,
-    //       api_secret: process.env.CLOUDINARY_SECRET,
-    //     }
-    //   );
-    //   console.log(response.data);
-    //   toast.success("Successfully Deleted!");
-    // } catch (error) {
-    //   console.log(error);
-    //   toast.error(error instanceof Error ? error.message : "Unknown Error");
-    //   // throw error;
-    // }
+    // Note: Unsigned presets do not allow deletes after 10 mins
   };
 
   return (
@@ -517,7 +498,7 @@ const Courses = () => {
                   ? theme.colors.dark[7]
                   : theme.colors.gray[0],
             })}
-            key={topic.topicSlug} // Add a unique key to each element
+            key={topic.topicSlug}
           >
             <Group py={"md"} position="apart">
               <Group>

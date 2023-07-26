@@ -53,7 +53,7 @@ export default function Statistics() {
         ]}
         fullWidth
       />
-      <Overview data={masteryData} />
+      <Overview masteryData={masteryData} />
       <SegmentedControl
         color="cyan"
         value={view}

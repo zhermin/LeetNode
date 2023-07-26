@@ -83,7 +83,6 @@ function sortData(
       if (payload.reversed) {
         [a, b] = [b, a];
       }
-      // compare the two
       if (a[sortBy] < b[sortBy]) {
         return -1;
       } else if (a[sortBy] > b[sortBy]) {
@@ -102,7 +101,7 @@ export default function MasteryBar({ data }: TableSortProps) {
   const [reverseSortDirection, setReverseSortDirection] = useState(false);
 
   useEffect(() => {
-    setSortedData(data); // Update the sortedData state when the props change
+    setSortedData(data);
   }, [data]);
 
   const setSorting = (field: keyof RowData) => {
