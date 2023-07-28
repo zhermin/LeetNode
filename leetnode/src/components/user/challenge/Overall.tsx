@@ -97,31 +97,28 @@ export default function Overall() {
             accessor: "rank",
             width: "10%",
             textAlignment: "center",
-            render: (record) => {
-              return allUsers?.indexOf(record) === 0 ? (
+            render: (record) =>
+              allUsers?.indexOf(record) === 0 ? (
                 <Center>
-                  <IconCrown color="black" className="fill-amber-500" />
+                  <IconCrown color="black" stroke={1.5} className="fill-amber-500" />
                 </Center>
               ) : (
                 <Text size="sm" weight={500}>
                   {(allUsers?.indexOf(record) ?? 0) + 1}
                 </Text>
-              );
-            },
+              ),
           },
           {
             accessor: "username",
             width: "65%",
-            render: (record) => {
-              return (
-                <Flex gap="xs" align="center">
-                  <Avatar size={18} src={record.image} radius={18} />
-                  <Text size="sm" weight={500} className="whitespace-pre-wrap">
-                    {record.username}
-                  </Text>
-                </Flex>
-              );
-            },
+            render: (record) => (
+              <Flex gap="xs" align="center">
+                <Avatar size={18} src={record.image} radius={18} />
+                <Text size="sm" weight={500} className="whitespace-pre-wrap">
+                  {record.username}
+                </Text>
+              </Flex>
+            ),
           },
           {
             accessor: "points",
@@ -129,7 +126,7 @@ export default function Overall() {
             textAlignment: "right",
             render: (record) => (
               <Text size="sm" weight={500}>
-                {record.points}⚡
+                {record.points} 🔋
               </Text>
             ),
           },

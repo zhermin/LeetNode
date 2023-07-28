@@ -23,6 +23,7 @@ import {
   Menu,
   SegmentedControl,
   Text,
+  Tooltip,
   UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -32,6 +33,7 @@ import {
   IconBook,
   IconCheckupList,
   IconChevronDown,
+  IconFlame,
   IconGauge,
   IconLicense,
   IconLock,
@@ -82,7 +84,7 @@ export default function Navbar({
   const session = useSession();
   const router = useRouter();
 
-  const { classes, theme, cx } = useStyles();
+  const { classes, theme } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
@@ -180,11 +182,7 @@ export default function Navbar({
   };
 
   return (
-    <Header
-      height={HEADER_HEIGHT}
-      withBorder={withBorder}
-      {...props}
-    >
+    <Header height={HEADER_HEIGHT} withBorder={withBorder} {...props}>
       <Box className={classes.inner}>
         {sidebarOpened !== undefined && setSidebarOpened ? (
           <Flex align="center" gap="xl">
@@ -251,160 +249,182 @@ export default function Navbar({
         )}
 
         {session.status === "authenticated" && (
-          <Menu
-            shadow="lg"
-            width={260}
-            radius="md"
-            position="bottom-end"
-            transition="pop-top-right"
-            classNames={classes}
-            onClose={() => setUserMenuOpened(false)}
-            onOpen={() => {
-              mobile && setSidebarOpened?.(false);
-              setUserMenuOpened(true);
-            }}
-          >
-            <Menu.Target>
-              <UnstyledButton
-                className={cx(classes.user, {
-                  [classes.userActive]: userMenuOpened,
-                })}
-              >
-                <Group spacing={7}>
-                  {isLoading === true || isError === true ? (
-                    <Loader />
-                  ) : (
-                    <>
-                      <Image
-                        src={userInfo.image || ""}
-                        alt={userInfo.username}
-                        className="mr-2 rounded-full"
-                        width={25}
-                        height={25}
-                      />
-                      <Text
-                        className={classes.userName}
-                        sx={{ lineHeight: 1 }}
-                        weight={500}
-                        color={theme.colors.gray[9]}
-                        mr="xs"
-                      >
-                        {userInfo?.username}
-                      </Text>
-                    </>
-                  )}
-
-                  <IconChevronDown size={12} stroke={1.5} />
-                </Group>
-              </UnstyledButton>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              <SegmentedControl
-                fullWidth
-                value={colorScheme}
-                onChange={() => handleColorSchemeChange()}
-                data={[
-                  {
-                    value: "light",
-                    label: (
-                      <Center>
-                        <IconSun size={16} stroke={2} />
-                        <Box ml={10}>Light</Box>
-                      </Center>
-                    ),
-                  },
-                  {
-                    value: "dark",
-                    label: (
-                      <Center>
-                        <IconMoon size={16} stroke={2} />
-                        <Box ml={10}>Dark</Box>
-                      </Center>
-                    ),
-                  },
-                ]}
-              />
-
-              <Menu.Divider />
-
-              <Menu.Label>
-                <Group position="apart">
-                  <Text
-                    weight={700}
-                    color={
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[0]
-                        : theme.colors.gray[9]
-                    }
-                  >
-                    Signed In As:
+          <Group>
+            <Link href="/courses">
+              <Tooltip label="Keep up the streak!" disabled={userMenuOpened}>
+                <Group
+                  p="xs"
+                  className="rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                >
+                  <IconFlame
+                    size={24}
+                    stroke={1.5}
+                    className="fill-amber-300 stroke-orange-500"
+                  />
+                  <Text className="text-orange-500" weight={500}>
+                    {userInfo?.loginStreak}
                   </Text>
-                  <RoleBadge role={session?.data?.user?.role} />
                 </Group>
-                {session?.data?.user?.email}
-              </Menu.Label>
+              </Tooltip>
+            </Link>
+            <Menu
+              shadow="lg"
+              width={260}
+              radius="md"
+              position="bottom-end"
+              transition="pop-top-right"
+              classNames={classes}
+              opened={userMenuOpened}
+              onClose={() => setUserMenuOpened(false)}
+              onOpen={() => {
+                mobile && setSidebarOpened?.(false);
+                setUserMenuOpened(true);
+              }}
+            >
+              <Menu.Target>
+                <UnstyledButton
+                  py="xs"
+                  px="sm"
+                  className={
+                    "rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  }
+                >
+                  <Group spacing={7}>
+                    {isLoading === true || isError === true ? (
+                      <Loader />
+                    ) : (
+                      <>
+                        <Image
+                          src={userInfo.image || ""}
+                          alt={userInfo.username}
+                          className="mr-2 rounded-full"
+                          width={25}
+                          height={25}
+                        />
+                        <Text
+                          className={classes.userName}
+                          sx={{ lineHeight: 1 }}
+                          weight={500}
+                          color={theme.colors.gray[9]}
+                          mr="xs"
+                        >
+                          {userInfo?.username}
+                        </Text>
+                      </>
+                    )}
 
-              <Menu.Divider />
+                    <IconChevronDown size={12} stroke={1.5} />
+                  </Group>
+                </UnstyledButton>
+              </Menu.Target>
 
-              <Menu.Label c="cyan">Personal</Menu.Label>
-              <Menu.Item
-                component={Link}
-                href="/dashboard"
-                icon={<IconGauge size={14} stroke={1.5} />}
-                color="cyan"
-              >
-                Dashboard
-              </Menu.Item>
-              <Menu.Item
-                component={Link}
-                href="/courses"
-                icon={<IconBook size={14} stroke={1.5} />}
-                color="cyan"
-              >
-                Learn
-              </Menu.Item>
+              <Menu.Dropdown>
+                <SegmentedControl
+                  fullWidth
+                  value={colorScheme}
+                  onChange={() => handleColorSchemeChange()}
+                  data={[
+                    {
+                      value: "light",
+                      label: (
+                        <Center>
+                          <IconSun size={16} stroke={2} />
+                          <Box ml={10}>Light</Box>
+                        </Center>
+                      ),
+                    },
+                    {
+                      value: "dark",
+                      label: (
+                        <Center>
+                          <IconMoon size={16} stroke={2} />
+                          <Box ml={10}>Dark</Box>
+                        </Center>
+                      ),
+                    },
+                  ]}
+                />
 
-              <Menu.Label c="yellow">NUS</Menu.Label>
-              <Menu.Item
-                component={Link}
-                href="/consent"
-                icon={<IconLicense size={14} stroke={1.5} />}
-                color="yellow"
-              >
-                Consent Form
-              </Menu.Item>
-              <Menu.Item
-                component={Link}
-                href="https://forms.gle/XCwZF28MKbaDnwGF9"
-                target="_blank"
-                icon={<IconCheckupList size={14} stroke={1.5} />}
-                color="yellow"
-              >
-                Usage Survey
-              </Menu.Item>
+                <Menu.Divider />
 
-              <Menu.Divider />
+                <Menu.Label>
+                  <Group position="apart">
+                    <Text
+                      weight={700}
+                      color={
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[0]
+                          : theme.colors.gray[9]
+                      }
+                    >
+                      Signed In As:
+                    </Text>
+                    <RoleBadge role={session?.data?.user?.role} />
+                  </Group>
+                  {session?.data?.user?.email}
+                </Menu.Label>
 
-              {(session?.data?.user?.role === Role.SUPERUSER ||
-                session?.data?.user?.role === Role.ADMIN) && (
+                <Menu.Divider />
+
+                <Menu.Label c="cyan">Personal</Menu.Label>
                 <Menu.Item
                   component={Link}
-                  href="/admin"
-                  icon={<IconLock size={14} stroke={1.5} />}
-                  color="red"
+                  href="/dashboard"
+                  icon={<IconGauge size={14} stroke={1.5} />}
+                  color="cyan"
                 >
-                  Admin Panel
+                  My Dashboard
                 </Menu.Item>
-              )}
-              <Menu.Item
-                onClick={() => signOut({ callbackUrl: "/" })}
-                icon={<IconLogout size={14} stroke={1.5} />}
-              >
-                Logout
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+                <Menu.Item
+                  component={Link}
+                  href="/courses"
+                  icon={<IconBook size={14} stroke={1.5} />}
+                  color="cyan"
+                >
+                  Learn
+                </Menu.Item>
+
+                <Menu.Label c="yellow">NUS</Menu.Label>
+                <Menu.Item
+                  component={Link}
+                  href="/consent"
+                  icon={<IconLicense size={14} stroke={1.5} />}
+                  color="yellow"
+                >
+                  Consent Form
+                </Menu.Item>
+                <Menu.Item
+                  component={Link}
+                  href="https://forms.gle/XCwZF28MKbaDnwGF9"
+                  target="_blank"
+                  icon={<IconCheckupList size={14} stroke={1.5} />}
+                  color="yellow"
+                >
+                  Usage Survey
+                </Menu.Item>
+
+                <Menu.Divider />
+
+                {(session?.data?.user?.role === Role.SUPERUSER ||
+                  session?.data?.user?.role === Role.ADMIN) && (
+                  <Menu.Item
+                    component={Link}
+                    href="/admin"
+                    icon={<IconLock size={14} stroke={1.5} />}
+                    color="red"
+                  >
+                    Admin Panel
+                  </Menu.Item>
+                )}
+                <Menu.Item
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  icon={<IconLogout size={14} stroke={1.5} />}
+                >
+                  Logout
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         )}
       </Box>
     </Header>
@@ -434,31 +454,11 @@ const useStyles = createStyles((theme) => ({
 
   item: {},
 
-  user: {
-    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-    borderRadius: theme.radius.sm,
-    transition: "background-color 100ms ease",
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[8]
-          : theme.colors.cyan[0],
-      borderRadius: theme.radius.md,
-    },
-  },
-
   userName: {
     color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
     [theme.fn.smallerThan("sm")]: {
       display: "none",
     },
-  },
-
-  userActive: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
   },
 
   control: {

@@ -10,7 +10,7 @@ export default async function handler(
     return res.status(405).json({ message: "Method not allowed" });
   } else {
     try {
-      const info = await prisma.user.findFirst({
+      const userInfo = await prisma.user.findFirst({
         where: {
           id: req.body.id,
         },
@@ -26,14 +26,15 @@ export default async function handler(
 
       const startDateTime = new Date();
       startDateTime.setDate(
-        startDateTime.getDate() - (info?.loginStreak ?? 1) + 1
+        startDateTime.getDate() - (userInfo?.loginStreak ?? 1) + 1
       );
       startDateTime.setHours(0, 0, 0, 0);
       const attempts = await prisma.attempt.findMany({
         where: {
           userId: req.body.id,
           submittedAt: {
-            gte: new Date(startDateTime.toISOString().substring(0, 10)), // Get all attempts done since begining of streak
+            // Get all attempts done since beginning of streak
+            gte: startDateTime,
           },
         },
       });
@@ -49,7 +50,7 @@ export default async function handler(
         }
       });
 
-      res.status(200).json({ ...info, attempts: attemptsPerDay }); // Return info and no. of attempts today
+      res.status(200).json({ ...userInfo, attempts: attemptsPerDay });
     } catch (error) {
       res.status(400).json({ message: "Something went wrong" });
     }
