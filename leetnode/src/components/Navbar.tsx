@@ -259,7 +259,7 @@ export default function Navbar({
                   <IconFlame
                     size={24}
                     stroke={1.5}
-                    className="fill-amber-300 stroke-orange-500"
+                    className="animate-pulse fill-amber-300 stroke-orange-500"
                   />
                   <Text className="text-orange-500" weight={500}>
                     {userInfo?.loginStreak}
