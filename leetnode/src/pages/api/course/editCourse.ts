@@ -23,7 +23,6 @@ export default async function handler(
     },
   });
 
-  // Find media that need to be created
   const mediaToCreate = req.body.content.slides.filter(
     (slide: { publicId: string }) =>
       !existingMedia.some((media) => media.publicId === slide.publicId)
@@ -39,7 +38,6 @@ export default async function handler(
     });
   }
 
-  // Find media that need to be deleted
   const mediaToDelete = existingMedia.filter(
     (media) =>
       !req.body.content.slides.some(

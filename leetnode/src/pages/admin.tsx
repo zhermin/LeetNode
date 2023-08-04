@@ -58,7 +58,6 @@ export type AttemptsInfoType = (Attempt & {
   };
 })[];
 
-// Sidebar Tabs based on Fetched Data
 const tabs = [
   { label: "Overview", icon: IconChartDots },
   { label: "Questions", icon: IconPuzzle },

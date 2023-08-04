@@ -146,8 +146,8 @@ export default function CoursesPage() {
           dotPositions={[
             { left: 0, top: 0 },
             { left: 120, top: 20 },
-            { right: 0, top: 80 },
-            { right: 120, top: 0 },
+            { right: 20, top: 60 },
+            { right: 60, top: 200 },
           ]}
         />
         <Box className={classes.innerWrapper}>

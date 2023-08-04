@@ -70,7 +70,6 @@ const QuestionHistory = ({ courseSlug }: { courseSlug: string }) => {
     .map((attempt) => attempt.isCorrect)
     .filter(Boolean).length;
 
-  // Count number of Easy, Medium, Hard questions
   const questionDifficulties = attempts.data.map(
     (attempt) => attempt.questionWithAddedTime.question.questionDifficulty
   );

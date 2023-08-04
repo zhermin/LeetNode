@@ -155,7 +155,7 @@ export default function PracticeQuestion() {
             message: (
               <>
                 Question(s) attempted:{" "}
-                {(userInfo.attempts[lastActive.toDateString()] ?? 0) + 1} ⚡
+                {(userInfo.attempts[lastActive.toDateString()] ?? 0) + 1} 🔋
                 <span className="text-yellow-600">
                   +
                   {(userInfo.attempts[lastActive.toDateString()] ?? 0) === 0

@@ -27,11 +27,13 @@ export default async function handler(
           role: {
             not: Role.SUPERUSER,
           },
-          OR: {
-            role: {
-              not: Role.ADMIN,
+          OR: [
+            {
+              role: {
+                not: Role.ADMIN,
+              },
             },
-          },
+          ],
         },
       },
     });

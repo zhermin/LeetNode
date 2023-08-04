@@ -6,7 +6,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  //updates topicPing after each submission
+  // Updates topicPing after each submission
   const updatePing = await prisma.mastery.update({
     where: {
       userId_topicSlug: {

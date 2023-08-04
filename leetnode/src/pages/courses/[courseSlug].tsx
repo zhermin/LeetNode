@@ -78,11 +78,9 @@ export default function CourseMainPage({
 }: {
   courseDetails: Course & { courseMedia: CourseMedia[] };
 }) {
-  // Mantine
   const { theme, classes, cx } = useStyles();
   const { width } = useViewportSize();
 
-  // States
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const [sidebarOpened, setSidebarOpened] = useState(false);
   useMemo(() => {
@@ -106,7 +104,6 @@ export default function CourseMainPage({
     setNumPages(numPages);
   }
 
-  // Data Fetched using Axios, Queried by React Query
   const router = useRouter();
   const currentCourseSlug = router.query.courseSlug;
 
@@ -124,7 +121,6 @@ export default function CourseMainPage({
     );
   }
 
-  // Sidebar Tabs based on Fetched Data
   const tabs = {
     learn: [
       { label: "Overview", icon: IconApps },
