@@ -90,7 +90,7 @@ export default function AdminPage() {
         navbarOffsetBreakpoint="sm"
         header={
           <>
-            <LeetNodeHeader />
+            <LeetNodeHeader title="Admin Panel" />
             <LeetNodeNavbar
               sidebarOpened={sidebarOpened}
               setSidebarOpened={setSidebarOpened}

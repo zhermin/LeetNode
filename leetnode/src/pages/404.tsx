@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import {
   Button,
   Container,
@@ -12,6 +13,7 @@ export default function NotFoundPage() {
 
   return (
     <Container className={classes.root}>
+      <Header title="404 Not Found" />
       <div className={classes.label}>404</div>
       <Title className={classes.title}>Nothing to see here.</Title>
       <Text
@@ -20,8 +22,8 @@ export default function NotFoundPage() {
         align="center"
         className={classes.description}
       >
-        The page you are trying to open does not exist. You may have mistyped the
-        address, or the page has been moved to another URL.
+        The page you are trying to open does not exist. You may have mistyped
+        the address, or the page has been moved to another URL.
       </Text>
       <Group position="center" mt="md">
         <Button size="md" component="a" href="/">

@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import {
   Button,
   Container,
@@ -12,6 +13,7 @@ export default function ForbiddenPage() {
 
   return (
     <Container className={classes.root}>
+      <Header title="403 Forbidden" />
       <div className={classes.label}>403</div>
       <Title className={classes.title}>You have found a secret place.</Title>
       <Text
