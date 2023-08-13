@@ -1,21 +1,21 @@
 version: "3"
 
 services:
-  # Production: $ docker compose up -d
+  # Production: $ docker compose --profile prod up -d --build --force-recreate
   nextjs:
     profiles: [ "prod" ]
-    build: .
+    build: ./leetnode
     restart: unless-stopped
     environment:
       - NODE_ENV=production
   recommender:
     profiles: [ "prod" ]
     build:
-      context: ..
-      dockerfile: recommender/Dockerfile
+      context: .
+      dockerfile: ./recommender/Dockerfile
     restart: unless-stopped
     env_file:
-      - .env
+      - ./leetnode/.env
     ports:
       - 8000:8000
   nginx:
@@ -36,6 +36,7 @@ services:
     profiles: [ "dev" ]
     build:
       context: .
+      dockerfile: ./leetnode/Dockerfile
       target: base
     restart: unless-stopped
     environment:
@@ -43,9 +44,9 @@ services:
       - NEXTAUTH_URL=http://localhost
       - RECOMMENDER_URL=http://recommender-dev:8000
     env_file:
-      - .env
+      - ./leetnode/.env
     volumes:
-      - .:/app
+      - ./leetnode:/app
       - /app/node_modules
       - /app/.next
     command:
@@ -58,13 +59,13 @@ services:
   recommender-dev:
     profiles: [ "dev" ]
     build:
-      context: ..
-      dockerfile: recommender/Dockerfile
+      context: .
+      dockerfile: ./recommender/Dockerfile
     restart: unless-stopped
     env_file:
-      - .env
+      - ./leetnode/.env
     volumes:
-      - ../recommender:/app
+      - ./recommender:/app
     command: uvicorn main:app --reload --host 0.0.0.0 --port 8000 --root-path /recommender
   nginx-dev:
     profiles: [ "dev" ]
