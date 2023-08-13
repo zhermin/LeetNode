@@ -35,8 +35,7 @@ services:
   nextjs-dev:
     profiles: [ "dev" ]
     build:
-      context: .
-      dockerfile: ./leetnode/Dockerfile
+      context: ./leetnode
       target: base
     restart: unless-stopped
     environment:

@@ -20,6 +20,31 @@ The instructions below outline how you can set up the necessary tools for local 
 
 If you are using Windows, it is highly recommended to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/) to have a Linux system for local dev due to ease of package installations. Install it through [Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install).
 
+### `EACCES: permission denied` Error
+
+**! IMPORTANT:** If you ever get the error `EACCES: permission denied` when running `pnpm` commands locally, it likely means that you have previously run the Docker containers. To fix this, you need to change the ownership of the generated folders from `root` to your user ID.
+
+Example, running `pnpm install` or `pnpm lint` will fail due to `EACCES: permission denied` when trying to `mkdir` or modify files.
+
+Fix this by first checking your user and group IDs with the `id` command, which might show `1000` for both, for example.
+
+```bash
+id
+>>> uid=1000(username) gid=1000(groupname)
+```
+
+Then simply change the ownership of the generated folders.
+
+```bash
+sudo chown -R <UID>:<GID> .next/ .pnpm-store/ node_modules/
+```
+
+Check that all files and folders are owned by your username instead of `root`.
+
+```bash
+ls -lah
+```
+
 ### 1. Package Management
 
 For the node package manager, `pnpm` is used instead of `npm`, due to several benefits. The syntax, however, is quite similar to `npm`. You can learn more about `pnpm` in their [documentation](https://pnpm.io/).
