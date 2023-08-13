@@ -3,12 +3,11 @@ from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 from pyBKT.models import Model, Roster
 from pydantic import BaseModel
-from urllib.parse import ParseResult, urlparse
+from typing import Literal
 
 import numpy as np
+import multiprocessing, os, pickle, re, time
 import pyrebase
-import multiprocessing, os, pickle, re
-import redis
 
 # Load .env file during local development
 load_dotenv("../leetnode/.env")
@@ -29,18 +28,6 @@ async def get_api_key(
         )
 
 
-# Redis cache configurations
-url = urlparse(os.environ.get("REDIS_URL"))
-if type(url) != ParseResult:
-    raise Exception("REDIS_URL is being parsed as raw bytes")
-r = redis.Redis(
-    host=url.hostname if url.hostname else "localhost",
-    port=url.port if url.port else 6379,
-    password=url.password,
-    ssl=True,
-    ssl_cert_reqs=None,
-)
-
 # Firebase persistent storage configurations
 config = {
     "apiKey": "AIzaSyBkOgyEaJLDrryHW5AtVs45miWidFhz-2g",
@@ -54,7 +41,7 @@ config = {
 firebase_storage = pyrebase.initialize_app(config)
 storage = firebase_storage.storage()
 
-# Multiprocessing lock
+# Multiprocessing lock for thread safety
 lock = multiprocessing.Lock()
 
 
@@ -88,7 +75,7 @@ def get_roster_model() -> Roster:
         return roster
 
 
-def get_all_topics() -> list:
+def get_all_topics() -> list[str]:
     """
     Returns list of topics by parsing the topicSlugs in the seed_data.ts file.
     """
@@ -103,27 +90,26 @@ def get_all_topics() -> list:
     return topics
 
 
-app = FastAPI()
-app.state.model = get_model()
-app.state.roster = get_roster_model()
-
-
 class Topics(BaseModel):
     student_id: str
-    topics: dict
+    topics: dict[str, Literal["0", "1"]]
+
+
+app = FastAPI()
 
 
 @app.on_event("startup")
 async def startup_event() -> None:
     """
-    Updates Redis cache with the latest model during start up.
+    Updates state variables with the latest model in persistent storage during startup.
     """
 
-    r.set("roster", pickle.dumps(app.state.roster))
+    app.state.model = get_model()
+    app.state.roster = get_roster_model()
 
 
 @app.get("/", status_code=status.HTTP_200_OK)
-def home() -> dict:
+def home() -> dict[str, str]:
     """
     Homepage
     """
@@ -131,14 +117,31 @@ def home() -> dict:
     return {"Status": "The recommender microservice is running!"}
 
 
-@app.post(
-    "/add-student/{student_id}/{topic}",
+@app.get(
+    "/get-all-mastery-probs",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def add_student(student_ids: str, topic: str) -> dict:
+def get_all_mastery_probabilities() -> dict[str, dict[str, float]]:
     """
-    Adds students with given names for a topic with optional initial states.
+    Fetches mastery probabilities for all students for each topic.
+    """
+
+    with lock:
+        return {
+            topic: app.state.roster.get_mastery_probs(topic)
+            for topic in app.state.roster.skill_rosters
+        }
+
+
+@app.post(
+    "/students-topic/{student_ids}/{topic}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_api_key)],
+)
+def add_students_to_topic(student_ids: str, topic: str) -> dict[str, bool]:
+    """
+    Adds comma-separated student IDs for 1 topic, ignoring those already in the Roster.
 
     Notes:
         Add multiple students at once.
@@ -146,42 +149,33 @@ def add_student(student_ids: str, topic: str) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-        student_id = student_ids.split(",")
+        filtered_student_ids = student_ids.split(",")
+        filtered_student_ids = [
+            student.strip()
+            for student in filtered_student_ids
+            if student not in app.state.roster.skill_rosters[topic].students
+        ]
 
-        if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
+        if topic not in app.state.roster.skill_rosters:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid topic name",
             )
-        elif any(
-            student in app.state.roster.skill_rosters[topic].students
-            for student in student_id
-        ):  # Prevent overwriting
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Data already exists",
-            )
 
-        app.state.roster.add_students(topic, student_id)  # Add the students
-        r.set("roster", pickle.dumps(app.state.roster))
+        app.state.roster.add_students(topic, filtered_student_ids)
+        save_roster_model()
+
         return {"Created": True}
 
 
 @app.delete(
-    "/remove-student/{student_id}/{topic}",
+    "/students-topic/{student_ids}/{topic}",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def remove_student(student_ids: str, topic: str) -> dict:
+def remove_students_from_topic(student_ids: str, topic: str) -> dict[str, bool]:
     """
-    Removes students with given names for a topic.
+    Removes comma-separated student IDs for 1 topic, ignoring those not in the Roster.
 
     Notes:
         Removes multiple students at once.
@@ -189,65 +183,47 @@ def remove_student(student_ids: str, topic: str) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-        student_id = student_ids.split(",")
+        filtered_student_ids = student_ids.split(",")
+        filtered_student_ids = [
+            student.strip()
+            for student in filtered_student_ids
+            if student in app.state.roster.skill_rosters[topic].students
+        ]
 
-        if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
+        if topic not in app.state.roster.skill_rosters:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid topic name",
             )
-        elif not all(
-            student in app.state.roster.skill_rosters[topic].students
-            for student in student_id
-        ):  # Ensure all students in the arguments exists in the Roster
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Student ID {student_id} does NOT exists",
-            )
 
-        app.state.roster.remove_students(topic, student_id)  # Remove the students
-        r.set("roster", pickle.dumps(app.state.roster))
+        app.state.roster.remove_students(topic, filtered_student_ids)
+        save_roster_model()
+
         return {"Deleted": True}
 
 
 @app.delete(
-    "/remove-all/{student_id}",
+    "/student-all-topics/{student_id}",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def remove_all(student_id: str) -> dict:
+def remove_student_from_all_topics(student_id: str) -> dict[str, bool]:
     """
-    Removes student for ALL topics.
+    Removes 1 student for ALL topics.
 
     Notes:
         Removes for ALL topics (IRREVERSIBLE).
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-
         for topic in app.state.roster.skill_rosters:
             if (
                 student_id in app.state.roster.skill_rosters[topic].students
             ):  # Ensure student exists in the Roster
-                app.state.roster.remove_students(
-                    topic, [student_id]
-                )  # Remove the students
+                app.state.roster.remove_students(topic, [student_id])
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        save_roster_model()
+
         return {"Deleted": True}
 
 
@@ -256,7 +232,7 @@ def remove_all(student_id: str) -> dict:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def get_mastery(student_id: str, topic: str) -> dict:
+def get_mastery_of_student(student_id: str, topic: str) -> dict[str, float]:
     """
     Fetches mastery probability for a particular student for a topic.
 
@@ -266,29 +242,22 @@ def get_mastery(student_id: str, topic: str) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-
-        if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
+        if topic not in app.state.roster.skill_rosters:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid topic name",
             )
         elif (
             student_id not in app.state.roster.skill_rosters[topic].students
-        ):  # Add student if doesn't exists in the Roster
+        ):  # Add student if doesn't exist in the Roster
             app.state.roster.add_students(topic, [student_id])
 
-        mastery = app.state.roster.get_mastery_prob(topic, student_id)
+        mastery: float = app.state.roster.get_mastery_prob(topic, student_id)
         if mastery == -1:  # Not trained
             mastery = 0  # Set default to 0
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        save_roster_model()
+
         return {f"Mastery": mastery}
 
 
@@ -297,7 +266,7 @@ def get_mastery(student_id: str, topic: str) -> dict:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def get_all(student_id: str) -> dict:
+def get_all_masteries_of_student(student_id: str) -> dict[str, dict[str, float]]:
     """
     Fetches the mastery probability for a particular student for ALL topic.
     Initialises student if not in Roster.
@@ -307,30 +276,24 @@ def get_all(student_id: str) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-        mastery_dict = {}
+        mastery_dict: dict[str, float] = {}
 
         for topic in app.state.roster.skill_rosters:
             if (
                 student_id not in app.state.roster.skill_rosters[topic].students
-            ):  # Prevent overwriting
+            ):  # Prevent overwriting existing students
                 app.state.roster.add_students(
                     topic, [student_id]
-                )  # Add student if doesn't exists in the Roster
+                )  # Add student if doesn't exist in the Roster
 
-            mastery = app.state.roster.get_mastery_prob(topic, student_id)
+            mastery: float = app.state.roster.get_mastery_prob(topic, student_id)
             if mastery == -1:  # Not trained
                 mastery_dict[topic] = 0  # Set default to 0
             else:
                 mastery_dict[topic] = mastery
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        save_roster_model()
+
         return {f"Mastery": mastery_dict}
 
 
@@ -339,7 +302,9 @@ def get_all(student_id: str) -> dict:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def update_state(student_id: str, topic: str, correct: str) -> dict:
+def update_state_of_student(
+    student_id: str, topic: str, correct: Literal["0", "1"]
+) -> dict[str, bool]:
     """
     Updates state of a particular student for a topic given one response.
 
@@ -349,33 +314,22 @@ def update_state(student_id: str, topic: str, correct: str) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-
-        if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
+        if topic not in app.state.roster.skill_rosters:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid topic name",
             )
-        elif not bool(re.fullmatch("[01]+", correct)):  # Ensure that string is binary
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Missing / Incorrect argument. Please ensure that the last agrument is a binary string.",
-            )
         elif (
             student_id not in app.state.roster.skill_rosters[topic].students
-        ):  # Add student if doesn't exists in the Roster
+        ):  # Add student if doesn't exist in the Roster
             app.state.roster.add_students(topic, student_id)
 
         app.state.roster.update_state(
             topic, student_id, np.array([int(i) for i in correct])
-        )  # Update the student
-        r.set("roster", pickle.dumps(app.state.roster))
+        )
+
+        save_roster_model()
+
         return {"Updated": True}
 
 
@@ -384,7 +338,9 @@ def update_state(student_id: str, topic: str, correct: str) -> dict:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def update_multiple(student_id: str, topics: Topics) -> dict:
+def update_multiple_states_of_student(
+    student_id: str, topics: Topics
+) -> dict[str, bool]:
     """
     Updates state of a particular student for all topics given one response.
 
@@ -393,37 +349,23 @@ def update_multiple(student_id: str, topics: Topics) -> dict:
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-
         for topic in topics.topics:
-            if topic not in app.state.roster.skill_rosters:  # Ensure valid topic name
+            if topic not in app.state.roster.skill_rosters:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Invalid topic name: {topic}",
                 )
-            elif not bool(
-                re.fullmatch("[01]+", topics.topics[topic])
-            ):  # Ensure that string is binary
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Missing / Incorrect argument. Please ensure that the last agrument is a binary string.",
-                )
             elif (
                 student_id not in app.state.roster.skill_rosters[topic].students
-            ):  # If student does not exist in Roster, add student into Roster
+            ):  # Add student if doesn't exist in the Roster
                 app.state.roster.add_students(topic, student_id)
 
             app.state.roster.update_state(
                 topic, student_id, np.array([int(i) for i in topics.topics[topic]])
-            )  # Update the student
+            )
 
-        r.set("roster", pickle.dumps(app.state.roster))
+        save_roster_model()
+
         return {"Updated": True}
 
 
@@ -434,14 +376,14 @@ def update_multiple(student_id: str, topics: Topics) -> dict:
 )
 def reset_roster() -> None:
     """
-    Initialises empty Roster.
+    Reinitialises an empty Roster and wipes out previous Roster.
     Removes all students.
     """
 
     with lock:
         topics = get_all_topics()
         app.state.roster = Roster(students=[], skills=topics, model=app.state.model)
-        r.set("roster", pickle.dumps(app.state.roster))
+        save_roster_model()
 
 
 @app.post(
@@ -449,39 +391,31 @@ def reset_roster() -> None:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_api_key)],
 )
-def save_roster() -> None:
+async def save_roster() -> None:
     """
-    Saves the Roster model to disk as a pickle file.
+    Saves the Roster model.
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-        with open("roster.pkl", "wb") as handle:
-            pickle.dump(app.state.roster, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        storage.child("roster.pkl").put("roster.pkl")
+        save_roster_model()
 
 
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """
-    Saves the roster file when shutting down.
-    Saves the Roster model to disk as a pickle file.
+    Saves the Roster model on shutdown.
     """
 
     with lock:
-        roster_data = r.get("roster")
-        if roster_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Roster not initialised",
-            )
-        app.state.roster = pickle.loads(roster_data)
-        with open("roster.pkl", "wb") as handle:
-            pickle.dump(app.state.roster, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        storage.child("roster.pkl").put("roster.pkl")
+        save_roster_model()
+
+
+def save_roster_model() -> None:
+    """
+    Saves the Roster model to disk and persistent storage.
+    """
+    with open("roster.pkl", "wb") as handle:
+        pickle.dump(app.state.roster, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    storage.child("roster.pkl").put("roster.pkl")
+
+    print(f"[{time.strftime('%D %H:%M:%S')}] ROSTER MODEL SAVED")
