@@ -79,40 +79,47 @@ docker run hello-world
 
 #### Server Setup
 
-There are many ways to provision a server to self-host the Docker containers. Easiest way to get started is to setup a small instance on cloud providers like GCP/AWS/Azure (on free credits preferably), SSH into it, `git pull` this repo, build and start the server using `docker compose`. Then, just get a free subdomain from [freedns](https://freedns.afraid.org/) and point it to the public static IP address of the instance, allowing the app to be accessible with the URL.
+There are many ways to provision a server to self-host the Docker containers. Easiest way to get started is to setup a small instance on cloud providers like GCP/AWS/Azure (on free credits preferably), SSH into it, `git clone/pull` this repo, build and start the server using `docker compose`. Then, just get a free subdomain from [freedns](https://freedns.afraid.org/) and point it to the public static IP address of the instance, allowing the app to be accessible with the URL.
 
 However, running on local servers is also viable. With a Raspberry Pi or Synology NAS, it follows the same concept as above where the main tool needed is Docker. Once Docker is setup, and you have the source code and env files in the hardware's disk, Docker should be able to handle everything else from there to deploy the app. At best some networking configs have to be setup for users to access the IP address of the server either through an internal address on VPN or the local wifi, or an external URL like one from freedns.
 
 #### Deployment Steps
 
-1. Provision server from online cloud providers or local hardware like Synology NAS / Raspberry Pi
-1. Find the public static IP address of the server and make sure the hardware allows SSH and has the SSH port 22 opened (no firewall blocking)
-1. Setup an SSH key on your local machine
+1. Provision server from online cloud providers or local hardware like Synology NAS / Raspberry Pi.
+1. Find the public static IP address of the server and make sure the hardware allows SSH and has the SSH port 22 opened (no firewall blocking).
+1. Setup an SSH key on your local machine.
 
     ```bash
     ssh-keygen
     ```
 
-1. SSH into the server with your private SSH key (non-`.pub`)
+1. SSH into the server with your private SSH key (non-`.pub`).
 
     ```bash
     ssh -i ~/.ssh/id_rsa <username>@<server public IP>
     ```
 
-1. Update packages in the server
+1. Update packages in the server.
 
     ```bash
     sudo apt-get update && sudo apt-get upgrade
     ```
 
-1. Install Docker for the server's OS and setup permissions to allow Docker to work for non-sudo users (refer above) and enable swap mode if the server has not enough RAM
-1. Git clone this repo
+1. Install Docker for the server's OS and setup permissions to allow Docker to work for non-sudo users (refer above) and enable swap mode if the server has not enough RAM.
+1. Git clone this repo.
 
     ```bash
     git clone https://github.com/zhermin/LeetNode
     ```
 
-1. Build and start the app in the `/LeetNode` root folder
+1. Navigate to the `/LeetNode` root folder and pull the latest changes, if any.
+
+    ```bash
+    cd LeetNode
+    git pull
+    ```
+
+1. Build and start the app in the background using `docker compose`.
 
     ```bash
     docker compose --profile prod up -d --build --force-recreate
@@ -125,8 +132,8 @@ However, running on local servers is also viable. With a Raspberry Pi or Synolog
     - `--build`: Rebuilds containers without having to first run `docker compose down` if there are new changes after `git pull`
     - `--force-recreate`: Recreates containers forcefully in case changes were not detected
 
-1. Get a DNS address and point to the public IP address, example from freedns; might be different for intranet / VPN access
-1. If everything ran without errors, the app should be accessible on the URL or the IP address directly, if on the same network as the server
+1. Get a DNS address and point it to the public IP address, example from freedns; might be different for intranet / VPN access.
+1. If everything ran without errors, the app should be accessible on the URL or the IP address directly, if on the same network as the server.
 
 ### Development Mode
 
