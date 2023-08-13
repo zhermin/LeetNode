@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+  # Production: $ docker compose --profile prod up -d --build --force-recreate
+  nextjs:
+    profiles: [ "prod" ]
+    build: ./leetnode
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+  recommender:
+    profiles: [ "prod" ]
+    build:
+      context: .
+      dockerfile: ./recommender/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./leetnode/.env
+    ports:
+      - 8000:8000
+  nginx:
+    profiles: [ "prod" ]
+    image: jonasal/nginx-certbot:4.3.0
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - CERTBOT_EMAIL=contact.leetnode@gmail.com
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/user_conf.d/default.conf
+      - nginx_secrets:/etc/letsencrypt
+
+  # Development: $ docker compose --profile dev up --build --force-recreate
+  nextjs-dev:
+    profiles: [ "dev" ]
+    build:
+      context: ./leetnode
+      target: base
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXTAUTH_URL=http://localhost
+      - RECOMMENDER_URL=http://recommender-dev:8000
+    env_file:
+      - ./leetnode/.env
+    volumes:
+      - ./leetnode:/app
+      - /app/node_modules
+      - /app/.next
+    command:
+      - /bin/sh
+      - -c
+      - |
+        yarn global add pnpm@7.23.0
+        pnpm install
+        pnpm dev
+  recommender-dev:
+    profiles: [ "dev" ]
+    build:
+      context: .
+      dockerfile: ./recommender/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./leetnode/.env
+    volumes:
+      - ./recommender:/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000 --root-path /recommender
+  nginx-dev:
+    profiles: [ "dev" ]
+    image: nginx:1.25.1-alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/default.dev.conf:/etc/nginx/conf.d/default.conf
+    command: sh -c 'nginx -g "daemon off;"'
+
+volumes:
+  nginx_secrets:

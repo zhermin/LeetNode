@@ -1,9 +1,12 @@
 import axios from "axios";
 import { useSession } from "next-auth/react";
+import { useState } from "react";
 
 import { UserData } from "@/components/Header";
 import {
+  Box,
   Center,
+  Flex,
   Group,
   Loader,
   Paper,
@@ -14,15 +17,17 @@ import { Calendar } from "@mantine/dates";
 import { User } from "@prisma/client";
 import {
   IconCheck,
-  IconCheckbox,
-  IconChecks,
+  IconCircleCheck,
   IconFlame,
-  IconSquare,
+  IconMoodHappy,
+  IconMoodSad,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
-export default function Personal() {
+export default function Streak() {
   const session = useSession();
+
+  const [date, setDate] = useState(new Date());
 
   const {
     data: userInfo,
@@ -67,7 +72,7 @@ export default function Personal() {
   }
 
   // Pre-processing to render the calendar
-  const lastActive = new Date(userInfo.lastActive ?? ""); // lastActive
+  const lastActive = new Date(userInfo.lastActive ?? "");
   const startDateTime = new Date(userInfo.lastActive ?? "");
   startDateTime.setDate(lastActive.getDate() - userInfo.loginStreak + 1); // Start of login streak
   startDateTime.setHours(0, 0, 0, 0); // Set to midnight for comparison in the calendar
@@ -75,20 +80,21 @@ export default function Personal() {
 
   return (
     <>
+      <h1 className="text-center">Daily Streak</h1>
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <Paper
         withBorder
         radius="md"
         p="xs"
-        key="userInfo"
         className="m-3 grid grid-cols-1 items-center justify-center gap-6 md:grid-cols-3"
       >
-        <div className="flex flex-row items-center justify-center text-center">
+        <Flex align="center" justify="center" ta="center" gap="md">
           <RingProgress
             size={80}
             thickness={5}
             sections={[
               {
-                // streak / days in entire (current) month
+                // Streak / days in entire (current) month
                 value:
                   (userInfo.loginStreak /
                     new Date(
@@ -103,36 +109,37 @@ export default function Personal() {
             label={
               <Center>
                 <IconFlame
-                  className="animate-bounce fill-amber-500 text-orange-500"
-                  size="2rem"
+                  size={24}
+                  stroke={1.5}
+                  className="animate-bounce fill-amber-300 stroke-orange-500"
                 />
               </Center>
             }
           />
-          <div className="ml-2">
+          <Box>
             <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
-              Current Streak
+              Login Streak
             </Text>
             <Text weight={700} size="lg">
               {userInfo.loginStreak}
             </Text>
-          </div>
-        </div>
-        <div className="text-center">
+          </Box>
+        </Flex>
+        <Box ta="center">
           <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
-            Position
+            Leaderboard
           </Text>
           <Text color="dimmed" size="xs" transform="uppercase" weight={700}>
-            (
+            (Resets in{" "}
             {new Date(
               lastActive.getFullYear(),
               lastActive.getMonth() + 1,
               0
             ).getDate() - lastActive.getDate()}{" "}
-            days till reset)
+            days)
           </Text>
           <Center>
-            <Text weight={700} size="lg" className="mr-1">
+            <Text weight={700} size="lg" className="mr-2">
               #
               {allUsers
                 ?.map((user: User) => {
@@ -140,42 +147,44 @@ export default function Personal() {
                 })
                 .indexOf(session?.data?.user?.id ?? "") + 1}
             </Text>
-            <Text weight={700} size="sm" color="grey">
-              ({userInfo.points}⚡)
+            <Text weight={500} size="sm" color="dimmed">
+              ( {userInfo.points} 🔋)
             </Text>
           </Center>
-        </div>
-        <div className="text-center">
+        </Box>
+        <Box ta="center">
           <Text color="dimmed" size="sm" transform="uppercase" weight={700}>
-            Question attempted today
+            Attempted Today
           </Text>
           <Center>
             {(userInfo.attempts[lastActive.toDateString()] ?? 0) > 0 ? (
-              <IconCheckbox color="green" />
+              <IconMoodHappy stroke={1.5} color="green" />
             ) : (
-              <IconSquare color="orange" />
+              <IconMoodSad stroke={1.5} color="red" />
             )}
           </Center>
-        </div>
+        </Box>
       </Paper>
 
       <Group position="center">
         <Calendar
+          value={date}
+          onChange={(value) => setDate(value ?? new Date())}
           size="md"
           renderDay={(date) => {
             const day = date.getDate();
 
             return date >= startDateTime && date <= lastActive ? (
               date.toDateString() in userInfo.attempts ? (
-                <div className="flex">
-                  <IconChecks color="green" />
+                <Flex>
+                  <IconCircleCheck size={14} stroke={3} color="lime" />
                   {day}
-                </div>
+                </Flex>
               ) : (
-                <div className="flex">
-                  <IconCheck color="orange" />
+                <Flex>
+                  <IconCheck size={12} stroke={4} color="orange" />
                   {day}
-                </div>
+                </Flex>
               )
             ) : (
               <>{day}</>

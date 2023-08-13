@@ -1,88 +1,133 @@
 # The LeetNode Website
 
-This folder houses all frontend and backend code for the LeetNode website. This is built with the [T3-Stack](https://create.t3.gg/) but with React Query and REST APIs instead of tRPC for the frontend-backend communication. The full tech stack can be found in the main README of this [repo](https://github.com/zhermin/LeetNode).
+This folder houses all frontend and backend code for the main user-facing LeetNode website. This is built mostly with the [T3-Stack](https://create.t3.gg/) but with React Query and REST APIs instead of tRPC for the frontend-backend communication. The full tech stack can be found in the main README of this [repo](../).
 
-## Setup
+## Environment Variables
 
-### Package Management
+**IMPORTANT:** Always ensure you have the most updated `.env` file from your team and place it in this `/LeetNode/leetnode` subfolder.
+
+## Docker Setup (Recommended)
+
+Follow the steps in the [root folder](../) to start all 3 Docker containers (Nginx, NextJS and Recommender) with the dev profile on [`http://localhost`](http://localhost).
+
+```bash
+docker compose --profile dev up --build --force-recreate
+```
+
+## Local Setup
+
+The instructions below outline how you can set up the necessary tools for local development on your own machine without Docker. You may want to just install the node modules by stopping at step 3, so that your VSCode or IDE can do proper syntax checks and auto-completion while still running the app in the `nextjs-dev` Docker container.
+
+If you are using Windows, it is highly recommended to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/) to have a Linux system for local dev due to ease of package installations. Install it through [Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install).
+
+### `EACCES: permission denied` Error
+
+**! IMPORTANT:** If you ever get the error `EACCES: permission denied` when running `pnpm` commands locally, it likely means that you have previously run the Docker containers. To fix this, you need to change the ownership of the generated folders from `root` to your user ID.
+
+Example, running `pnpm install` or `pnpm lint` will fail due to `EACCES: permission denied` when trying to `mkdir` or modify files.
+
+Fix this by first checking your user and group IDs with the `id` command, which might show `1000` for both, for example.
+
+```bash
+id
+>>> uid=1000(username) gid=1000(groupname)
+```
+
+Then simply change the ownership of the generated folders.
+
+```bash
+sudo chown -R <UID>:<GID> .next/ .pnpm-store/ node_modules/
+```
+
+Check that all files and folders are owned by your username instead of `root`.
+
+```bash
+ls -lah
+```
+
+### 1. Package Management
 
 For the node package manager, `pnpm` is used instead of `npm`, due to several benefits. The syntax, however, is quite similar to `npm`. You can learn more about `pnpm` in their [documentation](https://pnpm.io/).
 
 The main difference is in the adding and removing of packages, `pnpm add -` instead of `npm install -` and `pnpm remove -` instead of `npm uninstall -` respectively.
 
-### Project Cloning
-
-First clone this project. If you are solely working on the website, you may also want to open the project in this folder instead of the root folder as the relative paths might sometimes be confused.
+Install it by first making sure you have `node` on your system. This app was developed on `node 18`, so install that to ensure parity.
 
 ```bash
-git clone https://github.com/zhermin/LeetNode.git
-cd LeetNode  # root folder of this repo
+# Ubuntu (Linux / WSL)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
 
-cd leetnode  # subfolder for the website only
-code .  # opens the /leetnode subfolder in vscode
+# Verify Installation
+node -v
 ```
 
-### Dependencies
+Then install pnpm globally.
+
+```bash
+npm install -g pnpm@7.23.0
+```
+
+### 2. Dependencies
 
 Always perform these steps to get the most recent changes and install any new project dependencies:
 
 ```bash
 git pull
-cd leetnode  # make sure you are in the /leetnode subfolder
+cd leetnode  # make sure you are in the /Leetnode/leetnode subfolder
 pnpm install
 ```
 
-For a fresh setup, the hosting solutions used will also have to be initialized, so make sure that accounts are set up in these platforms (all have free tiers as of 2023), namely:
-
-- Vercel: Website Hosting
-- PlanetScale: MySQL Database Hosting
-- Cloudinary: Media Hosting
-
-### Environment Variables
-
-Make sure to copy the `.env.example` file and create a new `.env` local file with the environment variables filled in such as the API keys and secrets. They mostly allow backend services such as the databases and cron jobs to work properly.
-
-If you are deploying on Vercel, make sure to fill them in Vercel's environment variables section in the dashboard as well.
-
-### Run Website Locally (Terminal 1)
+### 3. Run Website Locally (Terminal 1)
 
 ```bash
 pnpm run dev
 ```
 
-The website will be accessible on [`localhost:3000`](localhost:3000) (try to keep this port clear).
+The website will then be accessible on [`http://localhost:3000`](http://localhost:3000) (try to keep this port clear).
 
-### Run Database Locally (Terminal 2)
+### 4. Run Database Locally (Terminal 2)
 
-Ensure that you have a database set up. We used PlanetScale, which offers a free MySQL database. Find out how to connect to your database, install the necessary libraries, and start a new terminal to run a local database server.
+If you want to play with your own dummy, non-production data, ensure that you an account and have a database set up. We use PlanetScale (pscale), which offers a free MySQL database.
+
+If you want to perform migrations and schema changes easily using the command-line, you should do it through their PlanetScale CLI, which you can install with this [link](https://github.com/planetscale/cli#installation).
 
 ```bash
-pscale auth login
-pscale connect my-planetscale-database-name my-branch-name --port 3309
+# Install PlanetScale CLI v0.150.0 for Linux, other versions available in their GitHub releases page
+wget https://github.com/planetscale/cli/releases/download/v0.150.0/pscale_0.150.0_linux_386.deb
+sudo dpkg -i pscale_0.150.0_linux_386.deb
+rm pscale_0.150.0_linux_386.deb
 
-# example
-pscale connect leetnode main --port 3309  # or: pnpm pscale
+# Verify Installation
+pscale --version
+
+# Login to your PlanetScale account
+pscale auth login
+pscale connect <my-planetscale-database-name> <my-branch-name>
+
+# Example: assuming your pscale db name is `leetnode` and pscale branch is `main`
+pscale connect leetnode main  # or: $ pnpm pscale
 ```
 
-Starts a connection to your local or hosted database on port `3309`.
+This starts a connection to your PlanetScale database on port `3306`.
 
-### Schema Changes (Terminal 3)
+### 5. Schema Changes (Terminal 3)
 
 Prisma, an ORM, is used to easily manage the database including schema changes. An initial seed file to quickly populate the database can also be used.
 
-Assumes schema changes are made to non-protected branches and a database connection to the database on `port=3309` has been started.
+Assumes schema changes are made to non-protected branches and a database connection to the database on `port=3306` has been started.
 
 ```bash
-npx prisma db push  # push schema changes to the database
-npx prisma db seed  # initialize database with seed data
+pnpm prisma db push  # push schema changes directly (only non-protected branches)
+pnpm prisma db seed  # initialize database with seed data
 ```
 
-### Interactive Database Management (Terminal 4)
+### 6. Interactive Database Management (Terminal 4)
 
 Prisma comes with a feature called `Studio` that allows you to view and manipulate the data in your database easily. Again, make sure the database connection has been established first.
 
 ```bash
-pnpm prisma studio  # or: pnpm studio
+pnpm prisma studio  # or: $ pnpm studio
 ```
 
-This `Studio` will then be accessible on [`localhost:5555`](localhost:5555).
+This `Studio` will then be accessible on [`http://localhost:5555`](http://localhost:5555).

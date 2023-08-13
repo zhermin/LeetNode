@@ -75,7 +75,7 @@ export default function ConsentPage() {
 
   return (
     <>
-      <Header />
+      <Header title="NUS Data Consent Form" />
       <Navbar />
       <form onSubmit={handleSubmit}>
         <Stack

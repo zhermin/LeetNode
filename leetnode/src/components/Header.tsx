@@ -49,7 +49,7 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
           customIcon: "📅",
           message: (
             <>
-              Login Streak: {res?.data?.loginStreak} ⚡
+              Login Streak: {res?.data?.loginStreak} 🔋
               <span className="text-yellow-600">
                 +{res?.data?.loginStreak < 5 ? res?.data?.loginStreak : 5}
               </span>
@@ -75,8 +75,8 @@ const Header = ({ title = "Personalized Path Mastery" }) => {
     const checkActive = () => {
       // Run only if user is logged in
       if (!(isLoading || isError || !userInfo)) {
-        const lastActive = new Date(userInfo.lastActive); // get last active
-        const currentDatetime = new Date(); // get current datetime
+        const lastActive = new Date(userInfo.lastActive);
+        const currentDatetime = new Date();
 
         const points =
           currentDatetime.getMonth() === lastActive.getMonth()

@@ -74,6 +74,7 @@ export default function Account({ userInfo }: AccountProps) {
 
         const [signature, key] = [res.data.signature, res.data.key];
 
+        // TODO: Abstract all of these media upload logic into a separate file
         const formData = new FormData();
         formData.append("file", form.values.file);
         formData.append("api_key", key);
@@ -113,7 +114,7 @@ export default function Account({ userInfo }: AccountProps) {
 
   return (
     <>
-      <h1 className="text-center">My Profile</h1>
+      <h1 className="text-center">Account Settings</h1>
       <hr className="my-4 h-px border-0 bg-gray-200" />
       <form
         onSubmit={form.onSubmit(

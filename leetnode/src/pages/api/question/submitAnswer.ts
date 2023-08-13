@@ -14,14 +14,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Submit Answer
-  // 1. Update the BKT model and get user's new mastery
-  // 2. Recommended question
-  //   a. Topic: random topic tested in current course
-  //   b. Difficulty: according to new mastery level
-  // 3. Add a new questionWithAddedTime with runtime generated answer options
-  // 4. Add a new attempt
-  // 5. Return the new mastery to fire a custom notification
+  /*
+  Submit Answer Flow
+  1. Update the BKT model and get user's new mastery
+  2. Recommended question
+    a. Topic: random topic tested in current course
+    b. Difficulty: according to new mastery level
+  3. Add a new questionWithAddedTime with runtime generated answer options
+  4. Add a new attempt
+  5. Return the new mastery to fire a custom notification
+  */
 
   const session = await getServerSession(req, res, authOptions);
 
@@ -46,13 +48,14 @@ export default async function handler(
     const { data: pybktUpdate } = await axios.patch<{
       Updated: boolean;
     }>(
-      `https://pybkt-api-deployment.herokuapp.com/update-state/${
+      `${process.env.RECOMMENDER_URL}/update-state/${
         session?.user?.id
       }/${topicSlug}/${isCorrect ? "1" : "0"}`,
       req,
       {
         headers: {
-          Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          Accept: "application/json",
+          access_token: process.env.RECOMMENDER_API_KEY,
         },
       }
     );
@@ -62,10 +65,11 @@ export default async function handler(
     }
 
     const { data: pybktGet } = await axios.get<{ Mastery: number }>(
-      `https://pybkt-api-deployment.herokuapp.com/get-mastery/${session?.user?.id}/${topicSlug}`,
+      `${process.env.RECOMMENDER_URL}/get-mastery/${session?.user?.id}/${topicSlug}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.HEROKU_API_KEY}`,
+          Accept: "application/json",
+          access_token: process.env.RECOMMENDER_API_KEY,
         },
       }
     );

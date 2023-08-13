@@ -20,7 +20,7 @@ export default function Editor(
   const modules = useMemo(
     () => ({
       clipboard: {
-        // toggle to add extra line breaks when pasting HTML
+        // Toggle to add extra line breaks when pasting HTML
         matchVisual: false,
       },
       syntax: {

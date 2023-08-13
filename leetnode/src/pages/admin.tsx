@@ -58,7 +58,6 @@ export type AttemptsInfoType = (Attempt & {
   };
 })[];
 
-// Sidebar Tabs based on Fetched Data
 const tabs = [
   { label: "Overview", icon: IconChartDots },
   { label: "Questions", icon: IconPuzzle },
@@ -91,7 +90,7 @@ export default function AdminPage() {
         navbarOffsetBreakpoint="sm"
         header={
           <>
-            <LeetNodeHeader />
+            <LeetNodeHeader title="Admin Panel" />
             <LeetNodeNavbar
               sidebarOpened={sidebarOpened}
               setSidebarOpened={setSidebarOpened}
