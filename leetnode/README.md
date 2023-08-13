@@ -1,6 +1,6 @@
 # The LeetNode Website
 
-This folder houses all frontend and backend code for the LeetNode website. This is built with the [T3-Stack](https://create.t3.gg/) but with React Query and REST APIs instead of tRPC for the frontend-backend communication. The full tech stack can be found in the main README of this [repo](https://github.com/zhermin/LeetNode).
+This folder houses all frontend and backend code for the main user-facing LeetNode website. This is built mostly with the [T3-Stack](https://create.t3.gg/) but with React Query and REST APIs instead of tRPC for the frontend-backend communication. The full tech stack can be found in the main README of this [repo](../).
 
 ## Environment Variables
 
