@@ -22,7 +22,7 @@ type UserWithPoints = {
   image: string | null;
 };
 
-export default function Overall() {
+export default function Leaderboard() {
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState<UserWithPoints[]>();
 
@@ -77,6 +77,8 @@ export default function Overall() {
 
   return (
     <ScrollArea>
+      <h1 className="text-center">Leaderboard</h1>
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <TextInput
         sx={{ flexBasis: "60%" }}
         placeholder="Search User..."
@@ -100,7 +102,11 @@ export default function Overall() {
             render: (record) =>
               allUsers?.indexOf(record) === 0 ? (
                 <Center>
-                  <IconCrown color="black" stroke={1.5} className="fill-amber-500" />
+                  <IconCrown
+                    color="black"
+                    stroke={1.5}
+                    className="fill-amber-500"
+                  />
                 </Center>
               ) : (
                 <Text size="sm" weight={500}>

@@ -6,8 +6,9 @@ import LeetNodeFooter from "@/components/Footer";
 import LeetNodeHeader, { UserData } from "@/components/Header";
 import LeetNodeNavbar from "@/components/Navbar";
 import Account from "@/components/user/Account";
-import Challenge from "@/components/user/challenge/Challenge";
+import Leaderboard from "@/components/user/Leaderboard";
 import Statistics from "@/components/user/statistics/Statistics";
+import Streak from "@/components/user/Streak";
 import {
   AppShell,
   Avatar,
@@ -24,15 +25,17 @@ import { useMediaQuery, useSessionStorage } from "@mantine/hooks";
 import {
   IconLogout,
   IconReportAnalytics,
+  IconSettings,
   IconTargetArrow,
-  IconUser,
+  IconTrophy,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
 const tabs = [
-  { label: "Account", icon: IconUser },
+  { label: "Daily Streak", icon: IconTargetArrow },
+  { label: "Leaderboard", icon: IconTrophy },
   { label: "Statistics", icon: IconReportAnalytics },
-  { label: "Challenge", icon: IconTargetArrow },
+  { label: "Account", icon: IconSettings },
 ];
 
 export default function DashboardPage() {
@@ -41,7 +44,7 @@ export default function DashboardPage() {
   const { classes, theme, cx } = useStyles();
   const [active, setActive] = useSessionStorage({
     key: "dashboardActiveTab",
-    defaultValue: "Account",
+    defaultValue: "Daily Streak",
   });
   const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm}px)`);
   const [sidebarOpened, setSidebarOpened] = useState(false);
@@ -161,12 +164,14 @@ export default function DashboardPage() {
     >
       <ScrollArea.Autosize maxHeight={"calc(100vh - 180px)"}>
         <Container>
-          {active === "Account" ? (
-            <Account userInfo={userInfo} />
+          {active === "Daily Streak" ? (
+            <Streak />
+          ) : active === "Leaderboard" ? (
+            <Leaderboard />
           ) : active === "Statistics" ? (
             <Statistics />
-          ) : active === "Challenge" ? (
-            <Challenge />
+          ) : active === "Account" ? (
+            <Account userInfo={userInfo} />
           ) : (
             <Text>Error</Text>
           )}

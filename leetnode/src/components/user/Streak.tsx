@@ -19,12 +19,12 @@ import {
   IconCheck,
   IconCircleCheck,
   IconFlame,
-  IconSquareCheck,
-  IconSquareX,
+  IconMoodHappy,
+  IconMoodSad,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
-export default function Personal() {
+export default function Streak() {
   const session = useSession();
 
   const [date, setDate] = useState(new Date());
@@ -80,6 +80,8 @@ export default function Personal() {
 
   return (
     <>
+      <h1 className="text-center">Daily Streak</h1>
+      <hr className="my-4 h-px border-0 bg-gray-200" />
       <Paper
         withBorder
         radius="md"
@@ -156,9 +158,9 @@ export default function Personal() {
           </Text>
           <Center>
             {(userInfo.attempts[lastActive.toDateString()] ?? 0) > 0 ? (
-              <IconSquareCheck stroke={1.5} color="green" />
+              <IconMoodHappy stroke={1.5} color="green" />
             ) : (
-              <IconSquareX stroke={1.5} color="red" />
+              <IconMoodSad stroke={1.5} color="red" />
             )}
           </Center>
         </Box>
@@ -175,7 +177,7 @@ export default function Personal() {
             return date >= startDateTime && date <= lastActive ? (
               date.toDateString() in userInfo.attempts ? (
                 <Flex>
-                  <IconCircleCheck size={14} stroke={3} color="green" />
+                  <IconCircleCheck size={14} stroke={3} color="lime" />
                   {day}
                 </Flex>
               ) : (

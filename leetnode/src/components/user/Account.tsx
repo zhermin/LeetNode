@@ -114,7 +114,7 @@ export default function Account({ userInfo }: AccountProps) {
 
   return (
     <>
-      <h1 className="text-center">My Profile</h1>
+      <h1 className="text-center">Account Settings</h1>
       <hr className="my-4 h-px border-0 bg-gray-200" />
       <form
         onSubmit={form.onSubmit(
