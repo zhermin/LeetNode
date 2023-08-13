@@ -35,11 +35,11 @@ code .  # opens the /leetnode subfolder in VSCode
 
 ### Environment Variables
 
-> **! IMPORTANT:** Always ensure you have the most updated `.env` file from your team and place it in the `/LeetNode/leetnode` subfolder. You will also need a `serviceAccountKey.json` file in the `/LeetNode/recommender` subfolder for Firebase to work, which you can get from your team, or from your Firebase console under `Project Overview > Project settings > Service accounts` after you are added into the Firebase project.
+**! IMPORTANT:** Always ensure you have the most updated `.env` file from your team and place it in the `/LeetNode/leetnode` subfolder. You will also need a `serviceAccountKey.json` file in the `/LeetNode/recommender` subfolder for Firebase to work, which you can get from your team, or from your Firebase console under `Project Overview > Project settings > Service accounts` after you are added into the Firebase project.
 
-You may also start from scratch by copying the `.env.example` file and creating a new `.env` local file with the environment variables filled in.
+You may also start from scratch by copying the `.env.example` file in the `/LeetNode/leetnode` subfolder and creating a new `.env` local file with the environment variables filled in.
 
-If you are deploying on Vercel or other managed hosting services, remember to also replicate them in Vercel's or the provider's environment variables section as well.
+If you are deploying on Vercel or other managed hosting services, remember to replicate them in Vercel's or the provider's environment variables section as well.
 
 ### Docker Setup
 
