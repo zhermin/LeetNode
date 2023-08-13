@@ -6,14 +6,27 @@ This microservice will be written entirely in Python as the BKT model used is al
 
 This allows the software's user-facing frontend and any additional backend to be handled and worked on separately and in a different tech stack.
 
-## Setup
+## Environment Variables
 
-### Installation
+**IMPORTANT:** Always ensure you have the `serviceAccountKey.json` file from your team and place it in this `/LeetNode/recommender` subfolder for Firebase to work. You can also get it from your Firebase console under `Project Overview > Project settings > Service accounts` after you are added into the Firebase project.
+
+## Docker Setup (Recommended)
+
+Follow the steps in the [root folder](../) to start all 3 Docker containers (Nginx, NextJS and Recommender) with the dev profile on [`http://localhost`](http://localhost).
+
+```bash
+docker compose --profile dev up --build --force-recreate
+```
+
+## Local Setup
+
+### Dependencies
 
 Install dependencies using either `pip` or `conda`:
 
 ```bash
-cd recommender
+git pull
+cd recommender  # make sure you are in the /Leetnode/recommender subfolder
 pip install -r requirements.txt
 ```
 
@@ -40,306 +53,19 @@ $ pip install pybkt
 $ python
 >>> import pyBKT
 >>> print(pyBKT.version)
-1.4 (Python/C++)
+1.4.1 (Python/C++)
 ```
 
-If the version printed is `1.4 (Python)` instead, the fast C++ version failed to install. If so, please refer to the detailed installation steps in the [pyBKT's GitHub repository](https://github.com/CAHLR/pyBKT "A Python implementation of the Bayesian Knowledge Tracing algorithm").
+If the version printed includes `(Python)` instead, the fast C++ version failed to install. If so, please refer to the detailed installation steps in the [pyBKT's GitHub repository](https://github.com/CAHLR/pyBKT "A Python implementation of the Bayesian Knowledge Tracing algorithm").
 
-### Starting the FastAPI Server Locally
+### Start the FastAPI Server Locally
 
 ```bash
 uvicorn main:app --reload
 ```
 
-## Recommender Microservice API
+## API Documentation
 
-This API is available at: `http://127.0.0.1:8000/`
+After starting the server, if using Docker Compose, the API will be available on [`http://localhost/recommender/`](http://localhost/recommender/). Otherwise, if run locally, it will by default be on localhost port 8000: [`http://localhost:8000/`](http://localhost:8000/).
 
-### 1. Add students
-
-Adds students with given names for a topic.
-
-#### 1.1 URL
-
-`/add-student/:student_id/:topic`
-
-#### 1.2 METHOD
-
-`POST`
-
-#### 1.3 URL Params
-
-```python
-student_id = [str] # Multiple students separated by commas
-topic = [str] # Only 1 topic
-```
-
-#### 1.4 Data Params
-
-`None`
-
-#### 1.5 Success Response
-
-Code: `200 OK`
-
-Content:
-
-```json
-{
-    "Created": true
-}
-```
-
-#### 1.6 Error Response
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Invalid topic name"
-}
-```
-
-OR
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Data already exists"
-
-}
-```
-
-### 2. Remove students
-
-Removes students with given names for a topic.
-
-#### 2.1 URL
-
-`/remove-student/:student_id/:topic`
-
-#### 2.2 METHOD
-
-`DELETE`
-
-#### 2.3 URL Params
-
-```python
-student_id = [str] # Multiple students separated by commas
-topic = [str] # Only 1 topic
-```
-
-#### 2.4 Data Params
-
-`None`
-
-#### 2.5 Success Response
-
-Code: `200 OK`
-
-Content:
-
-```json
-{
-    "Deleted": true
-}
-```
-
-#### 2.6 Error Response
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-  
-```json
-{
-    "detail": "Invalid topic name"
-}
-```
-
-OR
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Student ID ['A01', 'A02'] does NOT exists"
-}
-```
-
-### 3. Get mastery
-
-Fetches mastery probability for a particular student for a topic.
-
-#### 3.1 URL
-
-`/get-mastery/:student_id/:topic`
-
-#### 3.2 METHOD
-
-`GET`
-
-#### 3.3 URL Params
-
-```python
-student_id = [str] # Only 1 student
-topic = [str] # Only 1 topic
-```
-
-#### 3.4 Data Params
-
-`None`
-
-#### 3.5 Success Response
-
-Code: `200 OK`
-
-Content:
-
-```json
-{
-    "Mastery": 0.7930704584200629
-}
-```
-
-#### 3.6 Error Response
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Invalid topic name"
-}
-```
-
-OR
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-  
-```json
-{
-    "detail": "Student ID A01 does NOT exists"
-}
-```
-
-### 4. Update state
-
-Updates state of a particular student for a topic given one response.
-
-#### 4.1 URL
-
-`/update-state/:student_id/:topic/:correct`
-
-#### 4.2 METHOD
-
-`PATCH`
-
-#### 4.3 URL Params
-
-```python
-student_id = [str] # Only 1 student
-topic = [str] # Only 1 topic
-corrrect = [str] # String should be binary
-```
-
-#### 4.4 Data Params
-
-`None`
-
-#### 4.5 Success Response
-
-Code: `200 OK`
-
-Content:
-
-```json
-{
-    "Updated": true
-}
-```
-
-#### 4.6 Error Response
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Invalid topic name"
-}
-```
-
-OR
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-  
-```json
-{
-    "detail": "Student ID A01 does NOT exists"
-}
-```
-
-OR
-
-Code: `422 UNPROCESSABLE ENTITY`
-
-Content:
-
-```json
-{
-    "detail": "Missing / Incorrect argument. Please ensure that the last agrument is a binary string."
-}
-```
-
-### 5. Save roster
-
-Saves the Roster model to storage. Uses Python pickles.
-
-#### 5.1 URL
-
-`/save-roster`
-
-#### 5.2 METHOD
-
-`POST`
-
-#### 5.3 URL Params
-
-`None`
-
-#### 5.4 Data Params
-
-`None`
-
-#### 5.5 Success Response
-
-Code: `200 OK`
-
-Content:
-
-```json
-null
-```
-
-#### 5.6 Error Response
-
-`None`
-
-## PICs
-
-- [Jasmine](#)
-- [Angelina](#)
+The auto-generated documentation can be found on [`http://localhost/recommender/docs`](http://localhost/recommender/docs) and [`http://localhost:8000/docs`](http://localhost:8000/docs) for Docker Compose and local modes respectively, where you can test out the APIs through a UI.

@@ -4,53 +4,15 @@ This folder houses all frontend and backend code for the LeetNode website. This 
 
 ## Environment Variables
 
-Make sure to copy the `.env.example` file and create a new `.env` local file with the environment variables filled in. They are necessary for the backend services such as the databases and cron jobs to work properly.
-
-If you are deploying on Vercel, remember to always replicate them in Vercel's environment variables section in the dashboard as well.
-
-**IMPORTANT:** Always ensure you have the most updated `.env` file from your team and place it in the `/LeetNode/leetnode` subfolder.
+**IMPORTANT:** Always ensure you have the most updated `.env` file from your team and place it in this `/LeetNode/leetnode` subfolder.
 
 ## Docker Setup (Recommended)
 
-Using Docker to run the app while still developing on your own host machine is recommended because everyone on the team will be in the same environment with the same tools, although installing the dependencies and starting the app on your own machine works as well.
-
-Note that using Docker to develop means you cannot use the PlanetScale CLI and Prisma Studio to manage your database and interactively view and edit your database's data. So it is up to personal and team preferences.
-
-Start by installing Docker on your machine. The commands below are for Ubuntu / WSL machines from this [link](https://docs.docker.com/engine/install/ubuntu/).
-
-### Set Up Repository
+Follow the steps in the [root folder](../) to start all 3 Docker containers (Nginx, NextJS and Recommender) with the dev profile on [`http://localhost`](http://localhost).
 
 ```bash
-for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
-sudo apt-get update
-sudo apt-get install ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+docker compose --profile dev up --build --force-recreate
 ```
-
-### Install Docker and Allow Non-Root User Access
-
-```bash
-sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo groupadd -f docker && sudo usermod -aG docker $USER && newgrp docker
-
-# Verify Installation
-docker run hello-world
-```
-
-### Start our `nextjs-dev` Docker Container
-
-```bash
-docker run --profile dev up --build --force-recreate
-```
-
-The website will then be accessible on [`localhost:3000`](localhost:3000) (try to keep this port clear).
 
 ## Local Setup
 
@@ -58,19 +20,7 @@ The instructions below outline how you can set up the necessary tools for local 
 
 If you are using Windows, it is highly recommended to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/) to have a Linux system for local dev due to ease of package installations. Install it through [Microsoft](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-### 1. Project Cloning
-
-First, git clone this project onto your machine. Then, when you are working on the app itself, open the project in this `/LeetNode/leetnode` subfolder instead of the `/LeetNode` root folder as the relative paths might break.
-
-```bash
-git clone https://github.com/zhermin/LeetNode.git
-cd LeetNode  # root folder of this repo
-
-cd leetnode  # subfolder for the website only
-code .  # opens the /leetnode subfolder in VSCode
-```
-
-### 2. Package Management
+### 1. Package Management
 
 For the node package manager, `pnpm` is used instead of `npm`, due to several benefits. The syntax, however, is quite similar to `npm`. You can learn more about `pnpm` in their [documentation](https://pnpm.io/).
 
@@ -93,7 +43,7 @@ Then install pnpm globally.
 npm install -g pnpm@7.23.0
 ```
 
-### 3. Dependencies
+### 2. Dependencies
 
 Always perform these steps to get the most recent changes and install any new project dependencies:
 
@@ -103,15 +53,15 @@ cd leetnode  # make sure you are in the /Leetnode/leetnode subfolder
 pnpm install
 ```
 
-### 4. Run Website Locally (Terminal 1)
+### 3. Run Website Locally (Terminal 1)
 
 ```bash
 pnpm run dev
 ```
 
-The website will then be accessible on [`localhost:3000`](localhost:3000) (try to keep this port clear).
+The website will then be accessible on [`http://localhost:3000`](http://localhost:3000) (try to keep this port clear).
 
-### 5. Run Database Locally (Terminal 2)
+### 4. Run Database Locally (Terminal 2)
 
 If you want to play with your own dummy, non-production data, ensure that you an account and have a database set up. We use PlanetScale (pscale), which offers a free MySQL database.
 
@@ -131,12 +81,12 @@ pscale auth login
 pscale connect <my-planetscale-database-name> <my-branch-name>
 
 # Example: assuming your pscale db name is `leetnode` and pscale branch is `main`
-pscale connect leetnode main  # or: pnpm pscale
+pscale connect leetnode main  # or: $ pnpm pscale
 ```
 
 This starts a connection to your PlanetScale database on port `3306`.
 
-### 6. Schema Changes (Terminal 3)
+### 5. Schema Changes (Terminal 3)
 
 Prisma, an ORM, is used to easily manage the database including schema changes. An initial seed file to quickly populate the database can also be used.
 
@@ -147,12 +97,12 @@ pnpm prisma db push  # push schema changes directly (only non-protected branches
 pnpm prisma db seed  # initialize database with seed data
 ```
 
-### 7. Interactive Database Management (Terminal 4)
+### 6. Interactive Database Management (Terminal 4)
 
 Prisma comes with a feature called `Studio` that allows you to view and manipulate the data in your database easily. Again, make sure the database connection has been established first.
 
 ```bash
-pnpm prisma studio  # or: pnpm studio
+pnpm prisma studio  # or: $ pnpm studio
 ```
 
-This `Studio` will then be accessible on [`localhost:5555`](localhost:5555).
+This `Studio` will then be accessible on [`http://localhost:5555`](http://localhost:5555).
