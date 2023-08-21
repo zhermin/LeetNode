@@ -26,8 +26,8 @@ The adaptive learning software tool has great potential for the following:
 First, `git clone` this project onto your machine. Then, when you are working on the app itself, it is recommended to open the project in the `/LeetNode/leetnode` subfolder instead of the `/LeetNode` root folder as the relative paths might break. Just remember to `cd ..` back to the root folder when running `docker compose`.
 
 ```bash
-git clone https://github.com/zhermin/LeetNode
-cd LeetNode  # root folder of this repo
+git clone C:\Users\leehu\Documents\FYP\LeetNode_AY23-24](https://github.com/leehungtien/LeetNode_AY23-24.git
+cd LeetNode_AY23-24  # root folder of this repo
 
 cd leetnode  # subfolder for the NextJS app only
 code .  # opens the /leetnode subfolder in VSCode
