@@ -1,63 +1,45 @@
-#This is an optional tag. This will be the workflow name appearing on the Actions tab of your git repo
 name: LeetNode Workflow
 
-#Specifies the trigger for this workflow. This workflow will be triggered on push event, 
-#that is every time someone pushes a change to the repository or merges a pull request. 
-#This is triggered by a push to every branch; for examples of syntax that runs only on 
-#pushes to specific branches, paths, or tags, see "Workflow syntax for GitHub Actions."
+on:
+  push:
+    branches:
+      - main # Only trigger on pushes to the main branch
 
-on: [push]
-
-#Groups together all the jobs that run in the Demo Workflow workflow.
 jobs:
-  #Defines a job named build. The child keys will define properties of the job.
   build-and-test:
-    #Configures the job to run on the latest version of an Ubuntu Linux runner.
     runs-on: ubuntu-latest
 
-    #Groups together all the steps that run in the check-bats-version job. 
-    #Each item nested under this section is a separate action or shell script.
     steps:
-      #The uses keyword specifies that this step will run v4 of the actions/checkout action. 
-      #This is an action that checks out your repository onto the runner, 
-      #allowing you to run scripts or other actions against your code (such as build and test tools). 
-      #You should use the checkout action any time your workflow will run against the repository's code.
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        #This step uses the actions/setup-node to set up node.js
-        uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
+          fetch-depth: 0 # This will fetch all history for better caching
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3 
+        with:
+          node-version: '20' # Adjust to your preferred Node.js version
 
       - name: Install dependencies
-        #The run keyword tells the job to execute a command on the runner.
-        run: |
-          npm install
-      
+        run: npm install
+
       - name: Build
         run: npm run build
 
       - name: Test
-        run: npm run test
+        run: npm test # This runs your existing tests
 
       - name: Lint with Next lint
         run: npm run lint
 
-      # - name: Test with unittest
-      #   #runs the unittest
-      #   run: |
-      #     python tdd/courses_integration_tests.py
-      #     python tdd/learning_journey_integration_tests.py
-      #     python tdd/registration_integration_tests.py
-      #     python tdd/roles_integration_tests.py
-      #     python tdd/skills_integration_tests.py
-      #     python tdd/unit_testing.py
-
-    deploy-to-vercel:
+  deploy-to-vercel:
     needs: build-and-test
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Deploy to Vercel
         uses: vercel/vercel-action@v3
         with:
