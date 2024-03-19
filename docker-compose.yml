@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
-      - NEXTAUTH_URL=http://localhost
+      - NEXTAUTH_URL=http://EE4002Dadmin@eefyp.synology.me
       - RECOMMENDER_URL=http://recommender-dev:8000
     env_file:
       - ./leetnode/.env
