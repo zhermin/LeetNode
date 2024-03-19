@@ -13,5 +13,5 @@ jobs:
       - name: Call API
         run: |
           curl --request GET \
-          --url 'https://leetnode.vercel.app/api/email/sendEmail' \
+          --url 'https://eefyp.synology.me/api/email/sendEmail' \
           --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'

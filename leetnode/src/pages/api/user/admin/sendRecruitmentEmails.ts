@@ -29,7 +29,7 @@ export const sendRecruitmentEmail = async (emails: string[]) => {
 
           We have developed an adaptive learning software to help bridge any potential knowledge gaps.  You are encouraged to use the software to test and improve your knowledge in relevant electrical circuit principles until you have attained a "mastery score" of at least 80% for every topic.
 
-          The software can be accessed via https://leetnode.vercel.app
+          The software can be accessed via ${process.env.NEXTAUTH_URL}
 
           Your login email is as follows: ${email}
 
@@ -50,7 +50,7 @@ export const sendRecruitmentEmail = async (emails: string[]) => {
 
           <p>We have developed an adaptive learning software to help bridge any potential knowledge gaps.  You are encouraged to use the software to test and improve your knowledge in relevant electrical circuit principles until you have attained a "mastery score" of at least 80% for every topic.</p>
 
-          <p>The software can be accessed via <a href="https://leetnode.vercel.app" target="_blank">https://leetnode.vercel.app</a></p>
+          <p>The software can be accessed via <a href="${process.env.NEXTAUTH_URL}" target="_blank">${process.env.NEXTAUTH_URL}</a></p>
 
           <p>Your login email is as follows: <u>${email}</u></p>
 
