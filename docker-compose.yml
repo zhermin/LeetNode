@@ -1,7 +1,8 @@
 version: "3"
+name: leetnode
 
 services:
-  # Production: $ docker compose --profile prod up -d --build --force-recreate
+  # Production: $ docker compose --profile prod --env-file ./leetnode/.env up -d --build --force-recreate
   nextjs:
     profiles: [ prod ]
     build: ./leetnode
@@ -19,13 +20,13 @@ services:
     restart: unless-stopped
     env_file:
       - ./leetnode/.env
-    ports:
-      - 8000:8000
   nginx:
     profiles: [ prod ]
     image: jonasal/nginx-certbot:4.3.0
     restart: unless-stopped
     ports:
+      # Use 80:80 and 443:443 if no conflict,
+      # otherwise need to map 8080 and 8443 back to 80 and 443 respectively on the host
       - 8080:80
       - 8443:443
     environment:
@@ -34,7 +35,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/user_conf.d/default.conf
       - nginx_secrets:/etc/letsencrypt
 
-  # Development: $ docker compose --profile dev up --build --force-recreate
+  # Development: $ docker compose --profile dev --env-file ./leetnode/.env up --build --force-recreate
   nextjs-dev:
     profiles: [ dev ]
     build:
@@ -43,7 +44,8 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
-      - NEXTAUTH_URL=http://localhost
+      # - NEXTAUTH_URL=http://localhost
+      - NEXTAUTH_URL=http://eefyp.synology.me
       - RECOMMENDER_URL=http://recommender-dev:8000
     env_file:
       - ./leetnode/.env
@@ -77,7 +79,8 @@ services:
     image: nginx:1.25.1-alpine
     restart: unless-stopped
     ports:
-      - 80:80
+      # Use 80:80 if no conflict, otherwise need to map 8080 back to 80 on the host
+      - 8080:80
     volumes:
       - ./nginx/default.dev.conf:/etc/nginx/conf.d/default.conf
     command: sh -c 'nginx -g "daemon off;"'
@@ -91,8 +94,6 @@ services:
     volumes:
       - ./db:/docker-entrypoint-initdb.d/
       - mysql_data:/var/lib/mysql
-    ports:
-      - 3306:3306
     healthcheck:
       test:
         [
@@ -100,11 +101,14 @@ services:
           "mysqladmin",
           "ping",
           "-h",
-          "localhost",
+          "127.0.0.1",
           "-uroot",
           "-p${MYSQL_ROOT_PASSWORD}"
         ]
+      start_period: 5s
+      interval: 5s
+      retries: 30
 
 volumes:
-  nginx_secrets:
   mysql_data:
+  nginx_secrets:

@@ -16,7 +16,7 @@ COPY --link /prisma /app/prisma
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm@7.23.0 && pnpm i --prod --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm@8.15.5 && pnpm i --prod --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
