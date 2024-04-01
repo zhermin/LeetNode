@@ -2,7 +2,7 @@ version: "3"
 name: leetnode
 
 services:
-  # Production: $ docker compose --profile prod --env-file ./leetnode/.env up -d --build --force-recreate
+  # Production: $ docker compose --profile prod up -d --build --force-recreate
   nextjs:
     profiles: [ prod ]
     build: ./leetnode
@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
     ports:
       # Use 80:80 and 443:443 if no conflict,
-      # otherwise need to map 8080 and 8443 back to 80 and 443 respectively on the host
+      # otherwise need to map 8080 and 8443 back to 80 (http) and 443 (https) on the host
       - 8080:80
       - 8443:443
     environment:
@@ -35,7 +35,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/user_conf.d/default.conf
       - nginx_secrets:/etc/letsencrypt
 
-  # Development: $ docker compose --profile dev --env-file ./leetnode/.env up --build --force-recreate
+  # Development: $ docker compose --profile dev up --build --force-recreate
   nextjs-dev:
     profiles: [ dev ]
     build:
@@ -44,9 +44,10 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
-      # - NEXTAUTH_URL=http://localhost
-      - NEXTAUTH_URL=http://eefyp.synology.me
       - RECOMMENDER_URL=http://recommender-dev:8000
+      - NEXTAUTH_URL=http://localhost
+      # If developing on the NAS
+      # - NEXTAUTH_URL=http://eefyp.synology.me
     env_file:
       - ./leetnode/.env
     volumes:
@@ -57,7 +58,7 @@ services:
       - /bin/sh
       - -c
       - |
-        yarn global add pnpm@7.23.0
+        yarn global add pnpm@8.15.5
         pnpm install
         pnpm dev
     depends_on:
@@ -79,7 +80,7 @@ services:
     image: nginx:1.25.1-alpine
     restart: unless-stopped
     ports:
-      # Use 80:80 if no conflict, otherwise need to map 8080 back to 80 on the host
+      # Use 80:80 if no conflict, otherwise need to map 8080 back to 80 (http) on the host
       - 8080:80
     volumes:
       - ./nginx/default.dev.conf:/etc/nginx/conf.d/default.conf
@@ -88,26 +89,17 @@ services:
   # Common
   database:
     image: mysql:latest
-    restart: unless-stopped
+    restart: always
     env_file:
       - ./leetnode/.env
     volumes:
       - ./db:/docker-entrypoint-initdb.d/
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "127.0.0.1",
-          "-uroot",
-          "-p${MYSQL_ROOT_PASSWORD}"
-        ]
+      test: [ "CMD", "mysqladmin", "ping" ]
       start_period: 5s
       interval: 5s
-      retries: 30
+      retries: 10
 
 volumes:
   mysql_data:

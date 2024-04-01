@@ -17,47 +17,18 @@ import LeetNodeNavbar from "@/components/Navbar";
 import { getCourseDetails } from "@/pages/api/course/[courseSlug]";
 import { prisma } from "@/server/db/client";
 import {
-  ActionIcon,
-  AppShell,
-  Box,
-  Button,
-  Center,
-  Container,
-  createStyles,
-  Divider,
-  Flex,
-  Header,
-  Loader,
-  Navbar as Sidebar,
-  ScrollArea,
-  SegmentedControl,
-  Stack,
-  Text,
-  Title,
-  Tooltip,
-  TypographyStylesProvider,
+  ActionIcon, AppShell, Box, Button, Center, Container, createStyles, Divider,
+  Flex, Header, Loader, Navbar as Sidebar, ScrollArea, SegmentedControl, Stack,
+  Text, Title, Tooltip, TypographyStylesProvider,
 } from "@mantine/core";
 import {
-  useMediaQuery,
-  useSessionStorage,
-  useViewportSize,
+  useMediaQuery, useSessionStorage, useViewportSize,
 } from "@mantine/hooks";
 import { Course, CourseMedia, Mastery, Topic } from "@prisma/client";
 import {
-  IconApps,
-  IconArrowBarLeft,
-  IconArrowLeft,
-  IconArrowRight,
-  IconChartLine,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconDownload,
-  IconMessages,
-  IconPresentation,
-  IconReportSearch,
-  IconTarget,
-  IconVideo,
-  IconZoomQuestion,
+  IconApps, IconArrowBarLeft, IconArrowLeft, IconArrowRight, IconChartLine,
+  IconChevronsLeft, IconChevronsRight, IconDownload, IconMessages,
+  IconPresentation, IconReportSearch, IconTarget, IconVideo, IconZoomQuestion,
 } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 
@@ -437,13 +408,20 @@ export default function CourseMainPage({
 }
 
 export async function getStaticPaths() {
+  if (process.env.SELF_HOSTED) {
+    return {
+      paths: [],
+      fallback: 'blocking',
+    }
+  }
+
   const courses: Course[] = await prisma.course.findMany();
 
   const paths = courses.map((course) => ({
     params: { courseSlug: course.courseSlug },
   }));
 
-  return { paths, fallback: false };
+  return { paths, fallback: true };
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
