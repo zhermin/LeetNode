@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 
-FROM node:18-alpine AS base
+FROM node:18-alpine3.18 AS base
 WORKDIR /app
 
 # Install dependencies only when needed
@@ -16,9 +16,11 @@ COPY --link /prisma /app/prisma
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm@7.23.0 && pnpm i --prod --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm@8.15.5 && pnpm i --prod --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
+RUN pnpx update-browserslist-db@latest
+RUN pnpx browserslist@latest --update-db
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -36,17 +38,27 @@ WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN \
-  addgroup --system --gid 1001 nodejs; \
-  adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder --link /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs --link /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --link --chown=1001:1001 /app/.next/standalone ./
-COPY --from=builder --link --chown=1001:1001 /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+# Set hostname to localhost
+ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]

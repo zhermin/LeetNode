@@ -122,7 +122,7 @@ However, running on local servers is also viable. With a Raspberry Pi or Synolog
 1. Build and start the app in the background using `docker compose`.
 
     ```bash
-    docker compose --profile prod up -d --build --force-recreate
+    docker compose --profile prod --env-file ./leetnode/.env up -d --build --force-recreate
     ```
 
     - `docker compose`: Runs the multi-container setup specified by the `docker-compose.yml` file (preferred over the `docker-compose` command)
@@ -140,7 +140,7 @@ However, running on local servers is also viable. With a Raspberry Pi or Synolog
 You can also run the 3 containers in development mode using the `dev` profile, which enables hot reloading for changes to be reflected instantly, speeding up development on your own machine.
 
 ```bash
-docker compose --profile dev up --build --force-recreate
+docker compose --profile dev --env-file ./leetnode/.env up --build --force-recreate
 ```
 
 The app will then be accessible on [`http://localhost`](http://localhost) (no port needed). The recommender service will also be accessible on [`http://localhost/recommender/`](http://localhost/recommender/) and the auto-generated docs on [`http://localhost/recommender/docs`](http://localhost/recommender/docs).

@@ -11,7 +11,18 @@ export async function CustomSendVerificationRequest({
   provider: EmailConfig;
 }) {
   const { host } = new URL(url);
-  const transport = createTransport(provider.server);
+  const transport = createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.GMAIL,
+      pass: process.env.GMAIL_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
   const result = await transport.sendMail({
     to: identifier,
     from: provider.from,

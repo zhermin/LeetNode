@@ -13,5 +13,5 @@ jobs:
       - name: Call API
         run: |
           curl --request GET \
-          --url 'https://leetnode.vercel.app/api/pybkt/cronUpdate' \
+          --url 'https://eefyp.synology.me/api/pybkt/cronUpdate' \
           --header 'Authorization: Bearer ${{ secrets.ACTION_KEY }}'

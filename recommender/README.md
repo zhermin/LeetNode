@@ -15,7 +15,7 @@ This allows the software's user-facing frontend and any additional backend to be
 Follow the steps in the [root folder](../) to start all 3 Docker containers (Nginx, NextJS and Recommender) with the dev profile on [`http://localhost`](http://localhost).
 
 ```bash
-docker compose --profile dev up --build --force-recreate
+docker compose --profile dev --env-file ./leetnode/.env up --build --force-recreate
 ```
 
 ## Local Setup

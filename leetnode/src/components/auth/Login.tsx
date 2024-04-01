@@ -4,16 +4,8 @@ import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
-  ActionIcon,
-  Button,
-  Container,
-  Group,
-  LoadingOverlay,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-  useMantineTheme,
+  ActionIcon, Button, Container, Group, LoadingOverlay, Stack, Text, TextInput,
+  Title, useMantineTheme,
 } from "@mantine/core";
 import { IconBrandGoogle, IconLogin, IconSpeakerphone } from "@tabler/icons";
 import { useMutation } from "@tanstack/react-query";
@@ -32,7 +24,7 @@ export default function Login({
     const res = await signIn("email", {
       email,
       redirect: false,
-      callbackUrl: isNewUser ? "/welcome" : undefined,
+      callbackUrl: isNewUser ? "/consent" : undefined,
     });
     if (res?.error) {
       toast.error(`${res.error}\n\nPlease contact support if this persists.`);

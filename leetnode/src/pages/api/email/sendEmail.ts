@@ -155,7 +155,7 @@ export default async function handler(
         subject: "LeetNode students' summary",
         text: `
         Here are the list of students that require help:\n\n${templateString}\n
-        Click here to view more: https://leetnode.vercel.app/dashboard
+        Click here to view more: ${process.env.NEXTAUTH_URL}/dashboard
         `,
         html: `
         <p>Here are the list of students that require help:</p>
@@ -171,7 +171,7 @@ export default async function handler(
           </tbody>
         </table>
         <p>
-          Click here to view more: <a href="https://leetnode.vercel.app/dashboard">Prof's dashboard</a>
+          Click here to view more: <a href="${process.env.NEXTAUTH_URL}/dashboard">Prof's dashboard</a>
         </p>
         `,
       };
